@@ -301,4 +301,4 @@ alldata <- list("treatments"=treatments,
                 "floral_volatiles"=vt,
                 "seeds_2018"=sds18)
 
-purrr::walk(names(alldata), ~write_tsv(alldata[[.]], paste0("data/",., ".csv")))
+purrr::walk(names(alldata), ~write_tsv(alldata[[.]], paste0("data/",., ".tsv")))
