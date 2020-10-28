@@ -1,0 +1,6 @@
+ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g)) + geom_point() + geom_abline(slope=1, intercept = 0) + geom_abline(slope=1-median(lt$water_content), intercept = 0)
+ggplot(lt, aes(x=leaf_area_cm2, y=dry_weight_g)) + geom_point() + geom_smooth(method="lm")
+ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(method="lm")
+ggplot(lt, aes(x=water_content, y=sla)) + geom_point()
+ggplot(lt, aes(x=dry_weight_g, y=sla)) + geom_point()
+ggplot(lt, aes(x=wet_weight_g, y=sla)) + geom_point()
