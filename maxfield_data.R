@@ -1,10 +1,13 @@
 # Load in all the Maxfield Meadow Ipomopsis data
-# Includes treatments, HOBO loggers, census, phenology, floral and leaf traits
+# Includes treatments, loggers, census, phenology, floral and leaf traits, and seeds
 
 # TODO write metadata  to /metadata for the final data files
 # TODO add the following datasets:
-#       plant physiology measures
-#       2018 census
+#       + census 2018 - loaded but needs to be cleaned up and merged with other years
+#       + phenology 2018, 2019 - loaded but need to be cleaned up
+#       + floral volatiles 2018, 2019
+#       + leaf physiology measures (LICOR) 2018, 2019, 2020
+#       + seeds 2019, 2020
 
 # setup -------------------------------------------------------------------
 
@@ -117,6 +120,21 @@ translate_nrf_20 <- with(filter(allowed_nrf, year==2020),  setNames(status, nrf)
 status_ok <- c("flowering", "vegetative", "dead_nf")
 status_pal <- setNames(brewer.pal(3, name="Set1")[c(1,3,2)], status_ok)
 
+cen18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2018") %>% 
+  mutate_at(vars(ends_with(c("longest","leaves"))), ~as.integer(as.character(.))) %>% 
+  mutate(plot = as.character(plot),
+         plotid = paste0(plot, subplot),
+         plant = as.character(plant),
+         notes = other_notes %>% str_match("tagnf|nf|dead|chewed|eaten")  %>% factor %>% 
+           fct_explicit_na("blank") %>% recode(eaten="chewed"),
+         flowering = flowering %>% tolower %>% factor %>% fct_explicit_na("blank"),
+         n_rosettes = as.integer(as.character(rosettes)),
+         rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more", ),
+         r1_longest	= ifelse(rosettes=="zero", NA, r1_longest),
+         r1_leaves = ifelse(rosettes=="zero", NA, r1_leaves)) %>% 
+  left_join(treatments, by="plotid") %>%
+  mutate_if(is.character, as.factor)
+
 cen19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2019foranalysis") %>% 
   mutate(plot = as.character(plot),
          plotid = paste0(plot, subplot),
@@ -152,6 +170,45 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
 
 cen <- full_join(cen20, rename_all(cen19, paste0, "_19"), by=c("id"="id_19")) 
 
+# phenology ---------------------------------------------------------------
+
+ph18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2018") %>% 
+  mutate(plot = as.character(plot), 
+         subplot = toupper(subplot),
+         plotid = paste0(plot, subplot),
+         plantid = paste0(plotid, plant),
+         julian = factor(yday(date)),
+         open = rowSums(select(., starts_with("open")), na.rm=T),
+         buds = rowSums(select(., starts_with("buds")), na.rm=T)) %>% 
+  left_join(treatments, by=c("plotid","plot","subplot")) %>%
+  mutate_if(is.character, as.factor) 
+
+ph19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2019") %>% 
+  mutate(plot = as.character(plot), 
+         plotid = paste0(plot, subplot),
+         plantid = paste0(plotid, plant),
+         plant = as.character(plant),
+         julian = factor(yday(date))) %>% 
+  left_join(treatments, by=c("plotid","plot","subplot")) %>%
+  mutate_if(is.character, as.factor)
+
+ph20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2020") %>% 
+  mutate(plot = as.character(plot), 
+         plotid = paste0(plot, subplot),
+         plantid = paste0(plotid, plant),
+         plant = as.character(plant),
+         julian = factor(yday(date)),
+         open = rowSums(select(., starts_with("open")), na.rm=T),
+         buds = rowSums(select(., starts_with("buds")), na.rm=T),
+         eggs = rowSums(select(., starts_with("eggs")), na.rm=T)) %>% 
+  left_join(treatments, by=c("plotid","plot","subplot")) %>%
+  mutate_if(is.character, as.factor) 
+
+ph20 <- ph20 %>% 
+  complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+  mutate(flowering = open + buds > 0,
+         has_egg = eggs > 0)
+
 # leaftraits --------------------------------------------------------------
 
 lt_sheets <- filter(datasheets, name=="2020 Maxfield Leaf Traits")
@@ -171,7 +228,7 @@ lt.subplotround <- lt %>%
   group_by(year, round, plot, subplot, plotid, water, water4, snow) %>% 
   summarize_if(is.numeric, mean, na.rm=T)
 
-# floral ------------------------------------------------------------------
+# floraltraits ------------------------------------------------------------------
 
 mt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Morphology") %>% 
   bind_rows(read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Morphology1819")) %>% 
@@ -206,31 +263,42 @@ mt.subplot <- mt %>% mutate_at(c("plotid","plant"), as.character) %>%
 mt.plantyr <- mt %>% mutate_at(c("plotid","plant"), as.character) %>% 
   group_by(year, water, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup
 
-# volatiles ---------------------------------------------------------------
+# floralvolatiles ---------------------------------------------------------------
 
 vt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Volatiles"), sheet="2020") %>% 
   mutate(plotid = paste0(plot, subplot),
+         plant = as.character(plant),
          plantid = paste0(plotid, plant)) %>% 
   left_join(treatments, by="plotid") %>%
   mutate_if(is.character, as.factor)
 
-# phenology ---------------------------------------------------------------
+# seeds -------------------------------------------------------------------
 
-ph <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2020") %>% 
+sds18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet="2018") %>% 
   mutate(plot = as.character(plot), 
+         subplot = toupper(subplot),
          plotid = paste0(plot, subplot),
-         plantid = paste0(plotid, plant),
-         julian = factor(yday(date)),
-         open = rowSums(select(., starts_with("open")), na.rm=T),
-         buds = rowSums(select(., starts_with("buds")), na.rm=T),
-         eggs = rowSums(select(., starts_with("eggs")), na.rm=T)) %>% 
+         plantid = paste0(plotid, plant)) %>% 
   left_join(treatments, by=c("plotid","plot","subplot")) %>%
   mutate_if(is.character, as.factor) 
 
-ph <- ph %>% 
-  complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
-  mutate(flowering = open + buds > 0,
-         has_egg = eggs > 0)
+# export ------------------------------------------------------------------
 
 remove(wx)
 save.image("data/maxfield_data.rda")
+
+alldata <- list("treatments"=treatments,
+                "meltdates"=meltdates,
+                "soil_moisture"=sm,
+                "census_2018"=cen18,
+                "census_2019"=cen19,
+                "census_2020"=cen20,
+                "phenology_2018"=ph18,
+                "phenology_2019"=ph19,
+                "phenology_2020"=ph20,
+                "leaf_traits"=lt,
+                "floral_traits"=mt,
+                "floral_volatiles"=vt,
+                "seeds_2018"=sds18)
+
+purrr::walk(names(alldata), ~write_tsv(alldata[[.]], paste0("data/",., ".csv")))
