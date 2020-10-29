@@ -4,11 +4,11 @@ author: "[John Powers](http://sites.uci.edu/powers/)"
 date: "`r Sys.Date()`"
 output:
   html_document:
+    self_contained: no
+    lib_dir: libs
     code_folding: hide
     toc: yes
     toc_float: TRUE
-resource_files:   
-- .httr-oauth
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -24,88 +24,32 @@ Analyze selection on and plastic responses of floral and vegetative traits of *I
 ```{r setup, message=FALSE}
 library(tidyverse)
 library(lubridate)
-ggplot2::theme_set(theme_grey())
-library(knitr)
-knitr::opts_chunk$set(comment="", cache=T, warning = FALSE, message = FALSE)
 library(RColorBrewer)
+library(knitr)
+knitr::opts_chunk$set(comment="", cache=T, warning = FALSE, message = FALSE, fig.path = "images/")
+ggplot2::theme_set(theme_grey())
 
-# The data is sourced from Google Drive. You will need to authenticate interactively with the *_auth() commands to make this work locally.
-library(googlesheets4)
-gs4_auth(email = T)
-library(googledrive)
-drive_auth(email = T)
-
-datasheets <- drive_ls(as_id("1xVG466gMSCTfsMbvXudhq-Ruc2TKOZJB"), recursive=TRUE) #gets file listing for "2020 RMBL Campbell Lab"
-treatments <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="treatments") %>%#the experiemntal treatments
-  mutate(water = factor(recode(water, "control"="Control", "mock rainout"="Control", "addition"="Addition", "rainout"="Reduction")),
-         snow = factor(recode(snow, "early"="Early","normal"="Normal"))) %>% 
-  separate(plotid, c("plot","subplot"), sep=1, remove=F)
-water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$water))#
-snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
-
-with(treatments, table(water, snow))
-#![Maxfield Meadow Treatments by Siena Truex]("maxfieldtreatments.png")
-
-setwd("~/MyDocs/MEGA/UCI/RMBL 2020")
+load("data/maxfield_data.rda")
 ```
 
 # Snow melt vs. treatments
 
 ```{r hobo}
-#hobo_list <- read_csv("hobo_files.csv") %>% filter(is.na(use)) %>% mutate(year_plot = paste(year, plot, sep="."))
-#hobo <- map_dfr(setNames(paste0("./hobo/",hobo_list$path,".txt"),hobo_list$year_plot), read_tsv, .id="year_plot") %>% 
-#  mutate(time = parse_date_time(paste(Date, Time), "ymd HMS", tz="America/Denver")) %>% 
-#  rename(temp = "Temp (°C) c:1", intensity="Intensity (Lux) c:2") %>% 
-#  select(year_plot, time, temp, intensity) %>%
-#  separate(year_plot, c("year", "plot")) %>% mutate_if(is.integer, as.factor)
-#write_csv(hobo, "maxfield_hobo_data.csv")
-
-hobo <- drive_download(filter(datasheets, name=="maxfield_hobo_data.csv"), overwrite = T)$local_path %>% read_csv() %>% mutate(time=with_tz(time, "America/Denver"), sun=intensity > 15000, warm = temp>1) %>% mutate_at(c("year","plot"), as.factor)
-
-#plot 2, 4, 5 = early
 ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=temp, color=plot)) + facet_wrap(vars(year), scales="free_x", ncol=1) + geom_line() + geom_hline(yintercept=1) 
 ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=intensity, color=plot)) + facet_wrap(vars(year), scales="free_x", ncol=1) + geom_line() + geom_hline(yintercept=15000) 
-
-meltdates <- full_join(
-  hobo %>% filter(month(time)%in%4:6, sun==TRUE) %>% group_by(year, plot) %>% summarize_at("time", min) %>% mutate(time=yday(time)) %>%  rename(sun_date=time),
-  hobo %>% filter(month(time)%in%4:6, warm==TRUE) %>% group_by(year, plot) %>% summarize_at("time", min) %>% mutate(time=yday(time)) %>%  rename(warm_date=time))
-meltdates <- left_join(meltdates, treatments %>% dplyr::select(plot, snow) %>% distinct)
 
 ggplot(meltdates, aes(x=sun_date, y=warm_date, color=snow, label=plot)) + geom_text(size=6) + facet_wrap(vars(year), scales="free") + scale_x_continuous(breaks=seq(from=100, to=200, by=2)) + scale_y_continuous(breaks=seq(from=100, to=200, by=2)) + theme(panel.grid.minor=element_blank()) + geom_abline(intercept=0, slope=1) + scale_color_manual(values=snow_pal)
 ```
 
 # Weather data
 ```{r weather}
-wx <- read_tsv("billy_rmbl_wrcc_weather_2017_2020.csv", col_types="Dtnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn")
-daily_precip <- wx %>% group_by(date) %>% summarize_at("precip_mm", sum) %>% mutate(year=year(date), julian=yday(date))
-daily_temp <- wx %>% group_by(date) %>% summarize_at("av_temp_2m_C", mean, na.rm=T) %>% mutate(year=year(date), julian=yday(date))
 ggplot(daily_precip, aes(y=precip_mm, x=julian)) + geom_col(fill=brewer.pal(3, "Greens")[3]) + facet_wrap(vars(year), ncol=1) + scale_y_continuous(limits=c(0,125)) + labs(x="Day of year", y="Precipiation (mm)") + theme_minimal()
 ```
 
 
 # Soil moisture vs. treatments
 
-[Soil moisture data](https://docs.google.com/spreadsheets/d/177iQBUmXLGlrfUuvYZb8-jPjNNiuCaDJDdgK90kDsq8/edit#gid=463936387)
-
 ```{r soil, fig.height=12, fig.width=12}
-sm <- bind_rows("2020"=read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture"), sheet="2020"),
-                "2019"=read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture"), sheet="2019"),
-                "2018"=bind_rows(
-                  read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture"), sheet="2018 - long"),
-                  read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture"), sheet="2018 - wide") %>% 
-                    pivot_longer(UR:M, names_to="location", values_to="VWC")), .id="year") %>% 
-  mutate(plot=as.character(plot), plotid = paste0(plot, subplot)) %>% 
-  left_join(treatments) %>%
-  mutate_if(is.character, as.factor)
-
-sm.subplot <- sm %>% group_by(year, date, plot, subplot, plotid, water, snow) %>% 
-  summarize(VWC = mean(VWC, na.rm=T), .groups="drop") 
-
-sm.subplot.month <- sm %>% mutate(mo = month(date)) %>% group_by(year, mo, plot, subplot, plotid, water, snow) %>% 
-  summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
-
-sm.subplotyear <- sm.subplot %>% group_by(year, plot, subplot, plotid, water, snow) %>% summarize(VWC=mean(VWC, na.rm=T), .groups="drop")
-
 #ggplot(sm, aes(x=water, color=snow, y = VWC)) + geom_boxplot() + facet_wrap(vars(factor(date))) + 
 #  labs(y="Volumetric water content (%)", x="Precipitation", color="Snowmelt") +
 #  scale_color_manual(values=snow_pal)
@@ -131,50 +75,9 @@ The annual census at the beginning of the summer contains information on mortali
 
 ## Load census data
 
-* [2019 Census](https://docs.google.com/spreadsheets/d/17qSYLvl4aO3TNIHwz1YW_XdfjX_grSqoy38m4mKYXe8/edit#gid=792121413)
-* [2020 Census](https://docs.google.com/spreadsheets/d/17qSYLvl4aO3TNIHwz1YW_XdfjX_grSqoy38m4mKYXe8/edit#gid=714234807)
-
-After loading the censuses, check the allowed states of notes/rosettes/flowering for each year and [translate](https://docs.google.com/spreadsheets/d/17qSYLvl4aO3TNIHwz1YW_XdfjX_grSqoy38m4mKYXe8/edit#gid=816285957) each combination into a simplified plant "status". If there is a problem, status is flagged "recheck". Tally the number of each combination for each year. 
+Tally the number of each status combination for each year. 
 
 ```{r load_census}
-allowed_nrf <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="status")
-status_priority <- c("flowering", "vegetative", "recheck",  "dead_nf", "tagnf") # determines order for deduplicating
-translate_nrf_19 <- with(filter(allowed_nrf, year==2019),  setNames(status, nrf))
-translate_nrf_20 <- with(filter(allowed_nrf, year==2020),  setNames(status, nrf))
-status_ok <- c("flowering", "vegetative", "dead_nf")
-status_pal <- setNames(brewer.pal(3, name="Set1")[c(1,3,2)], status_ok)
-
-cen19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2019foranalysis") %>% 
-  mutate(plant = as.character(plant),
-         notes = other_notes %>% str_match("tagnf|nf|dead|chewed|eaten")  %>% factor %>% 
-           fct_explicit_na("blank") %>% recode(eaten="chewed"),
-         flowering = flowering %>% tolower %>% factor %>% fct_explicit_na("blank"),
-         n_rosettes = as.integer(as.character(rosettes)),
-         rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more", ),
-         status = recode(paste(notes, rosettes, flowering), !!!translate_nrf_19, .default="recheck") %>% fct_relevel(status_priority),
-         r1_longest	= ifelse(rosettes=="zero", NA, r1_longest),
-         r1_leaves = ifelse(rosettes=="zero", NA, r1_leaves),
-         id = na_if(id, "-"),
-         plotid = paste0(plot, subplot)) %>% 
-  drop_na(id) %>%
-  left_join(treatments, by="plotid") %>%
-  mutate_if(is.character, as.factor)
-
-cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2020") %>% 
-  select(-ends_with("_19")) %>% 
-  mutate(plant = as.character(plant),
-         notes = notes %>% fct_explicit_na("blank"),
-         flowering = flowering %>% as.character %>% fct_explicit_na("blank"),
-         n_rosettes = as.integer(as.character(rosettes)),
-         rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more", ),
-         status = recode(paste(notes, rosettes, flowering), !!!translate_nrf_20, .default="recheck") %>% fct_relevel(status_priority),
-         id = na_if(id, "-"),
-         plotid = paste0(plot, subplot)
-         ) %>% 
-  drop_na(id) %>% 
-  left_join(treatments, by="plotid") %>%
-  mutate_if(is.character, as.factor)
-
 nrf_count <- bind_rows(
   allowed_nrf %>% filter(year==2019) %>% left_join(cen19 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()),
   allowed_nrf %>% filter(year==2020) %>% left_join(cen20 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()))
@@ -194,10 +97,10 @@ This is automatic, but it may be better to resolve duplicates manually in some c
 
 ```{r dupes}
 #write out the duplicates
-cen19 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
-  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2019duplicates")
-cen20 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
-  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2020duplicates")
+#cen19 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
+#  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2019duplicates")
+#cen20 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
+#  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2020duplicates")
 
 #distinct() keeps the first row after sorting, discards the other rows
 cen19 <- cen19 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
@@ -211,10 +114,6 @@ ggplot(drop_na(cen20, water, snow) %>% filter(status %in% status_ok), aes(x=wate
 ```
 
 ## Join 2019 and 2020 datasets
-
-```{r join_years}
-cen <- full_join(cen20, rename_all(cen19, paste0, "_19"), by=c("id"="id_19")) 
-```
 
 Check these tags missing in each year to make sure tags were not mis-read. When tags were not found in the other year, the part of the row for that year is "NA".
 
@@ -263,44 +162,16 @@ ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geo
 ```
 
 # Leaf traits
-## 2020 leaf traits vs. treatments
 
-### In June
-```{r leaftraits}
-lt <- read_sheet(filter(datasheets, name=="2020 Maxfield Leaf Traits"), sheet="2020round1") %>% 
-  mutate(plotid = paste0(plot, subplot),
-         trichome_density = trichomes / leaf_area_cm2,
-         sla = leaf_area_cm2 / dry_weight_g,
-         water_content = (wet_weight_g-dry_weight_g)/wet_weight_g) %>% 
-  left_join(treatments, by="plotid") %>%
-  mutate_if(is.character, as.factor)
- 
-ggplot(lt, aes(x=water, color=snow, y = sla)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Specific Leaf Area (cm2/g)", color="Snowmelt")
-
-ggplot(lt, aes(x=sla, y=water_content, color=water, shape=snow, linetype=snow)) + geom_point() + geom_smooth(se=F, method="lm") +   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
-  theme(legend.key.size = unit(2, "lines"))
-
-ggplot(lt, aes(x=water, color=snow, y = water_content)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Water content", color="Snowmelt")
-
-ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Trichome density (/cm2)", color="Snowmelt")
-
-#average by plant, then subplot
-lt.means <- lt %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% 
-  group_by(plotid) %>% summarize_if(is.numeric, mean, na.rm=T) %>% 
-  left_join(treatments, by="plotid")
+```{r checkleaftraits}
+ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g)) + geom_point() + geom_abline(slope=1, intercept = 0) + geom_abline(slope=1-median(lt$water_content), intercept = 0)
+ggplot(lt, aes(x=leaf_area_cm2, y=dry_weight_g)) + geom_point() + geom_smooth(method="lm")
+ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(method="lm")
+ggplot(lt, aes(x=water_content, y=sla)) + geom_point()
 ```
 
-### In July
-```{r leaftraits2}
-lt <- read_sheet(filter(datasheets, name=="2020 Maxfield Leaf Traits"), sheet="2020round2") %>% 
-  mutate(plotid = paste0(plot, subplot),
-         trichome_density = trichomes / leaf_area_cm2,
-         sla = leaf_area_cm2 / dry_weight_g,
-         water_content = (wet_weight_g-dry_weight_g)/wet_weight_g) %>% 
-  left_join(treatments, by="plotid") %>%
-  mutate_if(is.character, as.factor)
- 
+
+```{r leaftraits}
 ggplot(lt, aes(x=water, color=snow, y = sla)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Specific Leaf Area (cm2/g)", color="Snowmelt")
 
 ggplot(lt, aes(x=sla, y=water_content, color=water, shape=snow, linetype=snow)) + geom_point() + geom_smooth(se=F, method="lm") +   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
@@ -314,44 +185,6 @@ ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + sc
 # Floral traits
 
 ## Floral morphology and nectar
-```{r floral_morphology}
-mt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Morphology") %>% 
-  bind_rows(read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Morphology1819")) %>% 
-    mutate(plant = as.character(plant), plantid = paste0(plotid, plant),
-           year = factor(ifelse(is.na(year), year(date), year))) %>% 
-  left_join(treatments, by="plotid") %>%
-  mutate_if(is.character, as.factor)
-
-with(mt, table(snow, water))
-
-#Nectar
-nt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Nectar") %>% 
-  bind_rows(read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Nectar1819") %>% mutate(plant=as.list(plant))) %>% 
-  mutate(plant = as.character(plant),  plantid = paste0(plotid, plant), 
-         year = factor(ifelse(is.na(year), year(date), year))) %>% 
-  left_join(treatments, by="plotid") %>%
-  mutate_if(is.character, as.factor)
-
-with(nt, table(snow, water))
-
-#Merge nectar and morphology, 
-#add avg soil moisture and snow melt date, and
-#pick traits for analysis
-mt <- bind_rows(mt, nt)  %>% 
-  left_join(sm.subplotyear) %>% 
-  left_join(meltdates)
-traits <- colnames(mt)[c(5,6,7,10,19,20)] #exclude anthers
-traitnames <- setNames(c("Corolla Length (mm)", "Corolla Width (mm)", "Style Length (mm)", "Sepal Width (mm)", "Nectar amount (48 hr, mm)", "Nectar concentration"), traits)
-
-#average by plant and year, then by subplot
-mt.subplot <- mt %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(year, water, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% 
-  group_by(year, water, snow, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)
-
-#average by plant and year
-mt.plantyr <- mt %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(year, water, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup
-```
 
 ### Floral trait correlations
 ```{r correlations}
@@ -361,13 +194,15 @@ ggpairs(mt %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	a
 ggplot(nt, aes(x=nectar_48_h_mm, y = nectar_conc)) + geom_point() + labs(x="Nectar amount (48 hr, mm)", y="Nectar concentration") + geom_smooth(se=F)
 ```
 
-
 ### Floral plasticity: treatments
 ```{r morphology_model}
 options(contrasts = c("contr.sum", "contr.poly"))
 library(lme4)
 library(lmerTest)
 library(emmeans)
+
+traits <- c("corolla_length", "corolla_width", "style_length", "sepal_width", "nectar_48_h_mm", "nectar_conc") #exclude anthers
+traitnames <- setNames(c("Corolla Length (mm)", "Corolla Width (mm)", "Style Length (mm)", "Sepal Width (mm)", "Nectar amount (48 hr, mm)", "Nectar concentration"), traits)
 
 mt.mod <- mt.mod.test <- mod.emm <- mt.mod.plot <- list()
 for(tr in traits) {
@@ -389,7 +224,7 @@ for(tr in traits) {
 
 #### After averaging by subplot
 Removed year * snow and year * water interactions, and random effect of subplot to make the models run because there are less data points after averaging.
-Not ideal because there are often year * water interactions, adn taking the mean hides the variance in the data. 
+Not ideal because there are often year * water interactions, and taking the mean hides the variance in the data. 
 ```{r morph_avg, message=T, warning=T}
 options(contrasts = c("contr.sum", "contr.poly"))
 mt.mod <- mt.mod.test <- list(length(traits))
@@ -461,9 +296,7 @@ for(tr in traits) {
 
 ### Multivariate response
 ```{r multresp}
- #and nectar (19,20) too
-#mt.morph <- mt[,c(5,6,7,8,9,10,12,25)] %>% drop_na(1:6)
-mt.morph <- mt[,c(5,6,7,8,9,12,25)] %>% drop_na(1:5) #drop 10 = sepal_width
+mt.morph <- mt[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","VWC")] %>% drop_na(1:5) #drop sepal_width
 mt.pca <- prcomp(mt.morph[,-(6:7)], scale.=TRUE)
 
 mt.morph.pca <- mt.morph %>%
@@ -492,15 +325,13 @@ ggplot(mt.morph.pca) + theme_classic() +
   scale_size_identity() + coord_fixed() + 
   scale_fill_viridis(direction=-1, option="plasma") + scale_color_viridis(direction=-1, option="plasma") + 
   labs(x=mt.pca.labs[1], y=mt.pca.labs[2])
-#ggsave("mt_morph_pca_noSW.pdf", height=15, width=20, device=cairo_pdf)
+ggsave("images/mt_morph_pca_noSW.pdf", height=15, width=20, device=cairo_pdf)
 
-#library(ggbiplot)
 ggplot(mt, aes(x=corolla_width, y=corolla_length, color=VWC)) + scale_color_viridis(direction=-1, option="plasma") + geom_point() + theme_minimal()
 ggplot(mt, aes(y=style_length / corolla_length, x=VWC, color=VWC)) + scale_color_viridis(direction=-1, option="plasma") + geom_point() + theme_minimal() + geom_smooth()
 
 library(vegan)
-mt.morph <- mt[,c(5,6,7,8,9,12,25)] %>% drop_na(1:5) #drop 10 = corolla_width
-mt.cap <- capscale(scale(mt.morph[,-(-1:-2)]) ~ VWC + year, data=mt.morph)
+mt.cap <- capscale(scale(mt.morph[,-(6:7)]) ~ VWC + year, data=mt.morph)
 mt.cap
 anova(mt.cap, by="term")
 plot(mt.cap, type="points")
@@ -509,8 +340,8 @@ text(mt.cap, display="species", col="red")
 
 ```{r multresp_discrete}
 library(vegan)
-mt.morph <- mt[,c(5,6,7,8,9,10,12,16,17)] %>% drop_na(1:6) #and nectar (19,20) too
-mt.cap <- capscale(scale(mt.morph[,-(7:9)]) ~ year + snow + water, data=mt.morph)
+mt.morph <- mt[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","water","snow")] %>% drop_na(1:6) #and nectar (19,20) too
+mt.cap <- capscale(scale(mt.morph[,-(6:8)]) ~ year + snow + water, data=mt.morph)
 plot(mt.cap, type="points")
 text(mt.cap, display="species", col="red")
 ```
@@ -549,67 +380,34 @@ ggplot(data=nt, aes(x=yday(date), y= nectar_conc, color=water)) +
   scale_color_manual(values=water_pal) + theme_minimal()
 ```
 
-## Floral volatiles
-```{r volatiles}
-vt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Volatiles"), sheet="2020") %>% 
-  mutate(plotid = paste0(plot, subplot),
-         plantid = paste0(plotid, plant)) %>% 
-  left_join(treatments, by="plotid") %>%
-  mutate_if(is.character, as.factor)
-
-with(vt, table(snow, water))
-with(vt %>% filter(plant !="air") %>% droplevels, table(plotid))
-```
-
-
 # Phenology
 ```{r phenology}
-ph <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2020") %>% 
-  mutate(plot = as.character(plot), 
-         plotid = paste0(plot, subplot),
-         plantid = paste0(plotid, plant),
-         julian = factor(yday(date)),
-         open = rowSums(select(., starts_with("open")), na.rm=T),
-         buds = rowSums(select(., starts_with("buds")), na.rm=T),
-         eggs = rowSums(select(., starts_with("eggs")), na.rm=T)) %>% 
-  left_join(treatments, by=c("plotid","plot","subplot")) %>%
-  mutate_if(is.character, as.factor) 
-
-with(ph, table(plotid, julian))
-with(ph, table(paste(snow, water), julian))
-
-ph <- ph %>% 
-  complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
-  mutate(flowering = open + buds > 0,
-         has_egg = eggs > 0)
-
-
-ggplot(ph, aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
+ggplot(ph20, aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
   labs(y="Plant height", 
        x="Day of year", color="Precipitation", shape="Snow") +
   scale_color_manual(values=water_pal) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ggplot(ph, aes(x=julian, y=open+buds, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=plantid)) +
+ggplot(ph20, aes(x=julian, y=open+buds, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=plantid)) +
   labs(y="Total flowers and buds", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ggplot(ph, aes(x=julian, y=eggs, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=plantid)) +
+ggplot(ph20, aes(x=julian, y=eggs, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=plantid)) +
   labs(y="Total eggs", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ph %>% group_by(snow, water, julian) %>% mutate() %>% summarize_at(c("open","buds"), mean) %>% 
+ph20 %>% group_by(snow, water, julian) %>% mutate() %>% summarize_at(c("open","buds"), mean) %>% 
   ggplot(aes(x=julian, y=open+buds, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=paste(snow, water))) +
   labs(y="Mean total flowers and buds", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ph %>% group_by(snow, water, julian) %>% summarize_at("flowering", mean, na.rm=T) %>% 
+ph20 %>% group_by(snow, water, julian) %>% summarize_at("flowering", mean, na.rm=T) %>% 
   ggplot(aes(x=julian, y=flowering, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=paste(snow, water))) +
   labs(y="Proportion flowering", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
@@ -617,14 +415,14 @@ ph %>% group_by(snow, water, julian) %>% summarize_at("flowering", mean, na.rm=T
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ph %>% group_by(snow, water, julian) %>% summarize_at("eggs", mean, na.rm=T) %>% 
+ph20 %>% group_by(snow, water, julian) %>% summarize_at("eggs", mean, na.rm=T) %>% 
   ggplot(aes(x=julian, y=eggs, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=paste(snow, water))) +
   labs(y="Mean total eggs", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ph %>% group_by(snow, water, julian) %>% summarize_at("has_egg", mean, na.rm=T) %>% 
+ph20 %>% group_by(snow, water, julian) %>% summarize_at("has_egg", mean, na.rm=T) %>% 
   ggplot(aes(x=julian, y=has_egg, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=paste(snow, water))) +
   labs(y="Proportion of plants with eggs", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
@@ -633,37 +431,3 @@ ph %>% group_by(snow, water, julian) %>% summarize_at("has_egg", mean, na.rm=T) 
   theme(legend.key.size = unit(2, "lines"))
 
 ```
-
-# Floral traits inventory
-
-## Remaining floral measurements
-
-Compare the phenology table to each trait table to find the flowering plants that have not been measured yet.
-
-```{r remaining}
-ph.wide <- ph %>% select(c("plantid","julian","flowering")) %>% distinct(plantid, julian, .keep_all=T) %>%  pivot_wider(names_from=julian, values_from=flowering)
-cat("Flowering plants for each week (header is the day of year)")
-colSums(ph.wide[,-1])
-cat("Total plants that flowered")
-nrow(ph.wide)
-
-current.flowering <- ph.wide %>% filter_at(ncol(ph.wide), all_vars(. == TRUE)) %>% select(plantid) %>% arrange(plantid) #what was flowering last week?
-
-cat("remaining volatiles")
-full_join(current.flowering, vt) %>% filter(is.na(date)) %>% pull(plantid)
-
-cat("remaining morphology (corolla length)")
-full_join(current.flowering, mt) %>% filter(is.na(corolla_length)) %>% pull(plantid)
-
-cat("remaining corolla width")
-full_join(current.flowering, mt) %>% filter(is.na(corolla_width)) %>% pull(plantid)
-
-cat("remaining nectar (concentration)")
-full_join(current.flowering, nt) %>% filter(is.na(nectar_conc)) %>% pull(plantid)
-```
-
-```{r save_out}
-remove(wx)
-save.image("maxfield_data.Rdata")
-```
-

@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="John Powers" />
+
+<meta name="date" content="2020-10-28" />
+
+<title>Maxfield Meadow Ipomopsis Experiment</title>
+
+<script src="libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="libs/navigation-1.1/tabsets.js"></script>
+<script src="libs/navigation-1.1/codefolding.js"></script>
+<link href="libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
+<h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
+<h4 class="date">2020-10-28</h4>
+
+</div>
+
+
+<style type="text/css">
+.main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
+img{ max-width:200%; height: auto; }
+td, th { padding : 6px }
+</style>
+<div id="purpose" class="section level1">
+<h1>Purpose</h1>
+<p>Analyze selection on and plastic responses of floral and vegetative traits of <em>Ipomopsis aggregata</em> to manipulations of snowmelt and summer precipitation. Determine whether plasticity is adaptive (improves survival and reproduction). Part of a <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1654655">larger project</a> to understand the potential for evolutionary rescue in alpine plants under climate change.</p>
+</div>
+<div id="treatments" class="section level1">
+<h1>Treatments</h1>
+<pre class="r"><code>library(tidyverse)
+library(lubridate)
+library(RColorBrewer)
+library(knitr)
+knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = FALSE, message = FALSE, fig.path = &quot;images/&quot;)
+ggplot2::theme_set(theme_grey())
+
+load(&quot;data/maxfield_data.rda&quot;)</code></pre>
+</div>
+<div id="snow-melt-vs.-treatments" class="section level1">
+<h1>Snow melt vs. treatments</h1>
+<pre class="r"><code>ggplot(hobo %&gt;% filter(month(time)%in%4:6), aes(x=time, y=temp, color=plot)) + facet_wrap(vars(year), scales=&quot;free_x&quot;, ncol=1) + geom_line() + geom_hline(yintercept=1) </code></pre>
+<p><img src="images/hobo-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(hobo %&gt;% filter(month(time)%in%4:6), aes(x=time, y=intensity, color=plot)) + facet_wrap(vars(year), scales=&quot;free_x&quot;, ncol=1) + geom_line() + geom_hline(yintercept=15000) </code></pre>
+<p><img src="images/hobo-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(meltdates, aes(x=sun_date, y=warm_date, color=snow, label=plot)) + geom_text(size=6) + facet_wrap(vars(year), scales=&quot;free&quot;) + scale_x_continuous(breaks=seq(from=100, to=200, by=2)) + scale_y_continuous(breaks=seq(from=100, to=200, by=2)) + theme(panel.grid.minor=element_blank()) + geom_abline(intercept=0, slope=1) + scale_color_manual(values=snow_pal)</code></pre>
+<p><img src="images/hobo-3.png" width="672" /></p>
+</div>
+<div id="weather-data" class="section level1">
+<h1>Weather data</h1>
+<pre class="r"><code>ggplot(daily_precip, aes(y=precip_mm, x=julian)) + geom_col(fill=brewer.pal(3, &quot;Greens&quot;)[3]) + facet_wrap(vars(year), ncol=1) + scale_y_continuous(limits=c(0,125)) + labs(x=&quot;Day of year&quot;, y=&quot;Precipiation (mm)&quot;) + theme_minimal()</code></pre>
+<p><img src="images/weather-1.png" width="672" /></p>
+</div>
+<div id="soil-moisture-vs.-treatments" class="section level1">
+<h1>Soil moisture vs. treatments</h1>
+<pre class="r"><code>#ggplot(sm, aes(x=water, color=snow, y = VWC)) + geom_boxplot() + facet_wrap(vars(factor(date))) + 
+#  labs(y=&quot;Volumetric water content (%)&quot;, x=&quot;Precipitation&quot;, color=&quot;Snowmelt&quot;) +
+#  scale_color_manual(values=snow_pal)
+
+#over time
+ggplot(sm, aes(x=yday(date), shape=snow, linetype=snow, color=water, y = VWC)) + 
+  facet_wrap(vars(year), ncol=1) +
+  #geom_bar(data=mt, aes(x=yday(date), y= ..count../10), inherit.aes = F, width=1, fill=&quot;yellow&quot;)+
+  geom_jitter(height=0, width=0.3) + geom_smooth(se=F, span=0.5) +
+  geom_col(data=daily_precip %&gt;% filter(year&gt;2017), aes(x=julian, y=precip_mm), inherit.aes = F, fill=brewer.pal(3, &quot;Greens&quot;)[3]) + 
+  geom_line(data=daily_temp %&gt;% filter(year&gt;2017), aes(x=julian, y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, &quot;Oranges&quot;)[3]) + 
+  geom_vline(data=meltdates, aes(xintercept=warm_date, linetype=snow), inherit.aes=F, color=brewer.pal(3, &quot;Purples&quot;)[3])+
+  scale_x_continuous(limits=c(110, 230), breaks=scales::breaks_extended(10), expand=expansion(0,0)) + scale_y_continuous(limits=c(-3, 20)) +
+  labs(y=&quot;Volumetric water content (%) / Daily precipitation (mm) / Mean temperature (C)&quot;, 
+       x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+  scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/soil-1.png" width="1152" /></p>
+</div>
+<div id="census" class="section level1">
+<h1>Census</h1>
+<p>The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).</p>
+<div id="load-census-data" class="section level2">
+<h2>Load census data</h2>
+<p>Tally the number of each status combination for each year.</p>
+<pre class="r"><code>nrf_count &lt;- bind_rows(
+  allowed_nrf %&gt;% filter(year==2019) %&gt;% left_join(cen19 %&gt;% mutate(nrf=paste(notes, rosettes, flowering)) %&gt;% group_by(nrf) %&gt;% tally()),
+  allowed_nrf %&gt;% filter(year==2020) %&gt;% left_join(cen20 %&gt;% mutate(nrf=paste(notes, rosettes, flowering)) %&gt;% group_by(nrf) %&gt;% tally()))
+
+kable(nrf_count %&gt;% select(-nrf) %&gt;% arrange(year, status, desc(n)))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">year</th>
+<th align="left">notes</th>
+<th align="left">rosettes</th>
+<th align="left">flowering</th>
+<th align="left">status</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">nf</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">dead_nf</td>
+<td align="right">215</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">dead</td>
+<td align="left">zero</td>
+<td align="left">n</td>
+<td align="left">dead_nf</td>
+<td align="right">143</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">zero</td>
+<td align="left">n</td>
+<td align="left">dead_nf</td>
+<td align="right">18</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">nf</td>
+<td align="left">blank</td>
+<td align="left">n</td>
+<td align="left">dead_nf</td>
+<td align="right">7</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">n</td>
+<td align="left">dead_nf</td>
+<td align="right">6</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">dead</td>
+<td align="left">blank</td>
+<td align="left">n</td>
+<td align="left">dead_nf</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">dead</td>
+<td align="left">one_or_more</td>
+<td align="left">n</td>
+<td align="left">dead_nf</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">dead</td>
+<td align="left">zero</td>
+<td align="left">blank</td>
+<td align="left">dead_nf</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">dead</td>
+<td align="left">zero</td>
+<td align="left">blank</td>
+<td align="left">dead_nf</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">nf</td>
+<td align="left">zero</td>
+<td align="left">n</td>
+<td align="left">dead_nf</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">y</td>
+<td align="left">flowering</td>
+<td align="right">110</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">one_or_more</td>
+<td align="left">y</td>
+<td align="left">flowering</td>
+<td align="right">51</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">indist</td>
+<td align="left">y</td>
+<td align="left">flowering</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">nf</td>
+<td align="left">one_or_more</td>
+<td align="left">blank</td>
+<td align="left">recheck</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">zero</td>
+<td align="left">y</td>
+<td align="left">recheck</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">recheck</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">chewed</td>
+<td align="left">zero</td>
+<td align="left">y</td>
+<td align="left">recheck</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">nf</td>
+<td align="left">blank</td>
+<td align="left">y</td>
+<td align="left">recheck</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">tagnf</td>
+<td align="left">one_or_more</td>
+<td align="left">blank</td>
+<td align="left">recheck</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">tagnf</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">tagnf</td>
+<td align="right">46</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">tagnf</td>
+<td align="left">blank</td>
+<td align="left">n</td>
+<td align="left">tagnf</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">tagnf</td>
+<td align="left">zero</td>
+<td align="left">blank</td>
+<td align="left">tagnf</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">one_or_more</td>
+<td align="left">n</td>
+<td align="left">vegetative</td>
+<td align="right">433</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">indist</td>
+<td align="left">n</td>
+<td align="left">vegetative</td>
+<td align="right">75</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">chewed</td>
+<td align="left">zero</td>
+<td align="left">n</td>
+<td align="left">vegetative</td>
+<td align="right">23</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">one_or_more</td>
+<td align="left">blank</td>
+<td align="left">vegetative</td>
+<td align="right">19</td>
+</tr>
+<tr class="odd">
+<td align="right">2019</td>
+<td align="left">chewed</td>
+<td align="left">one_or_more</td>
+<td align="left">n</td>
+<td align="left">vegetative</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="right">2019</td>
+<td align="left">chewed</td>
+<td align="left">indist</td>
+<td align="left">n</td>
+<td align="left">vegetative</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="right">2020</td>
+<td align="left">nf</td>
+<td align="left">zero</td>
+<td align="left">blank</td>
+<td align="left">dead_nf</td>
+<td align="right">490</td>
+</tr>
+<tr class="even">
+<td align="right">2020</td>
+<td align="left">dead</td>
+<td align="left">zero</td>
+<td align="left">blank</td>
+<td align="left">dead_nf</td>
+<td align="right">120</td>
+</tr>
+<tr class="odd">
+<td align="right">2020</td>
+<td align="left">blank</td>
+<td align="left">one_or_more</td>
+<td align="left">y</td>
+<td align="left">flowering</td>
+<td align="right">151</td>
+</tr>
+<tr class="even">
+<td align="right">2020</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">y</td>
+<td align="left">flowering</td>
+<td align="right">50</td>
+</tr>
+<tr class="odd">
+<td align="right">2020</td>
+<td align="left">chewed</td>
+<td align="left">one_or_more</td>
+<td align="left">y</td>
+<td align="left">flowering</td>
+<td align="right">17</td>
+</tr>
+<tr class="even">
+<td align="right">2020</td>
+<td align="left">chewed</td>
+<td align="left">indist</td>
+<td align="left">y</td>
+<td align="left">flowering</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">2020</td>
+<td align="left">chewed</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">recheck</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="right">2020</td>
+<td align="left">chewed</td>
+<td align="left">zero</td>
+<td align="left">blank</td>
+<td align="left">recheck</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">2020</td>
+<td align="left">chewed</td>
+<td align="left">blank</td>
+<td align="left">y</td>
+<td align="left">recheck</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">2020</td>
+<td align="left">chewed</td>
+<td align="left">zero</td>
+<td align="left">y</td>
+<td align="left">recheck</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">2020</td>
+<td align="left">tagnf</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">tagnf</td>
+<td align="right">76</td>
+</tr>
+<tr class="even">
+<td align="right">2020</td>
+<td align="left">blank</td>
+<td align="left">one_or_more</td>
+<td align="left">n</td>
+<td align="left">vegetative</td>
+<td align="right">233</td>
+</tr>
+<tr class="odd">
+<td align="right">2020</td>
+<td align="left">chewed</td>
+<td align="left">one_or_more</td>
+<td align="left">n</td>
+<td align="left">vegetative</td>
+<td align="right">6</td>
+</tr>
+<tr class="even">
+<td align="right">2020</td>
+<td align="left">chewed</td>
+<td align="left">zero</td>
+<td align="left">n</td>
+<td align="left">vegetative</td>
+<td align="right">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="duplicates" class="section level2">
+<h2>Duplicates</h2>
+<p>When there is more than one record for a plant tag in the census, which duplicate should be kept? Currently resolved by the following rules:</p>
+<ol style="list-style-type: decimal">
+<li>sort by status (keep flowering &gt; vegetative &gt; recheck &gt; dead_nf &gt; tagnf)</li>
+<li>sort by date within status (if statuses are the same, keep the observation with the newest date)</li>
+<li>keep the first row and discard the other duplicates</li>
+</ol>
+<p>This is automatic, but it may be better to resolve duplicates manually in some cases. The duplicates are written out to <a href="https://docs.google.com/spreadsheets/d/1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA/edit#gid=367829026">spreadsheets</a></p>
+<pre class="r"><code>#write out the duplicates
+#cen19 %&gt;% group_by(id) %&gt;% filter(n()&gt;1) %&gt;% arrange(id, status, desc(date)) %&gt;% 
+#  write_sheet(ss=filter(datasheets, name==&quot;Maxfield Results&quot;), sheet=&quot;2019duplicates&quot;)
+#cen20 %&gt;% group_by(id) %&gt;% filter(n()&gt;1) %&gt;% arrange(id, status, desc(date)) %&gt;% 
+#  write_sheet(ss=filter(datasheets, name==&quot;Maxfield Results&quot;), sheet=&quot;2020duplicates&quot;)
+
+#distinct() keeps the first row after sorting, discards the other rows
+cen19 &lt;- cen19 %&gt;% arrange(id, status, desc(date)) %&gt;% distinct(id, .keep_all = TRUE)
+cen20 &lt;- cen20 %&gt;% arrange(id, status, desc(date)) %&gt;% distinct(id, .keep_all = TRUE)</code></pre>
+</div>
+<div id="status-vs.-treatment" class="section level2">
+<h2>Status vs. treatment</h2>
+<pre class="r"><code>ggplot(drop_na(cen19, water, snow) %&gt;% filter(status %in% status_ok), aes(x=water, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(title=&quot;2019 status&quot;, x=&quot;Precipitation&quot;, y=&quot;Proportion&quot;, fill=&quot;Status&quot;)</code></pre>
+<p><img src="images/inventory-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(drop_na(cen20, water, snow) %&gt;% filter(status %in% status_ok), aes(x=water, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(title=&quot;2020 status&quot;, x=&quot;Precipitation&quot;, y=&quot;Proportion&quot;, fill=&quot;Status&quot;)</code></pre>
+<p><img src="images/inventory-2.png" width="672" /></p>
+</div>
+<div id="join-2019-and-2020-datasets" class="section level2">
+<h2>Join 2019 and 2020 datasets</h2>
+<p>Check these tags missing in each year to make sure tags were not mis-read. When tags were not found in the other year, the part of the row for that year is “NA”.</p>
+<p>Recorded in 2019 but not in 2020:</p>
+<pre class="r"><code>sort(setdiff(cen19[cen19$notes != &quot;tagnf&quot;,]$id, cen20$id))</code></pre>
+<pre><code> [1] &quot;-642&quot;   &quot;-643&quot;   &quot;1B-244&quot; &quot;1B-245&quot; &quot;1B-246&quot; &quot;1B-247&quot; &quot;1B-248&quot; &quot;1B-252&quot;
+ [9] &quot;1B-662&quot; &quot;1B-679&quot; &quot;1B-680&quot; &quot;1B-681&quot; &quot;1B-682&quot; &quot;1B-683&quot; &quot;1D-31&quot;  &quot;1D-32&quot; 
+[17] &quot;3A-659&quot; &quot;3B-602&quot; &quot;3B-603&quot; &quot;3B-604&quot; &quot;3B-605&quot; &quot;3B-611&quot; &quot;3B-612&quot; &quot;3B-615&quot;
+[25] &quot;3B-617&quot; &quot;3B-618&quot; &quot;3B-622&quot; &quot;3B-623&quot; &quot;3D-852&quot; &quot;4A-100&quot; &quot;4A-66&quot;  &quot;4A-83&quot; 
+[33] &quot;4A-90&quot;  &quot;4B-162&quot; &quot;4B-172&quot; &quot;4B-192&quot; &quot;4C-115&quot; &quot;4C-29&quot;  &quot;4C-32&quot;  &quot;4D-39&quot; 
+[41] &quot;4D-61&quot;  &quot;5A-172&quot; &quot;5A-177&quot; &quot;5B-14&quot;  &quot;5B-287&quot; &quot;5C-205&quot; &quot;5C-213&quot; &quot;5D-231&quot;
+[49] &quot;5D-236&quot; &quot;5D-284&quot; &quot;6B-32&quot;  &quot;6C-103&quot; &quot;6D-80&quot;  &quot;6D-81&quot; </code></pre>
+<p>Recorded in 2020 but not in 2019:</p>
+<pre class="r"><code>sort(setdiff(cen20[cen20$notes != &quot;tagnf&quot;,]$id, cen19$id))</code></pre>
+<pre><code> [1] &quot;1A-244&quot; &quot;1B-199&quot; &quot;1B-66&quot;  &quot;2A-100&quot; &quot;2A-589&quot; &quot;2A-684&quot; &quot;2A-689&quot; &quot;2A-99&quot; 
+ [9] &quot;2B-171&quot; &quot;2C-256&quot; &quot;2D-225&quot; &quot;3C-120&quot; &quot;3C-185&quot; &quot;3C-213&quot; &quot;3C-86&quot;  &quot;3C-94&quot; 
+[17] &quot;3D-255&quot; &quot;4A-124&quot; &quot;4A-168&quot; &quot;4B-594&quot; &quot;4B-596&quot; &quot;4B-680&quot; &quot;4C-641&quot; &quot;4C-642&quot;
+[25] &quot;4C-643&quot; &quot;4D-66&quot;  &quot;5B-30&quot;  &quot;5B-32&quot;  &quot;5B-88&quot;  &quot;5C-&quot;    &quot;5C-683&quot; &quot;6A-171&quot;
+[33] &quot;6A-685&quot; &quot;6B-120&quot; &quot;6B-243&quot; &quot;6B-266&quot; &quot;6C-271&quot; &quot;6C-447&quot; &quot;6D-18&quot;  &quot;6D-86&quot; </code></pre>
+</div>
+<div id="status-transitions" class="section level2">
+<h2>Status transitions</h2>
+<p>What did plants of a given status in 2019 look like now in 2020?</p>
+<pre class="r"><code>with(cen, table(`2019`=paste(status_19), `2020`=paste(status)))</code></pre>
+<pre><code>            2020
+2019         dead_nf flowering  NA recheck tagnf vegetative
+  dead_nf        294        21  27       1    18         51
+  flowering      127        15   9       1     7         16
+  NA              21        15   0       0     1          4
+  recheck          5         0   0       0     3          1
+  tagnf           13         7  15       0    12          5
+  vegetative     164       167  24       4    38        175</code></pre>
+<pre class="r"><code>ggplot(filter(cen, status_19 %in% status_ok, status %in% status_ok), aes(x=status_19, fill=status)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(fill=&quot;2020 Status&quot;, y=&quot;Proportion&quot;, x=&quot;2019 Status&quot;)</code></pre>
+<p><img src="images/transitions-1.png" width="672" /></p>
+</div>
+<div id="survival-and-flowering-vs.-plant-size" class="section level2">
+<h2>Survival and flowering vs. plant size</h2>
+<pre class="r"><code>ggplot(filter(cen, status %in% status_ok), aes(x=r1_longest_19, fill=status)) + facet_wrap(vars(status), ncol=1) +
+  geom_density() + scale_fill_manual(values=status_pal) + labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, fill=&quot;2020 status&quot;)</code></pre>
+<p><img src="images/surv_size-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(filter(cen, status %in% status_ok), aes(x=r1_leaves_19, fill=status)) + facet_wrap(vars(status), ncol=1) +
+  geom_density() + scale_fill_manual(values=status_pal) + labs(x=&quot;2019 Rosette 1 # Leaves&quot;, fill=&quot;2020 status&quot;)</code></pre>
+<p><img src="images/surv_size-2.png" width="672" /></p>
+</div>
+<div id="plant-growth-vs.-treatments" class="section level2">
+<h2>Plant growth vs. treatments</h2>
+<p>Only includes plants that remained vegetative and did not die or flower.</p>
+<pre class="r"><code>ggplot(drop_na(cen, water, snow), aes(x=r1_longest_19, y=r1_longest, color=water, shape=snow)) + geom_point() + geom_abline(intercept=0, slope=1) + scale_color_manual(values=water_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/growth-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(drop_na(cen, water, snow), aes(x=r1_leaves_19, y=r1_leaves, color=water, shape=snow)) + geom_point() + geom_abline(intercept=0, slope=1 )+ scale_color_manual(values=water_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 # Leaves&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/growth-2.png" width="672" /></p>
+</div>
+<div id="plant-size-vs.-treatments" class="section level2">
+<h2>Plant size vs. treatments</h2>
+<pre class="r"><code>ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/plantsize-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/plantsize-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/plantsize-3.png" width="672" /></p>
+<pre class="r"><code>ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/plantsize-4.png" width="672" /></p>
+</div>
+</div>
+<div id="leaf-traits" class="section level1">
+<h1>Leaf traits</h1>
+<pre class="r"><code>ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g)) + geom_point() + geom_abline(slope=1, intercept = 0) + geom_abline(slope=1-median(lt$water_content), intercept = 0)</code></pre>
+<p><img src="images/checkleaftraits-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=leaf_area_cm2, y=dry_weight_g)) + geom_point() + geom_smooth(method=&quot;lm&quot;)</code></pre>
+<p><img src="images/checkleaftraits-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(method=&quot;lm&quot;)</code></pre>
+<p><img src="images/checkleaftraits-3.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=water_content, y=sla)) + geom_point()</code></pre>
+<p><img src="images/checkleaftraits-4.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=water, color=snow, y = sla)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Specific Leaf Area (cm2/g)&quot;, color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/leaftraits-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=sla, y=water_content, color=water, shape=snow, linetype=snow)) + geom_point() + geom_smooth(se=F, method=&quot;lm&quot;) +   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/leaftraits-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=water, color=snow, y = water_content)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Water content&quot;, color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/leaftraits-3.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Trichome density (/cm2)&quot;, color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/leaftraits-4.png" width="672" /></p>
+</div>
+<div id="floral-traits" class="section level1">
+<h1>Floral traits</h1>
+<div id="floral-morphology-and-nectar" class="section level2">
+<h2>Floral morphology and nectar</h2>
+<div id="floral-trait-correlations" class="section level3">
+<h3>Floral trait correlations</h3>
+<pre class="r"><code>library(GGally)
+ggpairs(mt %&gt;% select(corolla_length,   corolla_width,  style_length,   anther_max, anther_min, sepal_width))</code></pre>
+<p><img src="images/correlations-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(nt, aes(x=nectar_48_h_mm, y = nectar_conc)) + geom_point() + labs(x=&quot;Nectar amount (48 hr, mm)&quot;, y=&quot;Nectar concentration&quot;) + geom_smooth(se=F)</code></pre>
+<p><img src="images/correlations-2.png" width="672" /></p>
+</div>
+<div id="floral-plasticity-treatments" class="section level3">
+<h3>Floral plasticity: treatments</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+library(lme4)
+library(lmerTest)
+library(emmeans)
+
+traits &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;, &quot;style_length&quot;, &quot;sepal_width&quot;, &quot;nectar_48_h_mm&quot;, &quot;nectar_conc&quot;) #exclude anthers
+traitnames &lt;- setNames(c(&quot;Corolla Length (mm)&quot;, &quot;Corolla Width (mm)&quot;, &quot;Style Length (mm)&quot;, &quot;Sepal Width (mm)&quot;, &quot;Nectar amount (48 hr, mm)&quot;, &quot;Nectar concentration&quot;), traits)
+
+mt.mod &lt;- mt.mod.test &lt;- mod.emm &lt;- mt.mod.plot &lt;- list()
+for(tr in traits) {
+  mt.mod[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ year * snow * water + (1|plot), data=mt.plantyr)
+  mt.mod.test[[tr]] &lt;- anova(mt.mod[[tr]])
+  mod.emm[[tr]] &lt;- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year * snow * water))
+  mt.mod.plot[[tr]] &lt;- 
+    ggplot(mod.emm[[tr]], aes(x=water, color=snow, y = emmean)) + facet_wrap(vars(year), nrow=1) +
+        labs(x=&quot;Precipitation&quot;, y=traitnames[[tr]], color=&quot;Snowmelt&quot;, shape=&quot;Year&quot;) +
+        geom_boxplot(data=mt, aes_string(x=&quot;water&quot;, color=&quot;snow&quot;, y = tr), inherit.aes = F) + 
+        geom_point(position=position_dodge2(0.6)) + 
+        geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE), position=position_dodge2(0.6)) + 
+        scale_color_manual(values=snow_pal) 
+  print(mt.mod.plot[[tr]])
+  cat(paste0(tr,&quot;\n&quot;))
+  print(mt.mod.test[[tr]])
+}</code></pre>
+<p><img src="images/morphology_model-1.png" width="672" /></p>
+<pre><code>corolla_length
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year            629.20 314.600     2 479.75 46.3162 &lt; 2.2e-16 ***
+snow              0.12   0.118     1   4.06  0.0174    0.9015    
+water           144.19  72.093     2 478.95 10.6138 3.088e-05 ***
+year:snow         1.36   0.680     2 479.75  0.1001    0.9048    
+year:water       44.75  11.188     4 478.32  1.6472    0.1612    
+snow:water        5.16   2.578     2 478.95  0.3795    0.6844    
+year:snow:water   8.07   2.019     4 478.32  0.2972    0.8798    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_model-2.png" width="672" /></p>
+<pre><code>corolla_width
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                 Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year            20.2966 10.1483     2 427.43 70.9772 &lt; 2.2e-16 ***
+snow             0.1237  0.1237     1   3.83  0.8651  0.407073    
+water            2.9358  1.4679     2 437.83 10.2666 4.392e-05 ***
+year:snow        0.0265  0.0132     2 427.43  0.0926  0.911608    
+year:water       0.6678  0.1669     4 439.19  1.1676  0.324422    
+snow:water       0.1212  0.0606     2 437.83  0.4238  0.654823    
+year:snow:water  2.5642  0.6410     4 439.19  4.4835  0.001466 ** 
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_model-3.png" width="672" /></p>
+<pre><code>style_length
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year            544.59 272.297     2 476.87 38.6563 2.763e-16 ***
+snow              0.06   0.061     1   4.34  0.0086 0.9301243    
+water           104.40  52.198     2 476.34  7.4102 0.0006774 ***
+year:snow         2.33   1.166     2 476.87  0.1655 0.8475336    
+year:water       45.74  11.435     4 476.13  1.6233 0.1671451    
+snow:water        2.46   1.228     2 476.34  0.1744 0.8400336    
+year:snow:water  29.67   7.418     4 476.13  1.0531 0.3792820    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_model-4.png" width="672" /></p>
+<pre><code>sepal_width
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                 Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year            0.10572 0.10572     1 331.85  2.0631 0.1518416    
+snow            0.00022 0.00022     1   4.36  0.0043 0.9505954    
+water           0.66141 0.33070     2 331.46  6.4535 0.0017803 ** 
+year:snow       0.07434 0.07434     1 331.85  1.4506 0.2292859    
+year:water      0.73436 0.36718     2 331.95  7.1653 0.0008983 ***
+snow:water      0.04415 0.02208     2 331.46  0.4308 0.6503370    
+year:snow:water 0.13037 0.06519     2 331.95  1.2721 0.2816184    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_model-5.png" width="672" /></p>
+<pre><code>nectar_48_h_mm
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year            7114.5  3557.2     2 414.11 19.9797 5.205e-09 ***
+snow              25.3    25.3     1   4.28  0.1423 0.7240063    
+water           3226.3  1613.1     2 414.19  9.0603 0.0001409 ***
+year:snow        515.7   257.9     2 414.11  1.4483 0.2361650    
+year:water       362.6    90.6     4 414.51  0.5091 0.7290853    
+snow:water       148.0    74.0     2 414.19  0.4156 0.6601967    
+year:snow:water  611.7   152.9     4 414.51  0.8589 0.4886657    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_model-6.png" width="672" /></p>
+<pre><code>nectar_conc
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year            3621.2 1810.61     2 381.68 71.4027 &lt; 2.2e-16 ***
+snow               6.4    6.38     1   3.97  0.2516    0.6424    
+water            590.8  295.40     2 382.14 11.6493 1.227e-05 ***
+year:snow         10.6    5.28     2 381.68  0.2082    0.8122    
+year:water       105.3   26.34     4 382.51  1.0386    0.3870    
+snow:water        79.4   39.70     2 382.14  1.5657    0.2103    
+year:snow:water  140.7   35.17     4 382.51  1.3869    0.2378    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<div id="after-averaging-by-subplot" class="section level4">
+<h4>After averaging by subplot</h4>
+<p>Removed year * snow and year * water interactions, and random effect of subplot to make the models run because there are less data points after averaging. Not ideal because there are often year * water interactions, and taking the mean hides the variance in the data.</p>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+mt.mod &lt;- mt.mod.test &lt;- list(length(traits))
+for(tr in traits) {
+  #cat(paste0(&quot;\n\n&quot;, tr,&quot;\n&quot;))
+  mt.mod[[tr]] &lt;- lmer(mt.subplot[[tr]] ~ year + snow * water + (1|plot), data=mt.subplot)
+    mt.mod.test[[tr]] &lt;- anova(mt.mod[[tr]])
+    #print(mt.mod.test[[tr]])
+}</code></pre>
+</div>
+</div>
+<div id="floral-plasticity-soil-moisture" class="section level3">
+<h3>Floral plasticity: soil moisture</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+mt.sm.mod &lt;- mt.sm.mod.test &lt;- coef.VWC &lt;- emm.VWC &lt;- mt.sm.mod.plot &lt;-list()
+for(tr in traits) {
+  mt.sm.mod[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ year * VWC + (1|plot), data=mt.plantyr)
+  mt.plantyr[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
+  mt.plantyr[[paste0(&quot;fit.&quot;,tr)]][!is.na(mt.plantyr[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA)
+  mt.sm.mod.test[[tr]] &lt;- anova(mt.sm.mod[[tr]])
+  
+  #Z-score the data first to get standardized slopes
+  mt.sm.mod[[tr]] &lt;- lmer(scale(mt.plantyr[[tr]]) ~ year * VWC + (1|plot), data=mt.plantyr)
+  coef.VWC[[tr]] &lt;- summary(mt.sm.mod[[tr]])$coefficients[&quot;VWC&quot;,]
+  emm.VWC[[tr]] &lt;- emtrends(mt.sm.mod[[tr]],  ~ year, var = &quot;VWC&quot;)
+
+   mt.sm.mod.plot[[tr]] &lt;- 
+    ggplot(mt, aes_string(x=&quot;VWC&quot;, color=&quot;year&quot;, y = tr)) + geom_point() +
+    geom_line(data=mt.plantyr %&gt;% drop_na(paste0(&quot;fit.&quot;,tr)), aes_string(y=paste0(&quot;fit.&quot;,tr)), size=2)+
+  #geom_line(data=mt.subplot %&gt;% drop_na(paste0(&quot;fit.avg.&quot;,tr)), aes_string(y=paste0(&quot;fit.avg.&quot;,tr)))+
+    #geom_smooth(method=&quot;lm&quot;,se=F) +
+        labs(x=&quot;Annual mean of soil moisture in subplot (VWC)&quot;, y=traitnames[[tr]], color=&quot;Year&quot;)
+      #annotate(&quot;text&quot;, x=7, y=min(mt[[tr]], na.rm = T), label=paste0(&quot;italic(R) ^ 2 ==&quot;, round(summary(mt.sm.mod[[tr]])$r.squared,2)), parse=T) +
+  print(mt.sm.mod.plot[[tr]])
+  
+  cat(paste0(tr,&quot;\n&quot;))
+  cat(paste(&quot;z-scored trait/VWC slope (averaged across years) =&quot; ,
+            round(coef.VWC[[tr]][1],2),&quot;+-&quot;,round(coef.VWC[[tr]][2],2), &quot;\n&quot;))
+  print(mt.sm.mod.test[[tr]])
+}</code></pre>
+<p><img src="images/morphology_sm-1.png" width="672" /></p>
+<pre><code>corolla_length
+z-scored trait/VWC slope (averaged across years) = 0.15 +- 0.04 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+          Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year      61.649  30.825     2 487.50  4.5786   0.01072 *  
+VWC      106.056 106.056     1 443.08 15.7531 8.418e-05 ***
+year:VWC   9.027   4.514     2 486.49  0.6704   0.51196    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_sm-2.png" width="672" /></p>
+<pre><code>corolla_width
+z-scored trait/VWC slope (averaged across years) = 0.16 +- 0.04 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+         Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year     1.6096 0.80481     2 328.25  5.5179  0.004396 ** 
+VWC      2.9361 2.93608     1 215.36 20.1302 1.177e-05 ***
+year:VWC 0.9763 0.48815     2 349.13  3.3468  0.036328 *  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_sm-3.png" width="672" /></p>
+<pre><code>style_length
+z-scored trait/VWC slope (averaged across years) = 0.16 +- 0.04 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+          Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year      22.470  11.235     2 462.10  1.6083    0.2013    
+VWC      114.338 114.338     1 347.85 16.3681 6.429e-05 ***
+year:VWC   2.197   1.098     2 460.66  0.1572    0.8545    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_sm-4.png" width="672" /></p>
+<pre><code>sepal_width
+z-scored trait/VWC slope (averaged across years) = 0.13 +- 0.05 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+          Sum Sq Mean Sq NumDF   DenDF F value   Pr(&gt;F)   
+year     0.37636 0.37636     1 294.118  7.1907 0.007742 **
+VWC      0.33229 0.33229     1  95.264  6.3486 0.013411 * 
+year:VWC 0.46829 0.46829     1 279.130  8.9471 0.003027 **
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_sm-5.png" width="672" /></p>
+<pre><code>nectar_48_h_mm
+z-scored trait/VWC slope (averaged across years) = 0.22 +- 0.04 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+         Sum Sq Mean Sq NumDF DenDF F value    Pr(&gt;F)    
+year      555.5   277.8     2   428  1.5967    0.2038    
+VWC      5929.3  5929.3     1   428 34.0854 1.044e-08 ***
+year:VWC  839.0   419.5     2   428  2.4115    0.0909 .  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_sm-6.png" width="672" /></p>
+<pre><code>nectar_conc
+z-scored trait/VWC slope (averaged across years) = -0.16 +- 0.04 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+         Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year     492.13  246.06     2 392.64  9.6365 8.211e-05 ***
+VWC      430.15  430.15     1 345.28 16.8457 5.064e-05 ***
+year:VWC  78.95   39.48     2 392.59  1.5460    0.2144    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>coef.VWC.df &lt;- as.data.frame(t(as.data.frame(coef.VWC))) %&gt;% rownames_to_column(&quot;trait&quot;)
+emm.VWC.ls &lt;- lapply(emm.VWC, as.data.frame)
+emm.VWC.ls$sepal_width[3,] &lt;- NA
+emm.VWC.df  &lt;- bind_rows(emm.VWC.ls, .id=&quot;trait&quot;)
+
+#ggplot(coef.VWC.df, aes(x=trait, y=Estimate)) + geom_point() + geom_linerange(aes(ymin=Estimate - `Std. Error`, ymax = Estimate + `Std. Error`)) + geom_hline(yintercept=0) + labs(y=&quot;Slope of z-scored trait vs. mean annual soil moisture&quot;, x=&quot;Floral Trait&quot;) + theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip()
+
+ggplot(emm.VWC.df %&gt;% drop_na(), aes(x=trait, y=VWC.trend, color=year)) +  
+  geom_hline(yintercept=0) + geom_pointrange(aes(ymin=VWC.trend - SE, ymax = VWC.trend + SE), position=position_dodge(width=0.3), size=0.4) + 
+  labs(y=&quot;Slope of z-scored trait vs. mean annual soil moisture&quot;, x=&quot;Floral Trait&quot;, color=&quot;Year&quot;) +
+  theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip()</code></pre>
+<p><img src="images/morphology_sm-7.png" width="672" /></p>
+<div id="after-averaging-by-subplot-1" class="section level4">
+<h4>After averaging by subplot</h4>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+mt.sm.mod &lt;- mt.sm.mod.test &lt;-  list()
+for(tr in traits) {
+  #cat(paste0(&quot;\n\n&quot;, tr,&quot;\n&quot;))
+  mt.sm.mod[[tr]] &lt;- lmer(mt.subplot[[tr]] ~ year * VWC + (1|plot), data=mt.subplot)#without scaling first
+    mt.subplot[[paste0(&quot;fit.avg.&quot;,tr)]] &lt;- NA
+  mt.subplot[[paste0(&quot;fit.avg.&quot;,tr)]][!is.na(mt.subplot[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA)
+    mt.sm.mod.test[[tr]] &lt;- anova(mt.sm.mod[[tr]])
+    #print(mt.sm.mod.test[[tr]])
+}</code></pre>
+<pre><code>boundary (singular) fit: see ?isSingular</code></pre>
+</div>
+</div>
+<div id="multivariate-response" class="section level3">
+<h3>Multivariate response</h3>
+<pre class="r"><code>mt.morph &lt;- mt[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;VWC&quot;)] %&gt;% drop_na(1:5) #drop sepal_width
+mt.pca &lt;- prcomp(mt.morph[,-(6:7)], scale.=TRUE)
+
+mt.morph.pca &lt;- mt.morph %&gt;%
+  bind_cols(as.data.frame(mt.pca$x)) %&gt;% 
+  tibble::rowid_to_column(&quot;index&quot;) %&gt;% 
+  mutate(x_0=0,y_0=0,
+         x_1=-corolla_width/2,y_1=corolla_length,
+         x_2= corolla_width/2,y_2=corolla_length) %&gt;% 
+  pivot_longer(c(starts_with(&quot;x&quot;),starts_with(&quot;y&quot;)), names_to=c(&quot;.value&quot;, &quot;point&quot;), names_sep=&quot;_&quot;)
+
+library(viridis)
+scl &lt;- 100
+zoom &lt;- 5.5
+mt.pca.vars &lt;- as.data.frame(mt.pca$rotation) %&gt;% rownames_to_column(&quot;variable&quot;)
+mt.pca.labs &lt;- paste0(&quot;PC&quot;, 1:2, &quot; (&quot;, round(100*mt.pca$sdev[1:2]^2/sum(mt.pca$sdev^2), 0), &quot;% explained var.)&quot;) 
+ggplot(mt.morph.pca) + theme_classic() +
+  geom_polygon(aes(x= x/scl+PC1, y= y/scl+PC2, group=index, color=VWC, fill=VWC)) +
+  #geom_point(aes(x=PC1, y=PC2, size=sepal_width/2), color=&quot;darkgreen&quot;) + 
+  geom_point(aes(x=PC1, y=PC2 + anther_min/scl), color=&quot;yellow&quot;, size=0.3) +
+  geom_point(aes(x=PC1, y=PC2 + anther_max/scl), color=&quot;yellow&quot;, size=0.3) +
+  geom_point(aes(x=PC1, y=PC2 + style_length/scl), color=&quot;grey60&quot;, size=0.5, shape=4) +
+  geom_segment(data=mt.pca.vars,aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
+               arrow = arrow(length = unit(1/2, &quot;picas&quot;)), color=&quot;black&quot;) +
+  geom_text(data =mt.pca.vars, aes(label = gsub(&quot;_&quot;,&quot; &quot;,variable), x = PC1*zoom*1.4, y = PC2*zoom*1.4,
+                                   angle =  (180/pi) * atan(PC2/PC1), hjust = 0), color=&quot;black&quot;)+
+  scale_size_identity() + coord_fixed() + 
+  scale_fill_viridis(direction=-1, option=&quot;plasma&quot;) + scale_color_viridis(direction=-1, option=&quot;plasma&quot;) + 
+  labs(x=mt.pca.labs[1], y=mt.pca.labs[2])</code></pre>
+<p><img src="images/multresp-1.png" width="672" /></p>
+<pre class="r"><code>ggsave(&quot;images/mt_morph_pca_noSW.pdf&quot;, height=15, width=20, device=cairo_pdf)
+
+ggplot(mt, aes(x=corolla_width, y=corolla_length, color=VWC)) + scale_color_viridis(direction=-1, option=&quot;plasma&quot;) + geom_point() + theme_minimal()</code></pre>
+<p><img src="images/multresp-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(mt, aes(y=style_length / corolla_length, x=VWC, color=VWC)) + scale_color_viridis(direction=-1, option=&quot;plasma&quot;) + geom_point() + theme_minimal() + geom_smooth()</code></pre>
+<p><img src="images/multresp-3.png" width="672" /></p>
+<pre class="r"><code>library(vegan)
+mt.cap &lt;- capscale(scale(mt.morph[,-(6:7)]) ~ VWC + year, data=mt.morph)
+mt.cap</code></pre>
+<pre><code>Call: capscale(formula = scale(mt.morph[, -(6:7)]) ~ VWC + year, data =
+mt.morph)
+
+              Inertia Proportion Rank
+Total          5.0000     1.0000     
+Constrained    1.0367     0.2073    3
+Unconstrained  3.9633     0.7927    5
+Inertia is mean squared Euclidean distance 
+Species scores projected from &#39;scale&#39; &#39;mt.morph[, -(6:7)]&#39; 
+
+Eigenvalues for constrained axes:
+  CAP1   CAP2   CAP3 
+0.9909 0.0447 0.0011 
+
+Eigenvalues for unconstrained axes:
+  MDS1   MDS2   MDS3   MDS4   MDS5 
+2.6291 0.6967 0.4033 0.1385 0.0957 </code></pre>
+<pre class="r"><code>anova(mt.cap, by=&quot;term&quot;)</code></pre>
+<pre><code>Permutation test for capscale under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+Model: capscale(formula = scale(mt.morph[, -(6:7)]) ~ VWC + year, data = mt.morph)
+          Df Variance       F Pr(&gt;F)    
+VWC        1   0.4492 107.796  0.001 ***
+year       2   0.5875  70.483  0.001 ***
+Residual 951   3.9633                   
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>plot(mt.cap, type=&quot;points&quot;)
+text(mt.cap, display=&quot;species&quot;, col=&quot;red&quot;)</code></pre>
+<p><img src="images/multresp-4.png" width="672" /></p>
+<pre class="r"><code>library(vegan)
+mt.morph &lt;- mt[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;water&quot;,&quot;snow&quot;)] %&gt;% drop_na(1:6) #and nectar (19,20) too
+mt.cap &lt;- capscale(scale(mt.morph[,-(6:8)]) ~ year + snow + water, data=mt.morph)
+plot(mt.cap, type=&quot;points&quot;)
+text(mt.cap, display=&quot;species&quot;, col=&quot;red&quot;)</code></pre>
+<p><img src="images/multresp_discrete-1.png" width="672" /></p>
+</div>
+<div id="floral-traits-within-season" class="section level3">
+<h3>Floral traits within season</h3>
+<p>No obvious effect of time within a season for corolla length/width or sepal width. The timing of trait measurements was different each year:</p>
+<pre class="r"><code>ggplot(sm, aes(x=yday(date))) + 
+  facet_wrap(vars(year), ncol=1) +
+  geom_point(data=mt, aes(y= corolla_length), color=&quot;purple&quot;)+
+    geom_point(data=mt, aes(y= nectar_48_h_mm/2), color=&quot;orange&quot;)+
+  geom_point(aes(y = VWC), color=&quot;black&quot;) +
+  geom_vline(data=meltdates, aes(xintercept=warm_date, linetype=snow), color=&quot;grey40&quot;)+
+  labs(title=&quot;Timing of measurements&quot;, subtitle=&quot;VWC (black) / Morphology (purple) / Nectar (orange)&quot;, x=&quot;Day of year&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;)+
+  scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/morph_season-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(data=mt, aes(x=yday(date), y= corolla_length, color=water)) + 
+  facet_wrap(vars(year), ncol=1) +
+  geom_point()+   geom_smooth(se=F)+ 
+  labs(y=&quot;Corolla Length (mm)&quot;, x=&quot;Day of year&quot;)+
+  scale_color_manual(values=water_pal) + theme_minimal()</code></pre>
+<p><img src="images/morph_season-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(data=mt, aes(x=yday(date), y= nectar_48_h_mm, color=water)) + 
+  facet_wrap(vars(year), ncol=1) +
+  geom_point()+   geom_smooth(se=F)+ 
+  labs(y=&quot;Nectar amount (48 hr, mm)&quot;, x=&quot;Day of year&quot;)+
+  scale_color_manual(values=water_pal) + theme_minimal()</code></pre>
+<p><img src="images/morph_season-3.png" width="672" /></p>
+<pre class="r"><code>ggplot(data=nt, aes(x=yday(date), y= nectar_conc, color=water)) + 
+  facet_wrap(vars(year), ncol=1) +
+  geom_point()+   geom_smooth(se=F)+ 
+  labs(y=&quot;Nectar concentration&quot;, x=&quot;Day of year&quot;)+
+  scale_color_manual(values=water_pal) + theme_minimal()</code></pre>
+<p><img src="images/morph_season-4.png" width="672" /></p>
+</div>
+</div>
+</div>
+<div id="phenology" class="section level1">
+<h1>Phenology</h1>
+<pre class="r"><code>ggplot(ph20, aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
+  labs(y=&quot;Plant height&quot;, 
+       x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;) +
+  scale_color_manual(values=water_pal) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/phenology-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(ph20, aes(x=julian, y=open+buds, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=plantid)) +
+  labs(y=&quot;Total flowers and buds&quot;, 
+       x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+  scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/phenology-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(ph20, aes(x=julian, y=eggs, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=plantid)) +
+  labs(y=&quot;Total eggs&quot;, 
+       x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+  scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/phenology-3.png" width="672" /></p>
+<pre class="r"><code>ph20 %&gt;% group_by(snow, water, julian) %&gt;% mutate() %&gt;% summarize_at(c(&quot;open&quot;,&quot;buds&quot;), mean) %&gt;% 
+  ggplot(aes(x=julian, y=open+buds, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=paste(snow, water))) +
+  labs(y=&quot;Mean total flowers and buds&quot;, 
+       x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+  scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/phenology-4.png" width="672" /></p>
+<pre class="r"><code>ph20 %&gt;% group_by(snow, water, julian) %&gt;% summarize_at(&quot;flowering&quot;, mean, na.rm=T) %&gt;% 
+  ggplot(aes(x=julian, y=flowering, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=paste(snow, water))) +
+  labs(y=&quot;Proportion flowering&quot;, 
+       x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+  scale_y_continuous(labels = scales::percent)+
+  scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/phenology-5.png" width="672" /></p>
+<pre class="r"><code>ph20 %&gt;% group_by(snow, water, julian) %&gt;% summarize_at(&quot;eggs&quot;, mean, na.rm=T) %&gt;% 
+  ggplot(aes(x=julian, y=eggs, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=paste(snow, water))) +
+  labs(y=&quot;Mean total eggs&quot;, 
+       x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+  scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/phenology-6.png" width="672" /></p>
+<pre class="r"><code>ph20 %&gt;% group_by(snow, water, julian) %&gt;% summarize_at(&quot;has_egg&quot;, mean, na.rm=T) %&gt;% 
+  ggplot(aes(x=julian, y=has_egg, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=paste(snow, water))) +
+  labs(y=&quot;Proportion of plants with eggs&quot;, 
+       x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+  scale_y_continuous(labels = scales::percent)+
+  scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/phenology-7.png" width="672" /></p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
