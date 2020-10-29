@@ -96,7 +96,7 @@ sm <- bind_rows(read_sheet(sm_sheets, sheet="2020"),
   mutate(plot = as.character(plot), plotid = paste0(plot, subplot), year=factor(year(date))) %>% 
   left_join(treatments) %>%
   mutate_if(is.character, as.factor) %>% 
-  filter(!(date %in% c(ymd("2018-06-06"), ymd("2018-06-07"))))
+  filter(!(format(date) %in% c("2018-06-06", "2018-06-07")))
 
 # Means within each subplot across days, months, and years
 sm.subplot <- sm %>% group_by(year, date, plot, subplot, plotid, water, snow) %>% 
@@ -112,6 +112,10 @@ sm.subplotyear <- sm.subplot %>% group_by(year, plot, subplot, plotid, water, sn
 
 # Census of all plants at the beginning of each season to mark if they are dead, vegetative, or flowering
 # For vegetative plants counted number of leaves on each rosette and longest leaf
+
+# After loading the censuses, check the allowed states of notes/rosettes/flowering for each year and 
+# [translate](https://docs.google.com/spreadsheets/d/17qSYLvl4aO3TNIHwz1YW_XdfjX_grSqoy38m4mKYXe8/edit#gid=816285957) 
+# each combination into a simplified plant "status". If there is a problem, status is flagged "recheck". 
 
 allowed_nrf <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="status")
 status_priority <- c("flowering", "vegetative", "recheck",  "dead_nf", "tagnf") # determines order for deduplicating
@@ -228,6 +232,12 @@ lt.subplotround <- lt %>%
   group_by(year, round, plot, subplot, plotid, water, water4, snow) %>% 
   summarize_if(is.numeric, mean, na.rm=T)
 
+#average by plant, then subplot
+lt.means <- lt %>% mutate_at(c("plotid","plant"), as.character) %>% 
+  group_by(plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% 
+  group_by(plotid) %>% summarize_if(is.numeric, mean, na.rm=T) %>% 
+  left_join(treatments, by="plotid")
+
 # floraltraits ------------------------------------------------------------------
 
 mt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Morphology") %>% 
@@ -251,8 +261,6 @@ nt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet=
 mt <- bind_rows(mt, nt)  %>% 
   left_join(sm.subplotyear) %>% 
   left_join(meltdates)
-traits <- colnames(mt)[c(5,6,7,10,19,20)] #exclude anthers
-traitnames <- setNames(c("Corolla Length (mm)", "Corolla Width (mm)", "Style Length (mm)", "Sepal Width (mm)", "Nectar amount (48 hr, mm)", "Nectar concentration"), traits)
 
 #average by plant and year, then by subplot
 mt.subplot <- mt %>% mutate_at(c("plotid","plant"), as.character) %>% 
