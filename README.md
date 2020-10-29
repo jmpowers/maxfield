@@ -1,2 +1,2 @@
 # maxfield
-Plasticity and selection on functional traits on Ipomopsis aggregata
+Analyze selection on and plastic responses of floral and vegetative traits of *Ipomopsis aggregata* to manipulations of snowmelt and summer precipitation. Determine whether plasticity is adaptive (improves survival and reproduction). Part of a [larger project](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1654655) to understand the potential for evolutionary rescue in alpine plants under climate change.
