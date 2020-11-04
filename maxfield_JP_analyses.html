@@ -331,17 +331,11 @@ load(&quot;data/maxfield_data.rda&quot;)</code></pre>
 </div>
 <div id="soil-moisture-vs.-treatments" class="section level1">
 <h1>Soil moisture vs. treatments</h1>
-<pre class="r"><code>#ggplot(sm, aes(x=water, color=snow, y = VWC)) + geom_boxplot() + facet_wrap(vars(factor(date))) + 
-#  labs(y=&quot;Volumetric water content (%)&quot;, x=&quot;Precipitation&quot;, color=&quot;Snowmelt&quot;) +
-#  scale_color_manual(values=snow_pal)
-
-#over time
-ggplot(sm, aes(x=yday(date), shape=snow, linetype=snow, color=water, y = VWC)) + 
+<pre class="r"><code>ggplot(sm, aes(x=yday(date), shape=snow, linetype=snow, color=water, y = VWC)) + 
   facet_wrap(vars(year), ncol=1) +
-  #geom_bar(data=mt, aes(x=yday(date), y= ..count../10), inherit.aes = F, width=1, fill=&quot;yellow&quot;)+
   geom_jitter(height=0, width=0.3) + geom_smooth(se=F, span=0.5) +
-  geom_col(data=daily_precip %&gt;% filter(year&gt;2017), aes(x=julian, y=precip_mm), inherit.aes = F, fill=brewer.pal(3, &quot;Greens&quot;)[3]) + 
-  geom_line(data=daily_temp %&gt;% filter(year&gt;2017), aes(x=julian, y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, &quot;Oranges&quot;)[3]) + 
+  geom_col(data=daily_precip %&gt;% filter(year!=&quot;2017&quot;), aes(x=julian, y=precip_mm), inherit.aes = F, fill=brewer.pal(3, &quot;Greens&quot;)[3]) + 
+  geom_line(data=daily_temp %&gt;% filter(year!=&quot;2017&quot;), aes(x=julian, y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, &quot;Oranges&quot;)[3]) + 
   geom_vline(data=meltdates, aes(xintercept=melt_date, linetype=snow), inherit.aes=F, color=brewer.pal(3, &quot;Purples&quot;)[3])+
   scale_x_continuous(limits=c(110, 230), breaks=scales::breaks_extended(10), expand=expansion(0,0)) + scale_y_continuous(limits=c(-3, 20)) +
   labs(y=&quot;Volumetric water content (%) / Daily precipitation (mm) / Mean temperature (C)&quot;, 
@@ -847,9 +841,19 @@ mt.mod.raw &lt;- mt.mod.plantyr &lt;- mt.mod.subplot &lt;- mt.mod.subplot.test &
 for(tr in traits) {
   mt.mod.raw[[tr]]     &lt;- lmer(mt[[tr]]         ~ year * water * melt_offset + (1|plotid) + (1|plantid), data=mt)
   mt.mod.plantyr[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ year * water * melt_offset + (1|plotid), data=mt.plantyr)
+  
+  # Use model with data averaged by subplot
   mt.mod.subplot[[tr]] &lt;- lmer(mt.subplot[[tr]] ~ year * water * melt_offset + (1|plot),   data=mt.subplot)
+  mt.subplot[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
+  mt.subplot[[paste0(&quot;fit.&quot;,tr)]][!is.na(mt.subplot[[tr]])]&lt;- predict(mt.mod.subplot[[tr]], re.form=NA)
   mt.mod.subplot.test[[tr]] &lt;- anova(mt.mod.subplot[[tr]])
-  #emtrends(mt.mod.raw[[tr]],  ~ year * water, var = &quot;melt_offset&quot;)
+  
+  # Plot the model predictions with the data average by plant 
+  mt.mod.plot[[tr]] &lt;- 
+    ggplot(mt.plantyr, aes_string(x=&quot;melt_offset&quot;, color=&quot;water&quot;, y = tr)) + geom_point() +
+    geom_line(data=mt.subplot %&gt;% drop_na(paste0(&quot;fit.&quot;,tr)), aes_string(y=paste0(&quot;fit.&quot;,tr)), size=2)+
+     scale_color_manual(values=water_pal)+ facet_wrap(vars(year))+
+        labs(x=&quot;Offset from mean normal snow melt date (days)&quot;, y=traitnames[[tr]], color=&quot;Precipitation&quot;)
 }
 mt.mod.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
 mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = ifelse(p.value &lt; 0.05,&quot;*&quot;,&quot;&quot;)) %&gt;% 
@@ -957,8 +961,8 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 mt.sm.mod &lt;- mt.sm.mod.test &lt;- coef.VWC &lt;- emm.VWC &lt;- mt.sm.mod.plot &lt;-list()
 for(tr in traits) {
   mt.sm.mod[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ year * VWC + (1|plotid), data=mt.plantyr)
-  mt.plantyr[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
-  mt.plantyr[[paste0(&quot;fit.&quot;,tr)]][!is.na(mt.plantyr[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA)
+  mt.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]] &lt;- NA
+  mt.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]][!is.na(mt.plantyr[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA)
   mt.sm.mod.test[[tr]] &lt;- anova(mt.sm.mod[[tr]])
   
   #Z-score the data first to get standardized slopes
@@ -967,19 +971,11 @@ for(tr in traits) {
   emm.VWC[[tr]] &lt;- emtrends(mt.sm.mod[[tr]],  ~ year, var = &quot;VWC&quot;)
 
    mt.sm.mod.plot[[tr]] &lt;- 
-    ggplot(mt, aes_string(x=&quot;VWC&quot;, color=&quot;year&quot;, y = tr)) + geom_point() +
-    geom_line(data=mt.plantyr %&gt;% drop_na(paste0(&quot;fit.&quot;,tr)), aes_string(y=paste0(&quot;fit.&quot;,tr)), size=2)+
-  #geom_line(data=mt.subplot %&gt;% drop_na(paste0(&quot;fit.avg.&quot;,tr)), aes_string(y=paste0(&quot;fit.avg.&quot;,tr)))+
-    #geom_smooth(method=&quot;lm&quot;,se=F) +
+    ggplot(mt.plantyr, aes_string(x=&quot;VWC&quot;, color=&quot;year&quot;, y = tr)) + geom_point() +
+    geom_line(data=mt.plantyr %&gt;% drop_na(paste0(&quot;fit.sm.&quot;,tr)), aes_string(y=paste0(&quot;fit.sm.&quot;,tr)), size=2)+
      scale_color_manual(values=year_pal)+
         labs(x=&quot;Annual mean of soil moisture in subplot (VWC)&quot;, y=traitnames[[tr]], color=&quot;Year&quot;)
-      #annotate(&quot;text&quot;, x=7, y=min(mt[[tr]], na.rm = T), label=paste0(&quot;italic(R) ^ 2 ==&quot;, round(summary(mt.sm.mod[[tr]])$r.squared,2)), parse=T) +
   print(mt.sm.mod.plot[[tr]])
-  
-  #cat(paste0(tr,&quot;\n&quot;))
-  #cat(paste(&quot;z-scored trait/VWC slope (averaged across years) =&quot; ,
-  #          round(coef.VWC[[tr]][1],2),&quot;+-&quot;,round(coef.VWC[[tr]][2],2), &quot;\n&quot;))
-  #print(mt.sm.mod.test[[tr]])
 }</code></pre>
 <p><img src="images/morphology_sm-1.png" width="672" /><img src="images/morphology_sm-2.png" width="672" /><img src="images/morphology_sm-3.png" width="672" /><img src="images/morphology_sm-4.png" width="672" /><img src="images/morphology_sm-5.png" width="672" /><img src="images/morphology_sm-6.png" width="672" /><img src="images/morphology_sm-7.png" width="672" /></p>
 <pre class="r"><code>mt.sm.mod.tests &lt;- map_dfr(mt.sm.mod.test, tidy, .id=&quot;trait&quot;)
@@ -1153,8 +1149,9 @@ text(mt.cap, display=&quot;species&quot;, col=&quot;red&quot;)</code></pre>
 <p>No obvious effect of time within a season for corolla length/width or sepal width. The timing of trait measurements was different each year:</p>
 <pre class="r"><code>ggplot(sm, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
+  #geom_vline(xintercept=175) + geom_vline(xintercept=183) +
   geom_point(data=mt, aes(y= corolla_length), color=&quot;purple&quot;)+
-    geom_point(data=mt, aes(y= nectar_24_h_ul/2), color=&quot;orange&quot;)+
+    geom_point(data=mt, aes(y= nectar_24_h_ul), color=&quot;orange&quot;)+
   geom_point(aes(y = VWC), color=&quot;black&quot;) +
   geom_vline(data=meltdates, aes(xintercept=melt_date, linetype=snow), color=&quot;grey40&quot;)+
   labs(title=&quot;Timing of measurements&quot;, subtitle=&quot;VWC (black) / Morphology (purple) / Nectar (orange)&quot;, x=&quot;Day of year&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;)+

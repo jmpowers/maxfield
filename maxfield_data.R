@@ -125,6 +125,9 @@ sm.subplotmonth <- sm.subplot %>% mutate(mo = month(date)) %>% group_by(year, mo
 sm.subplotyear <- sm.subplot %>% group_by(year, plot, subplot, plotid, water, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
 
+#sm.subplotearly <- sm.subplot %>% filter(yday(date)<=183 & yday(date)>=175) %>% group_by(year, plot, subplot, plotid, water, snow) %>% 
+#  summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
+
 # census ------------------------------------------------------------------
 
 # Census of all plants at the beginning of each season to mark if they are dead, vegetative, or flowering
