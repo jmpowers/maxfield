@@ -26,8 +26,10 @@ drive_auth(email = T)
 # Get file listing for "2020 RMBL Campbell Lab"
 datasheets <- drive_ls(as_id("1xVG466gMSCTfsMbvXudhq-Ruc2TKOZJB"), recursive=TRUE) 
 
+# hobo --------------------------------------------------------------------
+
 # The experimental treatments. "water4" keeps all four treatments, "water" lumps control and mock rainout together.
-treatments <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="treatments") %>%
+treatments <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="treatments") %>%
   mutate(
     water4 = factor(recode(water, 
                            "control"="Control", "mock rainout"="Mock rainout", "addition"="Addition", "rainout"="Reduction")),
@@ -35,25 +37,18 @@ treatments <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), she
     snow = factor(recode(snow, "early"="Early","normal"="Normal"))) %>% 
   separate(plotid, c("plot","subplot"), sep=1, remove=F)
 
-# Color palettes for water and snow treatments
-water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,8,1)], levels(treatments$water4))
-water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$water))
-snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
-
-# hobo --------------------------------------------------------------------
-
 # Tarps were placed on plots 2, 4 and 5 in the spring to make the snow melt faster.
 # HOBO pendant temperature/light loggers (model UA-002-xx?) were placed at the corners of each plot.
 # HOBO manual: https://www.onsetcomp.com/files/manual_pdfs/9556-M%20UA-002%20Manual.pdf
 # When the snow melts, the temperature rises above freezing and the light intensifies.
-# The day of first bare ground is when these measurements exceed the following thresholds.
-# Since sunlight may reach the logger through the snow, we will use the warm_date
+# The day of snowmelt can be calculated from the following thresholds.
+# DRC also provided a list of the observed melt_date (with what protocol?) that we will use
 
-melt_threshold_sun <- 15000 # light units (probably lux = lumen / m2)
-melt_threshold_warm <- 1    # 1 degree Celsius
+melt_threshold_sun  <- 15000 # light units (probably lux = lumen / m2)
+melt_threshold_warm <- 10    # degrees Celsius - 10C has a better fit to the melt_date and sun_date than 1C
 
 hobo <- drive_download(filter(datasheets, name=="maxfield_hobo_data.csv"), overwrite = T)$local_path %>% read_csv() %>% 
-  mutate(time=with_tz(time, "America/Denver"),
+  mutate(time=with_tz(time, "Etc/GMT+6"), #the HOBOs do not account for DST, and were likely all set up during MST
          sun = intensity > melt_threshold_sun, 
          warm = temp > melt_threshold_warm) %>% 
   mutate_at(c("year","plot"), as.factor)
@@ -61,11 +56,33 @@ hobo <- drive_download(filter(datasheets, name=="maxfield_hobo_data.csv"), overw
 meltdates <- full_join(
   hobo %>% filter(month(time)%in%4:6, sun==TRUE) %>% 
     group_by(year, plot) %>% summarize_at("time", min) %>% 
-    mutate(time=yday(time)) %>%  rename(sun_date=time),
+    mutate(sun_date=yday(time)) %>%  rename(sun_time=time),
   hobo %>% filter(month(time)%in%4:6, warm==TRUE) %>% 
     group_by(year, plot) %>% summarize_at("time", min) %>% 
-    mutate(time=yday(time)) %>%  rename(warm_date=time))
-meltdates <- left_join(meltdates, treatments %>% select(plot, snow) %>% distinct)
+    mutate(warm_date=yday(time)) %>%  rename(warm_time=time)) %>% 
+  # In 2018 the HOBO logger for plot 4 did not record any data. 
+  bind_rows(data.frame(year=factor("2018"), plot=factor("4"))) %>% 
+  left_join(treatments %>% select(plot, snow) %>% distinct) %>% 
+  left_join(read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="snowmelt") %>% 
+              mutate(year=factor(year), plot=as.factor(plot)) %>% select(-notes)) %>% 
+  mutate(plot=factor(plot),
+         melt_time = parse_date_time(paste(year,melt_date,12,0), "y j H M", tz="Etc/GMT+6")) %>%
+  # In 2019 the avalanche caused plots 5 and 2 to melt with the normal snowmelt plots, so these are recoded as normal
+  mutate(snow = factor(ifelse(year=="2019" & melt_date > 154, "Normal", as.character(snow))))
+
+# Calculate an offset from the mean melt_date in the normal plots
+meltdates <- meltdates %>% left_join(meltdates %>% group_by(year,snow) %>% summarize_at("melt_date", mean) %>% 
+            filter(snow=="Normal") %>% select(-snow) %>% rename(melt_date_normal_mean = melt_date)) %>% 
+  mutate(melt_offset = melt_date - melt_date_normal_mean) 
+
+# Update the treatments with the actual meltdates and updated early/normal codes in each year
+treatments <- treatments %>% select(-snow) %>% left_join(meltdates)
+
+# Color palettes for water and snow treatments
+water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,8,1)], levels(treatments$water4))
+water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$water))
+snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
+year_pal <- setNames(brewer.pal(8, name="Set2")[c(2,3,6)], levels(treatments$year))
 
 # weather -----------------------------------------------------------------
 
@@ -76,8 +93,8 @@ meltdates <- left_join(meltdates, treatments %>% select(plot, snow) %>% distinct
 
 wx <- drive_download(filter(datasheets, name=="billy_rmbl_wrcc_weather_2017_2020.csv"), overwrite = T)$local_path %>% 
   read_tsv(col_types="Dtnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn")
-daily_precip <- wx %>% group_by(date) %>% summarize_at("precip_mm", sum) %>% mutate(year=year(date), julian=yday(date))
-daily_temp <- wx %>% group_by(date) %>% summarize_at("av_temp_2m_C", mean, na.rm=T) %>% mutate(year=year(date), julian=yday(date))
+daily_precip <- wx %>% group_by(date) %>% summarize_at("precip_mm", sum) %>% mutate(year=factor(year(date)), julian=yday(date))
+daily_temp <- wx %>% group_by(date) %>% summarize_at("av_temp_2m_C", mean, na.rm=T) %>% mutate(year=factor(year(date)), julian=yday(date))
 
 # soil --------------------------------------------------------------------
 
@@ -86,7 +103,7 @@ daily_temp <- wx %>% group_by(date) %>% summarize_at("av_temp_2m_C", mean, na.rm
 # The units are volumetric water content expressed as a percentage
 # Data from 2018-06-06 and 2018-06-07 did not include all plots and are excluded
 
-sm_sheets <- filter(datasheets, name=="2020 Maxfield Soil Moisture")
+sm_sheets <- filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow")
 sm <- bind_rows(read_sheet(sm_sheets, sheet="2020"),
                 read_sheet(sm_sheets, sheet="2019"),
                 bind_rows(
@@ -129,6 +146,7 @@ cen18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
   mutate(plot = as.character(plot),
          plotid = paste0(plot, subplot),
          plant = as.character(plant),
+         year=factor(year(date)),
          notes = other_notes %>% str_match("tagnf|nf|dead|chewed|eaten")  %>% factor %>% 
            fct_explicit_na("blank") %>% recode(eaten="chewed"),
          flowering = flowering %>% tolower %>% factor %>% fct_explicit_na("blank"),
@@ -136,13 +154,14 @@ cen18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more", ),
          r1_longest	= ifelse(rosettes=="zero", NA, r1_longest),
          r1_leaves = ifelse(rosettes=="zero", NA, r1_leaves)) %>% 
-  left_join(treatments, by="plotid") %>%
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
 cen19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2019foranalysis") %>% 
   mutate(plot = as.character(plot),
          plotid = paste0(plot, subplot),
          plant = as.character(plant),
+         year=factor(year(date)),
          notes = other_notes %>% str_match("tagnf|nf|dead|chewed|eaten")  %>% factor %>% 
            fct_explicit_na("blank") %>% recode(eaten="chewed"),
          flowering = flowering %>% tolower %>% factor %>% fct_explicit_na("blank"),
@@ -153,7 +172,7 @@ cen19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          r1_leaves = ifelse(rosettes=="zero", NA, r1_leaves),
          id = na_if(id, "-")) %>% 
   drop_na(id) %>%
-  left_join(treatments, by="plotid") %>%
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
 cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2020") %>% 
@@ -161,6 +180,7 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
   mutate(plot = as.character(plot),
          plotid = paste0(plot, subplot),
          plant = as.character(plant),
+         year=factor(year(date)),
          notes = notes %>% fct_explicit_na("blank"),
          flowering = flowering %>% as.character %>% fct_explicit_na("blank"),
          n_rosettes = as.integer(as.character(rosettes)),
@@ -169,7 +189,7 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          id = na_if(id, "-"),
          plotid = paste0(plot, subplot)) %>% 
   drop_na(id) %>% 
-  left_join(treatments, by="plotid") %>%
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
 cen <- full_join(cen20, rename_all(cen19, paste0, "_19"), by=c("id"="id_19")) 
@@ -181,19 +201,27 @@ ph18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2
          subplot = toupper(subplot),
          plotid = paste0(plot, subplot),
          plantid = paste0(plotid, plant),
+         year=factor(year(date)),
          julian = factor(yday(date)),
          open = rowSums(select(., starts_with("open")), na.rm=T),
-         buds = rowSums(select(., starts_with("buds")), na.rm=T)) %>% 
-  left_join(treatments, by=c("plotid","plot","subplot")) %>%
+         buds = rowSums(select(., starts_with("buds")), na.rm=T),
+         eggs=eggs_total) %>% 
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor) 
+
+ph18 <- ph18 %>% 
+  complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+  mutate(flowering = open + buds > 0,
+         has_egg = eggs_total > 0)
 
 ph19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2019") %>% 
   mutate(plot = as.character(plot), 
          plotid = paste0(plot, subplot),
          plantid = paste0(plotid, plant),
          plant = as.character(plant),
+         year=factor(year(date)),
          julian = factor(yday(date))) %>% 
-  left_join(treatments, by=c("plotid","plot","subplot")) %>%
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
 ph20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2020") %>% 
@@ -201,11 +229,12 @@ ph20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2
          plotid = paste0(plot, subplot),
          plantid = paste0(plotid, plant),
          plant = as.character(plant),
+         year=factor(year(date)),
          julian = factor(yday(date)),
          open = rowSums(select(., starts_with("open")), na.rm=T),
          buds = rowSums(select(., starts_with("buds")), na.rm=T),
          eggs = rowSums(select(., starts_with("eggs")), na.rm=T)) %>% 
-  left_join(treatments, by=c("plotid","plot","subplot")) %>%
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor) 
 
 ph20 <- ph20 %>% 
@@ -219,7 +248,7 @@ lt_sheets <- filter(datasheets, name=="2020 Maxfield Leaf Traits")
 lt <- bind_rows(lapply(sheet_names(lt_sheets), function(x) read_sheet(lt_sheets, sheet=x))) %>% 
   mutate(plot = as.character(plot),
          plotid = paste0(plot, subplot),
-         year = year(date_collected),
+         year = factor(year(date_collected)),
          round = factor(ifelse(yday(date_collected) > 200,1,2)),
          trichome_density = trichomes / leaf_area_cm2,
          sla = leaf_area_cm2 / dry_weight_g,
@@ -232,52 +261,57 @@ lt.subplotround <- lt %>%
   group_by(year, round, plot, subplot, plotid, water, water4, snow) %>% 
   summarize_if(is.numeric, mean, na.rm=T)
 
-#average by plant, then subplot
-lt.means <- lt %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% 
-  group_by(plotid) %>% summarize_if(is.numeric, mean, na.rm=T) %>% 
-  left_join(treatments, by="plotid")
-
 # floraltraits ------------------------------------------------------------------
 
 mt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Morphology") %>% 
   bind_rows(read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Morphology1819")) %>% 
-  mutate(plant = as.character(plant), plantid = paste0(plotid, plant),
+  mutate(plant = as.character(plant), plantid = paste0(plotid, plant), 
+         plot = factor(str_sub(plotid,1,1)), subplot = factor(str_sub(plotid,2,2)),
          year = factor(ifelse(is.na(year), year(date), year))) %>% 
-  left_join(treatments, by="plotid") %>%
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
 #Nectar
 nt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Nectar") %>% 
   bind_rows(read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Nectar1819") %>% mutate(plant=as.list(plant))) %>% 
   mutate(plant = as.character(plant),  plantid = paste0(plotid, plant), 
-         year = factor(ifelse(is.na(year), year(date), year))) %>% 
-  left_join(treatments, by="plotid") %>%
+         plot = factor(str_sub(plotid,1,1)), subplot = factor(str_sub(plotid,2,2)),
+         year = factor(ifelse(is.na(year), year(date), year)),
+         nectar_24_h_ul = nectar_48_h_mm * 5 /(2 * 32), #5-uL microcapillary tube 32 mm in length, 2 days
+         # units for nectar_conc are degrees Brix = 1 g sucrose / 100 g solution (percentage by mass)
+         nectar_density = 1.852e-5 * nectar_conc^2 + 3.665e-3 * nectar_conc + 1, # mg/uL of sucrose solution at 20 C 
+         # Density depends on percentage sucrose by mass. polynomial fit to table at:
+         # https://www.mt.com/us/en/home/supportive_content/concentration-tables-ana/Sucrose_de_e.html
+         nectar_sugar_24_h_mg = nectar_24_h_ul * nectar_density * nectar_conc ) %>% 
+  select(-c("nectar_48_h_mm","nectar_density")) %>% 
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
 #Merge nectar and morphology, 
 #add avg soil moisture and snow melt date, and
 #pick traits for analysis
 mt <- bind_rows(mt, nt)  %>% 
-  left_join(sm.subplotyear) %>% 
-  left_join(meltdates)
-
-#average by plant and year, then by subplot
-mt.subplot <- mt %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(year, water, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% 
-  group_by(year, water, snow, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)
+  left_join(sm.subplotyear)
 
 #average by plant and year
 mt.plantyr <- mt %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(year, water, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup
+  group_by(year, water, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA))
+
+#average by plant and year, then by subplot
+mt.subplot <- mt.plantyr %>%  
+  group_by(year, water, snow, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA))
+
 
 # floralvolatiles ---------------------------------------------------------------
 
 vt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Volatiles"), sheet="2020") %>% 
-  mutate(plotid = paste0(plot, subplot),
-         plant = as.character(plant),
-         plantid = paste0(plotid, plant)) %>% 
-  left_join(treatments, by="plotid") %>%
+  mutate(plotid = paste0(plot, subplot), plant = as.character(plant),
+         plot = as.character(plot),
+         plantid = paste0(plotid, plant),
+         year=factor(year(date))) %>% 
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
 # seeds -------------------------------------------------------------------
@@ -287,7 +321,7 @@ sds18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet="2018
          subplot = toupper(subplot),
          plotid = paste0(plot, subplot),
          plantid = paste0(plotid, plant)) %>% 
-  left_join(treatments, by=c("plotid","plot","subplot")) %>%
+  left_join(treatments) %>%
   mutate_if(is.character, as.factor) 
 
 # export ------------------------------------------------------------------

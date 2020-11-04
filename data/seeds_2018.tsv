@@ -1,205 +1,611 @@
-plot	subplot	plant	seeds_total	seeds_early	seeds_fly	fruits	fruits_early	fruits_fly_with_seeds	fruits_fly_no_seeds	fruits_caterpillar	fruits_split	fruits_early_uncountable	aborted_nofruit	fruits_aborted	flowers_buds_aborted	flowers_buds_not_aborted	notes	plotid	plantid	water	snow	water4
-1	A	232	13	12	0	6	5	0	1	0	6	1	58	0	0	0	NA	1A	1A232	Addition	Normal	Addition
-1	A	234	9	0	0	9	0	0	1	0	1	3	0	0	2	0	NA	1A	1A234	Addition	Normal	Addition
-1	A	238	52	5	0	9	1	0	6	0	13	0	29	0	1	0	NA	1A	1A238	Addition	Normal	Addition
-1	A	253	39	0	0	5	0	0	3	0	0	0	4	0	0	0	NA	1A	1A253	Addition	Normal	Addition
-1	A	678	0	0	0	0	0	0	0	0	1	0	0	0	0	0	NA	1A	1A678	Addition	Normal	Addition
-1	B	99	4	0	0	1	0	0	1	0	4	0	8	2	0	0	NA	1B	1B99	Control	Normal	Control
-1	B	655	72	7	0	15	1	0	7	0	3	2	29	8	0	1	NA	1B	1B655	Control	Normal	Control
-1	B	664	7	0	0	2	0	0	0	0	0	1	17	3	1	0	NA	1B	1B664	Control	Normal	Control
-1	B	665	8	0	0	1	0	0	0	0	0	2	0	1	0	1	NA	1B	1B665	Control	Normal	Control
-1	B	675	17	0	0	2	0	0	1	3	16	0	15	2	0	0	NA	1B	1B675	Control	Normal	Control
-1	B	678	47	7	0	10	1	0	9	0	0	0	5	1	0	0	NA	1B	1B678	Control	Normal	Control
-1	C	50	63	0	0	10	0	0	10	1	19	0	7	0	1	0	NA	1C	1C50	Control	Normal	Mock rainout
-1	C	61	0	0	0	0	0	0	0	0	7	0	3	1	0	0	NA	1C	1C61	Control	Normal	Mock rainout
-1	C	275	10	0	0	2	0	0	0	1	0	0	0	1	0	0	NA	1C	1C275	Control	Normal	Mock rainout
-1	C	279	11	0	0	1	0	0	0	1	1	0	0	0	0	0	NA	1C	1C279	Control	Normal	Mock rainout
-1	D	29	167	6	3	25	1	1	2	0	4	2	46	4	3	0	NA	1D	1D29	Reduction	Normal	Reduction
-2	A	100	0	0	0	0	0	0	0	0	0	0	6	0	0	0	NA	2A	2A100	Control	Early	Control
-2	A	168	0	0	0	0	0	0	0	0	5	2	15	0	0	0	NA	2A	2A168	Control	Early	Control
-2	A	171	127	14	3	17	2	2	5	0	1	0	22	5	1	0	NA	2A	2A171	Control	Early	Control
-2	A	172	27	0	2	4	0	1	6	0	2	1	22	5	0	1	NA	2A	2A172	Control	Early	Control
-2	B	94	87	0	0	12	0	0	1	0	19	0	28	0	0	0	NA	2B	2B94	Control	Early	Mock rainout
-2	B	98	94	7	0	12	1	0	1	0	7	0	16	1	2	0	NA	2B	2B98	Control	Early	Mock rainout
-2	B	129	24	0	0	3	0	0	2	0	2	0	18	4	0	0	NA	2B	2B129	Control	Early	Mock rainout
-2	B	195	25	0	0	6	0	0	2	0	4	0	18	1	0	0	NA	2B	2B195	Control	Early	Mock rainout
-2	B	199	34	0	0	7	0	0	2	0	5	1	0	2	0	0	NA	2B	2B199	Control	Early	Mock rainout
-2	C	89	104	0	0	9	0	0	1	0	7	0	14	1	0	0	NA	2C	2C89	Reduction	Early	Reduction
-2	C	90	40	10	0	11	2	0	3	0	24	0	2	4	0	0	NA	2C	2C90	Reduction	Early	Reduction
-2	C	100	14	0	0	4	0	0	5	0	3	1	11	9	0	0	NA	2C	2C100	Reduction	Early	Reduction
-2	C	258	0	0	0	0	0	0	0	0	0	0	16	4	0	8	has a stem, no notes on the envelope. Not sure if Bs are aborts or not.	2C	2C258	Reduction	Early	Reduction
-2	C	284	0	0	0	0	0	0	0	0	0	1	17	0	0	0	2 envelopes	2C	2C284	Reduction	Early	Reduction
-2	C	265	50	0	0	7	0	0	0	0	18	0	29	5	3	0	NA	2C	2C265	Reduction	Early	Reduction
-2	C	266	1	0	0	1	0	0	1	0	3	0	3	0	3	0	NA	2C	2C266	Reduction	Early	Reduction
-2	C	275	15	0	0	3	0	0	0	0	7	2	23	5	0	0	NA	2C	2C275	Reduction	Early	Reduction
-2	C	276	13	0	0	6	0	0	1	0	5	0	22	6	0	0	NA	2C	2C276	Reduction	Early	Reduction
-2	C	279	14	7	0	5	3	0	2	0	0	2	0	1	0	0	NA	2C	2C279	Reduction	Early	Reduction
-2	C	291	177	0	2	26	0	2	10	0	46	0	48	8	0	0	NA	2C	2C291	Reduction	Early	Reduction
-2	C	294	22	0	0	4	0	0	0	0	1	0	25	1	3	0	NA	2C	2C294	Reduction	Early	Reduction
-2	D	189	4	0	0	2	0	0	1	0	4	0	35	0	3	0	NA	2D	2D189	Addition	Early	Addition
-2	D	200	15	11	0	7	4	0	2	0	10	8	42	1	0	0	NA	2D	2D200	Addition	Early	Addition
-2	D	206	74	13	0	12	3	0	4	1	14	8	66	5	1	0	NA	2D	2D206	Addition	Early	Addition
-2	D	212	60	14	0	6	2	0	0	1	8	3	20	11	2	0	NA	2D	2D212	Addition	Early	Addition
-2	D	218	254	0	0	51	0	0	20	0	34	0	55	4	1	0	NA	2D	2D218	Addition	Early	Addition
-3	A	127	53	0	0	8	0	0	7	0	5	0	6	0	0	0	NA	3A	3A127	Reduction	Normal	Reduction
-3	A	128	23	12	0	4	2	0	5	0	17	3	30	3	6	1	NA	3A	3A128	Reduction	Normal	Reduction
-3	A	135	0	0	0	0	0	0	0	0	3	0	2	0	0	0	NA	3A	3A135	Reduction	Normal	Reduction
-3	A	647	0	0	0	0	0	0	0	0	0	0	7	0	0	2	top of plant was broken off	3A	3A647	Reduction	Normal	Reduction
-3	B	601	93	0	0	10	0	0	6	0	1	0	37	0	0	0	NA	3B	3B601	Control	Normal	Mock rainout
-3	B	606	74	0	0	10	0	0	1	0	4	0	12	2	0	0	NA	3B	3B606	Control	Normal	Mock rainout
-3	B	824	21	0	0	4	0	0	8	0	23	0	13	0	0	0	NA	3B	3B824	Control	Normal	Mock rainout
-3	B	833	8	0	0	2	0	0	0	0	11	0	9	0	0	0	NA	3B	3B833	Control	Normal	Mock rainout
-3	C	86	5	5	0	1	1	0	0	0	0	1	0	0	0	0	NA	3C	3C86	Addition	Normal	Addition
-3	C	90	0	0	0	0	0	0	1	0	5	0	0	0	0	0	NA	3C	3C90	Addition	Normal	Addition
-3	C	94	53	0	1	10	0	1	2	0	8	1	15	1	1	0	NA	3C	3C94	Addition	Normal	Addition
-3	C	98	20	0	0	4	0	0	1	0	17	3	32	3	1	0	NA	3C	3C98	Addition	Normal	Addition
-3	C	127	66	0	0	12	0	0	2	0	3	5	12	1	1	0	NA	3C	3C127	Addition	Normal	Addition
-3	C	132	57	0	0	5	0	0	7	0	17	0	2	0	0	0	NA	3C	3C132	Addition	Normal	Addition
-3	C	147	9	0	0	7	0	0	1	2	3	2	55	3	5	0	NA	3C	3C147	Addition	Normal	Addition
-3	C	156	90	14	11	11	1	3	2	1	15	0	5	0	0	0	NA	3C	3C156	Addition	Normal	Addition
-3	C	163	34	0	0	12	0	0	1	2	1	3	67	15	3	0	NA	3C	3C163	Addition	Normal	Addition
-3	C	168	59	12	0	11	1	0	1	0	16	0	32	3	0	1	NA	3C	3C168	Addition	Normal	Addition
-3	C	171	30	0	0	5	0	0	5	2	13	0	17	2	0	0	NA	3C	3C171	Addition	Normal	Addition
-3	C	265	31	0	0	4	0	0	0	0	0	0	0	1	0	0	1 envelope	3C	3C265	Addition	Normal	Addition
-3	C	266	6	0	0	2	0	0	0	0	3	0	13	0	0	1	NA	3C	3C266	Addition	Normal	Addition
-3	C	284	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	3C	3C284	Addition	Normal	Addition
-3	D	245	30	0	0	4	0	0	0	0	0	0	0	0	0	0	1 envelope	3D	3D245	Control	Normal	Control
-3	D	255	15	0	0	2	0	0	0	1	0	0	34	0	5	0	NA	3D	3D255	Control	Normal	Control
-3	D	847	4	2	0	2	1	0	0	0	7	0	31	0	2	0	NA	3D	3D847	Control	Normal	Control
-3	D	852	0	0	0	0	0	0	0	0	12	0	21	5	1	0	NA	3D	3D852	Control	Normal	Control
-3	D	853	0	0	0	0	0	0	1	0	5	2	31	4	2	2	NA	3D	3D853	Control	Normal	Control
-3	D	856	41	0	0	6	0	0	0	0	3	0	13	0	0	1	NA	3D	3D856	Control	Normal	Control
-3	D	858	78	3	3	13	1	1	0	0	9	3	30	1	0	0	NA	3D	3D858	Control	Normal	Control
-3	D	874	28	0	0	5	0	0	0	0	17	2	32	6	1	0	NA	3D	3D874	Control	Normal	Control
-3	D	877	44	0	0	4	0	0	0	0	17	1	28	1	0	0	NA	3D	3D877	Control	Normal	Control
-3	D	878	12	0	0	1	0	0	1	0	2	0	0	1	0	0	2 envelopes from same date	3D	3D878	Control	Normal	Control
-3	D	879	46	0	0	5	0	0	2	0	2	0	10	1	0	0	NA	3D	3D879	Control	Normal	Control
-3	D	884	0	0	0	0	0	0	0	0	2	0	14	1	0	0	NA	3D	3D884	Control	Normal	Control
-4	A	45	6	0	0	1	0	0	1	0	6	0	0	0	0	0	2 envelopes from same date	4A	4A45	Addition	Early	Addition
-4	A	63	41	0	4	7	0	1	3	0	4	3	16	1	0	0	NA	4A	4A63	Addition	Early	Addition
-4	A	69	67	0	0	9	0	0	0	0	18	0	14	1	0	0	NA	4A	4A69	Addition	Early	Addition
-4	A	75	6	0	0	1	0	0	0	0	7	0	10	3	0	0	NA	4A	4A75	Addition	Early	Addition
-4	A	76	4	0	0	1	0	0	0	0	6	0	10	0	3	0	NA	4A	4A76	Addition	Early	Addition
-4	A	83	5	0	0	1	0	0	0	0	10	0	11	2	0	0	NA	4A	4A83	Addition	Early	Addition
-4	A	90	100	0	4	23	0	2	5	0	3	1	15	2	0	1	NA	4A	4A90	Addition	Early	Addition
-4	A	94	2	0	0	1	0	0	0	0	12	0	25	1	0	0	NA	4A	4A94	Addition	Early	Addition
-4	A	112	0	0	0	0	0	0	2	0	9	0	7	0	0	0	NA	4A	4A112	Addition	Early	Addition
-4	A	117	40	0	3	6	0	1	0	0	0	0	31	1	3	0	NA	4A	4A117	Addition	Early	Addition
-4	A	120	0	0	0	0	0	0	3	0	0	0	31	1	3	0	NA	4A	4A120	Addition	Early	Addition
-4	A	217	10	0	0	2	0	0	2	0	0	1	0	0	0	0	only 1 envelope	4A	4A217	Addition	Early	Addition
-4	B	164	7	0	0	1	0	0	3	0	21	0	9	0	0	0	NA	4B	4B164	Control	Early	Mock rainout
-4	B	174	0	0	0	0	0	0	0	0	22	0	2	2	0	0	NA	4B	4B174	Control	Early	Mock rainout
-4	B	175	14	0	0	3	0	0	0	0	6	0	24	1	2	0	NA	4B	4B175	Control	Early	Mock rainout
-4	B	177	25	0	0	3	0	0	3	0	21	0	4	0	0	0	NA	4B	4B177	Control	Early	Mock rainout
-4	B	181	39	0	2	5	0	1	2	0	6	0	18	2	0	1	NA	4B	4B181	Control	Early	Mock rainout
-4	B	183	0	0	0	0	0	0	0	0	17	0	5	2	0	0	NA	4B	4B183	Control	Early	Mock rainout
-4	B	185	23	8	0	4	1	0	3	0	3	0	11	0	0	0	NA	4B	4B185	Control	Early	Mock rainout
-4	B	189	0	0	0	0	0	0	0	0	10	0	9	4	0	0	NA	4B	4B189	Control	Early	Mock rainout
-4	B	192	46	0	0	6	0	0	4	1	15	0	8	1	0	0	NA	4B	4B192	Control	Early	Mock rainout
-4	B	193	2	0	0	2	0	0	0	0	5	0	37	8	5	0	B (0) or B? unknown- no info on envlope but infolrescence collected and only 1 envelope.	4B	4B193	Control	Early	Mock rainout
-4	B	195	0	0	0	0	0	0	0	0	0	0	21	2	4	0	only 2 envelopes	4B	4B195	Control	Early	Mock rainout
-4	B	196	0	0	0	0	0	0	2	0	26	0	8	0	0	0	NA	4B	4B196	Control	Early	Mock rainout
-4	B	199	98	0	0	13	0	0	0	1	22	0	7	0	0	0	NA	4B	4B199	Control	Early	Mock rainout
-4	B	601	0	0	0	0	0	0	0	0	4	0	0	0	0	0	NA	4B	4B601	Control	Early	Mock rainout
-4	B	833	0	0	0	0	0	0	0	0	0	0	18	0	2	0	NA	4B	4B833	Control	Early	Mock rainout
-4	C	118	86	0	0	14	0	0	6	0	12	1	58	2	3	3	NA	4C	4C118	Control	Early	Control
-4	C	119	103	0	0	12	0	0	2	1	11	0	12	4	0	0	NA	4C	4C119	Control	Early	Control
-4	C	163	0	0	0	0	0	0	0	0	0	3	0	0	0	0	1 envelope with 3 green fruits.	4C	4C163	Control	Early	Control
-4	D	26	6	0	0	1	0	0	0	0	12	0	15	2	0	0	NA	4D	4D26	Reduction	Early	Reduction
-4	D	29	0	0	0	0	0	0	0	1	7	0	51	0	0	1	No note for B	4D	4D29	Reduction	Early	Reduction
-4	D	31	1	0	0	1	0	0	1	0	7	2	33	2	2	1	NA	4D	4D31	Reduction	Early	Reduction
-4	D	33	0	0	0	0	0	0	0	0	16	1	13	0	1	0	NA	4D	4D33	Reduction	Early	Reduction
-4	D	34	71	0	0	9	0	0	2	0	11	0	11	1	1	0	mass of frass attached to plant.	4D	4D34	Reduction	Early	Reduction
-4	D	35	0	0	0	0	0	0	2	0	3	2	19	2	3	0	NA	4D	4D35	Reduction	Early	Reduction
-4	D	36	13	0	0	3	0	0	0	0	2	0	12	3	0	0	NA	4D	4D36	Reduction	Early	Reduction
-4	D	40	0	0	0	0	0	0	0	0	13	0	4	0	0	0	3 envelopes	4D	4D40	Reduction	Early	Reduction
-4	D	44	7	0	0	1	0	0	0	0	11	0	8	1	0	0	NA	4D	4D44	Reduction	Early	Reduction
-4	D	45	62	0	0	12	0	0	12	2	27	1	11	3	5	0	NA	4D	4D45	Reduction	Early	Reduction
-4	D	879	0	0	0	0	0	0	0	0	2	0	0	0	0	0	only 1 envelope	4D	4D879	Reduction	Early	Reduction
-5	A	112	0	0	0	0	0	0	0	0	1	0	0	0	0	0	1 envelope	5A	5A112	Addition	Early	Addition
-5	A	173	95	10	0	9	1	0	0	1	1	7	27	6	5	0	NA	5A	5A173	Addition	Early	Addition
-5	A	175	69	6	0	8	1	0	10	0	6	8	8	2	0	0	NA	5A	5A175	Addition	Early	Addition
-5	A	176	18	0	5	1	0	1	1	0	12	0	55	0	0	0	NA	5A	5A176	Addition	Early	Addition
-5	A	180	36	0	0	3	0	0	2	0	9	1	56	9	0	0	NA	5A	5A180	Addition	Early	Addition
-5	A	181	20	0	0	4	0	0	2	0	17	5	44	2	1	0	NA	5A	5A181	Addition	Early	Addition
-5	A	182	2	2	0	1	1	0	0	0	0	1	6	1	1	0	NA	5A	5A182	Addition	Early	Addition
-5	A	189	77	0	3	12	0	1	0	0	7	1	27	2	0	0	NA	5A	5A189	Addition	Early	Addition
-5	A	194	138	0	0	27	0	0	5	0	12	1	34	8	1	0	NA	5A	5A194	Addition	Early	Addition
-5	B	7	0	0	0	0	0	0	0	0	8	0	16	0	0	0	4 envelopes, 3 dates	5B	5B7	Control	Early	Mock rainout
-5	B	8	8	0	0	2	0	0	2	0	16	0	8	0	0	0	NA	5B	5B8	Control	Early	Mock rainout
-5	B	14	161	0	0	23	0	0	6	1	3	0	37	1	0	0	NA	5B	5B14	Control	Early	Mock rainout
-5	B	22	82	0	0	15	0	0	2	0	4	0	30	2	0	1	no note for B	5B	5B22	Control	Early	Mock rainout
-5	B	23	21	0	0	4	0	0	0	0	11	0	14	0	0	0	NA	5B	5B23	Control	Early	Mock rainout
-5	B	32	0	0	0	0	0	0	0	0	0	0	0	2	0	0	only 1 envelope- could be 23.	5B	5B32	Control	Early	Mock rainout
-5	B	234	4	0	3	2	0	1	0	0	4	0	0	0	0	0	only two envelopes from the same date- could be 284?	5B	5B234	Control	Early	Mock rainout
-5	B	284	5	0	0	1	0	0	4	1	4	1	26	0	1	5	NA	5B	5B284	Control	Early	Mock rainout
-5	B	292	9	0	0	2	0	0	2	0	7	0	12	2	0	0	NA	5B	5B292	Control	Early	Mock rainout
-5	B	294	20	0	0	5	0	0	1	0	0	2	19	6	0	2	no note for B- look accidentally collected.	5B	5B294	Control	Early	Mock rainout
-5	C	205	46	0	0	6	0	0	5	2	8	0	13	1	0	0	NA	5C	5C205	Reduction	Early	Reduction
-5	C	206	1	0	0	1	0	0	0	0	1	0	18	1	0	1	No note for B	5C	5C206	Reduction	Early	Reduction
-5	C	213	0	0	0	0	0	0	1	0	0	0	12	0	0	0	2 envelopes, 2 dates.	5C	5C213	Reduction	Early	Reduction
-5	C	215	73	0	0	9	0	0	5	0	25	0	10	1	0	0	NA	5C	5C215	Reduction	Early	Reduction
-5	C	216	0	0	0	0	0	0	0	0	5	0	2	0	0	0	NA	5C	5C216	Reduction	Early	Reduction
-5	C	220	78	0	0	9	0	0	5	0	33	0	16	2	0	0	NA	5C	5C220	Reduction	Early	Reduction
-5	C	221	0	0	0	0	0	0	1	0	0	0	16	5	1	1	1 envelope by HMB that said 2 fruits, but was empty.	5C	5C221	Reduction	Early	Reduction
-5	C	222	12	0	0	2	0	0	0	0	3	0	5	0	0	0	NA	5C	5C222	Reduction	Early	Reduction
-5	D	228	80	0	0	15	0	0	3	0	17	0	81	4	4	1	no note	5D	5D228	Control	Early	Control
-5	D	231	43	0	0	7	0	0	4	0	11	0	28	0	0	0	NA	5D	5D231	Control	Early	Control
-5	D	232	18	0	0	6	0	0	1	3	14	1	29	4	1	1	no note	5D	5D232	Control	Early	Control
-5	D	234	0	0	0	0	0	0	0	0	7	0	1	0	0	0	1 envelope	5D	5D234	Control	Early	Control
-5	D	245	9	9	0	2	2	0	4	0	2	4	43	5	2	0	NA	5D	5D245	Control	Early	Control
-5	D	258	264	20	10	30	2	2	3	0	7	0	53	0	8	0	NA	5D	5D258	Control	Early	Control
-5	D	283	8	0	0	6	0	0	1	0	12	0	9	2	1	0	NA	5D	5D283	Control	Early	Control
-6	A	125	30	7	1	8	1	1	0	1	8	0	43	2	3	0	NA	6A	6A125	Control	Normal	Control
-6	A	133	0	0	0	0	0	0	0	2	0	0	6	0	1	0	1 envelope	6A	6A133	Control	Normal	Control
-6	A	135	6	0	0	1	0	0	0	0	2	0	23	0	1	0	NA	6A	6A135	Control	Normal	Control
-6	A	143	2	0	0	1	0	0	3	0	2	0	16	3	0	0	NA	6A	6A143	Control	Normal	Control
-6	A	151	0	0	0	0	0	0	1	0	11	0	24	0	0	0	NA	6A	6A151	Control	Normal	Control
-6	A	160	0	0	0	0	0	0	0	0	1	0	18	4	0	0	NA	6A	6A160	Control	Normal	Control
-6	A	166	0	0	0	0	0	0	0	1	7	1	15	2	0	0	2 envelopes , 2 dates	6A	6A166	Control	Normal	Control
-6	A	173	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	6A	6A173	Control	Normal	Control
-6	B	1	29	0	0	10	0	0	1	0	7	0	22	3	0	0	weird larva was counted as a FF, see example envelope section in maxfield fruit box.	6B	6B1	Reduction	Normal	Reduction
-6	B	6	121	0	5	16	0	3	6	0	11	0	20	1	0	0	NA	6B	6B6	Reduction	Normal	Reduction
-6	B	20	19	0	0	7	0	0	0	0	9	1	26	9	4	0	NA	6B	6B20	Reduction	Normal	Reduction
-6	B	25	54	0	0	5	0	0	0	0	0	2	11	3	1	0	1 envelope	6B	6B25	Reduction	Normal	Reduction
-6	B	27	4	0	0	2	0	0	0	0	3	0	9	2	0	0	NA	6B	6B27	Reduction	Normal	Reduction
-6	B	28	19	11	0	4	1	0	0	0	0	5	42	4	1	0	NA	6B	6B28	Reduction	Normal	Reduction
-6	B	29	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, note that says ""1 abort, plant collected"" different #??"	6B	6B29	Reduction	Normal	Reduction
-6	B	32	63	0	0	8	0	0	2	1	4	0	31	0	1	0	NA	6B	6B32	Reduction	Normal	Reduction
-6	B	26	12	0	0	2	0	0	1	0	11	0	23	5	2	0	NA	6B	6B26	Reduction	Normal	Reduction
-6	B	34	103	1	0	16	1	0	5	0	25	6	60	4	1	0	NA	6B	6B34	Reduction	Normal	Reduction
-6	B	127	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	6B	6B127	Reduction	Normal	Reduction
-6	B	632	2	0	0	1	0	0	0	0	2	0	0	0	0	0	2 envelopes, 2 dates, HMB and RGD	6B	6B632	Reduction	Normal	Reduction
-6	B	654	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, says ""1 abort, plant coll"""	6B	6B654	Reduction	Normal	Reduction
-6	B	655	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, says ""abort"""	6B	6B655	Reduction	Normal	Reduction
-6	B	678	0	0	0	0	0	0	0	0	0	0	5	0	0	0	1 envelope	6B	6B678	Reduction	Normal	Reduction
-6	C	38	0	0	0	0	0	0	0	0	0	0	6	14	0	9	no note on B, 1 envelope	6C	6C38	Control	Normal	Mock rainout
-6	C	42	0	0	0	0	0	0	0	0	2	0	1	3	0	0	3 envelopes, all 7/28 HMB	6C	6C42	Control	Normal	Mock rainout
-6	C	44	0	0	0	0	0	0	3	0	3	0	2	0	0	0	3 envelopes, all 7/28 HMB	6C	6C44	Control	Normal	Mock rainout
-6	C	47	2	0	0	1	0	0	1	0	5	0	2	0	0	0	2 envelopes, all 7/28 HMB	6C	6C47	Control	Normal	Mock rainout
-6	C	54	26	0	0	4	0	0	1	0	0	0	8	0	0	1	no note for B, 2 envelopes 7/28 by HMB	6C	6C54	Control	Normal	Mock rainout
-6	C	66	0	0	0	0	0	0	0	0	0	0	13	0	0	0	1 envelope, 7/28 HMB	6C	6C66	Control	Normal	Mock rainout
-6	C	78	11	0	0	5	0	0	1	0	20	0	24	5	0	0	NA	6C	6C78	Control	Normal	Mock rainout
-6	C	82	33	0	0	5	0	0	2	0	3	0	11	0	1	0	NA	6C	6C82	Control	Normal	Mock rainout
-6	C	87	25	0	0	6	0	0	2	0	4	0	22	3	0	0	NA	6C	6C87	Control	Normal	Mock rainout
-6	C	102	19	19	0	4	4	0	0	0	0	0	8	8	0	0	NA	6C	6C102	Control	Normal	Mock rainout
-6	C	103	83	0	0	5	0	0	7	0	6	0	15	1	0	0	NA	6C	6C103	Control	Normal	Mock rainout
-6	C	106	58	3	6	12	2	2	6	0	1	1	8	0	0	0	NA	6C	6C106	Control	Normal	Mock rainout
-6	C	109	30	0	0	4	0	0	2	0	0	1	13	2	1	0	NA	6C	6C109	Control	Normal	Mock rainout
-6	C	118	23	0	0	6	0	0	0	0	2	0	9	1	3	0	NA	6C	6C118	Control	Normal	Mock rainout
-6	C	222	7	0	0	1	0	0	0	0	2	0	0	0	0	0	2 envelopes, 7/28 HMB	6C	6C222	Control	Normal	Mock rainout
-6	C	271	12	0	0	2	0	0	0	0	1	0	18	0	3	0	NA	6C	6C271	Control	Normal	Mock rainout
-na	"NA"	234	0	0	0	0	0	0	0	0	0	2	2	0	0	9	"envelope has no plot or subplot. From 7/25, has the note- ""stem broken"" on envelope"	naNA	naNA234	NA	NA	NA
-6	D	29	1	0	0	1	0	0	0	0	0	2	9	1	0	0	2 envelopes, no date on either.	6D	6D29	Addition	Normal	Addition
-6	D	38	6	3	0	2	1	0	0	3	0	4	17	11	0	0	NA	6D	6D38	Addition	Normal	Addition
-6	D	42	0	0	0	0	0	0	0	0	6	0	16	1	5	0	NA	6D	6D42	Addition	Normal	Addition
-6	D	43	0	0	0	0	0	0	0	0	1	0	15	0	4	1	4 dates	6D	6D43	Addition	Normal	Addition
-6	D	44	23	0	0	3	0	0	5	0	22	0	20	0	0	0	NA	6D	6D44	Addition	Normal	Addition
-6	D	45	21	0	0	4	0	0	1	0	3	0	38	4	3	0	NA	6D	6D45	Addition	Normal	Addition
-6	D	47	77	0	0	11	0	0	2	0	14	0	8	2	0	0	NA	6D	6D47	Addition	Normal	Addition
-6	D	51	0	0	0	0	0	0	0	0	7	0	10	0	0	0	4 envelopes, 4 dates	6D	6D51	Addition	Normal	Addition
-6	D	54	147	0	6	19	0	2	11	0	7	0	27	4	0	0	NA	6D	6D54	Addition	Normal	Addition
-6	D	55	23	0	0	4	0	0	4	0	5	0	0	0	0	0	NA	6D	6D55	Addition	Normal	Addition
-6	D	66	22	3	0	3	1	0	1	0	5	0	9	0	0	0	NA	6D	6D66	Addition	Normal	Addition
-6	D	245	1	0	0	1	0	0	0	0	0	0	1	2	0	0	1 envelope,7/31 RGD	6D	6D245	Addition	Normal	Addition
-6	D	258	0	0	0	0	0	0	0	0	5	0	10	1	0	0	1 envelope,7/31 RGD	6D	6D258	Addition	Normal	Addition
+plot	subplot	plant	seeds_total	seeds_early	seeds_fly	fruits	fruits_early	fruits_fly_with_seeds	fruits_fly_no_seeds	fruits_caterpillar	fruits_split	fruits_early_uncountable	aborted_nofruit	fruits_aborted	flowers_buds_aborted	flowers_buds_not_aborted	notes	plotid	plantid	water	water4	year	sun_time	sun_date	warm_time	warm_date	snow	melt_date	snow_new	melt_time	melt_date_normal_mean	melt_offset
+1	A	232	13	12	0	6	5	0	1	0	6	1	58	0	0	0	NA	1A	1A232	Addition	Addition	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	A	232	13	12	0	6	5	0	1	0	6	1	58	0	0	0	NA	1A	1A232	Addition	Addition	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	A	232	13	12	0	6	5	0	1	0	6	1	58	0	0	0	NA	1A	1A232	Addition	Addition	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	A	234	9	0	0	9	0	0	1	0	1	3	0	0	2	0	NA	1A	1A234	Addition	Addition	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	A	234	9	0	0	9	0	0	1	0	1	3	0	0	2	0	NA	1A	1A234	Addition	Addition	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	A	234	9	0	0	9	0	0	1	0	1	3	0	0	2	0	NA	1A	1A234	Addition	Addition	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	A	238	52	5	0	9	1	0	6	0	13	0	29	0	1	0	NA	1A	1A238	Addition	Addition	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	A	238	52	5	0	9	1	0	6	0	13	0	29	0	1	0	NA	1A	1A238	Addition	Addition	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	A	238	52	5	0	9	1	0	6	0	13	0	29	0	1	0	NA	1A	1A238	Addition	Addition	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	A	253	39	0	0	5	0	0	3	0	0	0	4	0	0	0	NA	1A	1A253	Addition	Addition	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	A	253	39	0	0	5	0	0	3	0	0	0	4	0	0	0	NA	1A	1A253	Addition	Addition	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	A	253	39	0	0	5	0	0	3	0	0	0	4	0	0	0	NA	1A	1A253	Addition	Addition	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	A	678	0	0	0	0	0	0	0	0	1	0	0	0	0	0	NA	1A	1A678	Addition	Addition	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	A	678	0	0	0	0	0	0	0	0	1	0	0	0	0	0	NA	1A	1A678	Addition	Addition	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	A	678	0	0	0	0	0	0	0	0	1	0	0	0	0	0	NA	1A	1A678	Addition	Addition	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	B	99	4	0	0	1	0	0	1	0	4	0	8	2	0	0	NA	1B	1B99	Control	Control	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	B	99	4	0	0	1	0	0	1	0	4	0	8	2	0	0	NA	1B	1B99	Control	Control	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	B	99	4	0	0	1	0	0	1	0	4	0	8	2	0	0	NA	1B	1B99	Control	Control	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	B	655	72	7	0	15	1	0	7	0	3	2	29	8	0	1	NA	1B	1B655	Control	Control	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	B	655	72	7	0	15	1	0	7	0	3	2	29	8	0	1	NA	1B	1B655	Control	Control	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	B	655	72	7	0	15	1	0	7	0	3	2	29	8	0	1	NA	1B	1B655	Control	Control	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	B	664	7	0	0	2	0	0	0	0	0	1	17	3	1	0	NA	1B	1B664	Control	Control	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	B	664	7	0	0	2	0	0	0	0	0	1	17	3	1	0	NA	1B	1B664	Control	Control	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	B	664	7	0	0	2	0	0	0	0	0	1	17	3	1	0	NA	1B	1B664	Control	Control	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	B	665	8	0	0	1	0	0	0	0	0	2	0	1	0	1	NA	1B	1B665	Control	Control	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	B	665	8	0	0	1	0	0	0	0	0	2	0	1	0	1	NA	1B	1B665	Control	Control	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	B	665	8	0	0	1	0	0	0	0	0	2	0	1	0	1	NA	1B	1B665	Control	Control	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	B	675	17	0	0	2	0	0	1	3	16	0	15	2	0	0	NA	1B	1B675	Control	Control	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	B	675	17	0	0	2	0	0	1	3	16	0	15	2	0	0	NA	1B	1B675	Control	Control	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	B	675	17	0	0	2	0	0	1	3	16	0	15	2	0	0	NA	1B	1B675	Control	Control	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	B	678	47	7	0	10	1	0	9	0	0	0	5	1	0	0	NA	1B	1B678	Control	Control	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	B	678	47	7	0	10	1	0	9	0	0	0	5	1	0	0	NA	1B	1B678	Control	Control	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	B	678	47	7	0	10	1	0	9	0	0	0	5	1	0	0	NA	1B	1B678	Control	Control	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	C	50	63	0	0	10	0	0	10	1	19	0	7	0	1	0	NA	1C	1C50	Control	Mock rainout	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	C	50	63	0	0	10	0	0	10	1	19	0	7	0	1	0	NA	1C	1C50	Control	Mock rainout	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	C	50	63	0	0	10	0	0	10	1	19	0	7	0	1	0	NA	1C	1C50	Control	Mock rainout	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	C	61	0	0	0	0	0	0	0	0	7	0	3	1	0	0	NA	1C	1C61	Control	Mock rainout	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	C	61	0	0	0	0	0	0	0	0	7	0	3	1	0	0	NA	1C	1C61	Control	Mock rainout	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	C	61	0	0	0	0	0	0	0	0	7	0	3	1	0	0	NA	1C	1C61	Control	Mock rainout	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	C	275	10	0	0	2	0	0	0	1	0	0	0	1	0	0	NA	1C	1C275	Control	Mock rainout	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	C	275	10	0	0	2	0	0	0	1	0	0	0	1	0	0	NA	1C	1C275	Control	Mock rainout	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	C	275	10	0	0	2	0	0	0	1	0	0	0	1	0	0	NA	1C	1C275	Control	Mock rainout	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	C	279	11	0	0	1	0	0	0	1	1	0	0	0	0	0	NA	1C	1C279	Control	Mock rainout	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	C	279	11	0	0	1	0	0	0	1	1	0	0	0	0	0	NA	1C	1C279	Control	Mock rainout	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	C	279	11	0	0	1	0	0	0	1	1	0	0	0	0	0	NA	1C	1C279	Control	Mock rainout	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+1	D	29	167	6	3	25	1	1	2	0	4	2	46	4	3	0	NA	1D	1D29	Reduction	Reduction	2018	2018-04-29T21:00:00Z	119	2018-04-30T17:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+1	D	29	167	6	3	25	1	1	2	0	4	2	46	4	3	0	NA	1D	1D29	Reduction	Reduction	2019	2019-06-06T18:00:00Z	157	2019-06-06T17:00:00Z	157	Normal	157	normal	2019-06-06T18:00:00Z	157.2	-0.19999999999998863
+1	D	29	167	6	3	25	1	1	2	0	4	2	46	4	3	0	NA	1D	1D29	Reduction	Reduction	2020	2020-05-04T15:00:00Z	125	2020-05-04T15:00:00Z	125	Normal	125	normal	2020-05-04T18:00:00Z	126	-1
+2	A	100	0	0	0	0	0	0	0	0	0	0	6	0	0	0	NA	2A	2A100	Control	Control	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	A	100	0	0	0	0	0	0	0	0	0	0	6	0	0	0	NA	2A	2A100	Control	Control	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	A	100	0	0	0	0	0	0	0	0	0	0	6	0	0	0	NA	2A	2A100	Control	Control	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	A	168	0	0	0	0	0	0	0	0	5	2	15	0	0	0	NA	2A	2A168	Control	Control	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	A	168	0	0	0	0	0	0	0	0	5	2	15	0	0	0	NA	2A	2A168	Control	Control	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	A	168	0	0	0	0	0	0	0	0	5	2	15	0	0	0	NA	2A	2A168	Control	Control	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	A	171	127	14	3	17	2	2	5	0	1	0	22	5	1	0	NA	2A	2A171	Control	Control	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	A	171	127	14	3	17	2	2	5	0	1	0	22	5	1	0	NA	2A	2A171	Control	Control	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	A	171	127	14	3	17	2	2	5	0	1	0	22	5	1	0	NA	2A	2A171	Control	Control	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	A	172	27	0	2	4	0	1	6	0	2	1	22	5	0	1	NA	2A	2A172	Control	Control	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	A	172	27	0	2	4	0	1	6	0	2	1	22	5	0	1	NA	2A	2A172	Control	Control	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	A	172	27	0	2	4	0	1	6	0	2	1	22	5	0	1	NA	2A	2A172	Control	Control	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	B	94	87	0	0	12	0	0	1	0	19	0	28	0	0	0	NA	2B	2B94	Control	Mock rainout	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	B	94	87	0	0	12	0	0	1	0	19	0	28	0	0	0	NA	2B	2B94	Control	Mock rainout	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	B	94	87	0	0	12	0	0	1	0	19	0	28	0	0	0	NA	2B	2B94	Control	Mock rainout	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	B	98	94	7	0	12	1	0	1	0	7	0	16	1	2	0	NA	2B	2B98	Control	Mock rainout	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	B	98	94	7	0	12	1	0	1	0	7	0	16	1	2	0	NA	2B	2B98	Control	Mock rainout	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	B	98	94	7	0	12	1	0	1	0	7	0	16	1	2	0	NA	2B	2B98	Control	Mock rainout	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	B	129	24	0	0	3	0	0	2	0	2	0	18	4	0	0	NA	2B	2B129	Control	Mock rainout	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	B	129	24	0	0	3	0	0	2	0	2	0	18	4	0	0	NA	2B	2B129	Control	Mock rainout	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	B	129	24	0	0	3	0	0	2	0	2	0	18	4	0	0	NA	2B	2B129	Control	Mock rainout	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	B	195	25	0	0	6	0	0	2	0	4	0	18	1	0	0	NA	2B	2B195	Control	Mock rainout	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	B	195	25	0	0	6	0	0	2	0	4	0	18	1	0	0	NA	2B	2B195	Control	Mock rainout	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	B	195	25	0	0	6	0	0	2	0	4	0	18	1	0	0	NA	2B	2B195	Control	Mock rainout	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	B	199	34	0	0	7	0	0	2	0	5	1	0	2	0	0	NA	2B	2B199	Control	Mock rainout	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	B	199	34	0	0	7	0	0	2	0	5	1	0	2	0	0	NA	2B	2B199	Control	Mock rainout	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	B	199	34	0	0	7	0	0	2	0	5	1	0	2	0	0	NA	2B	2B199	Control	Mock rainout	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	89	104	0	0	9	0	0	1	0	7	0	14	1	0	0	NA	2C	2C89	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	89	104	0	0	9	0	0	1	0	7	0	14	1	0	0	NA	2C	2C89	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	89	104	0	0	9	0	0	1	0	7	0	14	1	0	0	NA	2C	2C89	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	90	40	10	0	11	2	0	3	0	24	0	2	4	0	0	NA	2C	2C90	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	90	40	10	0	11	2	0	3	0	24	0	2	4	0	0	NA	2C	2C90	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	90	40	10	0	11	2	0	3	0	24	0	2	4	0	0	NA	2C	2C90	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	100	14	0	0	4	0	0	5	0	3	1	11	9	0	0	NA	2C	2C100	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	100	14	0	0	4	0	0	5	0	3	1	11	9	0	0	NA	2C	2C100	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	100	14	0	0	4	0	0	5	0	3	1	11	9	0	0	NA	2C	2C100	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	258	0	0	0	0	0	0	0	0	0	0	16	4	0	8	has a stem, no notes on the envelope. Not sure if Bs are aborts or not.	2C	2C258	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	258	0	0	0	0	0	0	0	0	0	0	16	4	0	8	has a stem, no notes on the envelope. Not sure if Bs are aborts or not.	2C	2C258	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	258	0	0	0	0	0	0	0	0	0	0	16	4	0	8	has a stem, no notes on the envelope. Not sure if Bs are aborts or not.	2C	2C258	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	284	0	0	0	0	0	0	0	0	0	1	17	0	0	0	2 envelopes	2C	2C284	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	284	0	0	0	0	0	0	0	0	0	1	17	0	0	0	2 envelopes	2C	2C284	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	284	0	0	0	0	0	0	0	0	0	1	17	0	0	0	2 envelopes	2C	2C284	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	265	50	0	0	7	0	0	0	0	18	0	29	5	3	0	NA	2C	2C265	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	265	50	0	0	7	0	0	0	0	18	0	29	5	3	0	NA	2C	2C265	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	265	50	0	0	7	0	0	0	0	18	0	29	5	3	0	NA	2C	2C265	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	266	1	0	0	1	0	0	1	0	3	0	3	0	3	0	NA	2C	2C266	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	266	1	0	0	1	0	0	1	0	3	0	3	0	3	0	NA	2C	2C266	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	266	1	0	0	1	0	0	1	0	3	0	3	0	3	0	NA	2C	2C266	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	275	15	0	0	3	0	0	0	0	7	2	23	5	0	0	NA	2C	2C275	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	275	15	0	0	3	0	0	0	0	7	2	23	5	0	0	NA	2C	2C275	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	275	15	0	0	3	0	0	0	0	7	2	23	5	0	0	NA	2C	2C275	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	276	13	0	0	6	0	0	1	0	5	0	22	6	0	0	NA	2C	2C276	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	276	13	0	0	6	0	0	1	0	5	0	22	6	0	0	NA	2C	2C276	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	276	13	0	0	6	0	0	1	0	5	0	22	6	0	0	NA	2C	2C276	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	279	14	7	0	5	3	0	2	0	0	2	0	1	0	0	NA	2C	2C279	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	279	14	7	0	5	3	0	2	0	0	2	0	1	0	0	NA	2C	2C279	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	279	14	7	0	5	3	0	2	0	0	2	0	1	0	0	NA	2C	2C279	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	291	177	0	2	26	0	2	10	0	46	0	48	8	0	0	NA	2C	2C291	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	291	177	0	2	26	0	2	10	0	46	0	48	8	0	0	NA	2C	2C291	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	291	177	0	2	26	0	2	10	0	46	0	48	8	0	0	NA	2C	2C291	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	C	294	22	0	0	4	0	0	0	0	1	0	25	1	3	0	NA	2C	2C294	Reduction	Reduction	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	C	294	22	0	0	4	0	0	0	0	1	0	25	1	3	0	NA	2C	2C294	Reduction	Reduction	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	C	294	22	0	0	4	0	0	0	0	1	0	25	1	3	0	NA	2C	2C294	Reduction	Reduction	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	D	189	4	0	0	2	0	0	1	0	4	0	35	0	3	0	NA	2D	2D189	Addition	Addition	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	D	189	4	0	0	2	0	0	1	0	4	0	35	0	3	0	NA	2D	2D189	Addition	Addition	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	D	189	4	0	0	2	0	0	1	0	4	0	35	0	3	0	NA	2D	2D189	Addition	Addition	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	D	200	15	11	0	7	4	0	2	0	10	8	42	1	0	0	NA	2D	2D200	Addition	Addition	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	D	200	15	11	0	7	4	0	2	0	10	8	42	1	0	0	NA	2D	2D200	Addition	Addition	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	D	200	15	11	0	7	4	0	2	0	10	8	42	1	0	0	NA	2D	2D200	Addition	Addition	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	D	206	74	13	0	12	3	0	4	1	14	8	66	5	1	0	NA	2D	2D206	Addition	Addition	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	D	206	74	13	0	12	3	0	4	1	14	8	66	5	1	0	NA	2D	2D206	Addition	Addition	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	D	206	74	13	0	12	3	0	4	1	14	8	66	5	1	0	NA	2D	2D206	Addition	Addition	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	D	212	60	14	0	6	2	0	0	1	8	3	20	11	2	0	NA	2D	2D212	Addition	Addition	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	D	212	60	14	0	6	2	0	0	1	8	3	20	11	2	0	NA	2D	2D212	Addition	Addition	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	D	212	60	14	0	6	2	0	0	1	8	3	20	11	2	0	NA	2D	2D212	Addition	Addition	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+2	D	218	254	0	0	51	0	0	20	0	34	0	55	4	1	0	NA	2D	2D218	Addition	Addition	2018	2018-04-25T17:00:00Z	115	2018-04-25T21:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+2	D	218	254	0	0	51	0	0	20	0	34	0	55	4	1	0	NA	2D	2D218	Addition	Addition	2019	2019-06-09T16:00:00Z	160	2019-06-09T16:00:00Z	160	Normal	160	normal	2019-06-09T18:00:00Z	157.2	2.8000000000000114
+2	D	218	254	0	0	51	0	0	20	0	34	0	55	4	1	0	NA	2D	2D218	Addition	Addition	2020	2020-04-29T18:00:00Z	120	2020-04-29T18:00:00Z	120	Early	120	early	2020-04-29T18:00:00Z	126	-6
+3	A	127	53	0	0	8	0	0	7	0	5	0	6	0	0	0	NA	3A	3A127	Reduction	Reduction	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	A	127	53	0	0	8	0	0	7	0	5	0	6	0	0	0	NA	3A	3A127	Reduction	Reduction	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	A	127	53	0	0	8	0	0	7	0	5	0	6	0	0	0	NA	3A	3A127	Reduction	Reduction	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	A	128	23	12	0	4	2	0	5	0	17	3	30	3	6	1	NA	3A	3A128	Reduction	Reduction	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	A	128	23	12	0	4	2	0	5	0	17	3	30	3	6	1	NA	3A	3A128	Reduction	Reduction	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	A	128	23	12	0	4	2	0	5	0	17	3	30	3	6	1	NA	3A	3A128	Reduction	Reduction	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	A	135	0	0	0	0	0	0	0	0	3	0	2	0	0	0	NA	3A	3A135	Reduction	Reduction	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	A	135	0	0	0	0	0	0	0	0	3	0	2	0	0	0	NA	3A	3A135	Reduction	Reduction	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	A	135	0	0	0	0	0	0	0	0	3	0	2	0	0	0	NA	3A	3A135	Reduction	Reduction	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	A	647	0	0	0	0	0	0	0	0	0	0	7	0	0	2	top of plant was broken off	3A	3A647	Reduction	Reduction	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	A	647	0	0	0	0	0	0	0	0	0	0	7	0	0	2	top of plant was broken off	3A	3A647	Reduction	Reduction	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	A	647	0	0	0	0	0	0	0	0	0	0	7	0	0	2	top of plant was broken off	3A	3A647	Reduction	Reduction	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	B	601	93	0	0	10	0	0	6	0	1	0	37	0	0	0	NA	3B	3B601	Control	Mock rainout	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	B	601	93	0	0	10	0	0	6	0	1	0	37	0	0	0	NA	3B	3B601	Control	Mock rainout	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	B	601	93	0	0	10	0	0	6	0	1	0	37	0	0	0	NA	3B	3B601	Control	Mock rainout	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	B	606	74	0	0	10	0	0	1	0	4	0	12	2	0	0	NA	3B	3B606	Control	Mock rainout	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	B	606	74	0	0	10	0	0	1	0	4	0	12	2	0	0	NA	3B	3B606	Control	Mock rainout	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	B	606	74	0	0	10	0	0	1	0	4	0	12	2	0	0	NA	3B	3B606	Control	Mock rainout	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	B	824	21	0	0	4	0	0	8	0	23	0	13	0	0	0	NA	3B	3B824	Control	Mock rainout	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	B	824	21	0	0	4	0	0	8	0	23	0	13	0	0	0	NA	3B	3B824	Control	Mock rainout	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	B	824	21	0	0	4	0	0	8	0	23	0	13	0	0	0	NA	3B	3B824	Control	Mock rainout	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	B	833	8	0	0	2	0	0	0	0	11	0	9	0	0	0	NA	3B	3B833	Control	Mock rainout	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	B	833	8	0	0	2	0	0	0	0	11	0	9	0	0	0	NA	3B	3B833	Control	Mock rainout	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	B	833	8	0	0	2	0	0	0	0	11	0	9	0	0	0	NA	3B	3B833	Control	Mock rainout	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	86	5	5	0	1	1	0	0	0	0	1	0	0	0	0	NA	3C	3C86	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	86	5	5	0	1	1	0	0	0	0	1	0	0	0	0	NA	3C	3C86	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	86	5	5	0	1	1	0	0	0	0	1	0	0	0	0	NA	3C	3C86	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	90	0	0	0	0	0	0	1	0	5	0	0	0	0	0	NA	3C	3C90	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	90	0	0	0	0	0	0	1	0	5	0	0	0	0	0	NA	3C	3C90	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	90	0	0	0	0	0	0	1	0	5	0	0	0	0	0	NA	3C	3C90	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	94	53	0	1	10	0	1	2	0	8	1	15	1	1	0	NA	3C	3C94	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	94	53	0	1	10	0	1	2	0	8	1	15	1	1	0	NA	3C	3C94	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	94	53	0	1	10	0	1	2	0	8	1	15	1	1	0	NA	3C	3C94	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	98	20	0	0	4	0	0	1	0	17	3	32	3	1	0	NA	3C	3C98	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	98	20	0	0	4	0	0	1	0	17	3	32	3	1	0	NA	3C	3C98	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	98	20	0	0	4	0	0	1	0	17	3	32	3	1	0	NA	3C	3C98	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	127	66	0	0	12	0	0	2	0	3	5	12	1	1	0	NA	3C	3C127	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	127	66	0	0	12	0	0	2	0	3	5	12	1	1	0	NA	3C	3C127	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	127	66	0	0	12	0	0	2	0	3	5	12	1	1	0	NA	3C	3C127	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	132	57	0	0	5	0	0	7	0	17	0	2	0	0	0	NA	3C	3C132	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	132	57	0	0	5	0	0	7	0	17	0	2	0	0	0	NA	3C	3C132	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	132	57	0	0	5	0	0	7	0	17	0	2	0	0	0	NA	3C	3C132	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	147	9	0	0	7	0	0	1	2	3	2	55	3	5	0	NA	3C	3C147	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	147	9	0	0	7	0	0	1	2	3	2	55	3	5	0	NA	3C	3C147	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	147	9	0	0	7	0	0	1	2	3	2	55	3	5	0	NA	3C	3C147	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	156	90	14	11	11	1	3	2	1	15	0	5	0	0	0	NA	3C	3C156	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	156	90	14	11	11	1	3	2	1	15	0	5	0	0	0	NA	3C	3C156	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	156	90	14	11	11	1	3	2	1	15	0	5	0	0	0	NA	3C	3C156	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	163	34	0	0	12	0	0	1	2	1	3	67	15	3	0	NA	3C	3C163	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	163	34	0	0	12	0	0	1	2	1	3	67	15	3	0	NA	3C	3C163	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	163	34	0	0	12	0	0	1	2	1	3	67	15	3	0	NA	3C	3C163	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	168	59	12	0	11	1	0	1	0	16	0	32	3	0	1	NA	3C	3C168	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	168	59	12	0	11	1	0	1	0	16	0	32	3	0	1	NA	3C	3C168	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	168	59	12	0	11	1	0	1	0	16	0	32	3	0	1	NA	3C	3C168	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	171	30	0	0	5	0	0	5	2	13	0	17	2	0	0	NA	3C	3C171	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	171	30	0	0	5	0	0	5	2	13	0	17	2	0	0	NA	3C	3C171	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	171	30	0	0	5	0	0	5	2	13	0	17	2	0	0	NA	3C	3C171	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	265	31	0	0	4	0	0	0	0	0	0	0	1	0	0	1 envelope	3C	3C265	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	265	31	0	0	4	0	0	0	0	0	0	0	1	0	0	1 envelope	3C	3C265	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	265	31	0	0	4	0	0	0	0	0	0	0	1	0	0	1 envelope	3C	3C265	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	266	6	0	0	2	0	0	0	0	3	0	13	0	0	1	NA	3C	3C266	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	266	6	0	0	2	0	0	0	0	3	0	13	0	0	1	NA	3C	3C266	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	266	6	0	0	2	0	0	0	0	3	0	13	0	0	1	NA	3C	3C266	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	C	284	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	3C	3C284	Addition	Addition	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	C	284	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	3C	3C284	Addition	Addition	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	C	284	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	3C	3C284	Addition	Addition	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	245	30	0	0	4	0	0	0	0	0	0	0	0	0	0	1 envelope	3D	3D245	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	245	30	0	0	4	0	0	0	0	0	0	0	0	0	0	1 envelope	3D	3D245	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	245	30	0	0	4	0	0	0	0	0	0	0	0	0	0	1 envelope	3D	3D245	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	255	15	0	0	2	0	0	0	1	0	0	34	0	5	0	NA	3D	3D255	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	255	15	0	0	2	0	0	0	1	0	0	34	0	5	0	NA	3D	3D255	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	255	15	0	0	2	0	0	0	1	0	0	34	0	5	0	NA	3D	3D255	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	847	4	2	0	2	1	0	0	0	7	0	31	0	2	0	NA	3D	3D847	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	847	4	2	0	2	1	0	0	0	7	0	31	0	2	0	NA	3D	3D847	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	847	4	2	0	2	1	0	0	0	7	0	31	0	2	0	NA	3D	3D847	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	852	0	0	0	0	0	0	0	0	12	0	21	5	1	0	NA	3D	3D852	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	852	0	0	0	0	0	0	0	0	12	0	21	5	1	0	NA	3D	3D852	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	852	0	0	0	0	0	0	0	0	12	0	21	5	1	0	NA	3D	3D852	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	853	0	0	0	0	0	0	1	0	5	2	31	4	2	2	NA	3D	3D853	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	853	0	0	0	0	0	0	1	0	5	2	31	4	2	2	NA	3D	3D853	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	853	0	0	0	0	0	0	1	0	5	2	31	4	2	2	NA	3D	3D853	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	856	41	0	0	6	0	0	0	0	3	0	13	0	0	1	NA	3D	3D856	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	856	41	0	0	6	0	0	0	0	3	0	13	0	0	1	NA	3D	3D856	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	856	41	0	0	6	0	0	0	0	3	0	13	0	0	1	NA	3D	3D856	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	858	78	3	3	13	1	1	0	0	9	3	30	1	0	0	NA	3D	3D858	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	858	78	3	3	13	1	1	0	0	9	3	30	1	0	0	NA	3D	3D858	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	858	78	3	3	13	1	1	0	0	9	3	30	1	0	0	NA	3D	3D858	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	874	28	0	0	5	0	0	0	0	17	2	32	6	1	0	NA	3D	3D874	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	874	28	0	0	5	0	0	0	0	17	2	32	6	1	0	NA	3D	3D874	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	874	28	0	0	5	0	0	0	0	17	2	32	6	1	0	NA	3D	3D874	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	877	44	0	0	4	0	0	0	0	17	1	28	1	0	0	NA	3D	3D877	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	877	44	0	0	4	0	0	0	0	17	1	28	1	0	0	NA	3D	3D877	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	877	44	0	0	4	0	0	0	0	17	1	28	1	0	0	NA	3D	3D877	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	878	12	0	0	1	0	0	1	0	2	0	0	1	0	0	2 envelopes from same date	3D	3D878	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	878	12	0	0	1	0	0	1	0	2	0	0	1	0	0	2 envelopes from same date	3D	3D878	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	878	12	0	0	1	0	0	1	0	2	0	0	1	0	0	2 envelopes from same date	3D	3D878	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	879	46	0	0	5	0	0	2	0	2	0	10	1	0	0	NA	3D	3D879	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	879	46	0	0	5	0	0	2	0	2	0	10	1	0	0	NA	3D	3D879	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	879	46	0	0	5	0	0	2	0	2	0	10	1	0	0	NA	3D	3D879	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+3	D	884	0	0	0	0	0	0	0	0	2	0	14	1	0	0	NA	3D	3D884	Control	Control	2018	2018-04-29T18:00:00Z	119	2018-04-29T22:00:00Z	119	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+3	D	884	0	0	0	0	0	0	0	0	2	0	14	1	0	0	NA	3D	3D884	Control	Control	2019	2019-06-07T14:00:00Z	158	2019-06-07T14:00:00Z	158	Normal	158	normal	2019-06-07T18:00:00Z	157.2	0.8000000000000114
+3	D	884	0	0	0	0	0	0	0	0	2	0	14	1	0	0	NA	3D	3D884	Control	Control	2020	2020-05-05T17:00:00Z	126	2020-05-05T18:00:00Z	126	Normal	126	normal	2020-05-05T18:00:00Z	126	0
+4	A	45	6	0	0	1	0	0	1	0	6	0	0	0	0	0	2 envelopes from same date	4A	4A45	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	45	6	0	0	1	0	0	1	0	6	0	0	0	0	0	2 envelopes from same date	4A	4A45	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	45	6	0	0	1	0	0	1	0	6	0	0	0	0	0	2 envelopes from same date	4A	4A45	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	63	41	0	4	7	0	1	3	0	4	3	16	1	0	0	NA	4A	4A63	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	63	41	0	4	7	0	1	3	0	4	3	16	1	0	0	NA	4A	4A63	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	63	41	0	4	7	0	1	3	0	4	3	16	1	0	0	NA	4A	4A63	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	69	67	0	0	9	0	0	0	0	18	0	14	1	0	0	NA	4A	4A69	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	69	67	0	0	9	0	0	0	0	18	0	14	1	0	0	NA	4A	4A69	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	69	67	0	0	9	0	0	0	0	18	0	14	1	0	0	NA	4A	4A69	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	75	6	0	0	1	0	0	0	0	7	0	10	3	0	0	NA	4A	4A75	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	75	6	0	0	1	0	0	0	0	7	0	10	3	0	0	NA	4A	4A75	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	75	6	0	0	1	0	0	0	0	7	0	10	3	0	0	NA	4A	4A75	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	76	4	0	0	1	0	0	0	0	6	0	10	0	3	0	NA	4A	4A76	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	76	4	0	0	1	0	0	0	0	6	0	10	0	3	0	NA	4A	4A76	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	76	4	0	0	1	0	0	0	0	6	0	10	0	3	0	NA	4A	4A76	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	83	5	0	0	1	0	0	0	0	10	0	11	2	0	0	NA	4A	4A83	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	83	5	0	0	1	0	0	0	0	10	0	11	2	0	0	NA	4A	4A83	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	83	5	0	0	1	0	0	0	0	10	0	11	2	0	0	NA	4A	4A83	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	90	100	0	4	23	0	2	5	0	3	1	15	2	0	1	NA	4A	4A90	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	90	100	0	4	23	0	2	5	0	3	1	15	2	0	1	NA	4A	4A90	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	90	100	0	4	23	0	2	5	0	3	1	15	2	0	1	NA	4A	4A90	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	94	2	0	0	1	0	0	0	0	12	0	25	1	0	0	NA	4A	4A94	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	94	2	0	0	1	0	0	0	0	12	0	25	1	0	0	NA	4A	4A94	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	94	2	0	0	1	0	0	0	0	12	0	25	1	0	0	NA	4A	4A94	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	112	0	0	0	0	0	0	2	0	9	0	7	0	0	0	NA	4A	4A112	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	112	0	0	0	0	0	0	2	0	9	0	7	0	0	0	NA	4A	4A112	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	112	0	0	0	0	0	0	2	0	9	0	7	0	0	0	NA	4A	4A112	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	117	40	0	3	6	0	1	0	0	0	0	31	1	3	0	NA	4A	4A117	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	117	40	0	3	6	0	1	0	0	0	0	31	1	3	0	NA	4A	4A117	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	117	40	0	3	6	0	1	0	0	0	0	31	1	3	0	NA	4A	4A117	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	120	0	0	0	0	0	0	3	0	0	0	31	1	3	0	NA	4A	4A120	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	120	0	0	0	0	0	0	3	0	0	0	31	1	3	0	NA	4A	4A120	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	120	0	0	0	0	0	0	3	0	0	0	31	1	3	0	NA	4A	4A120	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	A	217	10	0	0	2	0	0	2	0	0	1	0	0	0	0	only 1 envelope	4A	4A217	Addition	Addition	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	A	217	10	0	0	2	0	0	2	0	0	1	0	0	0	0	only 1 envelope	4A	4A217	Addition	Addition	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	A	217	10	0	0	2	0	0	2	0	0	1	0	0	0	0	only 1 envelope	4A	4A217	Addition	Addition	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	164	7	0	0	1	0	0	3	0	21	0	9	0	0	0	NA	4B	4B164	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	164	7	0	0	1	0	0	3	0	21	0	9	0	0	0	NA	4B	4B164	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	164	7	0	0	1	0	0	3	0	21	0	9	0	0	0	NA	4B	4B164	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	174	0	0	0	0	0	0	0	0	22	0	2	2	0	0	NA	4B	4B174	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	174	0	0	0	0	0	0	0	0	22	0	2	2	0	0	NA	4B	4B174	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	174	0	0	0	0	0	0	0	0	22	0	2	2	0	0	NA	4B	4B174	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	175	14	0	0	3	0	0	0	0	6	0	24	1	2	0	NA	4B	4B175	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	175	14	0	0	3	0	0	0	0	6	0	24	1	2	0	NA	4B	4B175	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	175	14	0	0	3	0	0	0	0	6	0	24	1	2	0	NA	4B	4B175	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	177	25	0	0	3	0	0	3	0	21	0	4	0	0	0	NA	4B	4B177	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	177	25	0	0	3	0	0	3	0	21	0	4	0	0	0	NA	4B	4B177	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	177	25	0	0	3	0	0	3	0	21	0	4	0	0	0	NA	4B	4B177	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	181	39	0	2	5	0	1	2	0	6	0	18	2	0	1	NA	4B	4B181	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	181	39	0	2	5	0	1	2	0	6	0	18	2	0	1	NA	4B	4B181	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	181	39	0	2	5	0	1	2	0	6	0	18	2	0	1	NA	4B	4B181	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	183	0	0	0	0	0	0	0	0	17	0	5	2	0	0	NA	4B	4B183	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	183	0	0	0	0	0	0	0	0	17	0	5	2	0	0	NA	4B	4B183	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	183	0	0	0	0	0	0	0	0	17	0	5	2	0	0	NA	4B	4B183	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	185	23	8	0	4	1	0	3	0	3	0	11	0	0	0	NA	4B	4B185	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	185	23	8	0	4	1	0	3	0	3	0	11	0	0	0	NA	4B	4B185	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	185	23	8	0	4	1	0	3	0	3	0	11	0	0	0	NA	4B	4B185	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	189	0	0	0	0	0	0	0	0	10	0	9	4	0	0	NA	4B	4B189	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	189	0	0	0	0	0	0	0	0	10	0	9	4	0	0	NA	4B	4B189	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	189	0	0	0	0	0	0	0	0	10	0	9	4	0	0	NA	4B	4B189	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	192	46	0	0	6	0	0	4	1	15	0	8	1	0	0	NA	4B	4B192	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	192	46	0	0	6	0	0	4	1	15	0	8	1	0	0	NA	4B	4B192	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	192	46	0	0	6	0	0	4	1	15	0	8	1	0	0	NA	4B	4B192	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	193	2	0	0	2	0	0	0	0	5	0	37	8	5	0	B (0) or B? unknown- no info on envlope but infolrescence collected and only 1 envelope.	4B	4B193	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	193	2	0	0	2	0	0	0	0	5	0	37	8	5	0	B (0) or B? unknown- no info on envlope but infolrescence collected and only 1 envelope.	4B	4B193	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	193	2	0	0	2	0	0	0	0	5	0	37	8	5	0	B (0) or B? unknown- no info on envlope but infolrescence collected and only 1 envelope.	4B	4B193	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	195	0	0	0	0	0	0	0	0	0	0	21	2	4	0	only 2 envelopes	4B	4B195	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	195	0	0	0	0	0	0	0	0	0	0	21	2	4	0	only 2 envelopes	4B	4B195	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	195	0	0	0	0	0	0	0	0	0	0	21	2	4	0	only 2 envelopes	4B	4B195	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	196	0	0	0	0	0	0	2	0	26	0	8	0	0	0	NA	4B	4B196	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	196	0	0	0	0	0	0	2	0	26	0	8	0	0	0	NA	4B	4B196	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	196	0	0	0	0	0	0	2	0	26	0	8	0	0	0	NA	4B	4B196	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	199	98	0	0	13	0	0	0	1	22	0	7	0	0	0	NA	4B	4B199	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	199	98	0	0	13	0	0	0	1	22	0	7	0	0	0	NA	4B	4B199	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	199	98	0	0	13	0	0	0	1	22	0	7	0	0	0	NA	4B	4B199	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	601	0	0	0	0	0	0	0	0	4	0	0	0	0	0	NA	4B	4B601	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	601	0	0	0	0	0	0	0	0	4	0	0	0	0	0	NA	4B	4B601	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	601	0	0	0	0	0	0	0	0	4	0	0	0	0	0	NA	4B	4B601	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	B	833	0	0	0	0	0	0	0	0	0	0	18	0	2	0	NA	4B	4B833	Control	Mock rainout	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	B	833	0	0	0	0	0	0	0	0	0	0	18	0	2	0	NA	4B	4B833	Control	Mock rainout	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	B	833	0	0	0	0	0	0	0	0	0	0	18	0	2	0	NA	4B	4B833	Control	Mock rainout	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	C	118	86	0	0	14	0	0	6	0	12	1	58	2	3	3	NA	4C	4C118	Control	Control	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	C	118	86	0	0	14	0	0	6	0	12	1	58	2	3	3	NA	4C	4C118	Control	Control	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	C	118	86	0	0	14	0	0	6	0	12	1	58	2	3	3	NA	4C	4C118	Control	Control	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	C	119	103	0	0	12	0	0	2	1	11	0	12	4	0	0	NA	4C	4C119	Control	Control	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	C	119	103	0	0	12	0	0	2	1	11	0	12	4	0	0	NA	4C	4C119	Control	Control	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	C	119	103	0	0	12	0	0	2	1	11	0	12	4	0	0	NA	4C	4C119	Control	Control	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	C	163	0	0	0	0	0	0	0	0	0	3	0	0	0	0	1 envelope with 3 green fruits.	4C	4C163	Control	Control	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	C	163	0	0	0	0	0	0	0	0	0	3	0	0	0	0	1 envelope with 3 green fruits.	4C	4C163	Control	Control	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	C	163	0	0	0	0	0	0	0	0	0	3	0	0	0	0	1 envelope with 3 green fruits.	4C	4C163	Control	Control	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	26	6	0	0	1	0	0	0	0	12	0	15	2	0	0	NA	4D	4D26	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	26	6	0	0	1	0	0	0	0	12	0	15	2	0	0	NA	4D	4D26	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	26	6	0	0	1	0	0	0	0	12	0	15	2	0	0	NA	4D	4D26	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	29	0	0	0	0	0	0	0	1	7	0	51	0	0	1	No note for B	4D	4D29	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	29	0	0	0	0	0	0	0	1	7	0	51	0	0	1	No note for B	4D	4D29	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	29	0	0	0	0	0	0	0	1	7	0	51	0	0	1	No note for B	4D	4D29	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	31	1	0	0	1	0	0	1	0	7	2	33	2	2	1	NA	4D	4D31	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	31	1	0	0	1	0	0	1	0	7	2	33	2	2	1	NA	4D	4D31	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	31	1	0	0	1	0	0	1	0	7	2	33	2	2	1	NA	4D	4D31	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	33	0	0	0	0	0	0	0	0	16	1	13	0	1	0	NA	4D	4D33	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	33	0	0	0	0	0	0	0	0	16	1	13	0	1	0	NA	4D	4D33	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	33	0	0	0	0	0	0	0	0	16	1	13	0	1	0	NA	4D	4D33	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	34	71	0	0	9	0	0	2	0	11	0	11	1	1	0	mass of frass attached to plant.	4D	4D34	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	34	71	0	0	9	0	0	2	0	11	0	11	1	1	0	mass of frass attached to plant.	4D	4D34	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	34	71	0	0	9	0	0	2	0	11	0	11	1	1	0	mass of frass attached to plant.	4D	4D34	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	35	0	0	0	0	0	0	2	0	3	2	19	2	3	0	NA	4D	4D35	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	35	0	0	0	0	0	0	2	0	3	2	19	2	3	0	NA	4D	4D35	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	35	0	0	0	0	0	0	2	0	3	2	19	2	3	0	NA	4D	4D35	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	36	13	0	0	3	0	0	0	0	2	0	12	3	0	0	NA	4D	4D36	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	36	13	0	0	3	0	0	0	0	2	0	12	3	0	0	NA	4D	4D36	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	36	13	0	0	3	0	0	0	0	2	0	12	3	0	0	NA	4D	4D36	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	40	0	0	0	0	0	0	0	0	13	0	4	0	0	0	3 envelopes	4D	4D40	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	40	0	0	0	0	0	0	0	0	13	0	4	0	0	0	3 envelopes	4D	4D40	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	40	0	0	0	0	0	0	0	0	13	0	4	0	0	0	3 envelopes	4D	4D40	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	44	7	0	0	1	0	0	0	0	11	0	8	1	0	0	NA	4D	4D44	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	44	7	0	0	1	0	0	0	0	11	0	8	1	0	0	NA	4D	4D44	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	44	7	0	0	1	0	0	0	0	11	0	8	1	0	0	NA	4D	4D44	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	45	62	0	0	12	0	0	12	2	27	1	11	3	5	0	NA	4D	4D45	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	45	62	0	0	12	0	0	12	2	27	1	11	3	5	0	NA	4D	4D45	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	45	62	0	0	12	0	0	12	2	27	1	11	3	5	0	NA	4D	4D45	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+4	D	879	0	0	0	0	0	0	0	0	2	0	0	0	0	0	only 1 envelope	4D	4D879	Reduction	Reduction	2019	2019-05-28T17:00:00Z	148	2019-05-28T18:00:00Z	148	Early	147	early	2019-05-27T18:00:00Z	157.2	-10.199999999999989
+4	D	879	0	0	0	0	0	0	0	0	2	0	0	0	0	0	only 1 envelope	4D	4D879	Reduction	Reduction	2020	2020-04-30T19:00:00Z	121	2020-04-29T17:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+4	D	879	0	0	0	0	0	0	0	0	2	0	0	0	0	0	only 1 envelope	4D	4D879	Reduction	Reduction	2018	NA	NA	NA	NA	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	112	0	0	0	0	0	0	0	0	1	0	0	0	0	0	1 envelope	5A	5A112	Addition	Addition	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	112	0	0	0	0	0	0	0	0	1	0	0	0	0	0	1 envelope	5A	5A112	Addition	Addition	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	A	112	0	0	0	0	0	0	0	0	1	0	0	0	0	0	1 envelope	5A	5A112	Addition	Addition	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	A	173	95	10	0	9	1	0	0	1	1	7	27	6	5	0	NA	5A	5A173	Addition	Addition	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	173	95	10	0	9	1	0	0	1	1	7	27	6	5	0	NA	5A	5A173	Addition	Addition	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	A	173	95	10	0	9	1	0	0	1	1	7	27	6	5	0	NA	5A	5A173	Addition	Addition	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	A	175	69	6	0	8	1	0	10	0	6	8	8	2	0	0	NA	5A	5A175	Addition	Addition	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	175	69	6	0	8	1	0	10	0	6	8	8	2	0	0	NA	5A	5A175	Addition	Addition	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	A	175	69	6	0	8	1	0	10	0	6	8	8	2	0	0	NA	5A	5A175	Addition	Addition	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	A	176	18	0	5	1	0	1	1	0	12	0	55	0	0	0	NA	5A	5A176	Addition	Addition	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	176	18	0	5	1	0	1	1	0	12	0	55	0	0	0	NA	5A	5A176	Addition	Addition	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	A	176	18	0	5	1	0	1	1	0	12	0	55	0	0	0	NA	5A	5A176	Addition	Addition	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	A	180	36	0	0	3	0	0	2	0	9	1	56	9	0	0	NA	5A	5A180	Addition	Addition	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	180	36	0	0	3	0	0	2	0	9	1	56	9	0	0	NA	5A	5A180	Addition	Addition	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	A	180	36	0	0	3	0	0	2	0	9	1	56	9	0	0	NA	5A	5A180	Addition	Addition	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	A	181	20	0	0	4	0	0	2	0	17	5	44	2	1	0	NA	5A	5A181	Addition	Addition	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	181	20	0	0	4	0	0	2	0	17	5	44	2	1	0	NA	5A	5A181	Addition	Addition	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	A	181	20	0	0	4	0	0	2	0	17	5	44	2	1	0	NA	5A	5A181	Addition	Addition	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	A	182	2	2	0	1	1	0	0	0	0	1	6	1	1	0	NA	5A	5A182	Addition	Addition	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	182	2	2	0	1	1	0	0	0	0	1	6	1	1	0	NA	5A	5A182	Addition	Addition	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	A	182	2	2	0	1	1	0	0	0	0	1	6	1	1	0	NA	5A	5A182	Addition	Addition	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	A	189	77	0	3	12	0	1	0	0	7	1	27	2	0	0	NA	5A	5A189	Addition	Addition	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	189	77	0	3	12	0	1	0	0	7	1	27	2	0	0	NA	5A	5A189	Addition	Addition	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	A	189	77	0	3	12	0	1	0	0	7	1	27	2	0	0	NA	5A	5A189	Addition	Addition	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	A	194	138	0	0	27	0	0	5	0	12	1	34	8	1	0	NA	5A	5A194	Addition	Addition	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	A	194	138	0	0	27	0	0	5	0	12	1	34	8	1	0	NA	5A	5A194	Addition	Addition	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	A	194	138	0	0	27	0	0	5	0	12	1	34	8	1	0	NA	5A	5A194	Addition	Addition	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	7	0	0	0	0	0	0	0	0	8	0	16	0	0	0	4 envelopes, 3 dates	5B	5B7	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	7	0	0	0	0	0	0	0	0	8	0	16	0	0	0	4 envelopes, 3 dates	5B	5B7	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	7	0	0	0	0	0	0	0	0	8	0	16	0	0	0	4 envelopes, 3 dates	5B	5B7	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	8	8	0	0	2	0	0	2	0	16	0	8	0	0	0	NA	5B	5B8	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	8	8	0	0	2	0	0	2	0	16	0	8	0	0	0	NA	5B	5B8	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	8	8	0	0	2	0	0	2	0	16	0	8	0	0	0	NA	5B	5B8	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	14	161	0	0	23	0	0	6	1	3	0	37	1	0	0	NA	5B	5B14	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	14	161	0	0	23	0	0	6	1	3	0	37	1	0	0	NA	5B	5B14	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	14	161	0	0	23	0	0	6	1	3	0	37	1	0	0	NA	5B	5B14	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	22	82	0	0	15	0	0	2	0	4	0	30	2	0	1	no note for B	5B	5B22	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	22	82	0	0	15	0	0	2	0	4	0	30	2	0	1	no note for B	5B	5B22	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	22	82	0	0	15	0	0	2	0	4	0	30	2	0	1	no note for B	5B	5B22	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	23	21	0	0	4	0	0	0	0	11	0	14	0	0	0	NA	5B	5B23	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	23	21	0	0	4	0	0	0	0	11	0	14	0	0	0	NA	5B	5B23	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	23	21	0	0	4	0	0	0	0	11	0	14	0	0	0	NA	5B	5B23	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	32	0	0	0	0	0	0	0	0	0	0	0	2	0	0	only 1 envelope- could be 23.	5B	5B32	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	32	0	0	0	0	0	0	0	0	0	0	0	2	0	0	only 1 envelope- could be 23.	5B	5B32	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	32	0	0	0	0	0	0	0	0	0	0	0	2	0	0	only 1 envelope- could be 23.	5B	5B32	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	234	4	0	3	2	0	1	0	0	4	0	0	0	0	0	only two envelopes from the same date- could be 284?	5B	5B234	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	234	4	0	3	2	0	1	0	0	4	0	0	0	0	0	only two envelopes from the same date- could be 284?	5B	5B234	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	234	4	0	3	2	0	1	0	0	4	0	0	0	0	0	only two envelopes from the same date- could be 284?	5B	5B234	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	284	5	0	0	1	0	0	4	1	4	1	26	0	1	5	NA	5B	5B284	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	284	5	0	0	1	0	0	4	1	4	1	26	0	1	5	NA	5B	5B284	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	284	5	0	0	1	0	0	4	1	4	1	26	0	1	5	NA	5B	5B284	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	292	9	0	0	2	0	0	2	0	7	0	12	2	0	0	NA	5B	5B292	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	292	9	0	0	2	0	0	2	0	7	0	12	2	0	0	NA	5B	5B292	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	292	9	0	0	2	0	0	2	0	7	0	12	2	0	0	NA	5B	5B292	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	B	294	20	0	0	5	0	0	1	0	0	2	19	6	0	2	no note for B- look accidentally collected.	5B	5B294	Control	Mock rainout	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	B	294	20	0	0	5	0	0	1	0	0	2	19	6	0	2	no note for B- look accidentally collected.	5B	5B294	Control	Mock rainout	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	B	294	20	0	0	5	0	0	1	0	0	2	19	6	0	2	no note for B- look accidentally collected.	5B	5B294	Control	Mock rainout	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	C	205	46	0	0	6	0	0	5	2	8	0	13	1	0	0	NA	5C	5C205	Reduction	Reduction	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	C	205	46	0	0	6	0	0	5	2	8	0	13	1	0	0	NA	5C	5C205	Reduction	Reduction	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	C	205	46	0	0	6	0	0	5	2	8	0	13	1	0	0	NA	5C	5C205	Reduction	Reduction	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	C	206	1	0	0	1	0	0	0	0	1	0	18	1	0	1	No note for B	5C	5C206	Reduction	Reduction	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	C	206	1	0	0	1	0	0	0	0	1	0	18	1	0	1	No note for B	5C	5C206	Reduction	Reduction	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	C	206	1	0	0	1	0	0	0	0	1	0	18	1	0	1	No note for B	5C	5C206	Reduction	Reduction	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	C	213	0	0	0	0	0	0	1	0	0	0	12	0	0	0	2 envelopes, 2 dates.	5C	5C213	Reduction	Reduction	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	C	213	0	0	0	0	0	0	1	0	0	0	12	0	0	0	2 envelopes, 2 dates.	5C	5C213	Reduction	Reduction	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	C	213	0	0	0	0	0	0	1	0	0	0	12	0	0	0	2 envelopes, 2 dates.	5C	5C213	Reduction	Reduction	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	C	215	73	0	0	9	0	0	5	0	25	0	10	1	0	0	NA	5C	5C215	Reduction	Reduction	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	C	215	73	0	0	9	0	0	5	0	25	0	10	1	0	0	NA	5C	5C215	Reduction	Reduction	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	C	215	73	0	0	9	0	0	5	0	25	0	10	1	0	0	NA	5C	5C215	Reduction	Reduction	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	C	216	0	0	0	0	0	0	0	0	5	0	2	0	0	0	NA	5C	5C216	Reduction	Reduction	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	C	216	0	0	0	0	0	0	0	0	5	0	2	0	0	0	NA	5C	5C216	Reduction	Reduction	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	C	216	0	0	0	0	0	0	0	0	5	0	2	0	0	0	NA	5C	5C216	Reduction	Reduction	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	C	220	78	0	0	9	0	0	5	0	33	0	16	2	0	0	NA	5C	5C220	Reduction	Reduction	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	C	220	78	0	0	9	0	0	5	0	33	0	16	2	0	0	NA	5C	5C220	Reduction	Reduction	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	C	220	78	0	0	9	0	0	5	0	33	0	16	2	0	0	NA	5C	5C220	Reduction	Reduction	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	C	221	0	0	0	0	0	0	1	0	0	0	16	5	1	1	1 envelope by HMB that said 2 fruits, but was empty.	5C	5C221	Reduction	Reduction	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	C	221	0	0	0	0	0	0	1	0	0	0	16	5	1	1	1 envelope by HMB that said 2 fruits, but was empty.	5C	5C221	Reduction	Reduction	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	C	221	0	0	0	0	0	0	1	0	0	0	16	5	1	1	1 envelope by HMB that said 2 fruits, but was empty.	5C	5C221	Reduction	Reduction	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	C	222	12	0	0	2	0	0	0	0	3	0	5	0	0	0	NA	5C	5C222	Reduction	Reduction	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	C	222	12	0	0	2	0	0	0	0	3	0	5	0	0	0	NA	5C	5C222	Reduction	Reduction	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	C	222	12	0	0	2	0	0	0	0	3	0	5	0	0	0	NA	5C	5C222	Reduction	Reduction	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	D	228	80	0	0	15	0	0	3	0	17	0	81	4	4	1	no note	5D	5D228	Control	Control	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	D	228	80	0	0	15	0	0	3	0	17	0	81	4	4	1	no note	5D	5D228	Control	Control	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	D	228	80	0	0	15	0	0	3	0	17	0	81	4	4	1	no note	5D	5D228	Control	Control	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	D	231	43	0	0	7	0	0	4	0	11	0	28	0	0	0	NA	5D	5D231	Control	Control	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	D	231	43	0	0	7	0	0	4	0	11	0	28	0	0	0	NA	5D	5D231	Control	Control	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	D	231	43	0	0	7	0	0	4	0	11	0	28	0	0	0	NA	5D	5D231	Control	Control	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	D	232	18	0	0	6	0	0	1	3	14	1	29	4	1	1	no note	5D	5D232	Control	Control	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	D	232	18	0	0	6	0	0	1	3	14	1	29	4	1	1	no note	5D	5D232	Control	Control	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	D	232	18	0	0	6	0	0	1	3	14	1	29	4	1	1	no note	5D	5D232	Control	Control	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	D	234	0	0	0	0	0	0	0	0	7	0	1	0	0	0	1 envelope	5D	5D234	Control	Control	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	D	234	0	0	0	0	0	0	0	0	7	0	1	0	0	0	1 envelope	5D	5D234	Control	Control	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	D	234	0	0	0	0	0	0	0	0	7	0	1	0	0	0	1 envelope	5D	5D234	Control	Control	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	D	245	9	9	0	2	2	0	4	0	2	4	43	5	2	0	NA	5D	5D245	Control	Control	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	D	245	9	9	0	2	2	0	4	0	2	4	43	5	2	0	NA	5D	5D245	Control	Control	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	D	245	9	9	0	2	2	0	4	0	2	4	43	5	2	0	NA	5D	5D245	Control	Control	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	D	258	264	20	10	30	2	2	3	0	7	0	53	0	8	0	NA	5D	5D258	Control	Control	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	D	258	264	20	10	30	2	2	3	0	7	0	53	0	8	0	NA	5D	5D258	Control	Control	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	D	258	264	20	10	30	2	2	3	0	7	0	53	0	8	0	NA	5D	5D258	Control	Control	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+5	D	283	8	0	0	6	0	0	1	0	12	0	9	2	1	0	NA	5D	5D283	Control	Control	2018	2018-04-24T19:00:00Z	114	2018-04-25T15:00:00Z	115	Early	115	early	2018-04-25T18:00:00Z	120	-5
+5	D	283	8	0	0	6	0	0	1	0	12	0	9	2	1	0	NA	5D	5D283	Control	Control	2019	2019-06-04T15:00:00Z	155	2019-06-04T15:00:00Z	155	Normal	155	early	2019-06-04T18:00:00Z	157.2	-2.1999999999999886
+5	D	283	8	0	0	6	0	0	1	0	12	0	9	2	1	0	NA	5D	5D283	Control	Control	2020	2020-04-29T16:00:00Z	120	2020-04-29T16:00:00Z	120	Early	119	early	2020-04-28T18:00:00Z	126	-7
+6	A	125	30	7	1	8	1	1	0	1	8	0	43	2	3	0	NA	6A	6A125	Control	Control	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	A	125	30	7	1	8	1	1	0	1	8	0	43	2	3	0	NA	6A	6A125	Control	Control	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	A	125	30	7	1	8	1	1	0	1	8	0	43	2	3	0	NA	6A	6A125	Control	Control	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	A	133	0	0	0	0	0	0	0	2	0	0	6	0	1	0	1 envelope	6A	6A133	Control	Control	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	A	133	0	0	0	0	0	0	0	2	0	0	6	0	1	0	1 envelope	6A	6A133	Control	Control	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	A	133	0	0	0	0	0	0	0	2	0	0	6	0	1	0	1 envelope	6A	6A133	Control	Control	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	A	135	6	0	0	1	0	0	0	0	2	0	23	0	1	0	NA	6A	6A135	Control	Control	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	A	135	6	0	0	1	0	0	0	0	2	0	23	0	1	0	NA	6A	6A135	Control	Control	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	A	135	6	0	0	1	0	0	0	0	2	0	23	0	1	0	NA	6A	6A135	Control	Control	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	A	143	2	0	0	1	0	0	3	0	2	0	16	3	0	0	NA	6A	6A143	Control	Control	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	A	143	2	0	0	1	0	0	3	0	2	0	16	3	0	0	NA	6A	6A143	Control	Control	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	A	143	2	0	0	1	0	0	3	0	2	0	16	3	0	0	NA	6A	6A143	Control	Control	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	A	151	0	0	0	0	0	0	1	0	11	0	24	0	0	0	NA	6A	6A151	Control	Control	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	A	151	0	0	0	0	0	0	1	0	11	0	24	0	0	0	NA	6A	6A151	Control	Control	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	A	151	0	0	0	0	0	0	1	0	11	0	24	0	0	0	NA	6A	6A151	Control	Control	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	A	160	0	0	0	0	0	0	0	0	1	0	18	4	0	0	NA	6A	6A160	Control	Control	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	A	160	0	0	0	0	0	0	0	0	1	0	18	4	0	0	NA	6A	6A160	Control	Control	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	A	160	0	0	0	0	0	0	0	0	1	0	18	4	0	0	NA	6A	6A160	Control	Control	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	A	166	0	0	0	0	0	0	0	1	7	1	15	2	0	0	2 envelopes , 2 dates	6A	6A166	Control	Control	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	A	166	0	0	0	0	0	0	0	1	7	1	15	2	0	0	2 envelopes , 2 dates	6A	6A166	Control	Control	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	A	166	0	0	0	0	0	0	0	1	7	1	15	2	0	0	2 envelopes , 2 dates	6A	6A166	Control	Control	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	A	173	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	6A	6A173	Control	Control	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	A	173	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	6A	6A173	Control	Control	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	A	173	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	6A	6A173	Control	Control	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	1	29	0	0	10	0	0	1	0	7	0	22	3	0	0	weird larva was counted as a FF, see example envelope section in maxfield fruit box.	6B	6B1	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	1	29	0	0	10	0	0	1	0	7	0	22	3	0	0	weird larva was counted as a FF, see example envelope section in maxfield fruit box.	6B	6B1	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	1	29	0	0	10	0	0	1	0	7	0	22	3	0	0	weird larva was counted as a FF, see example envelope section in maxfield fruit box.	6B	6B1	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	6	121	0	5	16	0	3	6	0	11	0	20	1	0	0	NA	6B	6B6	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	6	121	0	5	16	0	3	6	0	11	0	20	1	0	0	NA	6B	6B6	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	6	121	0	5	16	0	3	6	0	11	0	20	1	0	0	NA	6B	6B6	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	20	19	0	0	7	0	0	0	0	9	1	26	9	4	0	NA	6B	6B20	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	20	19	0	0	7	0	0	0	0	9	1	26	9	4	0	NA	6B	6B20	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	20	19	0	0	7	0	0	0	0	9	1	26	9	4	0	NA	6B	6B20	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	25	54	0	0	5	0	0	0	0	0	2	11	3	1	0	1 envelope	6B	6B25	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	25	54	0	0	5	0	0	0	0	0	2	11	3	1	0	1 envelope	6B	6B25	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	25	54	0	0	5	0	0	0	0	0	2	11	3	1	0	1 envelope	6B	6B25	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	27	4	0	0	2	0	0	0	0	3	0	9	2	0	0	NA	6B	6B27	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	27	4	0	0	2	0	0	0	0	3	0	9	2	0	0	NA	6B	6B27	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	27	4	0	0	2	0	0	0	0	3	0	9	2	0	0	NA	6B	6B27	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	28	19	11	0	4	1	0	0	0	0	5	42	4	1	0	NA	6B	6B28	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	28	19	11	0	4	1	0	0	0	0	5	42	4	1	0	NA	6B	6B28	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	28	19	11	0	4	1	0	0	0	0	5	42	4	1	0	NA	6B	6B28	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	29	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, note that says ""1 abort, plant collected"" different #??"	6B	6B29	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	29	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, note that says ""1 abort, plant collected"" different #??"	6B	6B29	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	29	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, note that says ""1 abort, plant collected"" different #??"	6B	6B29	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	32	63	0	0	8	0	0	2	1	4	0	31	0	1	0	NA	6B	6B32	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	32	63	0	0	8	0	0	2	1	4	0	31	0	1	0	NA	6B	6B32	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	32	63	0	0	8	0	0	2	1	4	0	31	0	1	0	NA	6B	6B32	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	26	12	0	0	2	0	0	1	0	11	0	23	5	2	0	NA	6B	6B26	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	26	12	0	0	2	0	0	1	0	11	0	23	5	2	0	NA	6B	6B26	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	26	12	0	0	2	0	0	1	0	11	0	23	5	2	0	NA	6B	6B26	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	34	103	1	0	16	1	0	5	0	25	6	60	4	1	0	NA	6B	6B34	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	34	103	1	0	16	1	0	5	0	25	6	60	4	1	0	NA	6B	6B34	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	34	103	1	0	16	1	0	5	0	25	6	60	4	1	0	NA	6B	6B34	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	127	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	6B	6B127	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	127	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	6B	6B127	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	127	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1 envelope	6B	6B127	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	632	2	0	0	1	0	0	0	0	2	0	0	0	0	0	2 envelopes, 2 dates, HMB and RGD	6B	6B632	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	632	2	0	0	1	0	0	0	0	2	0	0	0	0	0	2 envelopes, 2 dates, HMB and RGD	6B	6B632	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	632	2	0	0	1	0	0	0	0	2	0	0	0	0	0	2 envelopes, 2 dates, HMB and RGD	6B	6B632	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	654	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, says ""1 abort, plant coll"""	6B	6B654	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	654	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, says ""1 abort, plant coll"""	6B	6B654	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	654	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, says ""1 abort, plant coll"""	6B	6B654	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	655	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, says ""abort"""	6B	6B655	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	655	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, says ""abort"""	6B	6B655	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	655	0	0	0	0	0	0	0	0	0	0	1	0	0	0	"1 envelope, says ""abort"""	6B	6B655	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	B	678	0	0	0	0	0	0	0	0	0	0	5	0	0	0	1 envelope	6B	6B678	Reduction	Reduction	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	B	678	0	0	0	0	0	0	0	0	0	0	5	0	0	0	1 envelope	6B	6B678	Reduction	Reduction	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	B	678	0	0	0	0	0	0	0	0	0	0	5	0	0	0	1 envelope	6B	6B678	Reduction	Reduction	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	38	0	0	0	0	0	0	0	0	0	0	6	14	0	9	no note on B, 1 envelope	6C	6C38	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	38	0	0	0	0	0	0	0	0	0	0	6	14	0	9	no note on B, 1 envelope	6C	6C38	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	38	0	0	0	0	0	0	0	0	0	0	6	14	0	9	no note on B, 1 envelope	6C	6C38	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	42	0	0	0	0	0	0	0	0	2	0	1	3	0	0	3 envelopes, all 7/28 HMB	6C	6C42	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	42	0	0	0	0	0	0	0	0	2	0	1	3	0	0	3 envelopes, all 7/28 HMB	6C	6C42	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	42	0	0	0	0	0	0	0	0	2	0	1	3	0	0	3 envelopes, all 7/28 HMB	6C	6C42	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	44	0	0	0	0	0	0	3	0	3	0	2	0	0	0	3 envelopes, all 7/28 HMB	6C	6C44	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	44	0	0	0	0	0	0	3	0	3	0	2	0	0	0	3 envelopes, all 7/28 HMB	6C	6C44	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	44	0	0	0	0	0	0	3	0	3	0	2	0	0	0	3 envelopes, all 7/28 HMB	6C	6C44	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	47	2	0	0	1	0	0	1	0	5	0	2	0	0	0	2 envelopes, all 7/28 HMB	6C	6C47	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	47	2	0	0	1	0	0	1	0	5	0	2	0	0	0	2 envelopes, all 7/28 HMB	6C	6C47	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	47	2	0	0	1	0	0	1	0	5	0	2	0	0	0	2 envelopes, all 7/28 HMB	6C	6C47	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	54	26	0	0	4	0	0	1	0	0	0	8	0	0	1	no note for B, 2 envelopes 7/28 by HMB	6C	6C54	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	54	26	0	0	4	0	0	1	0	0	0	8	0	0	1	no note for B, 2 envelopes 7/28 by HMB	6C	6C54	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	54	26	0	0	4	0	0	1	0	0	0	8	0	0	1	no note for B, 2 envelopes 7/28 by HMB	6C	6C54	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	66	0	0	0	0	0	0	0	0	0	0	13	0	0	0	1 envelope, 7/28 HMB	6C	6C66	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	66	0	0	0	0	0	0	0	0	0	0	13	0	0	0	1 envelope, 7/28 HMB	6C	6C66	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	66	0	0	0	0	0	0	0	0	0	0	13	0	0	0	1 envelope, 7/28 HMB	6C	6C66	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	78	11	0	0	5	0	0	1	0	20	0	24	5	0	0	NA	6C	6C78	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	78	11	0	0	5	0	0	1	0	20	0	24	5	0	0	NA	6C	6C78	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	78	11	0	0	5	0	0	1	0	20	0	24	5	0	0	NA	6C	6C78	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	82	33	0	0	5	0	0	2	0	3	0	11	0	1	0	NA	6C	6C82	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	82	33	0	0	5	0	0	2	0	3	0	11	0	1	0	NA	6C	6C82	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	82	33	0	0	5	0	0	2	0	3	0	11	0	1	0	NA	6C	6C82	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	87	25	0	0	6	0	0	2	0	4	0	22	3	0	0	NA	6C	6C87	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	87	25	0	0	6	0	0	2	0	4	0	22	3	0	0	NA	6C	6C87	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	87	25	0	0	6	0	0	2	0	4	0	22	3	0	0	NA	6C	6C87	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	102	19	19	0	4	4	0	0	0	0	0	8	8	0	0	NA	6C	6C102	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	102	19	19	0	4	4	0	0	0	0	0	8	8	0	0	NA	6C	6C102	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	102	19	19	0	4	4	0	0	0	0	0	8	8	0	0	NA	6C	6C102	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	103	83	0	0	5	0	0	7	0	6	0	15	1	0	0	NA	6C	6C103	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	103	83	0	0	5	0	0	7	0	6	0	15	1	0	0	NA	6C	6C103	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	103	83	0	0	5	0	0	7	0	6	0	15	1	0	0	NA	6C	6C103	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	106	58	3	6	12	2	2	6	0	1	1	8	0	0	0	NA	6C	6C106	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	106	58	3	6	12	2	2	6	0	1	1	8	0	0	0	NA	6C	6C106	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	106	58	3	6	12	2	2	6	0	1	1	8	0	0	0	NA	6C	6C106	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	109	30	0	0	4	0	0	2	0	0	1	13	2	1	0	NA	6C	6C109	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	109	30	0	0	4	0	0	2	0	0	1	13	2	1	0	NA	6C	6C109	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	109	30	0	0	4	0	0	2	0	0	1	13	2	1	0	NA	6C	6C109	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	118	23	0	0	6	0	0	0	0	2	0	9	1	3	0	NA	6C	6C118	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	118	23	0	0	6	0	0	0	0	2	0	9	1	3	0	NA	6C	6C118	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	118	23	0	0	6	0	0	0	0	2	0	9	1	3	0	NA	6C	6C118	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	222	7	0	0	1	0	0	0	0	2	0	0	0	0	0	2 envelopes, 7/28 HMB	6C	6C222	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	222	7	0	0	1	0	0	0	0	2	0	0	0	0	0	2 envelopes, 7/28 HMB	6C	6C222	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	222	7	0	0	1	0	0	0	0	2	0	0	0	0	0	2 envelopes, 7/28 HMB	6C	6C222	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	C	271	12	0	0	2	0	0	0	0	1	0	18	0	3	0	NA	6C	6C271	Control	Mock rainout	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	C	271	12	0	0	2	0	0	0	0	1	0	18	0	3	0	NA	6C	6C271	Control	Mock rainout	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	C	271	12	0	0	2	0	0	0	0	1	0	18	0	3	0	NA	6C	6C271	Control	Mock rainout	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+na	"NA"	234	0	0	0	0	0	0	0	0	0	2	2	0	0	9	"envelope has no plot or subplot. From 7/25, has the note- ""stem broken"" on envelope"	naNA	naNA234	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+6	D	29	1	0	0	1	0	0	0	0	0	2	9	1	0	0	2 envelopes, no date on either.	6D	6D29	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	29	1	0	0	1	0	0	0	0	0	2	9	1	0	0	2 envelopes, no date on either.	6D	6D29	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	29	1	0	0	1	0	0	0	0	0	2	9	1	0	0	2 envelopes, no date on either.	6D	6D29	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	38	6	3	0	2	1	0	0	3	0	4	17	11	0	0	NA	6D	6D38	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	38	6	3	0	2	1	0	0	3	0	4	17	11	0	0	NA	6D	6D38	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	38	6	3	0	2	1	0	0	3	0	4	17	11	0	0	NA	6D	6D38	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	42	0	0	0	0	0	0	0	0	6	0	16	1	5	0	NA	6D	6D42	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	42	0	0	0	0	0	0	0	0	6	0	16	1	5	0	NA	6D	6D42	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	42	0	0	0	0	0	0	0	0	6	0	16	1	5	0	NA	6D	6D42	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	43	0	0	0	0	0	0	0	0	1	0	15	0	4	1	4 dates	6D	6D43	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	43	0	0	0	0	0	0	0	0	1	0	15	0	4	1	4 dates	6D	6D43	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	43	0	0	0	0	0	0	0	0	1	0	15	0	4	1	4 dates	6D	6D43	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	44	23	0	0	3	0	0	5	0	22	0	20	0	0	0	NA	6D	6D44	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	44	23	0	0	3	0	0	5	0	22	0	20	0	0	0	NA	6D	6D44	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	44	23	0	0	3	0	0	5	0	22	0	20	0	0	0	NA	6D	6D44	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	45	21	0	0	4	0	0	1	0	3	0	38	4	3	0	NA	6D	6D45	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	45	21	0	0	4	0	0	1	0	3	0	38	4	3	0	NA	6D	6D45	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	45	21	0	0	4	0	0	1	0	3	0	38	4	3	0	NA	6D	6D45	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	47	77	0	0	11	0	0	2	0	14	0	8	2	0	0	NA	6D	6D47	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	47	77	0	0	11	0	0	2	0	14	0	8	2	0	0	NA	6D	6D47	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	47	77	0	0	11	0	0	2	0	14	0	8	2	0	0	NA	6D	6D47	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	51	0	0	0	0	0	0	0	0	7	0	10	0	0	0	4 envelopes, 4 dates	6D	6D51	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	51	0	0	0	0	0	0	0	0	7	0	10	0	0	0	4 envelopes, 4 dates	6D	6D51	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	51	0	0	0	0	0	0	0	0	7	0	10	0	0	0	4 envelopes, 4 dates	6D	6D51	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	54	147	0	6	19	0	2	11	0	7	0	27	4	0	0	NA	6D	6D54	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	54	147	0	6	19	0	2	11	0	7	0	27	4	0	0	NA	6D	6D54	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	54	147	0	6	19	0	2	11	0	7	0	27	4	0	0	NA	6D	6D54	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	55	23	0	0	4	0	0	4	0	5	0	0	0	0	0	NA	6D	6D55	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	55	23	0	0	4	0	0	4	0	5	0	0	0	0	0	NA	6D	6D55	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	55	23	0	0	4	0	0	4	0	5	0	0	0	0	0	NA	6D	6D55	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	66	22	3	0	3	1	0	1	0	5	0	9	0	0	0	NA	6D	6D66	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	66	22	3	0	3	1	0	1	0	5	0	9	0	0	0	NA	6D	6D66	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	66	22	3	0	3	1	0	1	0	5	0	9	0	0	0	NA	6D	6D66	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	245	1	0	0	1	0	0	0	0	0	0	1	2	0	0	1 envelope,7/31 RGD	6D	6D245	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	245	1	0	0	1	0	0	0	0	0	0	1	2	0	0	1 envelope,7/31 RGD	6D	6D245	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	245	1	0	0	1	0	0	0	0	0	0	1	2	0	0	1 envelope,7/31 RGD	6D	6D245	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
+6	D	258	0	0	0	0	0	0	0	0	5	0	10	1	0	0	1 envelope,7/31 RGD	6D	6D258	Addition	Addition	2018	2018-04-30T15:00:00Z	120	2018-04-30T19:00:00Z	120	Normal	120	normal	2018-04-30T18:00:00Z	120	0
+6	D	258	0	0	0	0	0	0	0	0	5	0	10	1	0	0	1 envelope,7/31 RGD	6D	6D258	Addition	Addition	2019	2019-06-05T20:00:00Z	156	2019-06-05T20:00:00Z	156	Normal	156	normal	2019-06-05T18:00:00Z	157.2	-1.1999999999999886
+6	D	258	0	0	0	0	0	0	0	0	5	0	10	1	0	0	1 envelope,7/31 RGD	6D	6D258	Addition	Addition	2020	2020-05-06T18:00:00Z	127	2020-05-06T17:00:00Z	127	Normal	127	normal	2020-05-06T18:00:00Z	126	1
