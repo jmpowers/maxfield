@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Rpubs
+/rsconnect/
+
+# Weather data
+billy_rmbl_wrcc_weather_2017_2020.csv

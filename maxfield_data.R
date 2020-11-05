@@ -42,15 +42,16 @@ treatments <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture &
 # HOBO manual: https://www.onsetcomp.com/files/manual_pdfs/9556-M%20UA-002%20Manual.pdf
 # When the snow melts, the temperature rises above freezing and the light intensifies.
 # The day of snowmelt can be calculated from the following thresholds.
-# DRC also provided a list of the observed melt_date (with what protocol?) that we will use
+# DRC also provided a list of the melt_date - this uses 
+# HOBO light thresholds of 10000 lux, except for 2 plots in 2020.
 
-melt_threshold_sun  <- 15000 # light units (probably lux = lumen / m2)
-melt_threshold_warm <- 10    # degrees Celsius - 10C has a better fit to the melt_date and sun_date than 1C
+melt_threshold_sun  <- 10000 # light units (probably lux = lumen / m2)
+melt_threshold_warm <- 1    # degrees Celsius difference (positive or negative) from 0C (inside snow)
 
 hobo <- drive_download(filter(datasheets, name=="maxfield_hobo_data.csv"), overwrite = T)$local_path %>% read_csv() %>% 
   mutate(time=with_tz(time, "Etc/GMT+6"), #the HOBOs do not account for DST, and were likely all set up during MST
          sun = intensity > melt_threshold_sun, 
-         warm = temp > melt_threshold_warm) %>% 
+         warm = abs(temp) > melt_threshold_warm) %>% 
   mutate_at(c("year","plot"), as.factor)
 
 meltdates <- full_join(
@@ -60,20 +61,22 @@ meltdates <- full_join(
   hobo %>% filter(month(time)%in%4:6, warm==TRUE) %>% 
     group_by(year, plot) %>% summarize_at("time", min) %>% 
     mutate(warm_date=yday(time)) %>%  rename(warm_time=time)) %>% 
-  # In 2018 the HOBO logger for plot 4 did not record any data. 
-  bind_rows(data.frame(year=factor("2018"), plot=factor("4"))) %>% 
+  # In 2018 the HOBO logger for plot 4 did not record any data - impute data from plot 5's melt_date
+  bind_rows(data.frame(year=factor("2018"), plot=factor("4"), sun_date=114, warm_date=114)) %>% 
   left_join(treatments %>% select(plot, snow) %>% distinct) %>% 
   left_join(read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="snowmelt") %>% 
-              mutate(year=factor(year), plot=as.factor(plot)) %>% select(-notes)) %>% 
+              mutate(year=factor(year), plot=as.factor(plot)) %>% select(-notes),
+            snow_new = factor(recode(snow_new, "early"="Early","normal"="Normal"))) %>% 
   mutate(plot=factor(plot),
          melt_time = parse_date_time(paste(year,melt_date,12,0), "y j H M", tz="Etc/GMT+6")) %>%
   # In 2019 the avalanche caused plots 5 and 2 to melt with the normal snowmelt plots, so these are recoded as normal
-  mutate(snow = factor(ifelse(year=="2019" & melt_date > 154, "Normal", as.character(snow))))
+  # snow_new still records plot 5 as an "early" 
+  mutate(snow = factor(ifelse(year=="2019" & sun_date > 154, "Normal", as.character(snow))))
 
-# Calculate an offset from the mean melt_date in the normal plots
-meltdates <- meltdates %>% left_join(meltdates %>% group_by(year,snow) %>% summarize_at("melt_date", mean) %>% 
-            filter(snow=="Normal") %>% select(-snow) %>% rename(melt_date_normal_mean = melt_date)) %>% 
-  mutate(melt_offset = melt_date - melt_date_normal_mean) 
+# Calculate an offset from the mean sun_date in the normal plots
+meltdates <- meltdates %>% left_join(meltdates %>% group_by(year,snow) %>% summarize_at("sun_date", mean) %>% 
+            filter(snow=="Normal") %>% select(-snow) %>% rename(sun_date_normal_mean = sun_date)) %>% 
+  mutate(melt_offset = sun_date - sun_date_normal_mean) 
 
 # Update the treatments with the actual meltdates and updated early/normal codes in each year
 treatments <- treatments %>% select(-snow) %>% left_join(meltdates)
@@ -298,12 +301,12 @@ mt <- bind_rows(mt, nt)  %>%
 
 #average by plant and year
 mt.plantyr <- mt %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(year, water, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  group_by(year, water, water4, snow, snow_new, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
 #average by plant and year, then by subplot
 mt.subplot <- mt.plantyr %>%  
-  group_by(year, water, snow, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
+  group_by(year, water, water4, snow, snow_new, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
 

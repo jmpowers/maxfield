@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2020-11-03" />
+<meta name="date" content="2020-11-04" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -268,7 +268,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2020-11-03</h4>
+<h4 class="date">2020-11-04</h4>
 
 </div>
 
@@ -286,43 +286,83 @@ td, th { padding : 6px }
 <h1>Treatments</h1>
 <pre class="r"><code>library(tidyverse)
 library(lubridate)
+
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(broom)
+library(vegan)
+
 library(RColorBrewer)
+library(viridis)
+library(GGally)
+
 library(knitr)
-knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = FALSE, message = FALSE, fig.path = &quot;images/&quot;)
-ggplot2::theme_set(theme_grey())
+knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, fig.path = &quot;images/&quot;)
+
+signif.num &lt;- function(x) {
+    as.character(symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
+           cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+           symbols = c(&quot;***&quot;, &quot;**&quot;, &quot;*&quot;, &quot;.&quot;, &quot; &quot;)))
+}
 
 load(&quot;data/maxfield_data.rda&quot;)</code></pre>
 </div>
 <div id="snow-melt-vs.-treatments" class="section level1">
 <h1>Snow melt vs. treatments</h1>
-<pre class="r"><code>ggplot(hobo %&gt;% filter(month(time)%in%4:6), aes(x=time, y=temp, color=plot)) + facet_wrap(vars(year), scales=&quot;free_x&quot;, ncol=1) + 
-  geom_line() + geom_hline(yintercept=melt_threshold_warm) +
-  geom_segment(data=meltdates, aes(x=warm_time, y=-10, xend=melt_time, yend=-15, color=plot), size=1) +
-    geom_line(data=daily_temp %&gt;% filter(year&gt;2017, month(date)%in%4:6), aes(x=as.POSIXct(date), y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, &quot;Oranges&quot;)[3]) </code></pre>
+<pre class="r"><code>ggplot(hobo, aes(x=intensity, y=temp, color=hour(time))) +  geom_point(alpha=0.5, size=0.5) + geom_density_2d(color=&quot;black&quot;)+ 
+  scale_x_log10(labels=function(x) format(x, scientific=F, big.mark=&quot;,&quot;), limits=c(10,1e6), breaks=10^(0:6)) +
+  scale_color_gradientn(colours = rainbow(5))+
+  geom_vline(xintercept = melt_threshold_sun) + 
+  geom_hline(yintercept=melt_threshold_warm)+ geom_hline(yintercept=-melt_threshold_warm) +
+  labs(x=&quot;Light intensity (lux)&quot;, y=&quot;Temperature (C)&quot;, color=&quot;Hour&quot;) +
+  theme_dark() + theme(panel.grid.minor.x=element_blank())</code></pre>
 <p><img src="images/hobo-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(hobo %&gt;% filter(month(time)%in%4:6), aes(x=time, y=intensity, color=plot)) + facet_wrap(vars(year), scales=&quot;free_x&quot;, ncol=1) + 
-  geom_line() + geom_hline(yintercept=melt_threshold_sun) +
-  geom_segment(data=meltdates, aes(x=sun_time, y=-2e4, xend=melt_time, yend=-4e4, color=plot), size=1)</code></pre>
+<pre class="r"><code>ggplot(hobo %&gt;% filter(hour(time)%in%5:17 &amp; 
+                  (year!=&quot;2019&quot;&amp;yday(time) %in% 110:130 | 
+                   year==&quot;2019&quot;&amp;yday(time) %in% 145:160)), 
+       aes(x=intensity, y=temp, color=hour(time))) +   geom_point(alpha=0.7) +geom_density_2d(color=&quot;black&quot;)+
+  scale_x_log10(labels=function(x) format(x, scientific=F, big.mark=&quot;,&quot;), limits=c(10,1e6), breaks=10^(0:6)) +
+  scale_color_gradientn(colours = rainbow(5))+
+  geom_vline(xintercept = melt_threshold_sun) + 
+  geom_hline(yintercept=melt_threshold_warm)+ geom_hline(yintercept=-melt_threshold_warm) +
+  labs(title=&quot;Temperature and light thresholds for snow melt&quot;, subtitle = &quot;During the day during melt weeks&quot;,
+       x=&quot;Light intensity (lux)&quot;, y=&quot;Temperature (C)&quot;, color=&quot;Hour&quot;) +
+  theme_dark() + theme(panel.grid.minor.x=element_blank())</code></pre>
 <p><img src="images/hobo-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(hobo %&gt;% filter(month(time)%in%4:6), aes(x=time, y=temp, color=plot)) + 
+  facet_wrap(vars(year), scales=&quot;free_x&quot;, ncol=1) + 
+  geom_hline(yintercept=melt_threshold_warm) + geom_hline(yintercept=-melt_threshold_warm) +geom_line() +
+  geom_segment(data=meltdates, aes(x=warm_time, y=-10, xend=sun_time, yend=-15, color=plot), size=1) +
+    geom_line(data=daily_temp %&gt;% filter(year!=&quot;2017&quot;, month(date)%in%4:6), aes(x=as.POSIXct(date), y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, &quot;Oranges&quot;)[3]) +
+  labs(x=&quot;Date&quot;,y=&quot;Temperature (C)&quot;, color=&quot;Plot&quot;)</code></pre>
+<p><img src="images/hobo-3.png" width="672" /></p>
+<pre class="r"><code>ggplot(hobo %&gt;% filter(month(time)%in%4:6), aes(x=time, y=intensity, color=plot)) + 
+  facet_wrap(vars(year), scales=&quot;free_x&quot;, ncol=1) + 
+  geom_line() + geom_hline(yintercept=melt_threshold_sun) +
+  geom_segment(data=meltdates, aes(x=sun_time, y=-2e4, xend=melt_time, yend=-4e4, color=plot), size=1) +
+  labs(x=&quot;Date&quot;,y=&quot;Light intensity (lux)&quot;, color=&quot;Plot&quot;)</code></pre>
+<p><img src="images/hobo-4.png" width="672" /></p>
 <pre class="r"><code>meltdates %&gt;% select(c(&quot;year&quot;,&quot;plot&quot;, &quot;snow&quot;, ends_with(&quot;date&quot;))) %&gt;% pivot_longer(ends_with(&quot;date&quot;)) %&gt;% arrange(name) %&gt;% 
   ggplot(aes(y=name, x=value, color=plot, group=plot, linetype=snow)) + facet_wrap(vars(year), ncol=1) +
-  geom_path(size=1) + geom_text(aes(label=plot), hjust=1.5) +
-  scale_linetype_manual(values=c(4,1)) + scale_x_continuous(minor_breaks=110:160)</code></pre>
-<p><img src="images/hobo-3.png" width="672" /></p>
+  geom_path(size=1) + #geom_text(aes(label=plot), hjust=1.5) +
+  scale_linetype_manual(values=c(4,1)) + scale_x_continuous(minor_breaks=110:160)+
+  labs(x=&quot;Day of year&quot;,y=&quot;Criteron&quot;, color=&quot;Plot&quot;, linetype=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/hobo-5.png" width="672" /></p>
 <pre class="r"><code>meltdates %&gt;% ggplot(aes(x=melt_offset, fill=snow)) + geom_dotplot(binwidth=1, color=&quot;white&quot;) +
   facet_wrap(vars(year), ncol=1)+ scale_fill_manual(values=snow_pal) +
   scale_y_continuous(expand=expansion(0,0))+ scale_x_continuous(breaks=-10:4)+
   theme(panel.grid.minor = element_blank()) +
   labs(x=&quot;Offset from mean normal snow melt date (days)&quot;, y=&quot;Number of plots&quot;, fill=&quot;Snowmelt&quot;)</code></pre>
-<p><img src="images/hobo-4.png" width="672" /></p>
+<p><img src="images/hobo-6.png" width="672" /></p>
 <pre class="r"><code>left_join(sm.subplotmonth, meltdates) %&gt;% 
   mutate(mo = paste0(&quot;Month &quot;,mo,&quot;, &quot;,month.abb[mo])) %&gt;% 
-  ggplot(aes(x=melt_date, y=VWC, shape=year,color=water)) + 
+  ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
   facet_wrap(vars(mo), nrow=1)+
   geom_point() + geom_smooth(se=F, method=&quot;lm&quot;) +
   scale_color_manual(values=water_pal) +
   labs(x=&quot;Snowmelt date&quot;, y=&quot;Mean soil moisture in subplot&quot;, color=&quot;Water&quot;, shape=&quot;Year&quot;)</code></pre>
-<p><img src="images/hobo-5.png" width="672" /></p>
+<p><img src="images/hobo-7.png" width="672" /></p>
 </div>
 <div id="weather-data" class="section level1">
 <h1>Weather data</h1>
@@ -336,7 +376,7 @@ load(&quot;data/maxfield_data.rda&quot;)</code></pre>
   geom_jitter(height=0, width=0.3) + geom_smooth(se=F, span=0.5) +
   geom_col(data=daily_precip %&gt;% filter(year!=&quot;2017&quot;), aes(x=julian, y=precip_mm), inherit.aes = F, fill=brewer.pal(3, &quot;Greens&quot;)[3]) + 
   geom_line(data=daily_temp %&gt;% filter(year!=&quot;2017&quot;), aes(x=julian, y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, &quot;Oranges&quot;)[3]) + 
-  geom_vline(data=meltdates, aes(xintercept=melt_date, linetype=snow), inherit.aes=F, color=brewer.pal(3, &quot;Purples&quot;)[3])+
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), inherit.aes=F, color=brewer.pal(3, &quot;Purples&quot;)[3])+
   scale_x_continuous(limits=c(110, 230), breaks=scales::breaks_extended(10), expand=expansion(0,0)) + scale_y_continuous(limits=c(-3, 20)) +
   labs(y=&quot;Volumetric water content (%) / Daily precipitation (mm) / Mean temperature (C)&quot;, 
        x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
@@ -823,41 +863,279 @@ cen20 &lt;- cen20 %&gt;% arrange(id, status, desc(date)) %&gt;% distinct(id, .ke
 <pre class="r"><code>traits &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;, &quot;style_length&quot;, &quot;sepal_width&quot;, &quot;nectar_24_h_ul&quot;, &quot;nectar_conc&quot;,&quot;nectar_sugar_24_h_mg&quot;) #exclude anthers
 traitnames &lt;- setNames(c(&quot;Corolla Length (mm)&quot;, &quot;Corolla Width (mm)&quot;, &quot;Style Length (mm)&quot;, &quot;Sepal Width (mm)&quot;, &quot;Nectar Volume (uL/day)&quot;, &quot;Nectar Concentration (% sucrose by mass)&quot;, &quot;Nectar Sucrose (mg/day)&quot;), traits)
 
-library(GGally)
 ggpairs(mt %&gt;% select(corolla_length,   corolla_width,  style_length,   anther_max, anther_min, sepal_width))</code></pre>
 <p><img src="images/correlations-1.png" width="672" /></p>
 <pre class="r"><code>ggplot(mt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(x=&quot;Nectar volume (uL / day)&quot;, y=&quot;Nectar concentration (% sucrose by mass)&quot;) + geom_smooth(se=F)</code></pre>
 <p><img src="images/correlations-2.png" width="672" /></p>
 </div>
-<div id="floral-plasticity-water-treatments-and-snowmelt" class="section level3">
-<h3>Floral plasticity: water treatments and snowmelt</h3>
+<div id="floral-plasticity-water-treatments-and-snowmelt-treatments" class="section level3">
+<h3>Floral plasticity: water treatments and snowmelt treatments</h3>
+<p>This is a split-plot analysis, based on the original experimental design. The models use:</p>
+<ul>
+<li><em>mt.subplot</em>, the 24 * 3 subplot means within each year</li>
+<li><em>snow_new</em>, which has plot 5 as “early” in 2019 (it melted 1 day earlier than the next normal plot)</li>
+<li><em>water4</em>, which does not combine the mock rainout treatments with the controls</li>
+<li><em>plot</em> as a random effect (subplots vary within this larger unit)</li>
+</ul>
+<p>The models are specified as:</p>
+<pre><code>lmer(trait ~ year * snow_new * water4 + (1|plot), data = mt.subplot)</code></pre>
+<ul>
+<li>The models for nectar volume and total sugar are singular (variance at plot level near 0)</li>
+<li>Removing the interactions with year does not make those two models not singular</li>
+<li>The model fits are mostly singular when a random effect of <em>plotid</em> (subplot) is added for repeated measures among years</li>
+</ul>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-library(lme4)
-library(lmerTest)
-library(emmeans)
-library(broom)
-
-mt.mod.raw &lt;- mt.mod.plantyr &lt;- mt.mod.subplot &lt;- mt.mod.subplot.test &lt;- mt.mod.subplot.emm &lt;- mt.mod.plot &lt;- list()
+mt.mod &lt;- mt.mod.test &lt;- mod.emm &lt;- mt.mod.plot &lt;- list()
 for(tr in traits) {
-  mt.mod.raw[[tr]]     &lt;- lmer(mt[[tr]]         ~ year * water * melt_offset + (1|plotid) + (1|plantid), data=mt)
+  mt.mod[[tr]] &lt;- lmer(mt.subplot[[tr]] ~ year * snow_new * water4 + (1|plot), data=mt.subplot)
+  mt.mod.test[[tr]] &lt;- anova(mt.mod[[tr]])
+  mod.emm[[tr]] &lt;- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year + snow_new * water4))
+  
+  mt.mod.plot[[tr]] &lt;- 
+    ggplot(mod.emm[[tr]], aes(x=water4, color=snow_new, y = emmean)) + facet_wrap(vars(year), nrow=1) +
+        labs(x=&quot;Precipitation&quot;, y=traitnames[[tr]], color=&quot;Snowmelt\n(2019 plot 5=early)&quot;, shape=&quot;Year&quot;) +
+        geom_point(data=mt.subplot, aes_string(x=&quot;water4&quot;, color=&quot;snow_new&quot;, y = tr), inherit.aes = F, position=position_dodge(0.7)) + 
+        geom_point(position=position_dodge(0.7), size=4, shape=0) + 
+        geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE), position=position_dodge2(0.6)) +
+        guides(x=guide_axis(angle = 90))
+  print(mt.mod.plot[[tr]])
+  cat(paste(tr,&quot;\n&quot;))
+  print(mt.mod.test[[tr]])
+}</code></pre>
+<p><img src="images/morphology_split-1.png" width="672" /></p>
+<pre><code>corolla_length 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                     Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year                 88.452  44.226     2 44.076 22.9143 1.505e-07 ***
+snow_new              0.398   0.398     1  5.518  0.2060    0.6672    
+water4               10.008   3.336     3 43.287  1.7284    0.1753    
+year:snow_new         0.040   0.020     2 45.693  0.0103    0.9897    
+year:water4           8.147   1.358     6 43.281  0.7036    0.6483    
+snow_new:water4       1.410   0.470     3 43.287  0.2435    0.8655    
+year:snow_new:water4  3.496   0.583     6 43.281  0.3019    0.9325    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-2.png" width="672" /></p>
+<pre><code>corolla_width 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                      Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year                 3.15812 1.57906     2 43.414 67.2959 4.988e-14 ***
+snow_new             0.00764 0.00764     1  7.476  0.3257 0.5849686    
+water4               0.53375 0.17792     3 41.835  7.5824 0.0003686 ***
+year:snow_new        0.00818 0.00409     2 43.697  0.1744 0.8405752    
+year:water4          0.31814 0.05302     6 41.831  2.2598 0.0559234 .  
+snow_new:water4      0.04938 0.01646     3 41.835  0.7014 0.5565306    
+year:snow_new:water4 0.20592 0.03432     6 41.831  1.4626 0.2145245    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-3.png" width="672" /></p>
+<pre><code>style_length 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                     Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year                 66.626  33.313     2 44.027 20.7727 4.432e-07 ***
+snow_new              0.001   0.001     1  5.532  0.0005   0.98333    
+water4               10.323   3.441     3 43.197  2.1457   0.10833    
+year:snow_new         0.219   0.109     2 45.638  0.0682   0.93413    
+year:water4           7.637   1.273     6 43.191  0.7937   0.57996    
+snow_new:water4       1.842   0.614     3 43.197  0.3828   0.76589    
+year:snow_new:water4 19.427   3.238     6 43.191  2.0189   0.08371 .  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-4.png" width="672" /></p>
+<pre><code>sepal_width 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                       Sum Sq  Mean Sq NumDF  DenDF F value   Pr(&gt;F)   
+year                 0.002508 0.002508     1 30.020  0.2864 0.596494   
+snow_new             0.000738 0.000738     1 10.199  0.0843 0.777388   
+water4               0.144258 0.048086     3 27.795  5.4900 0.004314 **
+year:snow_new        0.005531 0.005531     1 30.237  0.6315 0.433000   
+year:water4          0.099730 0.033243     3 27.795  3.7954 0.021224 * 
+snow_new:water4      0.004973 0.001658     3 27.795  0.1892 0.902820   
+year:snow_new:water4 0.037080 0.012360     3 27.795  1.4112 0.260438   
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-5.png" width="672" /></p>
+<pre><code>nectar_24_h_ul 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                     Sum Sq Mean Sq NumDF DenDF F value   Pr(&gt;F)   
+year                 4.9402 2.47010     2    48  7.3690 0.001618 **
+snow_new             2.1049 2.10489     1    48  6.2795 0.015658 * 
+water4               3.8459 1.28195     3    48  3.8244 0.015512 * 
+year:snow_new        1.1722 0.58611     2    48  1.7485 0.184932   
+year:water4          0.9691 0.16151     6    48  0.4818 0.818564   
+snow_new:water4      0.7995 0.26649     3    48  0.7950 0.502700   
+year:snow_new:water4 1.4699 0.24498     6    48  0.7308 0.627080   
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-6.png" width="672" /></p>
+<pre><code>nectar_conc 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                     Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year                 656.17  328.09     2 45.320 32.2555 1.944e-09 ***
+snow_new               4.13    4.13     1 10.662  0.4062   0.53733    
+water4               127.12   42.37     3 43.830  4.1660   0.01111 *  
+year:snow_new         14.98    7.49     2 45.296  0.7363   0.48452    
+year:water4           22.19    3.70     6 43.830  0.3635   0.89800    
+snow_new:water4       34.23   11.41     3 43.830  1.1217   0.35065    
+year:snow_new:water4  72.60   12.10     6 43.830  1.1897   0.32958    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-7.png" width="672" /></p>
+<pre><code>nectar_sugar_24_h_mg 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                     Sum Sq Mean Sq NumDF DenDF F value    Pr(&gt;F)    
+year                 4903.3 2451.66     2    48  8.1599 0.0008903 ***
+snow_new              781.0  780.96     1    48  2.5992 0.1134711    
+water4                740.6  246.86     3    48  0.8216 0.4883775    
+year:snow_new        1049.5  524.75     2    48  1.7465 0.1852797    
+year:water4          1321.3  220.21     6    48  0.7329 0.6254833    
+snow_new:water4       998.3  332.76     3    48  1.1075 0.3552891    
+year:snow_new:water4 1600.3  266.71     6    48  0.8877 0.5113379    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>mt.mod.tests &lt;- map_dfr(mt.mod.test, tidy, .id=&quot;trait&quot;)
+mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
+  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
+  bind_rows(lapply(mt.mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
+<table>
+<colgroup>
+<col width="17%" />
+<col width="12%" />
+<col width="11%" />
+<col width="10%" />
+<col width="9%" />
+<col width="12%" />
+<col width="9%" />
+<col width="17%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="left">corolla_length</th>
+<th align="left">corolla_width</th>
+<th align="left">style_length</th>
+<th align="left">sepal_width</th>
+<th align="left">nectar_24_h_ul</th>
+<th align="left">nectar_conc</th>
+<th align="left">nectar_sugar_24_h_mg</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left"></td>
+<td align="left">**</td>
+<td align="left">***</td>
+<td align="left">***</td>
+</tr>
+<tr class="even">
+<td align="left">snow_new</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">water4</td>
+<td align="left"></td>
+<td align="left">***</td>
+<td align="left"></td>
+<td align="left">**</td>
+<td align="left">*</td>
+<td align="left">*</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">year:snow_new</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">year:water4</td>
+<td align="left"></td>
+<td align="left">.</td>
+<td align="left"></td>
+<td align="left">*</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">snow_new:water4</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow_new:water4</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">.</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">Singular?</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="floral-plasticity-water-treatments-and-snowmelt-offset" class="section level3">
+<h3>Floral plasticity: water treatments and snowmelt offset</h3>
+<p>The differences in snowmelt dates vary among years and plots, so this analysis uses a melt date offset. The models use:</p>
+<ul>
+<li><em>mt.plantyr</em>, the trait data averaged by plant within year</li>
+<li><em>water</em>, the water treatments with mock rainouts and controls combined</li>
+<li><em>melt_offset</em>, the number of days between the snowmelt date (when the light entering the HOBO logger exceeds 10,000 lux) and the mean snowmelt date for the normal plots in that year (according to <em>snow</em>)</li>
+<li><em>plotid</em> (subplot) as a random effect (plants vary within this larger unit)</li>
+</ul>
+<p>The models are specified as:</p>
+<pre><code>lmer(trait ~ year * water * melt_offset + (1|plotid), data = mt.plantyr)</code></pre>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+mt.mod.raw &lt;- mt.mod.plantyr &lt;- mt.mod.subplot &lt;- mt.mod.plantyr.test &lt;- mt.mod.plot &lt;- list()
+for(tr in traits) {
+  #mt.mod.raw[[tr]]     &lt;- lmer(mt[[tr]]         ~ year * water * melt_offset + (1|plotid) + (1|plantid), data=mt)
   mt.mod.plantyr[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ year * water * melt_offset + (1|plotid), data=mt.plantyr)
+  mt.plantyr[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
+  mt.plantyr[[paste0(&quot;fit.&quot;,tr)]][!is.na(mt.plantyr[[tr]])]&lt;- predict(mt.mod.plantyr[[tr]], re.form=NA)
+  mt.mod.plantyr.test[[tr]] &lt;- anova(mt.mod.plantyr[[tr]])
   
-  # Use model with data averaged by subplot
-  mt.mod.subplot[[tr]] &lt;- lmer(mt.subplot[[tr]] ~ year * water * melt_offset + (1|plot),   data=mt.subplot)
-  mt.subplot[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
-  mt.subplot[[paste0(&quot;fit.&quot;,tr)]][!is.na(mt.subplot[[tr]])]&lt;- predict(mt.mod.subplot[[tr]], re.form=NA)
-  mt.mod.subplot.test[[tr]] &lt;- anova(mt.mod.subplot[[tr]])
-  
-  # Plot the model predictions with the data average by plant 
   mt.mod.plot[[tr]] &lt;- 
     ggplot(mt.plantyr, aes_string(x=&quot;melt_offset&quot;, color=&quot;water&quot;, y = tr)) + geom_point() +
-    geom_line(data=mt.subplot %&gt;% drop_na(paste0(&quot;fit.&quot;,tr)), aes_string(y=paste0(&quot;fit.&quot;,tr)), size=2)+
+    geom_line(data=mt.plantyr %&gt;% drop_na(paste0(&quot;fit.&quot;,tr)), aes_string(y=paste0(&quot;fit.&quot;,tr)), size=2)+
      scale_color_manual(values=water_pal)+ facet_wrap(vars(year))+
         labs(x=&quot;Offset from mean normal snow melt date (days)&quot;, y=traitnames[[tr]], color=&quot;Precipitation&quot;)
-}
-mt.mod.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
-mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = ifelse(p.value &lt; 0.05,&quot;*&quot;,&quot;&quot;)) %&gt;% 
-  pivot_wider(names_from=trait, values_from=p.value) %&gt;% kable</code></pre>
+  print(mt.mod.plot[[tr]])
+}</code></pre>
+<p><img src="images/morphology_model-1.png" width="672" /><img src="images/morphology_model-2.png" width="672" /><img src="images/morphology_model-3.png" width="672" /><img src="images/morphology_model-4.png" width="672" /><img src="images/morphology_model-5.png" width="672" /><img src="images/morphology_model-6.png" width="672" /><img src="images/morphology_model-7.png" width="672" /></p>
+<pre class="r"><code>mt.mod.plantyr.tests &lt;- map_dfr(mt.mod.plantyr.test, tidy, .id=&quot;trait&quot;)
+mt.mod.plantyr.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
+  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
+  bind_rows(lapply(mt.mod.plantyr, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
 <table>
 <colgroup>
 <col width="18%" />
@@ -884,21 +1162,21 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <tbody>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">*</td>
-<td align="left">*</td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left">*</td>
-<td align="left">*</td>
-<td align="left"></td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">.</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">**</td>
 </tr>
 <tr class="even">
 <td align="left">water</td>
+<td align="left">.</td>
+<td align="left">***</td>
 <td align="left"></td>
-<td align="left">*</td>
 <td align="left"></td>
-<td align="left">*</td>
-<td align="left"></td>
+<td align="left">.</td>
 <td align="left">*</td>
 <td align="left"></td>
 </tr>
@@ -908,16 +1186,16 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="left">*</td>
+<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">year:water</td>
 <td align="left"></td>
+<td align="left">.</td>
+<td align="left"></td>
 <td align="left">*</td>
-<td align="left"></td>
-<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -928,14 +1206,14 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
+<td align="left">*</td>
 <td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">.</td>
 </tr>
 <tr class="even">
 <td align="left">water:melt_offset</td>
 <td align="left"></td>
-<td align="left"></td>
+<td align="left">*</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -947,20 +1225,42 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
+<td align="left">.</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">Singular?</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div id="floral-plasticity-soil-moisture" class="section level3">
 <h3>Floral plasticity: soil moisture</h3>
+<p>Both snowmelt timing and summer precipitation affect soil moisture and its timing. This analysis regresses the floral traits against the mean soil moisture in a subplot. Slopes may differ among years. The models use:</p>
+<ul>
+<li><em>mt.plantyr</em>, the trait data averaged by plant within year</li>
+<li><em>VWC</em>, the summer mean of the approximately weekly mean volumetric water content in a subplot. This may need to change to a subset of the summer because it includes soil moisture taken after traits were measured. See section on within-season variation for timing of measurements in each year.</li>
+<li><em>plotid</em> (subplot) as a random effect (plants vary within this larger unit)</li>
+</ul>
+<p>The models are specified as:</p>
+<pre><code>lmer(trait ~ year * VWC + (1|plotid), data = mt.plantyr)</code></pre>
+<ul>
+<li>The model for total sugar is singular (variance at subplot level near 0)</li>
+</ul>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-mt.sm.mod &lt;- mt.sm.mod.test &lt;- coef.VWC &lt;- emm.VWC &lt;- mt.sm.mod.plot &lt;-list()
+mt.sm.mod &lt;- mt.sm.mod.test &lt;- mt.sm.mod.raw &lt;- coef.VWC &lt;- emm.VWC &lt;- mt.sm.mod.plot &lt;-list()
 for(tr in traits) {
-  mt.sm.mod[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ year * VWC + (1|plotid), data=mt.plantyr)
+  #mt.sm.mod.raw[[tr]] &lt;- lmer(mt[[tr]]    ~ year * VWC + (1|plot) + (1|plantid), data=mt)
+  mt.sm.mod[[tr]] &lt;-lmer(mt.plantyr[[tr]] ~ year * VWC + (1|plotid), data=mt.plantyr)
   mt.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]] &lt;- NA
   mt.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]][!is.na(mt.plantyr[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA)
   mt.sm.mod.test[[tr]] &lt;- anova(mt.sm.mod[[tr]])
@@ -974,14 +1274,15 @@ for(tr in traits) {
     ggplot(mt.plantyr, aes_string(x=&quot;VWC&quot;, color=&quot;year&quot;, y = tr)) + geom_point() +
     geom_line(data=mt.plantyr %&gt;% drop_na(paste0(&quot;fit.sm.&quot;,tr)), aes_string(y=paste0(&quot;fit.sm.&quot;,tr)), size=2)+
      scale_color_manual(values=year_pal)+
-        labs(x=&quot;Annual mean of soil moisture in subplot (VWC)&quot;, y=traitnames[[tr]], color=&quot;Year&quot;)
+        labs(x=&quot;Summer mean of soil moisture in subplot (VWC)&quot;, y=traitnames[[tr]], color=&quot;Year&quot;)
   print(mt.sm.mod.plot[[tr]])
 }</code></pre>
 <p><img src="images/morphology_sm-1.png" width="672" /><img src="images/morphology_sm-2.png" width="672" /><img src="images/morphology_sm-3.png" width="672" /><img src="images/morphology_sm-4.png" width="672" /><img src="images/morphology_sm-5.png" width="672" /><img src="images/morphology_sm-6.png" width="672" /><img src="images/morphology_sm-7.png" width="672" /></p>
 <pre class="r"><code>mt.sm.mod.tests &lt;- map_dfr(mt.sm.mod.test, tidy, .id=&quot;trait&quot;)
-mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = ifelse(p.value &lt; 0.05,&quot;*&quot;,&quot;&quot;)) %&gt;% 
-  pivot_wider(names_from=trait, values_from=p.value) %&gt;% kable</code></pre>
-<table>
+mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
+  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
+    bind_rows(lapply(mt.sm.mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
+<table style="width:100%;">
 <colgroup>
 <col width="8%" />
 <col width="13%" />
@@ -1007,33 +1308,43 @@ mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.val
 <tbody>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">*</td>
-<td align="left">*</td>
+<td align="left">**</td>
+<td align="left">**</td>
 <td align="left"></td>
-<td align="left">*</td>
+<td align="left">**</td>
 <td align="left"></td>
-<td align="left">*</td>
-<td align="left">*</td>
+<td align="left">***</td>
+<td align="left">**</td>
 </tr>
 <tr class="even">
 <td align="left">VWC</td>
 <td align="left">*</td>
+<td align="left">***</td>
+<td align="left">**</td>
 <td align="left">*</td>
+<td align="left">***</td>
 <td align="left">*</td>
-<td align="left">*</td>
-<td align="left">*</td>
-<td align="left">*</td>
-<td align="left">*</td>
+<td align="left">***</td>
 </tr>
 <tr class="odd">
 <td align="left">year:VWC</td>
 <td align="left"></td>
 <td align="left">*</td>
 <td align="left"></td>
-<td align="left">*</td>
+<td align="left">**</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">*</td>
+</tr>
+<tr class="even">
+<td align="left">Singular?</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
 </tr>
 </tbody>
 </table>
@@ -1047,21 +1358,6 @@ ggplot(emm.VWC.df %&gt;% drop_na(), aes(x=trait, y=VWC.trend, color=year)) +
   labs(y=&quot;Slope of z-scored trait vs. mean annual soil moisture&quot;, x=&quot;Floral Trait&quot;, color=&quot;Year&quot;) +
   theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images/morphology_sm-8.png" width="672" /></p>
-<div id="after-averaging-by-subplot" class="section level4">
-<h4>After averaging by subplot</h4>
-<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-mt.sm.mod &lt;- mt.sm.mod.test &lt;-  list()
-for(tr in traits) {
-  #cat(paste0(&quot;\n\n&quot;, tr,&quot;\n&quot;))
-  mt.sm.mod[[tr]] &lt;- lmer(mt.subplot[[tr]] ~ year * VWC + (1|plot), data=mt.subplot)#without scaling first
-    mt.subplot[[paste0(&quot;fit.avg.&quot;,tr)]] &lt;- NA
-  mt.subplot[[paste0(&quot;fit.avg.&quot;,tr)]][!is.na(mt.subplot[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA)
-    mt.sm.mod.test[[tr]] &lt;- anova(mt.sm.mod[[tr]])
-    #print(mt.sm.mod.test[[tr]])
-}</code></pre>
-<pre><code>boundary (singular) fit: see ?isSingular
-boundary (singular) fit: see ?isSingular</code></pre>
-</div>
 </div>
 <div id="multivariate-response" class="section level3">
 <h3>Multivariate response</h3>
@@ -1076,7 +1372,6 @@ mt.morph.pca &lt;- mt.morph %&gt;%
          x_2= corolla_width/2,y_2=corolla_length) %&gt;% 
   pivot_longer(c(starts_with(&quot;x&quot;),starts_with(&quot;y&quot;)), names_to=c(&quot;.value&quot;, &quot;point&quot;), names_sep=&quot;_&quot;)
 
-library(viridis)
 scl &lt;- 100
 zoom &lt;- 5.5
 mt.pca.vars &lt;- as.data.frame(mt.pca$rotation) %&gt;% rownames_to_column(&quot;variable&quot;)
@@ -1101,7 +1396,7 @@ ggplot(mt, aes(x=corolla_width, y=corolla_length, color=VWC)) + scale_color_viri
 <p><img src="images/multresp-2.png" width="672" /></p>
 <pre class="r"><code>ggplot(mt, aes(y=style_length / corolla_length, x=VWC, color=VWC)) + scale_color_viridis(direction=-1, option=&quot;plasma&quot;) + geom_point() + theme_minimal() + geom_smooth()</code></pre>
 <p><img src="images/multresp-3.png" width="672" /></p>
-<pre class="r"><code>library(vegan)
+<pre class="r"><code>options(contrasts = c(&quot;contr.treatment&quot;, &quot;contr.poly&quot;))
 mt.cap &lt;- capscale(scale(mt.morph[,-(6:7)]) ~ VWC + year, data=mt.morph)
 mt.cap</code></pre>
 <pre><code>Call: capscale(formula = scale(mt.morph[, -(6:7)]) ~ VWC + year, data =
@@ -1121,27 +1416,136 @@ Eigenvalues for constrained axes:
 Eigenvalues for unconstrained axes:
   MDS1   MDS2   MDS3   MDS4   MDS5 
 2.6291 0.6967 0.4033 0.1385 0.0957 </code></pre>
-<pre class="r"><code>anova(mt.cap, by=&quot;term&quot;)</code></pre>
-<pre><code>Permutation test for capscale under reduced model
-Terms added sequentially (first to last)
-Permutation: free
-Number of permutations: 999
-
-Model: capscale(formula = scale(mt.morph[, -(6:7)]) ~ VWC + year, data = mt.morph)
-          Df Variance       F Pr(&gt;F)    
-VWC        1   0.4492 107.796  0.001 ***
-year       2   0.5875  70.483  0.001 ***
-Residual 951   3.9633                   
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>plot(mt.cap, type=&quot;points&quot;)
-text(mt.cap, display=&quot;species&quot;, col=&quot;red&quot;)</code></pre>
+<pre class="r"><code>anova(mt.cap, by=&quot;term&quot;) %&gt;% tidy %&gt;% kable</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">df</th>
+<th align="right">Variance</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">VWC</td>
+<td align="right">1</td>
+<td align="right">0.4492375</td>
+<td align="right">107.79564</td>
+<td align="right">0.001</td>
+</tr>
+<tr class="even">
+<td align="left">year</td>
+<td align="right">2</td>
+<td align="right">0.5874772</td>
+<td align="right">70.48329</td>
+<td align="right">0.001</td>
+</tr>
+<tr class="odd">
+<td align="left">Residual</td>
+<td align="right">951</td>
+<td align="right">3.9632853</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>library(ggvegan)
+autoplot(mt.cap) + guides(color=F, shape=F)</code></pre>
 <p><img src="images/multresp-4.png" width="672" /></p>
-<pre class="r"><code>library(vegan)
-mt.morph &lt;- mt[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;water&quot;,&quot;snow&quot;)] %&gt;% drop_na(1:6) #and nectar (19,20) too
-mt.cap &lt;- capscale(scale(mt.morph[,-(6:8)]) ~ year + snow + water, data=mt.morph)
-plot(mt.cap, type=&quot;points&quot;)
-text(mt.cap, display=&quot;species&quot;, col=&quot;red&quot;)</code></pre>
+<pre class="r"><code>mt.morph.wm &lt;- mt[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;water&quot;,&quot;melt_offset&quot;)] %&gt;% drop_na(1:6) #and nectar (19,20) too
+mt.cap.wm &lt;- capscale(scale(mt.morph.wm[,-(6:8)]) ~ year * melt_offset * water, data=mt.morph.wm)
+mt.cap.wm</code></pre>
+<pre><code>Call: capscale(formula = scale(mt.morph.wm[, -(6:8)]) ~ year *
+melt_offset * water, data = mt.morph.wm)
+
+              Inertia Proportion Rank
+Total          5.0000     1.0000     
+Constrained    1.1459     0.2292    5
+Unconstrained  3.8541     0.7708    5
+Inertia is mean squared Euclidean distance 
+Species scores projected from &#39;scale&#39; &#39;mt.morph.wm[, -(6:8)]&#39; 
+
+Eigenvalues for constrained axes:
+  CAP1   CAP2   CAP3   CAP4   CAP5 
+1.0587 0.0517 0.0284 0.0048 0.0023 
+
+Eigenvalues for unconstrained axes:
+  MDS1   MDS2   MDS3   MDS4   MDS5 
+2.5579 0.6711 0.3985 0.1337 0.0930 </code></pre>
+<pre class="r"><code>anova(mt.cap.wm, by=&quot;term&quot;) %&gt;% tidy %&gt;% kable</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">df</th>
+<th align="right">Variance</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">2</td>
+<td align="right">0.9178296</td>
+<td align="right">111.5715011</td>
+<td align="right">0.001</td>
+</tr>
+<tr class="even">
+<td align="left">melt_offset</td>
+<td align="right">1</td>
+<td align="right">0.0344690</td>
+<td align="right">8.3801187</td>
+<td align="right">0.003</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">2</td>
+<td align="right">0.1267323</td>
+<td align="right">15.4055996</td>
+<td align="right">0.001</td>
+</tr>
+<tr class="even">
+<td align="left">year:melt_offset</td>
+<td align="right">2</td>
+<td align="right">0.0080217</td>
+<td align="right">0.9751170</td>
+<td align="right">0.397</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water</td>
+<td align="right">4</td>
+<td align="right">0.0289412</td>
+<td align="right">1.7590459</td>
+<td align="right">0.088</td>
+</tr>
+<tr class="even">
+<td align="left">melt_offset:water</td>
+<td align="right">2</td>
+<td align="right">0.0062569</td>
+<td align="right">0.7605915</td>
+<td align="right">0.537</td>
+</tr>
+<tr class="odd">
+<td align="left">year:melt_offset:water</td>
+<td align="right">4</td>
+<td align="right">0.0236900</td>
+<td align="right">1.4398801</td>
+<td align="right">0.162</td>
+</tr>
+<tr class="even">
+<td align="left">Residual</td>
+<td align="right">937</td>
+<td align="right">3.8540593</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>#plot CAP without interactions
+autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data=mt.morph.wm)) + guides(color=F, shape=F)</code></pre>
 <p><img src="images/multresp_discrete-1.png" width="672" /></p>
 </div>
 <div id="floral-traits-within-season" class="section level3">
@@ -1153,7 +1557,7 @@ text(mt.cap, display=&quot;species&quot;, col=&quot;red&quot;)</code></pre>
   geom_point(data=mt, aes(y= corolla_length), color=&quot;purple&quot;)+
     geom_point(data=mt, aes(y= nectar_24_h_ul), color=&quot;orange&quot;)+
   geom_point(aes(y = VWC), color=&quot;black&quot;) +
-  geom_vline(data=meltdates, aes(xintercept=melt_date, linetype=snow), color=&quot;grey40&quot;)+
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=&quot;grey40&quot;)+
   labs(title=&quot;Timing of measurements&quot;, subtitle=&quot;VWC (black) / Morphology (purple) / Nectar (orange)&quot;, x=&quot;Day of year&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;)+
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
