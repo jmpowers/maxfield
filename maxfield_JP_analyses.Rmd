@@ -107,6 +107,20 @@ left_join(sm.subplotmonth, meltdates) %>%
 # Weather data
 ```{r weather}
 ggplot(daily_precip, aes(y=precip_mm, x=julian)) + geom_col(fill=brewer.pal(3, "Greens")[3]) + facet_wrap(vars(year), ncol=1) + scale_y_continuous(limits=c(0,125)) + labs(x="Day of year", y="Precipiation (mm)") + theme_minimal()
+
+groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% 
+  pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>% 
+  mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %>% 
+  ggplot(aes(x=year, y=day, color=threshold)) +  
+  annotate("rect", xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill="lightblue")+
+  geom_line(aes(group=year), size=2)+ geom_smooth( method="lm", se=F) +geom_point() +
+  scale_x_continuous(minor_breaks = 1976:2020, position = "top") + scale_y_continuous(n.breaks=10)+
+  scale_color_grey(labels=function(x) str_to_sentence(str_replace_all(x, "_", " ")), start=0, end=0.85) +
+  labs(x="Year", y="Day of year", color="Threshold") + theme_minimal()
+
+cat(range(groundcover$year), sep=" - ")
+cat(paste("SD of first bare ground =", round(sd(groundcover$first_0_cm_day),1),"days"))
+cat(paste("First bare ground trends", round(coef(lm(first_0_cm_day ~ year, data=groundcover))[[2]], 2),"days per year"))
 ```
 
 # Soil moisture vs. treatments
@@ -117,9 +131,13 @@ ggplot(sm, aes(x=yday(date), shape=snow, linetype=snow, color=water, y = VWC)) +
   geom_jitter(height=0, width=0.3) + geom_smooth(se=F, span=0.5) +
   geom_col(data=daily_precip %>% filter(year!="2017"), aes(x=julian, y=precip_mm), inherit.aes = F, fill=brewer.pal(3, "Greens")[3]) + 
   geom_line(data=daily_temp %>% filter(year!="2017"), aes(x=julian, y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, "Oranges")[3]) + 
-  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), inherit.aes=F, color=brewer.pal(3, "Purples")[3])+
-  scale_x_continuous(limits=c(110, 230), breaks=scales::breaks_extended(10), expand=expansion(0,0)) + scale_y_continuous(limits=c(-3, 20)) +
-  labs(y="Volumetric water content (%) / Daily precipitation (mm) / Mean temperature (C)", 
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=brewer.pal(3, "Purples")[3])+
+  geom_line(data = snowcloth, aes(x=yday(date), y=mean_snow_depth_cm/10, group=year), inherit.aes=F)+
+  geom_point(data = snowcloth, aes(x=yday(date), y=mean_snow_depth_cm/10), inherit.aes=F)+
+  geom_line(data=groundcover %>% pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>% filter(threshold!="first_snow_day", year>2017) %>% mutate(snow_depth_cm = as.integer(str_split_fixed(threshold,"_",n=4)[,2])),
+            aes(x=day, y=snow_depth_cm/10), inherit.aes=F, color="grey40")+
+  scale_x_continuous(limits=c(85, 230), breaks=scales::breaks_extended(10), expand=expansion(0,0)) + scale_y_continuous(limits=c(-3, 20)) +
+  labs(y="Soil VWC (%) / Daily precipitation (mm) / Mean temp. (C) / Snowpack (dm)", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))

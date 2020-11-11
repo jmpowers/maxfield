@@ -99,6 +99,14 @@ wx <- drive_download(filter(datasheets, name=="billy_rmbl_wrcc_weather_2017_2020
 daily_precip <- wx %>% group_by(date) %>% summarize_at("precip_mm", sum) %>% mutate(year=factor(year(date)), julian=yday(date))
 daily_temp <- wx %>% group_by(date) %>% summarize_at("av_temp_2m_C", mean, na.rm=T) %>% mutate(year=factor(year(date)), julian=yday(date))
 
+snowcloth <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="snowcloth") %>% 
+  mutate(plots = as.character(plots), date = force_tz(date, "America/Denver")+hours(12), year=factor(year)) %>% 
+  bind_rows(meltdates %>% group_by(year) %>% filter(snow=="Normal") %>% summarize(date=mean(sun_time)) %>% 
+              mutate(mean_snow_depth_cm=0, notes="Mean time of snowmelt (sun_time) in normal plots"))
+
+groundcover <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="groundcover") %>% 
+  mutate(across(starts_with("first"), list(day=yday)), year=year(first_0_cm))
+
 # soil --------------------------------------------------------------------
 
 # Soil moisture readings were taken with a Campbell Scientific HydroSense II https://www.campbellsci.com/hs2
