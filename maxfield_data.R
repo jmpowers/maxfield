@@ -69,9 +69,9 @@ meltdates <- full_join(
             snow_new = factor(recode(snow_new, "early"="Early","normal"="Normal"))) %>% 
   mutate(plot=factor(plot),
          melt_time = parse_date_time(paste(year,melt_date,12,0), "y j H M", tz="Etc/GMT+6")) %>%
-  # In 2019 the avalanche caused plots 5 and 2 to melt with the normal snowmelt plots, so these are recoded as normal
-  # snow_new still records plot 5 as an "early" 
-  mutate(snow = factor(ifelse(year=="2019" & sun_date > 154, "Normal", as.character(snow))))
+  # In 2019 the avalanche caused plot 2 to melt after the normal snowmelt plots, so this is recoded as normal
+  # This still records plot 5 as an "early" (1 day earlier)
+  mutate(snow = factor(ifelse(year=="2019" & plot=="2", "Normal", as.character(snow))))
 
 # Calculate an offset from the mean sun_date in the normal plots
 meltdates <- meltdates %>% left_join(meltdates %>% group_by(year,snow) %>% summarize_at("sun_date", mean) %>% 

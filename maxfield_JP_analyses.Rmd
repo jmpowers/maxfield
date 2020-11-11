@@ -89,7 +89,7 @@ meltdates %>% select(c("year","plot", "snow", ends_with("date"))) %>% pivot_long
   scale_linetype_manual(values=c(4,1)) + scale_x_continuous(minor_breaks=110:160)+
   labs(x="Day of year",y="Criteron", color="Plot", linetype="Snowmelt")
        
-meltdates %>% ggplot(aes(x=melt_offset, fill=snow)) + geom_dotplot(binwidth=1, color="white") +
+meltdates %>% ggplot(aes(x=melt_offset, fill=snow)) + geom_dotplot(method="histodot", binwidth=1, color="white") +
   facet_wrap(vars(year), ncol=1)+ scale_fill_manual(values=snow_pal) +
   scale_y_continuous(expand=expansion(0,0))+ scale_x_continuous(breaks=-10:4)+
   theme(panel.grid.minor = element_blank()) +
@@ -256,13 +256,13 @@ ggplot(mt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(x="Nect
 This is a split-plot analysis, based on the original experimental design. The models use:
 
 * *mt.subplot*, the 24 * 3 subplot means within each year
-* *snow_new*, which has plot 5 as "early" in 2019 (it melted 1 day earlier than the next normal plot)
-* *water4*, which does not combine the mock rainout treatments with the controls
+* *snow*, the snowmelt treatment (except for plot 2 in 2019)
+* *water*, the water treatments with mock rainouts and controls combined
 * *plot* as a random effect (subplots vary within this larger unit)
 
 The models are specified as:
 
-    lmer(trait ~ year * snow_new * water4 + (1|plot), data = mt.subplot)
+    lmer(trait ~ year * snow * water + (1|plot), data = mt.subplot)
 
 * The models for nectar volume and total sugar are singular (variance at plot level near 0)
 * Removing the interactions with year does not make those two models not singular
@@ -272,17 +272,17 @@ The models are specified as:
 options(contrasts = c("contr.sum", "contr.poly"))
 mt.mod <- mt.mod.test <- mod.emm <- mt.mod.plot <- list()
 for(tr in traits) {
-  mt.mod[[tr]] <- lmer(mt.subplot[[tr]] ~ year * snow_new * water4 + (1|plot), data=mt.subplot)
+  mt.mod[[tr]] <- lmer(mt.subplot[[tr]] ~ year * snow * water + (1|plot), data=mt.subplot)
   mt.mod.test[[tr]] <- anova(mt.mod[[tr]])
-  mod.emm[[tr]] <- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year + snow_new * water4))
+  mod.emm[[tr]] <- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year + snow * water))
   
   mt.mod.plot[[tr]] <- 
-    ggplot(mod.emm[[tr]], aes(x=water4, color=snow_new, y = emmean)) + facet_wrap(vars(year), nrow=1) +
-        labs(x="Precipitation", y=traitnames[[tr]], color="Snowmelt\n(2019 plot 5=early)", shape="Year") +
-        geom_point(data=mt.subplot, aes_string(x="water4", color="snow_new", y = tr), inherit.aes = F, position=position_dodge(0.7)) + 
+    ggplot(mod.emm[[tr]], aes(x=water, color=snow, y = emmean)) + facet_wrap(vars(year), nrow=1) +
+        labs(x="Precipitation", y=traitnames[[tr]], color="Snowmelt", shape="Year") +
+        geom_point(data=mt.subplot, aes_string(x="water", color="snow", y = tr), inherit.aes = F, position=position_dodge(0.7)) + 
         geom_point(position=position_dodge(0.7), size=4, shape=0) + 
         geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE), position=position_dodge2(0.6)) +
-        guides(x=guide_axis(angle = 90))
+        guides(x=guide_axis(angle = 90)) + scale_color_manual(values=snow_pal)
   print(mt.mod.plot[[tr]])
   cat(paste(tr,"\n"))
   print(mt.mod.test[[tr]])
@@ -297,36 +297,37 @@ mt.mod.tests %>% select(c("trait", "term", "p.value")) %>% mutate(p.value = sign
 
 The differences in snowmelt dates vary among years and plots, so this analysis uses a melt date offset. The models use:
 
-* *mt.plantyr*, the trait data averaged by plant within year
+* *mt.subplot*, the 24 * 3 subplot means within each year
 * *water*, the water treatments with mock rainouts and controls combined
 * *melt_offset*, the number of days between the snowmelt date (when the light entering the HOBO logger exceeds 10,000 lux) and the mean snowmelt date for the normal plots in that year (according to *snow*)
 * *plotid* (subplot) as a random effect (plants vary within this larger unit)
 
 The models are specified as: 
 
-    lmer(trait ~ year * water * melt_offset + (1|plotid), data = mt.plantyr)
+    lmer(trait ~ year * water * melt_offset + (1|plotid), data = mt.subplot)
 
 ```{r morphology_model}
 options(contrasts = c("contr.sum", "contr.poly"))
-mt.mod.raw <- mt.mod.plantyr <- mt.mod.subplot <- mt.mod.plantyr.test <- mt.mod.plot <- list()
+mt.mod.raw <- mt.mod.plantyr <- mt.mod.subplot <- mt.mod.subplot.test <- mt.mod.plot <- list()
 for(tr in traits) {
   #mt.mod.raw[[tr]]     <- lmer(mt[[tr]]         ~ year * water * melt_offset + (1|plotid) + (1|plantid), data=mt)
-  mt.mod.plantyr[[tr]] <- lmer(mt.plantyr[[tr]] ~ year * water * melt_offset + (1|plotid), data=mt.plantyr)
-  mt.plantyr[[paste0("fit.",tr)]] <- NA
-  mt.plantyr[[paste0("fit.",tr)]][!is.na(mt.plantyr[[tr]])]<- predict(mt.mod.plantyr[[tr]], re.form=NA)
-  mt.mod.plantyr.test[[tr]] <- anova(mt.mod.plantyr[[tr]])
+  #mt.mod.plantyr[[tr]] <- lmer(mt.plantyr[[tr]] ~ year * water * melt_offset + (1|plotid), data=mt.plantyr)
+  mt.mod.subplot[[tr]] <- lmer(mt.subplot[[tr]] ~ year * water * melt_offset + (1|plot), data=mt.subplot)
+  mt.subplot[[paste0("fit.",tr)]] <- NA
+  mt.subplot[[paste0("fit.",tr)]][!is.na(mt.subplot[[tr]])]<- predict(mt.mod.subplot[[tr]], re.form=NA)
+  mt.mod.subplot.test[[tr]] <- anova(mt.mod.subplot[[tr]])
   
   mt.mod.plot[[tr]] <- 
-    ggplot(mt.plantyr, aes_string(x="melt_offset", color="water", y = tr)) + geom_point() +
-    geom_line(data=mt.plantyr %>% drop_na(paste0("fit.",tr)), aes_string(y=paste0("fit.",tr)), size=2)+
+    ggplot(mt.subplot, aes_string(x="melt_offset", color="water", y = tr)) + geom_point() +
+    geom_line(data=mt.subplot %>% drop_na(paste0("fit.",tr)), aes_string(y=paste0("fit.",tr)), size=2)+
      scale_color_manual(values=water_pal)+ facet_wrap(vars(year))+
         labs(x="Offset from mean normal snow melt date (days)", y=traitnames[[tr]], color="Precipitation")
   print(mt.mod.plot[[tr]])
 }
-mt.mod.plantyr.tests <- map_dfr(mt.mod.plantyr.test, tidy, .id="trait")
-mt.mod.plantyr.tests %>% select(c("trait", "term", "p.value")) %>% mutate(p.value = signif.num(p.value)) %>% 
+mt.mod.subplot.tests <- map_dfr(mt.mod.subplot.test, tidy, .id="trait")
+mt.mod.subplot.tests %>% select(c("trait", "term", "p.value")) %>% mutate(p.value = signif.num(p.value)) %>% 
   pivot_wider(names_from=trait, values_from=p.value) %>% 
-  bind_rows(lapply(mt.mod.plantyr, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
+  bind_rows(lapply(mt.mod.subplot, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
 ```
 
 ### Floral plasticity: soil moisture
@@ -537,7 +538,7 @@ ph %>% group_by(year_df, snow, water, julian) %>% summarize_at("has_egg", mean, 
 ph20.plantid <- ph20 %>% left_join(sm.subplotyear) %>% group_by(plotid, plantid, snow, water) %>% summarize_at(c("open","height_cm", "VWC"), mean, na.rm=T)
 
 ggplot(ph20.plantid, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method="lm", se=F) + scale_color_manual(values=water_pal) +
-  labs(x="Mean inflorescence height (cm)", y="Mean number of open inflorescences", color="Precipitation")
+  labs(x="Mean inflorescence height (cm)", y="Mean number of open flowers", color="Precipitation")
 
 ggplot(ph20.plantid, aes(x=water, color=snow, y = height_cm)) +
     labs(x="Precipitation", y="Mean inflorescence height (cm)", color="Snowmelt") +
@@ -546,10 +547,10 @@ ggplot(ph20.plantid, aes(x=VWC, y=height_cm)) + geom_point() + geom_smooth() +
     labs(x="Mean VWC", y="Mean inflorescence height (cm)")
     
 ggplot(ph20.plantid, aes(x=water, color=snow, y = open)) +
-    labs(x="Precipitation", y="Mean number of open inflorescences", color="Snowmelt") +
+    labs(x="Precipitation", y="Mean number of open flowers", color="Snowmelt") +
     geom_boxplot() + scale_color_manual(values=snow_pal) 
 ggplot(ph20.plantid, aes(x=VWC, y=open)) + geom_point() + geom_smooth()+
-    labs(x="Mean VWC", y="Mean number of open inflorescences")
+    labs(x="Mean VWC", y="Mean number of open flowers")
 ```
 
 # Seeds
