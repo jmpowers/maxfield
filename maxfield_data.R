@@ -37,6 +37,9 @@ treatments <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture &
     snow = factor(recode(snow, "early"="Early","normal"="Normal"))) %>% 
   separate(plotid, c("plot","subplot"), sep=1, remove=F)
 
+treatments_map <- treatments
+treatments <- select(treatments, !ends_with(c("x","y")))
+
 # Tarps were placed on plots 2, 4 and 5 in the spring to make the snow melt faster.
 # HOBO pendant temperature/light loggers (model UA-002-xx?) were placed at the corners of each plot.
 # HOBO manual: https://www.onsetcomp.com/files/manual_pdfs/9556-M%20UA-002%20Manual.pdf
@@ -82,7 +85,7 @@ meltdates <- meltdates %>% left_join(meltdates %>% group_by(year,snow) %>% summa
 treatments <- treatments %>% select(-snow) %>% left_join(meltdates)
 
 # Color palettes for water and snow treatments
-water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,8,1)], levels(treatments$water4))
+water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,7,1)], levels(treatments$water4))
 water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$water))
 snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
 year_pal <- setNames(brewer.pal(8, name="Set2")[c(2,3,6)], levels(treatments$year))

@@ -9,6 +9,8 @@ output:
     code_folding: hide
     toc: yes
     toc_float: TRUE
+editor_options: 
+  chunk_output_type: console
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -46,6 +48,22 @@ signif.num <- function(x) {
 
 load("data/maxfield_data.rda")
 ```
+
+```{r map}
+library(ggnewscale)
+subplot_offset <- 1/6
+size_meter <- 6
+ggplot(treatments_map) + coord_fixed(clip="off")+
+  geom_point(aes(x=plot_x, y=plot_y, fill=snow), size=7*size_meter, shape=22, stroke=1)+
+  scale_fill_manual("Snowmelt", values=snow_pal, guide=guide_legend(override.aes = list(size = 2*size_meter)))+
+  new_scale_fill()+
+  geom_point(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, fill=water4), size=2*size_meter, shape=22, stroke=1) + 
+    geom_text(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, label=subplot)) + 
+  scale_fill_manual("Precipitation", values=water4_pal) +
+  geom_text(aes(x=plot_x, y=plot_y, label=plot))+
+  theme(legend.position="left", axis.title=element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank(), legend.box.background = element_blank())
+```
+
 
 # Snow melt vs. treatments
 

@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2020-11-10" />
+<meta name="date" content="2020-11-11" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -268,7 +268,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2020-11-10</h4>
+<h4 class="date">2020-11-11</h4>
 
 </div>
 
@@ -307,6 +307,19 @@ signif.num &lt;- function(x) {
 }
 
 load(&quot;data/maxfield_data.rda&quot;)</code></pre>
+<pre class="r"><code>library(ggnewscale)
+subplot_offset &lt;- 1/6
+size_meter &lt;- 6
+ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
+  geom_point(aes(x=plot_x, y=plot_y, fill=snow), size=7*size_meter, shape=22, stroke=1)+
+  scale_fill_manual(&quot;Snowmelt&quot;, values=snow_pal, guide=guide_legend(override.aes = list(size = 2*size_meter)))+
+  new_scale_fill()+
+  geom_point(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, fill=water4), size=2*size_meter, shape=22, stroke=1) + 
+    geom_text(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, label=subplot)) + 
+  scale_fill_manual(&quot;Precipitation&quot;, values=water4_pal) +
+  geom_text(aes(x=plot_x, y=plot_y, label=plot))+
+  theme(legend.position=&quot;left&quot;, axis.title=element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank(), legend.box.background = element_blank())</code></pre>
+<p><img src="images/map-1.png" width="672" /></p>
 </div>
 <div id="snow-melt-vs.-treatments" class="section level1">
 <h1>Snow melt vs. treatments</h1>
@@ -368,6 +381,22 @@ load(&quot;data/maxfield_data.rda&quot;)</code></pre>
 <h1>Weather data</h1>
 <pre class="r"><code>ggplot(daily_precip, aes(y=precip_mm, x=julian)) + geom_col(fill=brewer.pal(3, &quot;Greens&quot;)[3]) + facet_wrap(vars(year), ncol=1) + scale_y_continuous(limits=c(0,125)) + labs(x=&quot;Day of year&quot;, y=&quot;Precipiation (mm)&quot;) + theme_minimal()</code></pre>
 <p><img src="images/weather-1.png" width="672" /></p>
+<pre class="r"><code>groundcover %&gt;% mutate(first_snow_day=first_snow_day-365) %&gt;% 
+  pivot_longer(ends_with(&quot;day&quot;), names_to=&quot;threshold&quot;, values_to=&quot;day&quot;) %&gt;% 
+  mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %&gt;% 
+  ggplot(aes(x=year, y=day, color=threshold)) +  
+  annotate(&quot;rect&quot;, xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill=&quot;lightblue&quot;)+
+  geom_line(aes(group=year), size=2)+ geom_smooth( method=&quot;lm&quot;, se=F) +geom_point() +
+  scale_x_continuous(minor_breaks = 1976:2020, position = &quot;top&quot;) + scale_y_continuous(n.breaks=10)+
+  scale_color_grey(labels=function(x) str_to_sentence(str_replace_all(x, &quot;_&quot;, &quot; &quot;)), start=0, end=0.85) +
+  labs(x=&quot;Year&quot;, y=&quot;Day of year&quot;, color=&quot;Threshold&quot;) + theme_minimal()</code></pre>
+<p><img src="images/weather-2.png" width="672" /></p>
+<pre class="r"><code>cat(range(groundcover$year), sep=&quot; - &quot;)</code></pre>
+<pre><code>1976 - 2020</code></pre>
+<pre class="r"><code>cat(paste(&quot;SD of first bare ground =&quot;, round(sd(groundcover$first_0_cm_day),1),&quot;days&quot;))</code></pre>
+<pre><code>SD of first bare ground = 13.5 days</code></pre>
+<pre class="r"><code>cat(paste(&quot;First bare ground trends&quot;, round(coef(lm(first_0_cm_day ~ year, data=groundcover))[[2]], 2),&quot;days per year&quot;))</code></pre>
+<pre><code>First bare ground trends -0.21 days per year</code></pre>
 </div>
 <div id="soil-moisture-vs.-treatments" class="section level1">
 <h1>Soil moisture vs. treatments</h1>
@@ -376,9 +405,13 @@ load(&quot;data/maxfield_data.rda&quot;)</code></pre>
   geom_jitter(height=0, width=0.3) + geom_smooth(se=F, span=0.5) +
   geom_col(data=daily_precip %&gt;% filter(year!=&quot;2017&quot;), aes(x=julian, y=precip_mm), inherit.aes = F, fill=brewer.pal(3, &quot;Greens&quot;)[3]) + 
   geom_line(data=daily_temp %&gt;% filter(year!=&quot;2017&quot;), aes(x=julian, y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, &quot;Oranges&quot;)[3]) + 
-  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), inherit.aes=F, color=brewer.pal(3, &quot;Purples&quot;)[3])+
-  scale_x_continuous(limits=c(110, 230), breaks=scales::breaks_extended(10), expand=expansion(0,0)) + scale_y_continuous(limits=c(-3, 20)) +
-  labs(y=&quot;Volumetric water content (%) / Daily precipitation (mm) / Mean temperature (C)&quot;, 
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=brewer.pal(3, &quot;Purples&quot;)[3])+
+  geom_line(data = snowcloth, aes(x=yday(date), y=mean_snow_depth_cm/10, group=year), inherit.aes=F)+
+  geom_point(data = snowcloth, aes(x=yday(date), y=mean_snow_depth_cm/10), inherit.aes=F)+
+  geom_line(data=groundcover %&gt;% pivot_longer(ends_with(&quot;day&quot;), names_to=&quot;threshold&quot;, values_to=&quot;day&quot;) %&gt;% filter(threshold!=&quot;first_snow_day&quot;, year&gt;2017) %&gt;% mutate(snow_depth_cm = as.integer(str_split_fixed(threshold,&quot;_&quot;,n=4)[,2])),
+            aes(x=day, y=snow_depth_cm/10), inherit.aes=F, color=&quot;grey40&quot;)+
+  scale_x_continuous(limits=c(85, 230), breaks=scales::breaks_extended(10), expand=expansion(0,0)) + scale_y_continuous(limits=c(-3, 20)) +
+  labs(y=&quot;Soil VWC (%) / Daily precipitation (mm) / Mean temp. (C) / Snowpack (dm)&quot;, 
        x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
