@@ -133,6 +133,12 @@ sm <- bind_rows(read_sheet(sm_sheets, sheet="2020"),
 sm.subplot <- sm %>% group_by(year, date, plot, subplot, plotid, water, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop") 
 
+breaks_20 <- seq(160, 240, by=20)
+sm.subplot20d <- sm.subplot %>% 
+  mutate(mo20d = cut(yday(date), breaks_20, labels=paste(breaks_20[1:4]+1, breaks_20[2:5], sep=" - "))) %>% 
+  group_by(year, mo20d, plot, subplot, plotid, water, snow) %>% 
+  summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
+
 sm.subplotmonth <- sm.subplot %>% mutate(mo = month(date)) %>% group_by(year, mo, plot, subplot, plotid, water, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
 

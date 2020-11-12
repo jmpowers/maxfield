@@ -368,7 +368,7 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
   theme(panel.grid.minor = element_blank()) +
   labs(x=&quot;Offset from mean normal snow melt date (days)&quot;, y=&quot;Number of plots&quot;, fill=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/hobo-6.png" width="672" /></p>
-<pre class="r"><code>left_join(sm.subplot20d, meltdates) %&gt;% 
+<pre class="r"><code>left_join(filter(sm.subplot20d, mo20d!=&quot;221 - 240&quot;), meltdates) %&gt;% 
   mutate(mo = paste0(&quot;Days &quot;,mo20d)) %&gt;% 
   ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
   facet_wrap(vars(mo), nrow=1)+
@@ -925,11 +925,11 @@ for(tr in traits) {
   mod.emm[[tr]] &lt;- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year + snow * water))
   
   mt.mod.plot[[tr]] &lt;- 
-    ggplot(mod.emm[[tr]], aes(x=water, color=snow, y = emmean)) + facet_wrap(vars(year), nrow=1) +
-        labs(x=&quot;Precipitation&quot;, y=traitnames[[tr]], color=&quot;Snowmelt&quot;, shape=&quot;Year&quot;) +
+    ggplot(mod.emm[[tr]] %&gt;% mutate(year=factor(year, levels=2018:2020)), aes(x=water, color=snow, y = emmean)) + facet_wrap(vars(year), nrow=1) +
+        labs(x=&quot;Precipitation&quot;, y=traitnames[[tr]], color=&quot;Snowmelt&quot;) +
         geom_point(data=mt.subplot, aes_string(x=&quot;water&quot;, color=&quot;snow&quot;, y = tr), inherit.aes = F, position=position_dodge(0.7)) + 
         geom_point(position=position_dodge(0.7), size=4, shape=0) + 
-        geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE), position=position_dodge2(0.6)) +
+        geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE), position=position_dodge2(0.7)) +
         guides(x=guide_axis(angle = 90)) + scale_color_manual(values=snow_pal)
   print(mt.mod.plot[[tr]])
   cat(paste(tr,&quot;\n&quot;))
