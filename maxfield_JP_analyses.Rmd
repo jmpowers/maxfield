@@ -113,8 +113,8 @@ meltdates %>% ggplot(aes(x=melt_offset, fill=snow)) + geom_dotplot(method="histo
   theme(panel.grid.minor = element_blank()) +
   labs(x="Offset from mean normal snow melt date (days)", y="Number of plots", fill="Snowmelt")
 
-left_join(sm.subplotmonth, meltdates) %>% 
-  mutate(mo = paste0("Month ",mo,", ",month.abb[mo])) %>% 
+left_join(sm.subplot20d, meltdates) %>% 
+  mutate(mo = paste0("Days ",mo20d)) %>% 
   ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
   facet_wrap(vars(mo), nrow=1)+
   geom_point() + geom_smooth(se=F, method="lm") +
@@ -127,7 +127,7 @@ left_join(sm.subplotmonth, meltdates) %>%
 ggplot(daily_precip, aes(y=precip_mm, x=julian)) + geom_col(fill=brewer.pal(3, "Greens")[3]) + facet_wrap(vars(year), ncol=1) + scale_y_continuous(limits=c(0,125)) + labs(x="Day of year", y="Precipiation (mm)") + theme_minimal()
 
 groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% 
-  pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>% 
+  pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>% drop_na(day) %>% select(-starts_with("first")) %>% 
   mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %>% 
   ggplot(aes(x=year, y=day, color=threshold)) +  
   annotate("rect", xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill="lightblue")+

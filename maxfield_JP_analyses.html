@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2020-11-11" />
+<meta name="date" content="2020-11-12" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -268,7 +268,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2020-11-11</h4>
+<h4 class="date">2020-11-12</h4>
 
 </div>
 
@@ -368,8 +368,8 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
   theme(panel.grid.minor = element_blank()) +
   labs(x=&quot;Offset from mean normal snow melt date (days)&quot;, y=&quot;Number of plots&quot;, fill=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/hobo-6.png" width="672" /></p>
-<pre class="r"><code>left_join(sm.subplotmonth, meltdates) %&gt;% 
-  mutate(mo = paste0(&quot;Month &quot;,mo,&quot;, &quot;,month.abb[mo])) %&gt;% 
+<pre class="r"><code>left_join(sm.subplot20d, meltdates) %&gt;% 
+  mutate(mo = paste0(&quot;Days &quot;,mo20d)) %&gt;% 
   ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
   facet_wrap(vars(mo), nrow=1)+
   geom_point() + geom_smooth(se=F, method=&quot;lm&quot;) +
@@ -382,7 +382,7 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
 <pre class="r"><code>ggplot(daily_precip, aes(y=precip_mm, x=julian)) + geom_col(fill=brewer.pal(3, &quot;Greens&quot;)[3]) + facet_wrap(vars(year), ncol=1) + scale_y_continuous(limits=c(0,125)) + labs(x=&quot;Day of year&quot;, y=&quot;Precipiation (mm)&quot;) + theme_minimal()</code></pre>
 <p><img src="images/weather-1.png" width="672" /></p>
 <pre class="r"><code>groundcover %&gt;% mutate(first_snow_day=first_snow_day-365) %&gt;% 
-  pivot_longer(ends_with(&quot;day&quot;), names_to=&quot;threshold&quot;, values_to=&quot;day&quot;) %&gt;% 
+  pivot_longer(ends_with(&quot;day&quot;), names_to=&quot;threshold&quot;, values_to=&quot;day&quot;) %&gt;% drop_na(day) %&gt;% select(-starts_with(&quot;first&quot;)) %&gt;% 
   mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %&gt;% 
   ggplot(aes(x=year, y=day, color=threshold)) +  
   annotate(&quot;rect&quot;, xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill=&quot;lightblue&quot;)+
