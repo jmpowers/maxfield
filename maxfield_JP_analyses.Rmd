@@ -163,18 +163,48 @@ ggplot(sm, aes(x=yday(date), shape=snow, linetype=snow, color=water, y = VWC)) +
 
 # Census
 
-The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).
+## Measures of all plants in all years
 
-## Load census data
+```{r megatally}
+megatally <- list(
+  cen18 %>% group_by(plotid, plant) %>% tally(name="census18"),
+  cen18r2 %>% group_by(plotid, plant) %>% tally(name="census18r2"),
+  cen19 %>% group_by(plotid, plant) %>% tally(name="census19"),
+  cen20 %>% group_by(plotid, plant) %>% tally(name="census20"),
+  lt %>% filter(year=="2018") %>% group_by(plotid, plant) %>% tally(name="leaf18"),
+  lt %>% filter(year=="2019") %>% group_by(plotid, plant) %>% tally(name="leaf19"),
+  lt %>% filter(year=="2020") %>% group_by(plotid, plant) %>% tally(name="leaf20"),
+  mt %>% filter(year=="2018") %>% group_by(plotid, plant) %>% tally(name="floral18"),
+  mt %>% filter(year=="2019") %>% group_by(plotid, plant) %>% tally(name="floral19"),
+  mt %>% filter(year=="2020") %>% group_by(plotid, plant) %>% tally(name="floral20"),
+  vt %>% filter(year=="2020") %>% group_by(plotid, plant) %>% tally(name="volatiles20"),
+  ph18.raw %>% group_by(plotid, plant) %>% tally(name="pheno18"),
+  ph19.raw %>% group_by(plotid, plant) %>% tally(name="pheno19"),
+  ph20.raw %>% group_by(plotid, plant) %>% tally(name="pheno20"),
+    sds18 %>% group_by(plotid, plant) %>% tally(name="seeds18"),
+    sds20 %>% group_by(plotid, plant) %>% tally(name="seeds20")
+) %>% 
+  reduce(full_join) %>% arrange(plotid, plant) %>% rowwise() %>% 
+  mutate(total_obs = sum(c_across(3:17), na.rm=T))
+
+megatally %>% 
+  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="megatally")
+```
+
+## Census status
+
+The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).
 
 Tally the number of each status combination for each year. 
 
 ```{r load_census}
 nrf_count <- bind_rows(
-  allowed_nrf %>% filter(year==2019) %>% left_join(cen19 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()),
-  allowed_nrf %>% filter(year==2020) %>% left_join(cen20 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()))
+    "2018"=allowed_nrf %>% filter(year==2018) %>% left_join(cen18 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()),
+  "2018r2"=allowed_nrf %>% filter(year==2018) %>% left_join(cen18r2 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()),
+  "2019"=allowed_nrf %>% filter(year==2019) %>% left_join(cen19 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()),
+  "2020"=allowed_nrf %>% filter(year==2020) %>% left_join(cen20 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()), .id="year_round")
 
-kable(nrf_count %>% select(-nrf) %>% arrange(year, status, desc(n)))
+nrf_count %>% select(-nrf) %>% arrange(year_round, status, desc(n)) %>% drop_na(n) %>% kable
 ```
 
 ## Duplicates
@@ -189,12 +219,18 @@ This is automatic, but it may be better to resolve duplicates manually in some c
 
 ```{r dupes}
 #write out the duplicates
+cen18 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
+  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2018duplicates")
+cen18r2 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status) %>% 
+  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2018r2duplicates")
 #cen19 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
 #  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2019duplicates")
 #cen20 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
 #  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2020duplicates")
 
 #distinct() keeps the first row after sorting, discards the other rows
+cen18 <- cen18 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
+cen18r2 <- cen18r2 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
 cen19 <- cen19 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
 cen20 <- cen20 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
 ```
