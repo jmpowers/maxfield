@@ -224,7 +224,7 @@ ph18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2
          subplot = toupper(subplot),
          plotid = paste0(plot, subplot),
          plantid = paste0(plotid, plant),
-         year=factor(year(date)),
+         plant=as.character(plant),
          julian = factor(yday(date)),
          open = rowSums(select(., starts_with("open")), na.rm=T),
          buds = rowSums(select(., starts_with("buds")), na.rm=T),
@@ -235,24 +235,30 @@ ph18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2
 ph18 <- ph18 %>% 
   complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
   mutate(flowering = open + buds > 0,
-         has_egg = eggs_total > 0)
+         has_egg = eggs > 0)
 
 ph19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2019") %>% 
   mutate(plot = as.character(plot), 
          plotid = paste0(plot, subplot),
          plantid = paste0(plotid, plant),
          plant = as.character(plant),
-         year=factor(year(date)),
-         julian = factor(yday(date))) %>% 
+         julian = factor(yday(date)),
+         open = rowSums(select(., starts_with("open")), na.rm=T),
+         buds = rowSums(select(., starts_with("buds")), na.rm=T),
+         eggs = rowSums(select(., starts_with("eggs")), na.rm=T)) %>% 
   left_join(treatments) %>%
   mutate_if(is.character, as.factor)
+
+ph19 <- ph19 %>% 
+  complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+  mutate(flowering = open + buds > 0,
+         has_egg = eggs > 0)
 
 ph20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2020") %>% 
   mutate(plot = as.character(plot), 
          plotid = paste0(plot, subplot),
          plantid = paste0(plotid, plant),
          plant = as.character(plant),
-         year=factor(year(date)),
          julian = factor(yday(date)),
          open = rowSums(select(., starts_with("open")), na.rm=T),
          buds = rowSums(select(., starts_with("buds")), na.rm=T),
@@ -264,6 +270,9 @@ ph20 <- ph20 %>%
   complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
   mutate(flowering = open + buds > 0,
          has_egg = eggs > 0)
+
+ph <- bind_rows(list("2018" = ph18, "2019" = ph19, "2020" = ph20), .id="year") %>% 
+  mutate(julian=as.integer(as.character(julian)))
 
 # leaftraits --------------------------------------------------------------
 
@@ -339,14 +348,55 @@ vt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Volatiles"), she
 
 # seeds -------------------------------------------------------------------
 
-sds18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet="2018") %>% 
+sds18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet="2018", skip=2) %>% 
   mutate(plot = as.character(plot), 
          subplot = toupper(subplot),
          plotid = paste0(plot, subplot),
-         plantid = paste0(plotid, plant)) %>% 
+         plantid = paste0(plotid, plant),
+         plant = as.character(plant),
+         year = "2018",
+         seeds_mature = seeds - seeds_early,
+         fruits_mature = fruits - fruits_early_countable,
+         aborts = aborted_nofruit + fruits_aborted,
+         flowers_buds = flowers_buds_not_aborted + flowers_buds_not_aborted) %>% 
   left_join(treatments) %>%
   mutate_if(is.character, as.factor) 
 
+sds20.date <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet="2020", skip=1) %>% 
+  mutate(plot = as.character(plot), 
+         plotid = paste0(plot, subplot),
+         plantid = paste0(plotid, plant),
+         plant = as.character(plant),
+         julian = factor(yday(date)),
+         year = "2020") %>% 
+  mutate(across(5:14, replace_na, 0)) %>% 
+  left_join(treatments) %>%
+  mutate_if(is.character, as.factor) 
+counts20 <- colnames(sds20.date)[5:14]
+
+sds20 <- sds20.date %>% group_by(across(c("plant", "plantid",colnames(treatments)))) %>% 
+  summarize(across(counts20, sum, na.rm=T), dates=n(), .groups="drop")
+
+sds <- bind_rows(sds18, sds20) %>% 
+  left_join(sm.subplotyear) %>% 
+  mutate(seeds_per_fruit = seeds/fruits,
+         seeds_est = seeds + seeds_fly + fruits_split * seeds_per_fruit,
+         fruits_with_seeds = fruits + fruits_split + fruits_fly_with_seeds,
+         fruits_nonaborted = fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar + fruits_early_uncountable,
+         flowers_est = flowers_buds + fruits_nonaborted + aborts,
+         prop_aborts = aborts / (fruits_nonaborted + aborts),
+         prop_fly = (fruits_fly_no_seeds + fruits_fly_with_seeds) / fruits_nonaborted)
+
+sds20.date.zeroed <- sds20.date %>% 
+  mutate(julian=recode(julian, "215"="216")) %>% 
+  filter(date %in% (sds20.date %>% drop_na(date) %>% count(date) %>% filter(n>1) %>% pull(date))) %>% 
+  complete(nesting(plantid, plotid, plot, subplot, snow, water), nesting(julian, date), fill=list(seeds=0, fruits=0, fruits_split=0, fruits_fly_no_seeds=0, fruits_fly_with_seeds=0, seeds_fly=0, fruits_caterpillar=0)) %>% 
+  mutate(julian=as.integer(as.character(julian)),
+         seeds_per_fruit = seeds/fruits,
+         fruits_with_seeds = fruits + fruits_split + fruits_fly_with_seeds,
+         fruits_nonaborted = fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar,
+         prop_fly = (fruits_fly_no_seeds + fruits_fly_with_seeds) / fruits_nonaborted,
+         fruiting = fruits_nonaborted > 0)
 # export ------------------------------------------------------------------
 
 remove(wx)
@@ -364,6 +414,7 @@ alldata <- list("treatments"=treatments,
                 "leaf_traits"=lt,
                 "floral_traits"=mt,
                 "floral_volatiles"=vt,
-                "seeds_2018"=sds18)
+                "seeds_2018"=sds18,
+                "seeds_2020"=sds20)
 
 purrr::walk(names(alldata), ~write_tsv(alldata[[.]], paste0("data/",., ".tsv")))

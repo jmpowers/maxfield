@@ -507,39 +507,25 @@ ggplot(data=nt, aes(x=yday(date), y= nectar_conc, color=water)) +
 
 # Phenology
 ```{r phenology}
-ggplot(ph20, aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
+ggplot(ph, aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
+  facet_wrap(vars(year), ncol=1)+
   labs(y="Plant height", 
        x="Day of year", color="Precipitation", shape="Snow") +
   scale_color_manual(values=water_pal) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-#ggplot(ph20, aes(x=julian, y=open+buds, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=plantid)) +
-#  labs(y="Total flowers and buds", 
-#       x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
-#  scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
-#  theme(legend.key.size = unit(2, "lines"))
-
-# ggplot(ph20, aes(x=julian, y=eggs, shape=snow, linetype=snow, color=water))+ geom_point() + geom_path(aes(group=plantid)) +
-#   labs(y="Total eggs", 
-#        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
-#   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
-#   theme(legend.key.size = unit(2, "lines"))
-
-ph <-bind_rows(list("2020"= ph20,
-                    "2018"= ph18 %>% mutate(plant=as.character(plant))), .id="year_df") %>% mutate(julian=as.integer(as.character(julian)))
-
-ph %>% group_by(year_df, snow, water, julian) %>% summarize_at(c("open","buds"), mean) %>% 
+ph %>% group_by(year, snow, water, julian) %>% summarize_at(c("open","buds"), mean) %>% 
   ggplot(aes(x=julian, y=open, shape=snow, linetype=snow, color=water))+ geom_point() + 
-  facet_wrap(vars(year_df), nrow=2)+
+  facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +
   labs(y="Mean total flowers", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ph %>% group_by(year_df, snow, water, julian) %>% summarize_at("flowering", mean, na.rm=T) %>% 
+ph %>% group_by(year, snow, water, julian) %>% summarize_at("flowering", mean, na.rm=T) %>% 
   ggplot(aes(x=julian, y=flowering, shape=snow, linetype=snow, color=water))+ geom_point() + 
-    facet_wrap(vars(year_df), nrow=2)+
+    facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +
   labs(y="Proportion flowering", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
@@ -547,18 +533,18 @@ ph %>% group_by(year_df, snow, water, julian) %>% summarize_at("flowering", mean
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ph %>% group_by(year_df, snow, water, julian) %>% summarize_at("eggs", mean, na.rm=T) %>% 
+ph %>% group_by(year, snow, water, julian) %>% summarize_at("eggs", mean, na.rm=T) %>% 
   ggplot(aes(x=julian, y=eggs, shape=snow, linetype=snow, color=water))+ geom_point() + 
-    facet_wrap(vars(year_df), nrow=2)+
+    facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +
   labs(y="Mean total eggs", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ph %>% group_by(year_df, snow, water, julian) %>% summarize_at("has_egg", mean, na.rm=T) %>% 
+ph %>% group_by(year, snow, water, julian) %>% summarize_at("has_egg", mean, na.rm=T) %>% 
   ggplot(aes(x=julian, y=has_egg, shape=snow, linetype=snow, color=water))+ geom_point() + 
-    facet_wrap(vars(year_df), nrow=2)+
+    facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +
   labs(y="Proportion of plants with eggs", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
@@ -571,33 +557,70 @@ ph %>% group_by(year_df, snow, water, julian) %>% summarize_at("has_egg", mean, 
 ## Floral display size
 ### 2020
 ```{r display_size}
-ph20.plantid <- ph20 %>% left_join(sm.subplotyear) %>% group_by(plotid, plantid, snow, water) %>% summarize_at(c("open","height_cm", "VWC"), mean, na.rm=T)
+ph.plantid <- ph %>% left_join(sm.subplotyear) %>% group_by(year, plotid, plantid, snow, water) %>% summarize_at(c("open","height_cm", "VWC"), mean, na.rm=T) 
 
-ggplot(ph20.plantid, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method="lm", se=F) + scale_color_manual(values=water_pal) +
+ggplot(ph.plantid, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method="lm", se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
   labs(x="Mean inflorescence height (cm)", y="Mean number of open flowers", color="Precipitation")
 
-ggplot(ph20.plantid, aes(x=water, color=snow, y = height_cm)) +
+ggplot(ph.plantid, aes(x=water, color=snow, y = height_cm)) +
     labs(x="Precipitation", y="Mean inflorescence height (cm)", color="Snowmelt") +
-    geom_boxplot() + scale_color_manual(values=snow_pal) 
-ggplot(ph20.plantid, aes(x=VWC, y=height_cm)) + geom_point() + geom_smooth() +
-    labs(x="Mean VWC", y="Mean inflorescence height (cm)")
+    geom_boxplot() + scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1)
+ggplot(ph.plantid, aes(x=VWC, y=height_cm, color=year)) + geom_point() + geom_smooth(se=F) +
+    scale_color_manual(values=year_pal) + labs(x="Mean VWC", y="Mean inflorescence height (cm)") 
     
-ggplot(ph20.plantid, aes(x=water, color=snow, y = open)) +
+ggplot(ph.plantid, aes(x=water, color=snow, y = open)) +
     labs(x="Precipitation", y="Mean number of open flowers", color="Snowmelt") +
-    geom_boxplot() + scale_color_manual(values=snow_pal) 
-ggplot(ph20.plantid, aes(x=VWC, y=open)) + geom_point() + geom_smooth()+
-    labs(x="Mean VWC", y="Mean number of open flowers")
+    geom_boxplot() + scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1)
+ggplot(ph.plantid, aes(x=VWC, y=open, color=year)) + geom_point() + geom_smooth(se=F)+
+  scale_color_manual(values=year_pal) + labs(x="Mean VWC", y="Mean number of open flowers")
 ```
 
 # Seeds
-## 2018
-```{r seeds, eval=FALSE}
-ggplot(sds18, aes(color=water, fruits, seeds_total)) + geom_point() + geom_smooth(se=F) + scale_color_manual(values=water_pal)
 
-ggplot(sds18, aes(color=water, water, seeds_total)) + geom_boxplot() + scale_color_manual(values=water_pal)
-ggplot(sds18, aes(color=water, water, fruits)) + geom_boxplot() + scale_color_manual(values=water_pal)
-ggplot(sds18, aes(color=water, water, seeds_total/fruits)) + geom_boxplot() + scale_color_manual(values=water_pal)
-ggplot(sds18, aes(color=water, water, fruits_fly_no_seeds)) + geom_boxplot() + scale_color_manual(values=water_pal)
-ggplot(sds18, aes(color=water, water, fruits_fly_no_seeds/fruits)) + geom_boxplot() + scale_color_manual(values=water_pal)
+```{r seeds}
+ggplot(sds, aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
+  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1)
+
+seedtraits <- c("seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_fly", "prop_aborts")
+seedtraitnames <- setNames(c("Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits with flies","Proportion of fruits that aborted"), seedtraits)
+
+for(tr in seedtraits) {
+  print(ggplot(sds %>% drop_na(plot), aes_string(tr, x="water", color="snow")) + geom_boxplot() + 
+    scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1) + 
+    scale_y_continuous(trans=ifelse(tr %in% c("seeds_est", "fruits_nonaborted"),"sqrt","identity"))+
+    labs(x="Precipitation", y=seedtraitnames[[tr]], color="Precipitation") +
+        guides(x=guide_axis(angle = 90)))
+  
+  print(ggplot(sds, aes_string(tr, x="VWC", color="year")) + geom_point() + geom_smooth(se=F) + 
+   scale_color_manual(values=year_pal) +
+    scale_y_continuous(trans=ifelse(tr %in% c("seeds_est", "fruits_nonaborted"),"sqrt","identity"))+
+    labs(x="Summer mean of soil moisture in subplot (VWC)", y=seedtraitnames[[tr]], color="Year"))
+}
+```
+
+## Fruiting phenology (2020)
+
+```{r seed_phenology}
+ggplot(sds20.date.zeroed, aes(x=julian, y=fruits_nonaborted, color=water, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun="mean", geom="line") + scale_y_sqrt() + scale_color_manual(values=water_pal)+
+  labs(y="Nonaborted fruits", x="Day of year", color="Precipitation", shape="Snow", linetype="Snow")+ scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+ggplot(sds20.date.zeroed, aes(x=julian, y=seeds, color=water, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun="mean", geom="line") + scale_y_sqrt() + scale_color_manual(values=water_pal)+
+  labs(y="Seeds", x="Day of year", color="Precipitation", shape="Snow", linetype="Snow")+ scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+ggplot(sds20.date.zeroed, aes(x=julian, y=prop_fly, color=water, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun="mean", geom="line") + scale_color_manual(values=water_pal)+
+  labs(y="Proportion of nonaborted fruits with flies", x="Day of year", color="Precipitation", shape="Snow", linetype="Snow")+ scale_linetype_manual(values=c(2,1)) +
+  scale_y_continuous(labels = scales::percent)+ theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+sds20.date.zeroed %>% group_by(snow, water, julian) %>% summarize_at("fruiting", mean, na.rm=T) %>% 
+  ggplot(aes(x=julian, y=fruiting, shape=snow, linetype=snow, color=water))+ geom_point() +
+  geom_path(aes(group=paste(snow, water))) +
+  labs(y="Proportion fruiting (nonaborted fruits)", 
+       x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
+  scale_y_continuous(labels = scales::percent)+
+  scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
 ```
 
