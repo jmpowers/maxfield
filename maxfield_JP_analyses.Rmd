@@ -26,6 +26,7 @@ Analyze selection on and plastic responses of floral and vegetative traits of *I
 ```{r setup, message=FALSE}
 library(tidyverse)
 library(lubridate)
+library(googlesheets4)
 
 library(lme4)
 library(lmerTest)
@@ -36,6 +37,8 @@ library(vegan)
 library(RColorBrewer)
 library(viridis)
 library(GGally)
+library(ggvegan)
+library(ggnewscale)
 
 library(knitr)
 knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = "images/")
@@ -50,7 +53,6 @@ load("data/maxfield_data.rda")
 ```
 
 ```{r map}
-library(ggnewscale)
 subplot_offset <- 1/6
 size_meter <- 6
 ggplot(treatments_map) + coord_fixed(clip="off")+
@@ -230,7 +232,7 @@ cen18r2 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status) %>%
 
 #distinct() keeps the first row after sorting, discards the other rows
 cen18 <- cen18 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
-cen18r2 <- cen18r2 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
+cen18r2 <- cen18r2 %>% arrange(id, status) %>% distinct(id, .keep_all = TRUE)
 cen19 <- cen19 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
 cen20 <- cen20 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
 ```
@@ -493,7 +495,7 @@ options(contrasts = c("contr.treatment", "contr.poly"))
 mt.cap <- capscale(scale(mt.morph[,-(6:7)]) ~ VWC + year, data=mt.morph)
 mt.cap
 anova(mt.cap, by="term") %>% tidy %>% kable
-library(ggvegan)
+
 autoplot(mt.cap) + guides(color=F, shape=F)
 ```
 
@@ -617,8 +619,8 @@ ggplot(ph.plantid, aes(x=VWC, y=open, color=year)) + geom_point() + geom_smooth(
 ggplot(sds, aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
   scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1)
 
-seedtraits <- c("seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_fly", "prop_aborts")
-seedtraitnames <- setNames(c("Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits with flies","Proportion of fruits that aborted"), seedtraits)
+seedtraits <- c("seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower")
+seedtraitnames <- setNames(c("Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits infested","Proportion of fruits that aborted","Estimated seeds per flower"), seedtraits)
 
 for(tr in seedtraits) {
   print(ggplot(sds %>% drop_na(plot), aes_string(tr, x="water", color="snow")) + geom_boxplot() + 

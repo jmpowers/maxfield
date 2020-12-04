@@ -378,6 +378,16 @@ sds18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet="2018
   left_join(treatments) %>%
   mutate_if(is.character, as.factor) 
 
+sds19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet="2019", skip=1) %>% 
+  mutate(plot = as.character(plot), 
+         plotid = paste0(plot, subplot),
+         plantid = paste0(plotid, plant),
+         plant = as.character(plant),
+         year = "2019") %>%
+  mutate(across(5:15, replace_na, 0)) %>% 
+  left_join(treatments) %>%
+  mutate_if(is.character, as.factor) 
+
 sds20.date <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet="2020", skip=1) %>% 
   mutate(plot = as.character(plot), 
          plotid = paste0(plot, subplot),
@@ -393,15 +403,24 @@ counts20 <- colnames(sds20.date)[5:14]
 sds20 <- sds20.date %>% group_by(across(c("plant", "plantid",colnames(treatments)))) %>% 
   summarize(across(counts20, sum, na.rm=T), dates=n(), .groups="drop")
 
-sds <- bind_rows(sds18, sds20) %>% 
+# TODO for sds20, split flowers into early and last collections
+
+sds <- bind_rows(sds18, sds19, sds20) %>% 
   left_join(sm.subplotyear) %>% 
-  mutate(seeds_per_fruit = seeds/fruits,
-         seeds_est = seeds + seeds_fly + fruits_split * seeds_per_fruit,
-         fruits_with_seeds = fruits + fruits_split + fruits_fly_with_seeds,
-         fruits_nonaborted = fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar + fruits_early_uncountable,
-         flowers_est = flowers_buds + fruits_nonaborted + aborts,
-         prop_aborts = aborts / (fruits_nonaborted + aborts),
-         prop_fly = (fruits_fly_no_seeds + fruits_fly_with_seeds) / fruits_nonaborted)
+  mutate(#flowers_destroyed	= flowers_morphology + flowers_nectar + flowers_color + flowers_volatiles,
+    flowers_destroyed = 0,
+    flowers_buds_collected_last = 0,
+         seeds_per_fruit	= seeds / fruits,
+         fruits_aborted	= aborts + flowers_buds_collected_last,
+         seeds_est	= seeds + seeds_fly + (flowers_buds_collected_early + flowers_destroyed + fruits_early_uncountable) * (seeds/(fruits + fruits_aborted + fruits_fly_with_seeds + fruits_fly_no_seeds + fruits_caterpillar)) + fruits_split * seeds_per_fruit, 
+         fruits_with_seeds	= fruits + fruits_split + fruits_fly_with_seeds, 
+         fruits_nonaborted	= fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar + fruits_split,
+         flowers_est	= fruits_nonaborted + fruits_aborted + flowers_buds + flowers_destroyed,
+         prop_infested	= (fruits_fly_no_seeds + fruits_fly_with_seeds + fruits_caterpillar) / fruits_nonaborted,
+         prop_aborted	= fruits_aborted / (fruits_nonaborted + fruits_aborted),
+         prop_nonaborted	= fruits_nonaborted / (fruits_nonaborted + fruits_aborted),
+         seeds_per_flower = seeds_est / flowers_est)
+
 
 sds20.date.zeroed <- sds20.date %>% 
   mutate(julian=recode(julian, "215"="216")) %>% 
@@ -431,6 +450,7 @@ alldata <- list("treatments"=treatments,
                 "floral_traits"=mt,
                 "floral_volatiles"=vt,
                 "seeds_2018"=sds18,
+                "seeds_2019"=sds19,
                 "seeds_2020"=sds20)
 
 purrr::walk(names(alldata), ~write_tsv(alldata[[.]], paste0("data/",., ".tsv")))
