@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2020-12-04" />
+<meta name="date" content="2020-12-10" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2020-12-04</h4>
+<h4 class="date">2020-12-10</h4>
 
 </div>
 
@@ -432,36 +432,10 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
 </div>
 <div id="census" class="section level1">
 <h1>Census</h1>
-<div id="measures-of-all-plants-in-all-years" class="section level2">
-<h2>Measures of all plants in all years</h2>
-<pre class="r"><code>megatally &lt;- list(
-  cen18 %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;census18&quot;),
-  cen18r2 %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;census18r2&quot;),
-  cen19 %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;census19&quot;),
-  cen20 %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;census20&quot;),
-  lt %&gt;% filter(year==&quot;2018&quot;) %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;leaf18&quot;),
-  lt %&gt;% filter(year==&quot;2019&quot;) %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;leaf19&quot;),
-  lt %&gt;% filter(year==&quot;2020&quot;) %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;leaf20&quot;),
-  mt %&gt;% filter(year==&quot;2018&quot;) %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;floral18&quot;),
-  mt %&gt;% filter(year==&quot;2019&quot;) %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;floral19&quot;),
-  mt %&gt;% filter(year==&quot;2020&quot;) %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;floral20&quot;),
-  vt %&gt;% filter(year==&quot;2020&quot;) %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;volatiles20&quot;),
-  ph18.raw %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;pheno18&quot;),
-  ph19.raw %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;pheno19&quot;),
-  ph20.raw %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;pheno20&quot;),
-    sds18 %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;seeds18&quot;),
-    sds20 %&gt;% group_by(plotid, plant) %&gt;% tally(name=&quot;seeds20&quot;)
-) %&gt;% 
-  reduce(full_join) %&gt;% arrange(plotid, plant) %&gt;% rowwise() %&gt;% 
-  mutate(total_obs = sum(c_across(3:17), na.rm=T))
-
-megatally %&gt;% 
-  write_sheet(ss=filter(datasheets, name==&quot;Maxfield Results&quot;), sheet=&quot;megatally&quot;)</code></pre>
-</div>
 <div id="census-status" class="section level2">
 <h2>Census status</h2>
 <p>The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).</p>
-<p>Tally the number of each status combination for each year.</p>
+<p>Tally the number of each status combination for each year. Note this this is now happening after duplicates are resolved.</p>
 <pre class="r"><code>nrf_count &lt;- bind_rows(
     &quot;2018&quot;=allowed_nrf %&gt;% filter(year==2018) %&gt;% left_join(cen18 %&gt;% mutate(nrf=paste(notes, rosettes, flowering)) %&gt;% group_by(nrf) %&gt;% tally()),
   &quot;2018r2&quot;=allowed_nrf %&gt;% filter(year==2018) %&gt;% left_join(cen18r2 %&gt;% mutate(nrf=paste(notes, rosettes, flowering)) %&gt;% group_by(nrf) %&gt;% tally()),
@@ -1015,31 +989,27 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 </tr>
 </tbody>
 </table>
-</div>
-<div id="duplicates" class="section level2">
-<h2>Duplicates</h2>
-<p>When there is more than one record for a plant tag in the census, which duplicate should be kept? Currently resolved by the following rules:</p>
-<ol style="list-style-type: decimal">
-<li>sort by status (keep flowering &gt; vegetative &gt; recheck &gt; dead_nf &gt; tagnf)</li>
-<li>sort by date within status (if statuses are the same, keep the observation with the newest date)</li>
-<li>keep the first row and discard the other duplicates</li>
-</ol>
-<p>This is automatic, but it may be better to resolve duplicates manually in some cases. The duplicates are written out to <a href="https://docs.google.com/spreadsheets/d/1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA/edit#gid=367829026">spreadsheets</a></p>
-<pre class="r"><code>#write out the duplicates
-cen18 %&gt;% group_by(id) %&gt;% filter(n()&gt;1) %&gt;% arrange(id, status, desc(date)) %&gt;% 
-  write_sheet(ss=filter(datasheets, name==&quot;Maxfield Results&quot;), sheet=&quot;2018duplicates&quot;)
-cen18r2 %&gt;% group_by(id) %&gt;% filter(n()&gt;1) %&gt;% arrange(id, status) %&gt;% 
-  write_sheet(ss=filter(datasheets, name==&quot;Maxfield Results&quot;), sheet=&quot;2018r2duplicates&quot;)
-#cen19 %&gt;% group_by(id) %&gt;% filter(n()&gt;1) %&gt;% arrange(id, status, desc(date)) %&gt;% 
-#  write_sheet(ss=filter(datasheets, name==&quot;Maxfield Results&quot;), sheet=&quot;2019duplicates&quot;)
-#cen20 %&gt;% group_by(id) %&gt;% filter(n()&gt;1) %&gt;% arrange(id, status, desc(date)) %&gt;% 
-#  write_sheet(ss=filter(datasheets, name==&quot;Maxfield Results&quot;), sheet=&quot;2020duplicates&quot;)
+<p>Visualize a plant’s status in each census</p>
+<pre class="r"><code># library(vegan)
+# library(viridis)
+# megatally %&gt;% select(where(is.numeric)) %&gt;% 
+#   relocate(total_obs,census18,census18r2,census19,census20,pheno18,seeds18,floral18,pheno19,seeds19,floral19,pheno20,seeds20,floral20,volatiles20, leaf18,leaf19,leaf20,census18r2) %&gt;% 
+#   arrange(census18&gt;0,cut(pheno18,c(0,1,2,Inf),right=F),seeds18&gt;0,census19&gt;0,cut(pheno19,c(0,1,2,Inf),right=F),seeds19&gt;0,census20&gt;0,cut(pheno20,c(0,1,2,Inf),right=F),seeds20&gt;0, leaf18&gt;0,leaf19&gt;0,leaf20&gt;0,census18r2&gt;0,total_obs) %&gt;% 
+#   decostand(&quot;max&quot;) %&gt;% sqrt %&gt;% as.matrix %&gt;% 
+#   heatmap(Colv=NA, Rowv = NA, scale=&quot;none&quot;, col=viridis(512))
 
-#distinct() keeps the first row after sorting, discards the other rows
-cen18 &lt;- cen18 %&gt;% arrange(id, status, desc(date)) %&gt;% distinct(id, .keep_all = TRUE)
-cen18r2 &lt;- cen18r2 %&gt;% arrange(id, status) %&gt;% distinct(id, .keep_all = TRUE)
-cen19 &lt;- cen19 %&gt;% arrange(id, status, desc(date)) %&gt;% distinct(id, .keep_all = TRUE)
-cen20 &lt;- cen20 %&gt;% arrange(id, status, desc(date)) %&gt;% distinct(id, .keep_all = TRUE)</code></pre>
+# ggplot(cen.size.long %&gt;% filter(census!=&quot;2018r2&quot;), aes(x=census, y=n_rosettes, group=plantid))+geom_path()+ geom_point() + scale_y_continuous(breaks=0:10)
+
+# ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
+#   scale_fill_manual(values=brewer.pal(8, name=&quot;Set1&quot;)[c(1,3,5,2,7,6)])+
+#   theme(axis.text.y=element_blank(), axis.ticks = element_blank()) + 
+#   labs(fill=&quot;Status&quot;, x=&quot;Census year&quot;,y=&quot;Plant ID&quot;)
+
+ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_tile() +
+  scale_fill_manual(values=c(brewer.pal(5, name=&quot;Set1&quot;)[c(1,3,5,2)],brewer.pal(8, &quot;Set2&quot;)[7:8]))+
+  theme(axis.text.y=element_blank(), axis.ticks = element_blank(), axis.text.x = element_text(angle=90, size=14)) + 
+  labs(fill=&quot;Status&quot;, x=&quot;Dataset and year&quot;,y=&quot;Plant ID&quot;)</code></pre>
+<p><img src="images/status-1.png" width="672" /></p>
 </div>
 <div id="status-vs.-treatment" class="section level2">
 <h2>Status vs. treatment</h2>
@@ -1910,9 +1880,7 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data
 <h2>Floral display size</h2>
 <div id="section" class="section level3">
 <h3>2020</h3>
-<pre class="r"><code>ph.plantid &lt;- ph %&gt;% left_join(sm.subplotyear) %&gt;% group_by(year, plotid, plantid, snow, water) %&gt;% summarize_at(c(&quot;open&quot;,&quot;height_cm&quot;, &quot;VWC&quot;), mean, na.rm=T) 
-
-ggplot(ph.plantid, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
+<pre class="r"><code>ggplot(ph.plantid, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
   labs(x=&quot;Mean inflorescence height (cm)&quot;, y=&quot;Mean number of open flowers&quot;, color=&quot;Precipitation&quot;)</code></pre>
 <p><img src="images/display_size-1.png" width="672" /></p>
 <pre class="r"><code>ggplot(ph.plantid, aes(x=water, color=snow, y = height_cm)) +
@@ -1934,11 +1902,12 @@ ggplot(ph.plantid, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_
 </div>
 <div id="seeds" class="section level1">
 <h1>Seeds</h1>
-<pre class="r"><code>ggplot(sds, aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
-  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1)</code></pre>
+<pre class="r"><code>ggplot(sds %&gt;% drop_na(plot), aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
+  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) + theme_minimal() +
+  labs(x=&quot;Counted fruits&quot;, y=&quot;Counted seeds&quot;, color=&quot;Precipitation&quot;)</code></pre>
 <p><img src="images/seeds-1.png" width="672" /></p>
-<pre class="r"><code>seedtraits &lt;- c(&quot;seeds_per_fruit&quot;, &quot;seeds_est&quot;, &quot;fruits_nonaborted&quot;,  &quot;flowers_est&quot;, &quot;prop_fly&quot;, &quot;prop_aborts&quot;)
-seedtraitnames &lt;- setNames(c(&quot;Seeds per fruit&quot;, &quot;Estimated total seeds&quot;, &quot;Nonaborted fruits&quot;, &quot;Estimated total flowers&quot;, &quot;Proportion of nonaborted fruits with flies&quot;,&quot;Proportion of fruits that aborted&quot;), seedtraits)
+<pre class="r"><code>seedtraits &lt;- c(&quot;seeds_per_fruit&quot;, &quot;seeds_est&quot;, &quot;fruits_nonaborted&quot;,  &quot;flowers_est&quot;, &quot;prop_infested&quot;, &quot;prop_aborted&quot;, &quot;seeds_per_flower&quot;)
+seedtraitnames &lt;- setNames(c(&quot;Seeds per fruit&quot;, &quot;Estimated total seeds&quot;, &quot;Nonaborted fruits&quot;, &quot;Estimated total flowers&quot;, &quot;Proportion of nonaborted fruits infested&quot;,&quot;Proportion of fruits that aborted&quot;,&quot;Estimated seeds per flower&quot;), seedtraits)
 
 for(tr in seedtraits) {
   print(ggplot(sds %&gt;% drop_na(plot), aes_string(tr, x=&quot;water&quot;, color=&quot;snow&quot;)) + geom_boxplot() + 
@@ -1952,7 +1921,7 @@ for(tr in seedtraits) {
     scale_y_continuous(trans=ifelse(tr %in% c(&quot;seeds_est&quot;, &quot;fruits_nonaborted&quot;),&quot;sqrt&quot;,&quot;identity&quot;))+
     labs(x=&quot;Summer mean of soil moisture in subplot (VWC)&quot;, y=seedtraitnames[[tr]], color=&quot;Year&quot;))
 }</code></pre>
-<p><img src="images/seeds-2.png" width="672" /><img src="images/seeds-3.png" width="672" /><img src="images/seeds-4.png" width="672" /><img src="images/seeds-5.png" width="672" /><img src="images/seeds-6.png" width="672" /><img src="images/seeds-7.png" width="672" /><img src="images/seeds-8.png" width="672" /><img src="images/seeds-9.png" width="672" /><img src="images/seeds-10.png" width="672" /><img src="images/seeds-11.png" width="672" /><img src="images/seeds-12.png" width="672" /><img src="images/seeds-13.png" width="672" /></p>
+<p><img src="images/seeds-2.png" width="672" /><img src="images/seeds-3.png" width="672" /><img src="images/seeds-4.png" width="672" /><img src="images/seeds-5.png" width="672" /><img src="images/seeds-6.png" width="672" /><img src="images/seeds-7.png" width="672" /><img src="images/seeds-8.png" width="672" /><img src="images/seeds-9.png" width="672" /><img src="images/seeds-10.png" width="672" /><img src="images/seeds-11.png" width="672" /><img src="images/seeds-12.png" width="672" /><img src="images/seeds-13.png" width="672" /><img src="images/seeds-14.png" width="672" /><img src="images/seeds-15.png" width="672" /></p>
 <div id="fruiting-phenology-2020" class="section level2">
 <h2>Fruiting phenology (2020)</h2>
 <pre class="r"><code>ggplot(sds20.date.zeroed, aes(x=julian, y=fruits_nonaborted, color=water, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun=&quot;mean&quot;, geom=&quot;line&quot;) + scale_y_sqrt() + scale_color_manual(values=water_pal)+

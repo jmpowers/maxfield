@@ -165,39 +165,11 @@ ggplot(sm, aes(x=yday(date), shape=snow, linetype=snow, color=water, y = VWC)) +
 
 # Census
 
-## Measures of all plants in all years
-
-```{r megatally}
-megatally <- list(
-  cen18 %>% group_by(plotid, plant) %>% tally(name="census18"),
-  cen18r2 %>% group_by(plotid, plant) %>% tally(name="census18r2"),
-  cen19 %>% group_by(plotid, plant) %>% tally(name="census19"),
-  cen20 %>% group_by(plotid, plant) %>% tally(name="census20"),
-  lt %>% filter(year=="2018") %>% group_by(plotid, plant) %>% tally(name="leaf18"),
-  lt %>% filter(year=="2019") %>% group_by(plotid, plant) %>% tally(name="leaf19"),
-  lt %>% filter(year=="2020") %>% group_by(plotid, plant) %>% tally(name="leaf20"),
-  mt %>% filter(year=="2018") %>% group_by(plotid, plant) %>% tally(name="floral18"),
-  mt %>% filter(year=="2019") %>% group_by(plotid, plant) %>% tally(name="floral19"),
-  mt %>% filter(year=="2020") %>% group_by(plotid, plant) %>% tally(name="floral20"),
-  vt %>% filter(year=="2020") %>% group_by(plotid, plant) %>% tally(name="volatiles20"),
-  ph18.raw %>% group_by(plotid, plant) %>% tally(name="pheno18"),
-  ph19.raw %>% group_by(plotid, plant) %>% tally(name="pheno19"),
-  ph20.raw %>% group_by(plotid, plant) %>% tally(name="pheno20"),
-    sds18 %>% group_by(plotid, plant) %>% tally(name="seeds18"),
-    sds20 %>% group_by(plotid, plant) %>% tally(name="seeds20")
-) %>% 
-  reduce(full_join) %>% arrange(plotid, plant) %>% rowwise() %>% 
-  mutate(total_obs = sum(c_across(3:17), na.rm=T))
-
-megatally %>% 
-  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="megatally")
-```
-
 ## Census status
 
 The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).
 
-Tally the number of each status combination for each year. 
+Tally the number of each status combination for each year. Note this this is now happening after duplicates are resolved.
 
 ```{r load_census}
 nrf_count <- bind_rows(
@@ -209,32 +181,28 @@ nrf_count <- bind_rows(
 nrf_count %>% select(-nrf) %>% arrange(year_round, status, desc(n)) %>% drop_na(n) %>% kable
 ```
 
-## Duplicates
-When there is more than one record for a plant tag in the census, which duplicate should be kept? 
-Currently resolved by the following rules:
+Visualize a plant's status in each census
 
-1. sort by status (keep flowering > vegetative > recheck > dead_nf > tagnf)
-2. sort by date within status (if statuses are the same, keep the observation with the newest date)
-3. keep the first row and discard the other duplicates
+```{r status}
+# library(vegan)
+# library(viridis)
+# megatally %>% select(where(is.numeric)) %>% 
+#   relocate(total_obs,census18,census18r2,census19,census20,pheno18,seeds18,floral18,pheno19,seeds19,floral19,pheno20,seeds20,floral20,volatiles20, leaf18,leaf19,leaf20,census18r2) %>% 
+#   arrange(census18>0,cut(pheno18,c(0,1,2,Inf),right=F),seeds18>0,census19>0,cut(pheno19,c(0,1,2,Inf),right=F),seeds19>0,census20>0,cut(pheno20,c(0,1,2,Inf),right=F),seeds20>0, leaf18>0,leaf19>0,leaf20>0,census18r2>0,total_obs) %>% 
+#   decostand("max") %>% sqrt %>% as.matrix %>% 
+#   heatmap(Colv=NA, Rowv = NA, scale="none", col=viridis(512))
 
-This is automatic, but it may be better to resolve duplicates manually in some cases. The duplicates are written out to [spreadsheets](https://docs.google.com/spreadsheets/d/1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA/edit#gid=367829026)
+# ggplot(cen.size.long %>% filter(census!="2018r2"), aes(x=census, y=n_rosettes, group=plantid))+geom_path()+ geom_point() + scale_y_continuous(breaks=0:10)
 
-```{r dupes}
-#write out the duplicates
-cen18 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
-  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2018duplicates")
-cen18r2 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status) %>% 
-  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2018r2duplicates")
-#cen19 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
-#  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2019duplicates")
-#cen20 %>% group_by(id) %>% filter(n()>1) %>% arrange(id, status, desc(date)) %>% 
-#  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="2020duplicates")
+# ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
+#   scale_fill_manual(values=brewer.pal(8, name="Set1")[c(1,3,5,2,7,6)])+
+#   theme(axis.text.y=element_blank(), axis.ticks = element_blank()) + 
+#   labs(fill="Status", x="Census year",y="Plant ID")
 
-#distinct() keeps the first row after sorting, discards the other rows
-cen18 <- cen18 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
-cen18r2 <- cen18r2 %>% arrange(id, status) %>% distinct(id, .keep_all = TRUE)
-cen19 <- cen19 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
-cen20 <- cen20 %>% arrange(id, status, desc(date)) %>% distinct(id, .keep_all = TRUE)
+ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_tile() +
+  scale_fill_manual(values=c(brewer.pal(5, name="Set1")[c(1,3,5,2)],brewer.pal(8, "Set2")[7:8]))+
+  theme(axis.text.y=element_blank(), axis.ticks = element_blank(), axis.text.x = element_text(angle=90, size=14)) + 
+  labs(fill="Status", x="Dataset and year",y="Plant ID")
 ```
 
 ## Status vs. treatment
@@ -595,8 +563,6 @@ ph %>% group_by(year, snow, water, julian) %>% summarize_at("has_egg", mean, na.
 ## Floral display size
 ### 2020
 ```{r display_size}
-ph.plantid <- ph %>% left_join(sm.subplotyear) %>% group_by(year, plotid, plantid, snow, water) %>% summarize_at(c("open","height_cm", "VWC"), mean, na.rm=T) 
-
 ggplot(ph.plantid, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method="lm", se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
   labs(x="Mean inflorescence height (cm)", y="Mean number of open flowers", color="Precipitation")
 
@@ -616,8 +582,9 @@ ggplot(ph.plantid, aes(x=VWC, y=open, color=year)) + geom_point() + geom_smooth(
 # Seeds
 
 ```{r seeds}
-ggplot(sds, aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
-  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1)
+ggplot(sds %>% drop_na(plot), aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
+  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) + theme_minimal() +
+  labs(x="Counted fruits", y="Counted seeds", color="Precipitation")
 
 seedtraits <- c("seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower")
 seedtraitnames <- setNames(c("Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits infested","Proportion of fruits that aborted","Estimated seeds per flower"), seedtraits)
