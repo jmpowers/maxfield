@@ -1007,6 +1007,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 
 ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_tile() +
   scale_fill_manual(values=c(brewer.pal(5, name=&quot;Set1&quot;)[c(1,3,5,2)],brewer.pal(8, &quot;Set2&quot;)[7:8]))+
+  scale_x_discrete(position=&quot;top&quot;) +
   theme(axis.text.y=element_blank(), axis.ticks = element_blank(), axis.text.x = element_text(angle=90, size=14)) + 
   labs(fill=&quot;Status&quot;, x=&quot;Dataset and year&quot;,y=&quot;Plant ID&quot;)</code></pre>
 <p><img src="images/status-1.png" width="672" /></p>
@@ -1102,12 +1103,12 @@ ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_til
 </div>
 <div id="floral-traits" class="section level1">
 <h1>Floral traits</h1>
-<div id="floral-morphology-and-nectar" class="section level2">
-<h2>Floral morphology and nectar</h2>
+<div id="floral-morphology-nectar-phenology-seeds" class="section level2">
+<h2>Floral morphology, nectar, phenology, seeds</h2>
 <div id="floral-trait-correlations" class="section level3">
 <h3>Floral trait correlations</h3>
-<pre class="r"><code>traits &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;, &quot;style_length&quot;, &quot;sepal_width&quot;, &quot;nectar_24_h_ul&quot;, &quot;nectar_conc&quot;,&quot;nectar_sugar_24_h_mg&quot;) #exclude anthers
-traitnames &lt;- setNames(c(&quot;Corolla Length (mm)&quot;, &quot;Corolla Width (mm)&quot;, &quot;Style Length (mm)&quot;, &quot;Sepal Width (mm)&quot;, &quot;Nectar Volume (uL/day)&quot;, &quot;Nectar Concentration (% sucrose by mass)&quot;, &quot;Nectar Sucrose (mg/day)&quot;), traits)
+<pre class="r"><code>traits &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;, &quot;style_length&quot;, &quot;sepal_width&quot;, &quot;nectar_24_h_ul&quot;, &quot;nectar_conc&quot;,&quot;nectar_sugar_24_h_mg&quot;,&quot;height_cm&quot;,&quot;open&quot;,&quot;seeds_per_fruit&quot;, &quot;seeds_est&quot;, &quot;fruits_nonaborted&quot;,  &quot;flowers_est&quot;, &quot;prop_infested&quot;, &quot;prop_aborted&quot;, &quot;seeds_per_flower&quot;) #exclude anthers
+traitnames &lt;- setNames(c(&quot;Corolla Length (mm)&quot;, &quot;Corolla Width (mm)&quot;, &quot;Style Length (mm)&quot;, &quot;Sepal Width (mm)&quot;, &quot;Nectar Volume (uL/day)&quot;, &quot;Nectar Concentration (% sucrose by mass)&quot;, &quot;Nectar Sucrose (mg/day)&quot;, &quot;Inflorescence height (cm)&quot;, &quot;Open flowers&quot;, &quot;Seeds per fruit&quot;, &quot;Estimated total seeds&quot;, &quot;Nonaborted fruits&quot;, &quot;Estimated total flowers&quot;, &quot;Proportion of nonaborted fruits infested&quot;,&quot;Proportion of fruits that aborted&quot;,&quot;Estimated seeds per flower&quot;), traits)
 
 ggpairs(mt %&gt;% select(corolla_length,   corolla_width,  style_length,   anther_max, anther_min, sepal_width))</code></pre>
 <p><img src="images/correlations-1.png" width="672" /></p>
@@ -1118,29 +1119,30 @@ ggpairs(mt %&gt;% select(corolla_length,   corolla_width,  style_length,   anthe
 <h3>Floral plasticity: water treatments and snowmelt treatments</h3>
 <p>This is a split-plot analysis, based on the original experimental design. The models use:</p>
 <ul>
-<li><em>mt.subplot</em>, the 24 * 3 subplot means within each year</li>
+<li><em>mnps.subplot</em>, the 24 * 3 subplot means within each year</li>
 <li><em>snow</em>, the snowmelt treatment (except for plot 2 in 2019)</li>
 <li><em>water</em>, the water treatments with mock rainouts and controls combined</li>
 <li><em>plot</em> as a random effect (subplots vary within this larger unit)</li>
 </ul>
 <p>The models are specified as:</p>
-<pre><code>lmer(trait ~ year * snow * water + (1|plot), data = mt.subplot)</code></pre>
+<pre><code>lmer(trait ~ year * snow * water + (1|plot), data = mnps.subplot)</code></pre>
 <ul>
 <li>The models for nectar volume and total sugar are singular (variance at plot level near 0)</li>
 <li>Removing the interactions with year does not make those two models not singular</li>
 <li>The model fits are mostly singular when a random effect of <em>plotid</em> (subplot) is added for repeated measures among years</li>
 </ul>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+
 mt.mod &lt;- mt.mod.test &lt;- mod.emm &lt;- mt.mod.plot &lt;- list()
 for(tr in traits) {
-  mt.mod[[tr]] &lt;- lmer(mt.subplot[[tr]] ~ year * snow * water + (1|plot), data=mt.subplot)
+  mt.mod[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ year * snow * water + (1|plot), data=mnps.subplot)
   mt.mod.test[[tr]] &lt;- anova(mt.mod[[tr]])
   mod.emm[[tr]] &lt;- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year + snow * water))
   
   mt.mod.plot[[tr]] &lt;- 
     ggplot(mod.emm[[tr]] %&gt;% mutate(year=factor(year, levels=2018:2020)), aes(x=water, color=snow, y = emmean)) + facet_wrap(vars(year), nrow=1) +
         labs(x=&quot;Precipitation&quot;, y=traitnames[[tr]], color=&quot;Snowmelt&quot;) +
-        geom_point(data=mt.subplot, aes_string(x=&quot;water&quot;, color=&quot;snow&quot;, y = tr), inherit.aes = F, position=position_dodge(0.7)) + 
+        geom_point(data=mnps.subplot, aes_string(x=&quot;water&quot;, color=&quot;snow&quot;, y = tr), inherit.aes = F, position=position_dodge(0.7)) + 
         geom_point(position=position_dodge(0.7), size=4, shape=0) + 
         geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE), position=position_dodge2(0.7)) +
         guides(x=guide_axis(angle = 90)) + scale_color_manual(values=snow_pal)
@@ -1239,20 +1241,146 @@ snow:water       307.7  153.83     2    54  0.5112 0.6026421
 year:snow:water 1223.4  305.86     4    54  1.0164 0.4071820    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-8.png" width="672" /></p>
+<pre><code>height_cm 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                 Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year            1030.92  515.46     2 50.113 33.3530 6.168e-10 ***
+snow              89.50   89.50     1  7.192  5.7912    0.0461 *  
+water             11.18    5.59     2 48.794  0.3618    0.6982    
+year:snow         49.03   24.51     2 51.629  1.5862    0.2145    
+year:water        18.28    4.57     4 48.793  0.2958    0.8793    
+snow:water        37.24   18.62     2 48.794  1.2047    0.3085    
+year:snow:water   98.95   24.74     4 48.793  1.6006    0.1892    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-9.png" width="672" /></p>
+<pre><code>open 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                 Sum Sq Mean Sq NumDF DenDF F value    Pr(&gt;F)    
+year            290.652 145.326     2    54 40.3515 1.912e-11 ***
+snow              1.436   1.436     1    54  0.3986    0.5305    
+water             1.578   0.789     2    54  0.2191    0.8040    
+year:snow        13.486   6.743     2    54  1.8723    0.1636    
+year:water        2.166   0.542     4    54  0.1504    0.9620    
+snow:water        0.303   0.152     2    54  0.0421    0.9588    
+year:snow:water   0.785   0.196     4    54  0.0545    0.9943    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-10.png" width="672" /></p>
+<pre><code>seeds_per_fruit 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                Sum Sq Mean Sq NumDF DenDF F value    Pr(&gt;F)    
+year            47.745 23.8727     2    54 17.3193 1.545e-06 ***
+snow             0.861  0.8605     1    54  0.6243   0.43292    
+water            2.964  1.4821     2    54  1.0753   0.34840    
+year:snow        4.883  2.4416     2    54  1.7713   0.17985    
+year:water      14.388  3.5969     4    54  2.6095   0.04551 *  
+snow:water       9.591  4.7954     2    54  3.4790   0.03791 *  
+year:snow:water 13.992  3.4979     4    54  2.5377   0.05037 .  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-11.png" width="672" /></p>
+<pre><code>seeds_est 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                Sum Sq Mean Sq NumDF  DenDF F value   Pr(&gt;F)   
+year             31842 15921.1     2 50.981  6.0998 0.004216 **
+snow              1185  1184.7     1  6.601  0.4539 0.523365   
+water             1265   632.6     2 49.774  0.2424 0.785682   
+year:snow        32253 16126.7     2 53.020  6.1785 0.003872 **
+year:water       16178  4044.6     4 49.774  1.5496 0.202402   
+snow:water        5441  2720.6     2 49.774  1.0423 0.360199   
+year:snow:water   5715  1428.7     4 49.774  0.5474 0.701760   
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-12.png" width="672" /></p>
+<pre><code>fruits_nonaborted 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                 Sum Sq Mean Sq NumDF  DenDF F value  Pr(&gt;F)  
+year             525.56  262.78     2 51.219  1.7287 0.18772  
+snow             114.26  114.26     1  7.006  0.7516 0.41467  
+water            318.78  159.39     2 50.139  1.0485 0.35801  
+year:snow       1064.84  532.42     2 53.218  3.5025 0.03724 *
+year:water       679.82  169.95     4 50.139  1.1180 0.35851  
+snow:water       298.44  149.22     2 50.139  0.9816 0.38179  
+year:snow:water  461.98  115.49     4 50.139  0.7598 0.55640  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-13.png" width="672" /></p>
+<pre><code>flowers_est 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                 Sum Sq Mean Sq NumDF  DenDF F value  Pr(&gt;F)  
+year             255.47  127.73     2 51.172  0.4051 0.66902  
+snow              65.60   65.60     1  6.818  0.2081 0.66246  
+water            317.25  158.63     2 50.107  0.5031 0.60768  
+year:snow       1720.86  860.43     2 53.280  2.7289 0.07442 .
+year:water      1902.36  475.59     4 50.107  1.5084 0.21391  
+snow:water      1044.18  522.09     2 50.107  1.6558 0.20121  
+year:snow:water  814.62  203.65     4 50.107  0.6459 0.63236  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-14.png" width="672" /></p>
+<pre><code>prop_infested 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                  Sum Sq  Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year            0.138751 0.069376     2 51.212 11.5259 7.363e-05 ***
+snow            0.013793 0.013793     1  8.663  2.2916   0.16567    
+water           0.008286 0.004143     2 49.779  0.6883   0.50716    
+year:snow       0.043785 0.021892     2 51.934  3.6372   0.03324 *  
+year:water      0.010965 0.002741     4 49.779  0.4554   0.76798    
+snow:water      0.014154 0.007077     2 49.779  1.1758   0.31699    
+year:snow:water 0.032622 0.008155     4 49.779  1.3549   0.26298    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-15.png" width="672" /></p>
+<pre><code>prop_aborted 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                  Sum Sq  Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
+year            0.208158 0.104079     2 51.269  7.9698 0.0009686 ***
+snow            0.028869 0.028869     1  8.891  2.2106 0.1716417    
+water           0.002983 0.001492     2 49.854  0.1142 0.8922943    
+year:snow       0.018479 0.009240     2 51.944  0.7075 0.4975495    
+year:water      0.023780 0.005945     4 49.854  0.4552 0.7681164    
+snow:water      0.036559 0.018280     2 49.854  1.3997 0.2561839    
+year:snow:water 0.032140 0.008035     4 49.854  0.6153 0.6536476    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p><img src="images/morphology_split-16.png" width="672" /></p>
+<pre><code>seeds_per_flower 
+Type III Analysis of Variance Table with Satterthwaite&#39;s method
+                Sum Sq Mean Sq NumDF DenDF F value   Pr(&gt;F)   
+year            6.8279  3.4139     2    54  6.3643 0.003298 **
+snow            1.2726  1.2726     1    54  2.3724 0.129335   
+water           0.3702  0.1851     2    54  0.3451 0.709700   
+year:snow       2.2138  1.1069     2    54  2.0635 0.136909   
+year:water      2.3747  0.5937     4    54  1.1067 0.362891   
+snow:water      3.5555  1.7777     2    54  3.3141 0.043895 * 
+year:snow:water 1.0481  0.2620     4    54  0.4885 0.744114   
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <pre class="r"><code>mt.mod.tests &lt;- map_dfr(mt.mod.test, tidy, .id=&quot;trait&quot;)
 mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
   pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
   bind_rows(lapply(mt.mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
-<table>
+<table style="width:100%;">
 <colgroup>
-<col width="13%" />
-<col width="12%" />
-<col width="11%" />
-<col width="11%" />
-<col width="10%" />
-<col width="12%" />
-<col width="10%" />
-<col width="17%" />
+<col width="6%" />
+<col width="6%" />
+<col width="6%" />
+<col width="5%" />
+<col width="5%" />
+<col width="6%" />
+<col width="5%" />
+<col width="9%" />
+<col width="4%" />
+<col width="2%" />
+<col width="6%" />
+<col width="4%" />
+<col width="7%" />
+<col width="5%" />
+<col width="6%" />
+<col width="5%" />
+<col width="7%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1264,6 +1392,15 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <th align="left">nectar_24_h_ul</th>
 <th align="left">nectar_conc</th>
 <th align="left">nectar_sugar_24_h_mg</th>
+<th align="left">height_cm</th>
+<th align="left">open</th>
+<th align="left">seeds_per_fruit</th>
+<th align="left">seeds_est</th>
+<th align="left">fruits_nonaborted</th>
+<th align="left">flowers_est</th>
+<th align="left">prop_infested</th>
+<th align="left">prop_aborted</th>
+<th align="left">seeds_per_flower</th>
 </tr>
 </thead>
 <tbody>
@@ -1276,6 +1413,15 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left">**</td>
 <td align="left">***</td>
 <td align="left">***</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">**</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">**</td>
 </tr>
 <tr class="even">
 <td align="left">snow</td>
@@ -1284,6 +1430,15 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">*</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
@@ -1296,6 +1451,15 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left">*</td>
 <td align="left">**</td>
 <td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">year:snow</td>
@@ -1306,6 +1470,15 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">**</td>
+<td align="left">*</td>
+<td align="left">.</td>
+<td align="left">*</td>
+<td align="left"></td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
@@ -1313,6 +1486,15 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">**</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -1326,10 +1508,28 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
 </tr>
 <tr class="odd">
 <td align="left">year:snow:water</td>
 <td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">.</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -1346,6 +1546,15 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <td align="left">Y</td>
 <td align="left">N</td>
 <td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
 </tr>
 </tbody>
 </table>
@@ -1354,45 +1563,55 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <h3>Floral plasticity: water treatments and snowmelt offset</h3>
 <p>The differences in snowmelt dates vary among years and plots, so this analysis uses a melt date offset. The models use:</p>
 <ul>
-<li><em>mt.subplot</em>, the 24 * 3 subplot means within each year</li>
+<li><em>mnps.subplot</em>, the 24 * 3 subplot means within each year</li>
 <li><em>water</em>, the water treatments with mock rainouts and controls combined</li>
 <li><em>melt_offset</em>, the number of days between the snowmelt date (when the light entering the HOBO logger exceeds 10,000 lux) and the mean snowmelt date for the normal plots in that year (according to <em>snow</em>)</li>
 <li><em>plotid</em> (subplot) as a random effect (plants vary within this larger unit)</li>
 </ul>
 <p>The models are specified as:</p>
-<pre><code>lmer(trait ~ year * water * melt_offset + (1|plotid), data = mt.subplot)</code></pre>
+<pre><code>lmer(trait ~ year * water * melt_offset + (1|plotid), data = mnps.subplot)</code></pre>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+
 mt.mod.raw &lt;- mt.mod.plantyr &lt;- mt.mod.subplot &lt;- mt.mod.subplot.test &lt;- mt.mod.plot &lt;- list()
 for(tr in traits) {
   #mt.mod.raw[[tr]]     &lt;- lmer(mt[[tr]]         ~ year * water * melt_offset + (1|plotid) + (1|plantid), data=mt)
   #mt.mod.plantyr[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ year * water * melt_offset + (1|plotid), data=mt.plantyr)
-  mt.mod.subplot[[tr]] &lt;- lmer(mt.subplot[[tr]] ~ year * water * melt_offset + (1|plot), data=mt.subplot)
-  mt.subplot[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
-  mt.subplot[[paste0(&quot;fit.&quot;,tr)]][!is.na(mt.subplot[[tr]])]&lt;- predict(mt.mod.subplot[[tr]], re.form=NA)
+  mt.mod.subplot[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ year * water * melt_offset + (1|plot), data=mnps.subplot)
+  mnps.subplot[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
+  mnps.subplot[[paste0(&quot;fit.&quot;,tr)]][!is.na(mnps.subplot[[tr]])]&lt;- predict(mt.mod.subplot[[tr]], re.form=NA)
   mt.mod.subplot.test[[tr]] &lt;- anova(mt.mod.subplot[[tr]])
   
   mt.mod.plot[[tr]] &lt;- 
-    ggplot(mt.subplot, aes_string(x=&quot;melt_offset&quot;, color=&quot;water&quot;, y = tr)) + geom_point() +
-    geom_line(data=mt.subplot %&gt;% drop_na(paste0(&quot;fit.&quot;,tr)), aes_string(y=paste0(&quot;fit.&quot;,tr)), size=2)+
+    ggplot(mnps.subplot, aes_string(x=&quot;melt_offset&quot;, color=&quot;water&quot;, y = tr)) + geom_point() +
+    geom_line(data=mnps.subplot %&gt;% drop_na(paste0(&quot;fit.&quot;,tr)), aes_string(y=paste0(&quot;fit.&quot;,tr)), size=2)+
      scale_color_manual(values=water_pal)+ facet_wrap(vars(year))+
         labs(x=&quot;Offset from mean normal snow melt date (days)&quot;, y=traitnames[[tr]], color=&quot;Precipitation&quot;)
   print(mt.mod.plot[[tr]])
 }</code></pre>
-<p><img src="images/morphology_model-1.png" width="672" /><img src="images/morphology_model-2.png" width="672" /><img src="images/morphology_model-3.png" width="672" /><img src="images/morphology_model-4.png" width="672" /><img src="images/morphology_model-5.png" width="672" /><img src="images/morphology_model-6.png" width="672" /><img src="images/morphology_model-7.png" width="672" /></p>
+<p><img src="images/morphology_model-1.png" width="672" /><img src="images/morphology_model-2.png" width="672" /><img src="images/morphology_model-3.png" width="672" /><img src="images/morphology_model-4.png" width="672" /><img src="images/morphology_model-5.png" width="672" /><img src="images/morphology_model-6.png" width="672" /><img src="images/morphology_model-7.png" width="672" /><img src="images/morphology_model-8.png" width="672" /><img src="images/morphology_model-9.png" width="672" /><img src="images/morphology_model-10.png" width="672" /><img src="images/morphology_model-11.png" width="672" /><img src="images/morphology_model-12.png" width="672" /><img src="images/morphology_model-13.png" width="672" /><img src="images/morphology_model-14.png" width="672" /><img src="images/morphology_model-15.png" width="672" /><img src="images/morphology_model-16.png" width="672" /></p>
 <pre class="r"><code>mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
 mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
   pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
   bind_rows(lapply(mt.mod.subplot, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
 <table>
 <colgroup>
-<col width="18%" />
-<col width="12%" />
-<col width="11%" />
-<col width="10%" />
 <col width="9%" />
-<col width="12%" />
-<col width="9%" />
-<col width="16%" />
+<col width="6%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="6%" />
+<col width="5%" />
+<col width="8%" />
+<col width="4%" />
+<col width="2%" />
+<col width="6%" />
+<col width="4%" />
+<col width="7%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="7%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1404,6 +1623,15 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <th align="left">nectar_24_h_ul</th>
 <th align="left">nectar_conc</th>
 <th align="left">nectar_sugar_24_h_mg</th>
+<th align="left">height_cm</th>
+<th align="left">open</th>
+<th align="left">seeds_per_fruit</th>
+<th align="left">seeds_est</th>
+<th align="left">fruits_nonaborted</th>
+<th align="left">flowers_est</th>
+<th align="left">prop_infested</th>
+<th align="left">prop_aborted</th>
+<th align="left">seeds_per_flower</th>
 </tr>
 </thead>
 <tbody>
@@ -1416,6 +1644,15 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <td align="left">**</td>
 <td align="left">***</td>
 <td align="left">*</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">**</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">**</td>
+<td align="left">**</td>
 </tr>
 <tr class="even">
 <td align="left">water</td>
@@ -1425,6 +1662,15 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <td align="left">*</td>
 <td align="left"></td>
 <td align="left">**</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 <td align="left"></td>
 </tr>
 <tr class="odd">
@@ -1436,6 +1682,15 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <td align="left">*</td>
 <td align="left"></td>
 <td align="left"></td>
+<td align="left">**</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">year:water</td>
@@ -1443,6 +1698,15 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <td align="left">.</td>
 <td align="left"></td>
 <td align="left">.</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -1456,9 +1720,27 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
+<td align="left">.</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">.</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">water:melt_offset</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -1476,6 +1758,15 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
+<td align="left">.</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">Singular?</td>
@@ -1484,6 +1775,15 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <td align="left">Y</td>
 <td align="left">N</td>
 <td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">Y</td>
+<td align="left">Y</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
 <td align="left">N</td>
 <td align="left">Y</td>
 </tr>
@@ -1504,41 +1804,51 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <li>The model for total sugar is singular (variance at subplot level near 0)</li>
 </ul>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+
 mt.sm.mod &lt;- mt.sm.mod.test &lt;- mt.sm.mod.raw &lt;- coef.VWC &lt;- emm.VWC &lt;- mt.sm.mod.plot &lt;-list()
 for(tr in traits) {
   #mt.sm.mod.raw[[tr]] &lt;- lmer(mt[[tr]]    ~ year * VWC + (1|plot) + (1|plantid), data=mt)
-  mt.sm.mod[[tr]] &lt;-lmer(mt.plantyr[[tr]] ~ year * VWC + (1|plotid), data=mt.plantyr)
-  mt.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]] &lt;- NA
-  mt.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]][!is.na(mt.plantyr[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA)
+  mt.sm.mod[[tr]] &lt;-lmer(mnps.plantyr[[tr]] ~ year * VWC + (1|plotid), data=mnps.plantyr)
+  mnps.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]] &lt;- NA
+  mnps.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]][!is.na(mnps.plantyr[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA)
   mt.sm.mod.test[[tr]] &lt;- anova(mt.sm.mod[[tr]])
   
   #Z-score the data first to get standardized slopes
-  mt.sm.mod[[tr]] &lt;- lmer(scale(mt.plantyr[[tr]]) ~ year * VWC + (1|plotid), data=mt.plantyr)
+  mt.sm.mod[[tr]] &lt;- lmer(scale(mnps.plantyr[[tr]]) ~ year * VWC + (1|plotid), data=mnps.plantyr)
   coef.VWC[[tr]] &lt;- summary(mt.sm.mod[[tr]])$coefficients[&quot;VWC&quot;,]
   emm.VWC[[tr]] &lt;- emtrends(mt.sm.mod[[tr]],  ~ year, var = &quot;VWC&quot;)
 
    mt.sm.mod.plot[[tr]] &lt;- 
-    ggplot(mt.plantyr, aes_string(x=&quot;VWC&quot;, color=&quot;year&quot;, y = tr)) + geom_point() +
-    geom_line(data=mt.plantyr %&gt;% drop_na(paste0(&quot;fit.sm.&quot;,tr)), aes_string(y=paste0(&quot;fit.sm.&quot;,tr)), size=2)+
+    ggplot(mnps.plantyr, aes_string(x=&quot;VWC&quot;, color=&quot;year&quot;, y = tr)) + geom_point() +
+    geom_line(data=mnps.plantyr %&gt;% drop_na(paste0(&quot;fit.sm.&quot;,tr)), aes_string(y=paste0(&quot;fit.sm.&quot;,tr)), size=2)+
      scale_color_manual(values=year_pal)+
         labs(x=&quot;Summer mean of soil moisture in subplot (VWC)&quot;, y=traitnames[[tr]], color=&quot;Year&quot;)
   print(mt.sm.mod.plot[[tr]])
 }</code></pre>
-<p><img src="images/morphology_sm-1.png" width="672" /><img src="images/morphology_sm-2.png" width="672" /><img src="images/morphology_sm-3.png" width="672" /><img src="images/morphology_sm-4.png" width="672" /><img src="images/morphology_sm-5.png" width="672" /><img src="images/morphology_sm-6.png" width="672" /><img src="images/morphology_sm-7.png" width="672" /></p>
+<p><img src="images/morphology_sm-1.png" width="672" /><img src="images/morphology_sm-2.png" width="672" /><img src="images/morphology_sm-3.png" width="672" /><img src="images/morphology_sm-4.png" width="672" /><img src="images/morphology_sm-5.png" width="672" /><img src="images/morphology_sm-6.png" width="672" /><img src="images/morphology_sm-7.png" width="672" /><img src="images/morphology_sm-8.png" width="672" /><img src="images/morphology_sm-9.png" width="672" /><img src="images/morphology_sm-10.png" width="672" /><img src="images/morphology_sm-11.png" width="672" /><img src="images/morphology_sm-12.png" width="672" /><img src="images/morphology_sm-13.png" width="672" /><img src="images/morphology_sm-14.png" width="672" /><img src="images/morphology_sm-15.png" width="672" /><img src="images/morphology_sm-16.png" width="672" /></p>
 <pre class="r"><code>mt.sm.mod.tests &lt;- map_dfr(mt.sm.mod.test, tidy, .id=&quot;trait&quot;)
 mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
   pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
     bind_rows(lapply(mt.sm.mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
-<table style="width:100%;">
+<table>
 <colgroup>
-<col width="8%" />
-<col width="13%" />
-<col width="12%" />
-<col width="11%" />
-<col width="10%" />
-<col width="13%" />
-<col width="10%" />
-<col width="18%" />
+<col width="4%" />
+<col width="6%" />
+<col width="6%" />
+<col width="5%" />
+<col width="5%" />
+<col width="6%" />
+<col width="5%" />
+<col width="9%" />
+<col width="4%" />
+<col width="2%" />
+<col width="7%" />
+<col width="4%" />
+<col width="7%" />
+<col width="5%" />
+<col width="6%" />
+<col width="5%" />
+<col width="7%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1550,6 +1860,15 @@ mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.val
 <th align="left">nectar_24_h_ul</th>
 <th align="left">nectar_conc</th>
 <th align="left">nectar_sugar_24_h_mg</th>
+<th align="left">height_cm</th>
+<th align="left">open</th>
+<th align="left">seeds_per_fruit</th>
+<th align="left">seeds_est</th>
+<th align="left">fruits_nonaborted</th>
+<th align="left">flowers_est</th>
+<th align="left">prop_infested</th>
+<th align="left">prop_aborted</th>
+<th align="left">seeds_per_flower</th>
 </tr>
 </thead>
 <tbody>
@@ -1562,6 +1881,15 @@ mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.val
 <td align="left"></td>
 <td align="left">***</td>
 <td align="left">**</td>
+<td align="left"></td>
+<td align="left">***</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">VWC</td>
@@ -1572,6 +1900,15 @@ mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.val
 <td align="left">***</td>
 <td align="left">*</td>
 <td align="left">***</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">.</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">year:VWC</td>
@@ -1582,6 +1919,15 @@ mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.val
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">*</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">Singular?</td>
@@ -1592,6 +1938,15 @@ mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.val
 <td align="left">N</td>
 <td align="left">N</td>
 <td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
 </tr>
 </tbody>
 </table>
@@ -1604,7 +1959,7 @@ ggplot(emm.VWC.df %&gt;% drop_na(), aes(x=trait, y=VWC.trend, color=year)) +
   geom_hline(yintercept=0) + geom_pointrange(aes(ymin=VWC.trend - SE, ymax = VWC.trend + SE), position=position_dodge(width=0.3), size=0.4) + 
   labs(y=&quot;Slope of z-scored trait vs. mean annual soil moisture&quot;, x=&quot;Floral Trait&quot;, color=&quot;Year&quot;) +
   theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images/morphology_sm-8.png" width="672" /></p>
+<p><img src="images/morphology_sm-17.png" width="672" /></p>
 </div>
 <div id="multivariate-response" class="section level3">
 <h3>Multivariate response</h3>

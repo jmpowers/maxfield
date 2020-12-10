@@ -535,7 +535,7 @@ mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>%
 #average by plant and year, then by subplot
 mnps.subplot <- mnps.plantyr %>%  
   group_by(year, water, water4, snow, snow_new, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
-  mutate_if(is.numeric, ~replace(., is.nan(.), NA))
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA)) %>% drop_na(water4) #TODO figure out what entries in ph are causing NAs
 
 # export ------------------------------------------------------------------
 
