@@ -472,6 +472,25 @@ ggplot(emm.VWC.df %>% drop_na(), aes(x=trait, y=VWC.trend, color=year)) +
   theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)
 ```
 
+### Traits for plasticity paper
+```{r emmeans_filtered, fig.width=8, fig.height=5}
+bind_rows(melt_date = emm.melt %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=melt_date.trend),
+          early_precip_mm = emm.precip %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=early_precip_mm.trend),      .id="predictor") %>% mutate(predictor=fct_relevel(predictor,"melt_date")) %>%
+  filter(trait %in% traits[c(1:8, 13)]) %>% 
+  ggplot(aes(x=fct_relevel(trait, rev(traits)), y=trend, color=water)) +  
+  facet_wrap(vars(predictor), nrow=1, scales="free_x", labeller=labeller(predictor=c(early_precip_mm="Early summer precip (mm)", melt_date="Snowmelt date"))) + 
+  geom_hline(yintercept=0) + 
+  geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), position=position_dodge(width=0.3), size=0.4) + 
+  labs(y="Slope of z-scored trait vs. predictor", x="Floral Trait", color="Water") +
+  theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
+  theme(legend.position = "top")
+
+ggplot(emm.VWC.df %>% drop_na() %>% filter(trait %in% traits[c(1:8, 13)]), aes(x=fct_relevel(trait, rev(traits)), y=VWC.trend, color=year)) +  
+  geom_hline(yintercept=0) + geom_pointrange(aes(ymin=VWC.trend - SE, ymax = VWC.trend + SE), position=position_dodge(width=0.3), size=0.4) + 
+  labs(y="Slope of z-scored trait vs. mean annual soil moisture", x="Floral Trait", color="Year") +
+  theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)
+```
+
 ### Multivariate response
 ```{r multresp}
 mt.morph <- mt[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","VWC")] %>% drop_na(1:5) #drop sepal_width

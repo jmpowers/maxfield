@@ -2162,6 +2162,25 @@ ggplot(emm.VWC.df %&gt;% drop_na(), aes(x=trait, y=VWC.trend, color=year)) +
   theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images/morphology_sm-17.png" width="672" /></p>
 </div>
+<div id="traits-for-plasticity-paper" class="section level3">
+<h3>Traits for plasticity paper</h3>
+<pre class="r"><code>bind_rows(melt_date = emm.melt %&gt;% map(as.data.frame) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% rename(trend=melt_date.trend),
+          early_precip_mm = emm.precip %&gt;% map(as.data.frame) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% rename(trend=early_precip_mm.trend),      .id=&quot;predictor&quot;) %&gt;% mutate(predictor=fct_relevel(predictor,&quot;melt_date&quot;)) %&gt;%
+  filter(trait %in% traits[c(1:8, 13)]) %&gt;% 
+  ggplot(aes(x=fct_relevel(trait, rev(traits)), y=trend, color=water)) +  
+  facet_wrap(vars(predictor), nrow=1, scales=&quot;free_x&quot;, labeller=labeller(predictor=c(early_precip_mm=&quot;Early summer precip (mm)&quot;, melt_date=&quot;Snowmelt date&quot;))) + 
+  geom_hline(yintercept=0) + 
+  geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), position=position_dodge(width=0.3), size=0.4) + 
+  labs(y=&quot;Slope of z-scored trait vs. predictor&quot;, x=&quot;Floral Trait&quot;, color=&quot;Water&quot;) +
+  theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
+  theme(legend.position = &quot;top&quot;)</code></pre>
+<p><img src="images/emmeans_filtered-1.png" width="768" /></p>
+<pre class="r"><code>ggplot(emm.VWC.df %&gt;% drop_na() %&gt;% filter(trait %in% traits[c(1:8, 13)]), aes(x=fct_relevel(trait, rev(traits)), y=VWC.trend, color=year)) +  
+  geom_hline(yintercept=0) + geom_pointrange(aes(ymin=VWC.trend - SE, ymax = VWC.trend + SE), position=position_dodge(width=0.3), size=0.4) + 
+  labs(y=&quot;Slope of z-scored trait vs. mean annual soil moisture&quot;, x=&quot;Floral Trait&quot;, color=&quot;Year&quot;) +
+  theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)</code></pre>
+<p><img src="images/emmeans_filtered-2.png" width="768" /></p>
+</div>
 <div id="multivariate-response" class="section level3">
 <h3>Multivariate response</h3>
 <pre class="r"><code>mt.morph &lt;- mt[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;VWC&quot;)] %&gt;% drop_na(1:5) #drop sepal_width
