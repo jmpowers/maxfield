@@ -99,10 +99,16 @@ wx <- drive_download(filter(datasheets, name=="billy_rmbl_wrcc_weather_2017_2020
 daily_precip <- wx %>% group_by(date) %>% summarize_at("precip_mm", sum) %>% mutate(year=factor(year(date)), julian=yday(date))
 daily_temp <- wx %>% group_by(date) %>% summarize_at("av_temp_2m_C", mean, na.rm=T) %>% mutate(year=factor(year(date)), julian=yday(date))
 
+normal_meltdate <- meltdates %>% group_by(year) %>% filter(snow=="Normal") %>% summarize(date=mean(sun_time)) %>%
+  mutate(day = yday(date), mean_snow_depth_cm=0, notes="Mean time of snowmelt (sun_time) in normal plots")
+
 snowcloth <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="snowcloth") %>% 
   mutate(plots = as.character(plots), date = force_tz(date, "America/Denver")+hours(12), year=factor(year)) %>% 
-  bind_rows(meltdates %>% group_by(year) %>% filter(snow=="Normal") %>% summarize(date=mean(sun_time)) %>% 
-              mutate(mean_snow_depth_cm=0, notes="Mean time of snowmelt (sun_time) in normal plots"))
+  bind_rows(normal_meltdate)
+
+early_summer = 40 #sum precip for first 40 days after normal snowmelt - this is around when flowering takes off
+summer_precip <- daily_precip %>% inner_join(normal_meltdate %>% rename(normal_meltdate=date)) %>% 
+  filter(date > normal_meltdate & date < normal_meltdate+days(early_summer)) %>% group_by(year) %>% summarize(early_precip_mm=sum(precip_mm))
 
 groundcover <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="groundcover") %>% 
   mutate(across(starts_with("first"), list(day=yday)), year=year(first_0_cm))
@@ -525,7 +531,7 @@ sds <- bind_rows(sds18, sds19, sds20) %>%
     seeds_per_flower = seeds_est / flowers_est)
 
 ######## Merge morphology, nectar, phenology, and seeds ####
-mnps <- bind_rows(mt, ph, sds)
+mnps <- bind_rows(mt, ph, sds) %>% left_join(summer_precip)
 
 #average by plant and year
 mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>% 

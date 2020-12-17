@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2020-12-10" />
+<meta name="date" content="2020-12-17" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2020-12-10</h4>
+<h4 class="date">2020-12-17</h4>
 
 </div>
 
@@ -729,13 +729,22 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">blank</td>
+<td align="left">recheck</td>
+<td align="right">57</td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="right">2019</td>
 <td align="left">nf</td>
 <td align="left">one_or_more</td>
 <td align="left">blank</td>
 <td align="left">recheck</td>
 <td align="right">3</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -743,15 +752,6 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">y</td>
 <td align="left">recheck</td>
 <td align="right">2</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">recheck</td>
-<td align="right">1</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
@@ -1042,33 +1042,33 @@ ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_til
 <div id="status-transitions" class="section level2">
 <h2>Status transitions</h2>
 <p>What did plants of a given status in 2019 look like now in 2020?</p>
-<pre class="r"><code>with(cen, table(`2019`=paste(status_19), `2020`=paste(status)))</code></pre>
+<pre class="r"><code>with(cen, table(`2019`=paste(status_19), `2020`=paste(status_20)))</code></pre>
 <pre><code>            2020
 2019         dead_nf flowering  NA recheck tagnf vegetative
-  dead_nf        294        21  27       1    18         51
-  flowering      127        15   9       1     7         16
-  NA              21        15   0       0     1          4
-  recheck          5         0   0       0     3          1
-  tagnf           13         7  15       0    12          5
-  vegetative     164       167  24       4    38        175</code></pre>
-<pre class="r"><code>ggplot(filter(cen, status_19 %in% status_ok, status %in% status_ok), aes(x=status_19, fill=status)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(fill=&quot;2020 Status&quot;, y=&quot;Proportion&quot;, x=&quot;2019 Status&quot;)</code></pre>
+  dead_nf        271        21  22       1    18         48
+  flowering      115        14   9       1     7         16
+  NA              21        15  38       0     1          4
+  recheck          5         0   0       1     3          1
+  tagnf           13         6  15       0    11          4
+  vegetative     151       159  23       4    36        166</code></pre>
+<pre class="r"><code>ggplot(filter(cen, status_19 %in% status_ok, status_20 %in% status_ok), aes(x=status_19, fill=status_20)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(fill=&quot;2020 Status&quot;, y=&quot;Proportion&quot;, x=&quot;2019 Status&quot;)</code></pre>
 <p><img src="images/transitions-1.png" width="672" /></p>
 </div>
 <div id="survival-and-flowering-vs.-plant-size" class="section level2">
 <h2>Survival and flowering vs. plant size</h2>
-<pre class="r"><code>ggplot(filter(cen, status %in% status_ok), aes(x=r1_longest_19, fill=status)) + facet_wrap(vars(status), ncol=1) +
+<pre class="r"><code>ggplot(filter(cen, status_20 %in% status_ok), aes(x=r1_longest_19, fill=status_20)) + facet_wrap(vars(status_20), ncol=1) +
   geom_density() + scale_fill_manual(values=status_pal) + labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, fill=&quot;2020 status&quot;)</code></pre>
 <p><img src="images/surv_size-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(filter(cen, status %in% status_ok), aes(x=r1_leaves_19, fill=status)) + facet_wrap(vars(status), ncol=1) +
+<pre class="r"><code>ggplot(filter(cen, status_20 %in% status_ok), aes(x=r1_leaves_19, fill=status_20)) + facet_wrap(vars(status_20), ncol=1) +
   geom_density() + scale_fill_manual(values=status_pal) + labs(x=&quot;2019 Rosette 1 # Leaves&quot;, fill=&quot;2020 status&quot;)</code></pre>
 <p><img src="images/surv_size-2.png" width="672" /></p>
 </div>
 <div id="plant-growth-vs.-treatments" class="section level2">
 <h2>Plant growth vs. treatments</h2>
 <p>Only includes plants that remained vegetative and did not die or flower.</p>
-<pre class="r"><code>ggplot(drop_na(cen, water, snow), aes(x=r1_longest_19, y=r1_longest, color=water, shape=snow)) + geom_point() + geom_abline(intercept=0, slope=1) + scale_color_manual(values=water_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen, water_19, snow_19), aes(x=r1_longest_19, y=r1_longest_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) + scale_color_manual(values=water_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/growth-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen, water, snow), aes(x=r1_leaves_19, y=r1_leaves, color=water, shape=snow)) + geom_point() + geom_abline(intercept=0, slope=1 )+ scale_color_manual(values=water_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 # Leaves&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen, water_19, snow_19), aes(x=r1_leaves_19, y=r1_leaves_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1 )+ scale_color_manual(values=water_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 # Leaves&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/growth-2.png" width="672" /></p>
 </div>
 <div id="plant-size-vs.-treatments" class="section level2">
@@ -1790,6 +1790,207 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 </tbody>
 </table>
 </div>
+<div id="floral-plasticity-absolute-snowmelt-date" class="section level3">
+<h3>FLoral plasticity: absolute snowmelt date</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+
+mt.mod.raw &lt;- mt.mod.plantyr &lt;- mt.mod.subplot &lt;- mt.mod.subplot.test &lt;- mt.mod.plot &lt;- coef.melt.precip &lt;-emm.melt&lt;- emm.precip &lt;- list()
+for(tr in traits) {
+  #mt.mod.raw[[tr]]     &lt;- lmer(mt[[tr]]         ~ year * water * melt_date + (1|plotid) + (1|plantid), data=mt)
+  #mt.mod.plantyr[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ year * water * melt_date + (1|plotid), data=mt.plantyr)
+  mt.mod.subplot[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ melt_date + water + early_precip_mm + melt_date:water + early_precip_mm:water + (1|plot), data=mnps.subplot)
+  mnps.subplot[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
+  mnps.subplot[[paste0(&quot;fit.&quot;,tr)]][!is.na(mnps.subplot[[tr]])]&lt;- predict(mt.mod.subplot[[tr]], re.form=NA)
+  mt.mod.subplot.test[[tr]] &lt;- anova(mt.mod.subplot[[tr]])
+  
+    #Z-score the data first to get standardized slopes
+  mt.mod.subplot[[tr]] &lt;- lmer(scale(mnps.subplot[[tr]]) ~ melt_date + water + early_precip_mm + melt_date:water + early_precip_mm:water + (1|plot), data=mnps.subplot)
+  coef.melt.precip[[tr]] &lt;- summary(mt.mod.subplot[[tr]])$coefficients[c(&quot;melt_date&quot;,&quot;early_precip_mm&quot;),]
+  emm.melt[[tr]] &lt;- emtrends(mt.mod.subplot[[tr]],  ~ water, var = &quot;melt_date&quot;)
+  emm.precip[[tr]] &lt;- emtrends(mt.mod.subplot[[tr]],  ~ water, var = &quot;early_precip_mm&quot;)
+  
+  mt.mod.plot[[tr]] &lt;-
+    ggplot(mnps.subplot, aes_string(x=&quot;melt_date&quot;, color=&quot;water&quot;, y = tr, shape=&quot;year&quot;)) + geom_point() +
+    geom_line(data=mnps.subplot %&gt;% drop_na(paste0(&quot;fit.&quot;,tr)) %&gt;% mutate(year.water = paste(year, water)), aes_string(y=paste0(&quot;fit.&quot;,tr), group=&quot;year.water&quot;), size=2)+
+     scale_color_manual(values=water_pal)+
+    scale_shape_discrete(labels=with(summer_precip, paste0(year, &quot;: &quot;, round(early_precip_mm), &quot; mm&quot;)))+
+        labs(x=&quot;Snow melt date (day of year)&quot;, y=traitnames[[tr]], color=&quot;Precipitation&quot;, shape=&quot;Year: Summer precip&quot;)
+  print(mt.mod.plot[[tr]])
+}</code></pre>
+<p><img src="images/morphology_meltdate-1.png" width="672" /><img src="images/morphology_meltdate-2.png" width="672" /><img src="images/morphology_meltdate-3.png" width="672" /><img src="images/morphology_meltdate-4.png" width="672" /><img src="images/morphology_meltdate-5.png" width="672" /><img src="images/morphology_meltdate-6.png" width="672" /><img src="images/morphology_meltdate-7.png" width="672" /><img src="images/morphology_meltdate-8.png" width="672" /><img src="images/morphology_meltdate-9.png" width="672" /><img src="images/morphology_meltdate-10.png" width="672" /><img src="images/morphology_meltdate-11.png" width="672" /><img src="images/morphology_meltdate-12.png" width="672" /><img src="images/morphology_meltdate-13.png" width="672" /><img src="images/morphology_meltdate-14.png" width="672" /><img src="images/morphology_meltdate-15.png" width="672" /><img src="images/morphology_meltdate-16.png" width="672" /></p>
+<pre class="r"><code>mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
+mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
+  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
+  bind_rows(lapply(mt.mod.subplot, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
+<table>
+<colgroup>
+<col width="9%" />
+<col width="6%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="6%" />
+<col width="5%" />
+<col width="8%" />
+<col width="4%" />
+<col width="2%" />
+<col width="6%" />
+<col width="4%" />
+<col width="7%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="7%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="left">corolla_length</th>
+<th align="left">corolla_width</th>
+<th align="left">style_length</th>
+<th align="left">sepal_width</th>
+<th align="left">nectar_24_h_ul</th>
+<th align="left">nectar_conc</th>
+<th align="left">nectar_sugar_24_h_mg</th>
+<th align="left">height_cm</th>
+<th align="left">open</th>
+<th align="left">seeds_per_fruit</th>
+<th align="left">seeds_est</th>
+<th align="left">fruits_nonaborted</th>
+<th align="left">flowers_est</th>
+<th align="left">prop_infested</th>
+<th align="left">prop_aborted</th>
+<th align="left">seeds_per_flower</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">melt_date</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left"></td>
+<td align="left">**</td>
+<td align="left">***</td>
+<td align="left"></td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">**</td>
+<td align="left"></td>
+<td align="left">**</td>
+<td align="left">***</td>
+<td align="left">***</td>
+</tr>
+<tr class="even">
+<td align="left">water</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">early_precip_mm</td>
+<td align="left">***</td>
+<td align="left">***</td>
+<td align="left">*</td>
+<td align="left"></td>
+<td align="left">**</td>
+<td align="left">*</td>
+<td align="left">**</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+<td align="left">**</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">melt_date:water</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">water:early_precip_mm</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">Singular?</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>bind_rows(melt_date = emm.melt %&gt;% map(as.data.frame) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% rename(trend=melt_date.trend),
+          early_precip_mm = emm.precip %&gt;% map(as.data.frame) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% rename(trend=early_precip_mm.trend),      .id=&quot;predictor&quot;) %&gt;% mutate(predictor=fct_relevel(predictor,&quot;melt_date&quot;)) %&gt;% 
+  ggplot(aes(x=fct_relevel(trait, rev(traits)), y=trend, color=water)) +  
+  facet_wrap(vars(predictor), nrow=1, scales=&quot;free_x&quot;, labeller=labeller(predictor=c(early_precip_mm=&quot;Early summer precip (mm)&quot;, melt_date=&quot;Snowmelt date&quot;))) + 
+  geom_hline(yintercept=0) + 
+  geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), position=position_dodge(width=0.3), size=0.4) + 
+  labs(y=&quot;Slope of z-scored trait vs. predictor&quot;, x=&quot;Floral Trait&quot;, color=&quot;Water&quot;) +
+  theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
+  theme(legend.position = &quot;top&quot;)</code></pre>
+<p><img src="images/morphology_meltdate-17.png" width="672" /></p>
+</div>
 <div id="floral-plasticity-soil-moisture" class="section level3">
 <h3>Floral plasticity: soil moisture</h3>
 <p>Both snowmelt timing and summer precipitation affect soil moisture and its timing. This analysis regresses the floral traits against the mean soil moisture in a subplot. Slopes may differ among years. The models use:</p>
@@ -2113,21 +2314,21 @@ Eigenvalues for unconstrained axes:
 <td align="right">2</td>
 <td align="right">0.0080217</td>
 <td align="right">0.9751170</td>
-<td align="right">0.427</td>
+<td align="right">0.371</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
 <td align="right">4</td>
 <td align="right">0.0289412</td>
 <td align="right">1.7590459</td>
-<td align="right">0.087</td>
+<td align="right">0.085</td>
 </tr>
 <tr class="even">
 <td align="left">melt_offset:water</td>
 <td align="right">2</td>
 <td align="right">0.0062569</td>
 <td align="right">0.7605915</td>
-<td align="right">0.547</td>
+<td align="right">0.518</td>
 </tr>
 <tr class="odd">
 <td align="left">year:melt_offset:water</td>
@@ -2188,8 +2389,10 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data
 <h1>Phenology</h1>
 <pre class="r"><code>ggplot(ph, aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
   facet_wrap(vars(year), ncol=1)+
+    geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
   labs(y=&quot;Plant height&quot;, 
        x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;) +
+  scale_x_continuous(breaks=seq(120,240, by=20))+
   scale_color_manual(values=water_pal) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/phenology-1.png" width="672" /></p>
@@ -2197,8 +2400,10 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data
   ggplot(aes(x=julian, y=open, shape=snow, linetype=snow, color=water))+ geom_point() + 
   facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
   labs(y=&quot;Mean total flowers&quot;, 
        x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+    scale_x_continuous(breaks=seq(120,240, by=20))+
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/phenology-2.png" width="672" /></p>
@@ -2206,8 +2411,10 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data
   ggplot(aes(x=julian, y=flowering, shape=snow, linetype=snow, color=water))+ geom_point() + 
     facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +
+    geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
   labs(y=&quot;Proportion flowering&quot;, 
        x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+  scale_x_continuous(breaks=seq(120,240, by=20))+
   scale_y_continuous(labels = scales::percent)+
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
@@ -2216,8 +2423,10 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data
   ggplot(aes(x=julian, y=eggs, shape=snow, linetype=snow, color=water))+ geom_point() + 
     facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +
+    geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
   labs(y=&quot;Mean total eggs&quot;, 
        x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+    scale_x_continuous(breaks=seq(120,240, by=20))+
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/phenology-4.png" width="672" /></p>
@@ -2225,8 +2434,10 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data
   ggplot(aes(x=julian, y=has_egg, shape=snow, linetype=snow, color=water))+ geom_point() + 
     facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +
+    geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
   labs(y=&quot;Proportion of plants with eggs&quot;, 
        x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;) +
+    scale_x_continuous(breaks=seq(120,240, by=20))+
   scale_y_continuous(labels = scales::percent)+
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
@@ -2287,8 +2498,8 @@ for(tr in seedtraits) {
   labs(y=&quot;Seeds&quot;, x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;)+ scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/seed_phenology-2.png" width="672" /></p>
-<pre class="r"><code>ggplot(sds20.date.zeroed, aes(x=julian, y=prop_fly, color=water, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun=&quot;mean&quot;, geom=&quot;line&quot;) + scale_color_manual(values=water_pal)+
-  labs(y=&quot;Proportion of nonaborted fruits with flies&quot;, x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;)+ scale_linetype_manual(values=c(2,1)) +
+<pre class="r"><code>ggplot(sds20.date.zeroed, aes(x=julian, y=prop_infested, color=water, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun=&quot;mean&quot;, geom=&quot;line&quot;) + scale_color_manual(values=water_pal)+
+  labs(y=&quot;Proportion of nonaborted fruits infested&quot;, x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;)+ scale_linetype_manual(values=c(2,1)) +
   scale_y_continuous(labels = scales::percent)+ theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/seed_phenology-3.png" width="672" /></p>
