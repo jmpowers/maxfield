@@ -551,11 +551,12 @@ No obvious effect of time within a season for corolla length/width or sepal widt
 ggplot(sm, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
   #geom_vline(xintercept=175) + geom_vline(xintercept=183) +
+  geom_point(data=ph, aes(y= height_cm/2), color="grey")+
   geom_point(data=mt, aes(y= corolla_length), color="purple")+
     geom_point(data=mt, aes(y= nectar_24_h_ul), color="orange")+
   geom_point(aes(y = VWC), color="black") +
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="grey40")+
-  labs(title="Timing of measurements", subtitle="VWC (black) / Morphology (purple) / Nectar (orange)", x="Day of year", shape="Snow", linetype="Snow")+
+  labs(title="Timing of measurements", subtitle="VWC (black) / Morphology (purple) / Nectar (orange)", x="Day of year", shape="Snow", linetype="Snow", y="Measurements")+
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
