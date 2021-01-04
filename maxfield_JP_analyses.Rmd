@@ -375,7 +375,7 @@ mt.mod.subplot.tests %>% select(c("trait", "term", "p.value")) %>% mutate(p.valu
   bind_rows(lapply(mt.mod.subplot, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
 ```
 
-### FLoral plasticity: absolute snowmelt date
+### FLoral plasticity: absolute snowmelt date and summed summer precip
 
 ```{r morphology_meltdate}
 options(contrasts = c("contr.sum", "contr.poly"))
@@ -550,15 +550,16 @@ No obvious effect of time within a season for corolla length/width or sepal widt
 ```{r morph_season}
 ggplot(sm, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
-  #geom_vline(xintercept=175) + geom_vline(xintercept=183) +
-  geom_point(data=ph, aes(y= height_cm/2), color="grey")+
-  geom_point(data=mt, aes(y= corolla_length), color="purple")+
-    geom_point(data=mt, aes(y= nectar_24_h_ul), color="orange")+
-  geom_point(aes(y = VWC), color="black") +
+  geom_point(data=ph, aes(y= height_cm/2, color="Phenology (height)"))+
+  geom_point(data=mt, aes(y= corolla_length, color="Morphology"))+
+  geom_point(data=mt, aes(y= nectar_24_h_ul, color="Nectar"))+
+  geom_point(aes(y = VWC, color="Soil moisture")) +
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="grey40")+
-  labs(title="Timing of measurements", subtitle="VWC (black) / Morphology (purple) / Nectar (orange)", x="Day of year", shape="Snow", linetype="Snow", y="Measurements")+
+  labs(x="Day of year", shape="Snow", linetype="Snow", y="", color="Measurement")+
+  scale_color_manual(values=c("purple","orange","grey","black"))+
+  scale_x_continuous(breaks=seq(120, 240, by=20))+
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
-  theme(legend.key.size = unit(2, "lines"))
+  theme(legend.key.size = unit(1.5, "lines"), axis.text.y=element_blank())
 
 ggplot(data=mt, aes(x=yday(date), y= corolla_length, color=water)) + 
   facet_wrap(vars(year), ncol=1) +
@@ -580,6 +581,23 @@ ggplot(data=nt, aes(x=yday(date), y= nectar_conc, color=water)) +
 ```
 
 # Phenology
+```{r check_phenology}
+library(viridis)
+walk(list(ph18.raw, ph19.raw, ph20.raw), 
+     function(ph.raw) {
+  y = ph.raw$year[1]
+  p <- ph.raw %>% count(plot, subplot, plotid, plantid, julian) %>% add_count(plantid, name="n_plantid") %>% 
+  mutate(plantid = fct_reorder(plantid, as.integer(factor(paste(plotid, n_plantid))),.desc=T)) %>% 
+  ggplot(aes(julian, plantid, fill=factor(n)))+
+  geom_tile()+ scale_fill_viridis(option="inferno", discrete=T) + 
+  geom_point(aes(color=subplot, x=median(as.integer(julian))))+ scale_color_manual(values=sample(rainbow(10)))+
+  geom_point(aes(color=plot, x=median(as.integer(julian))), position=position_nudge(x=-0.3))+ 
+  theme_classic() + theme(panel.background = element_rect(fill="grey")) + guides(x=guide_axis(angle = 90)) +
+  labs(x="Day of year", y="Plant (sorted by subplot)", fill="Observations", color="Plot", title=paste(y,"phenology"))
+  print(p)})
+```
+
+
 ```{r phenology}
 ggplot(ph, aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
   facet_wrap(vars(year), ncol=1)+
@@ -590,7 +608,7 @@ ggplot(ph, aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + 
   scale_color_manual(values=water_pal) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-ph %>% group_by(year, snow, water, julian) %>% summarize_at(c("open","buds"), mean) %>% 
+ph %>% group_by(year, snow, water, julian) %>% summarize_at(c("open","buds"), mean, na.rm=T) %>% 
   ggplot(aes(x=julian, y=open, shape=snow, linetype=snow, color=water))+ geom_point() + 
   facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +

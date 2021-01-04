@@ -109,8 +109,8 @@ snowcloth <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & 
 early_summer = 40 #sum precip from mean normal snowmelt date to last morphology/nectar/phenology measurement
 summer_precip <- daily_precip %>% 
   inner_join(normal_meltdate %>% rename(normal_meltdate=date)) %>% 
-  inner_join(mnps %>% filter(is.na(seeds)) %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T))))
-  filter(date > normal_meltdate & date < last_day) %>% 
+  inner_join(mnps %>% filter(is.na(seeds)) %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) %>% 
+  filter(date > normal_meltdate & julian < last_day) %>% 
   group_by(year) %>% summarize(early_precip_mm=sum(precip_mm))
 
 groundcover <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="groundcover") %>% 

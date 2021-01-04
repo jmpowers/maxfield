@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2020-12-17" />
+<meta name="date" content="2021-01-04" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2020-12-17</h4>
+<h4 class="date">2021-01-04</h4>
 
 </div>
 
@@ -1790,8 +1790,8 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 </tbody>
 </table>
 </div>
-<div id="floral-plasticity-absolute-snowmelt-date" class="section level3">
-<h3>FLoral plasticity: absolute snowmelt date</h3>
+<div id="floral-plasticity-absolute-snowmelt-date-and-summed-summer-precip" class="section level3">
+<h3>FLoral plasticity: absolute snowmelt date and summed summer precip</h3>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 
 mt.mod.raw &lt;- mt.mod.plantyr &lt;- mt.mod.subplot &lt;- mt.mod.subplot.test &lt;- mt.mod.plot &lt;- coef.melt.precip &lt;-emm.melt&lt;- emm.precip &lt;- list()
@@ -2374,14 +2374,16 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data
 <p>No obvious effect of time within a season for corolla length/width or sepal width. The timing of trait measurements was different each year:</p>
 <pre class="r"><code>ggplot(sm, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
-  #geom_vline(xintercept=175) + geom_vline(xintercept=183) +
-  geom_point(data=mt, aes(y= corolla_length), color=&quot;purple&quot;)+
-    geom_point(data=mt, aes(y= nectar_24_h_ul), color=&quot;orange&quot;)+
-  geom_point(aes(y = VWC), color=&quot;black&quot;) +
+  geom_point(data=ph, aes(y= height_cm/2, color=&quot;Phenology (height)&quot;))+
+  geom_point(data=mt, aes(y= corolla_length, color=&quot;Morphology&quot;))+
+  geom_point(data=mt, aes(y= nectar_24_h_ul, color=&quot;Nectar&quot;))+
+  geom_point(aes(y = VWC, color=&quot;Soil moisture&quot;)) +
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=&quot;grey40&quot;)+
-  labs(title=&quot;Timing of measurements&quot;, subtitle=&quot;VWC (black) / Morphology (purple) / Nectar (orange)&quot;, x=&quot;Day of year&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;)+
+  labs(x=&quot;Day of year&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;, y=&quot;&quot;, color=&quot;Measurement&quot;)+
+  scale_color_manual(values=c(&quot;purple&quot;,&quot;orange&quot;,&quot;grey&quot;,&quot;black&quot;))+
+  scale_x_continuous(breaks=seq(120, 240, by=20))+
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
-  theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
+  theme(legend.key.size = unit(1.5, &quot;lines&quot;), axis.text.y=element_blank())</code></pre>
 <p><img src="images/morph_season-1.png" width="672" /></p>
 <pre class="r"><code>ggplot(data=mt, aes(x=yday(date), y= corolla_length, color=water)) + 
   facet_wrap(vars(year), ncol=1) +
@@ -2406,6 +2408,20 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data
 </div>
 <div id="phenology" class="section level1">
 <h1>Phenology</h1>
+<pre class="r"><code>library(viridis)
+walk(list(ph18.raw, ph19.raw, ph20.raw), 
+     function(ph.raw) {
+  y = ph.raw$year[1]
+  p &lt;- ph.raw %&gt;% count(plot, subplot, plotid, plantid, julian) %&gt;% add_count(plantid, name=&quot;n_plantid&quot;) %&gt;% 
+  mutate(plantid = fct_reorder(plantid, as.integer(factor(paste(plotid, n_plantid))),.desc=T)) %&gt;% 
+  ggplot(aes(julian, plantid, fill=factor(n)))+
+  geom_tile()+ scale_fill_viridis(option=&quot;inferno&quot;, discrete=T) + 
+  geom_point(aes(color=subplot, x=median(as.integer(julian))))+ scale_color_manual(values=sample(rainbow(10)))+
+  geom_point(aes(color=plot, x=median(as.integer(julian))), position=position_nudge(x=-0.3))+ 
+  theme_classic() + theme(panel.background = element_rect(fill=&quot;grey&quot;)) + guides(x=guide_axis(angle = 90)) +
+  labs(x=&quot;Day of year&quot;, y=&quot;Plant (sorted by subplot)&quot;, fill=&quot;Observations&quot;, color=&quot;Plot&quot;, title=paste(y,&quot;phenology&quot;))
+  print(p)})</code></pre>
+<p><img src="images/check_phenology-1.png" width="672" /><img src="images/check_phenology-2.png" width="672" /><img src="images/check_phenology-3.png" width="672" /></p>
 <pre class="r"><code>ggplot(ph, aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
   facet_wrap(vars(year), ncol=1)+
     geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
@@ -2415,7 +2431,7 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data
   scale_color_manual(values=water_pal) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/phenology-1.png" width="672" /></p>
-<pre class="r"><code>ph %&gt;% group_by(year, snow, water, julian) %&gt;% summarize_at(c(&quot;open&quot;,&quot;buds&quot;), mean) %&gt;% 
+<pre class="r"><code>ph %&gt;% group_by(year, snow, water, julian) %&gt;% summarize_at(c(&quot;open&quot;,&quot;buds&quot;), mean, na.rm=T) %&gt;% 
   ggplot(aes(x=julian, y=open, shape=snow, linetype=snow, color=water))+ geom_point() + 
   facet_wrap(vars(year), ncol=1)+
   geom_path(aes(group=paste(snow, water))) +
