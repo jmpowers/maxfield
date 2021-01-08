@@ -106,15 +106,18 @@ snowcloth <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & 
   mutate(plots = as.character(plots), date = force_tz(date, "America/Denver")+hours(12), year=factor(year)) %>% 
   bind_rows(normal_meltdate)
 
-early_summer = 40 #sum precip from mean normal snowmelt date to last morphology/nectar/phenology measurement
-summer_precip <- daily_precip %>% 
+#sum precip from mean normal snowmelt date to last morphology/nectar measurement (dropped phenology)
+summer_precip_timing <- daily_precip %>% 
   inner_join(normal_meltdate %>% rename(normal_meltdate=date)) %>% 
-  inner_join(mnps %>% filter(is.na(seeds)) %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) %>% 
+  inner_join(mt %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) #mnps %>% filter(is.na(seeds))
+summer_precip <- summer_precip_timing %>% 
   filter(date > normal_meltdate & julian < last_day) %>% 
   group_by(year) %>% summarize(early_precip_mm=sum(precip_mm))
 
 groundcover <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="groundcover") %>% 
   mutate(across(starts_with("first"), list(day=yday)), year=year(first_0_cm))
+
+waterdates <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="water_dates")
 
 # soil --------------------------------------------------------------------
 
@@ -201,13 +204,13 @@ cen18r2 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet=
   left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
-cen19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2019foranalysis") %>% 
+cen19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2019foranalysis") %>% drop_na(plot) %>% 
   mutate(plot = as.character(plot),
          plotid = paste0(plot, subplot),
          plant = as.character(plant),
          plantid = paste0(plotid,plant),
          year=factor(year(date)),
-         notes = other_notes %>% str_match("tagnf|nf|dead|chewed|eaten")  %>% factor %>% 
+         notes = other_notes %>% str_match("tagnf|nf|dead|chewed|eaten|ts")  %>% factor %>% 
            fct_explicit_na("blank") %>% recode(eaten="chewed"),
          flowering = flowering %>% tolower %>% factor %>% fct_explicit_na("blank"),
          n_rosettes = as.integer(as.character(rosettes)),
@@ -256,14 +259,14 @@ cen <- list(cen18, cen18r2, cen19, cen20) %>%
        ~ .x %>% rename_with(paste0, !any_of(joiners), .y)) %>% 
   reduce(full_join)
                                                                                                                            
-cen.status <- cen %>% select(any_of(joiners)|starts_with("status")) %>% 
+cen.status <- cen %>% select(any_of(joiners)|starts_with(c("status","check"))|contains("notes")) %>% 
   mutate(across(starts_with("status"), 
                 . %>% fct_explicit_na("no_record") %>% fct_expand(status_priority) %>% fct_relevel(status_priority)),
          plantid = fct_reorder(factor(plantid), .desc=T, 
                           paste(as.integer(status_18),as.integer(status_19),as.integer(status_20),as.integer(status_18r2))),
-         transition_1819 = paste(status_18, status_19, sep=">"),
-         transition_1920 = paste(status_19, status_20, sep=">"),
-         transition_181920 = paste(status_18, status_19, status_20, sep=">"))
+         transition_1819 = paste(status_18, status_19, sep=" > "),
+         transition_1920 = paste(status_19, status_20, sep=" > "),
+         transition_181920 = paste(status_18, status_19, status_20, sep=" > "))
 
 cen.status.long <- cen.status %>% select(!starts_with("transition")) %>% 
   pivot_longer(starts_with("status"),names_to="census",values_to="status") %>% 
@@ -492,7 +495,10 @@ megatally <- list(
   rowwise() %>%  mutate(total_obs = sum(c_across(census18:seeds20), na.rm=T)) %>% ungroup
 
 megatally %>% 
-  write_csv("data/megatally.csv")
+  mutate(index=row_number()) %>% 
+  mutate(across(census18:seeds20, na_if, 0)) %>% 
+  select(index,plot,subplot,plotid,plant,plantid,status_18,status_18r2,status_19,status_20,transition_1819,transition_1920,transition_181920,check_19_20_20,census18,notes_18,other_notes_18,census18r2,other_notes_18r2,pheno18,floral18,seeds18,leaf18,census19,notes_19,other_notes_19,pheno19,floral19,seeds19,leaf19,census20,notes_20,other_notes_20,pheno20,floral20,volatiles20,seeds20,leaf20,total_obs) %>% 
+  write_csv("data/megatally.csv", na="")
   #write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="megatally")
 
 megatally.status <- megatally %>% select(!starts_with("census")) %>% 
@@ -527,7 +533,7 @@ sds <- bind_rows(sds18, sds19, sds20) %>%
     seeds_est	= seeds + seeds_fly + (flowers_buds_collected_early + flowers_destroyed + fruits_early_uncountable) * (seeds/(fruits + fruits_aborted + fruits_fly_with_seeds + fruits_fly_no_seeds + fruits_caterpillar)) + fruits_split * seeds_per_fruit, 
     fruits_with_seeds	= fruits + fruits_split + fruits_fly_with_seeds, 
     fruits_nonaborted	= fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar + fruits_split,
-    flowers_est	= fruits_nonaborted + fruits_aborted + flowers_buds + flowers_destroyed,
+    flowers_est	= fruits_nonaborted + aborts + flowers_buds + flowers_destroyed,# aborts used to be fruits_aborted, which includes flowers_buds_collected_last, but these are already in flowers_buds
     prop_infested	= (fruits_fly_no_seeds + fruits_fly_with_seeds + fruits_caterpillar) / fruits_nonaborted,
     prop_aborted	= fruits_aborted / (fruits_nonaborted + fruits_aborted),
     prop_nonaborted	= fruits_nonaborted / (fruits_nonaborted + fruits_aborted),
@@ -545,6 +551,8 @@ mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>%
 mnps.subplot <- mnps.plantyr %>%  
   group_by(year, water, water4, snow, snow_new, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA)) %>% drop_na(water4) #TODO figure out what entries in ph are causing NAs
+write_sheet(mnps.subplot %>% select(!starts_with(c("open_","buds_","nr_","snow_new","eggs_","fit."))), 
+                                    ss=filter(datasheets, name=="Maxfield Results"), sheet="subplot_means")
 
 # export ------------------------------------------------------------------
 
