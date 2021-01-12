@@ -48,7 +48,7 @@ treatments <- select(treatments, !ends_with(c("x","y")))
 melt_threshold_sun  <- 10000 # light units (probably lux = lumen / m2)
 melt_threshold_warm <- 1    # degrees Celsius difference (positive or negative) from 0C (inside snow)
 
-hobo <- drive_download(filter(datasheets, name=="maxfield_hobo_data.csv"), overwrite = T)$local_path %>% read_csv() %>% 
+hobo <- drive_download(filter(datasheets, name=="data/maxfield_hobo_data.csv"), overwrite = T)$local_path %>% read_csv() %>% 
   mutate(time=with_tz(time, "Etc/GMT+6"), #the HOBOs do not account for DST, and were likely all set up during MST
          sun = intensity > melt_threshold_sun, 
          warm = abs(temp) > melt_threshold_warm) %>% 
@@ -90,15 +90,52 @@ year_pal <- setNames(brewer.pal(8, name="Set2")[c(2,3,6)], levels(treatments$yea
 # weather -----------------------------------------------------------------
 
 # Weather data from billy barr's RMBL station in Gothic, CO, USA provided by the Western Regional Climate Center
-# Original (not FPA) data from 2017-2020 in metric units
-# Downloaded as xls (csv download broken) from https://wrcc.dri.edu/cgi-bin/rawMAIN.pl?corbil
-# Columns renamed from WRCC names according to /metadata/weather_wrcc_metadata.csv
+# Original (not FPA - unavailable) data from 2009-2021 in metric units
+# Downloaded as xls (which results in a tsv) from https://wrcc.dri.edu/cgi-bin/rawMAIN.pl?corbil
+# Columns renamed from WRCC names according to /metadata/WRCC/weather_wrcc_metadata.csv
+# Flags on each column indicate 0 = raw data, (M)issing data, (E)stimated data, (N)on-measuring time interval, per https://wrcc.dri.edu/cgi-bin/wea_listex.pl?flags
 
-wx <- drive_download(filter(datasheets, name=="billy_rmbl_wrcc_weather_2017_2020.csv"), overwrite = T)$local_path %>% 
-  read_tsv(col_types="Dtnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn")
-daily_precip <- wx %>% group_by(date) %>% summarize_at("precip_mm", sum) %>% mutate(year=factor(year(date)), julian=yday(date))
-daily_temp <- wx %>% group_by(date) %>% summarize_at("av_temp_2m_C", mean, na.rm=T) %>% mutate(year=factor(year(date)), julian=yday(date))
+wrcc_metadata <- read_tsv("metadata/WRCC/weather_wrcc_metadata.tsv") %>% mutate(index = row_number(), flag=F)
+wrcc_metadata <- bind_rows(wrcc_metadata, wrcc_metadata %>% select(name_metric, col_type, index) %>% filter(! name_metric %in% c("date","time")) %>% 
+  mutate(name_metric=paste0("flag_",name_metric), col_type="f",flag=T)) %>% arrange(index)
 
+tenmin_CORBIL <- read_tsv("data/wrcc_corbil.tsv.gz", skip = 4, 
+               col_types=paste0(wrcc_metadata$col_type, collapse=""), col_names=wrcc_metadata$name_metric) %>% 
+  filter(date >= as.Date("2015-07-01"))#when precip starts to have reasonable values, temp starts 2015-10-01
+hourly_CORBIL <- tenmin_CORBIL %>% mutate(hour=hour(time)) %>% group_by(date, hour) %>% summarize(precip_mm = sum(precip_mm), av_temp_2m_C=mean(av_temp_2m_C)) #take the mean of the precip rate per hour that is reported every 10 min
+daily_CORBIL <- hourly_CORBIL %>% group_by(date) %>% summarize(precip_mm = sum(precip_mm), av_temp_2m_C=mean(av_temp_2m_C)) %>% 
+  mutate(year=factor(year(date)), julian=yday(date)) #sum the hourly precip rates over each 24 hrs
+
+# Other data (no precip) for Kettle Ponds S of Gothic, CO and Judd Falls E of Gothic, CO
+
+# Weather data from Gold Link station in Mt. Crested Butte. Michelle Newcomer and David Brian Rogers. 2020. Gap-filled meteorological data (2011-2020) and modeled potential evapotranspiration data from the KCOMTCRE2 WeatherUnderground weather station, from the East River Watershed, Colorado. ESS-DIVE: Deep Insight for Earth Science Data. doi:10.15485/1734790, version: ess-dive-ce2fd798f9d81f5-20201210T030125380.
+
+daily_KCOMTCRE2 <- read_csv("data/2011_2020_KComCret_1day_ETModeled.csv")
+
+# Weather data from EPA CASTNET GTH161 station, Gothic Research Meadow https://www3.epa.gov/castnet/site_pages/GTH161.html
+hourly_GTH161 <- read_csv("data/CASTNET-GTH161-Meteorological - Hourly.csv.gz", 
+                          col_types=cols(DATE_TIME=col_datetime("%m/%d/%Y %H:%M:%S"), QA_CODE=col_character())) %>% 
+  filter(year(DATE_TIME) < 2012)
+daily_GTH161 <- hourly_GTH161 %>% mutate(date = date(DATE_TIME)) %>% group_by(date) %>% 
+  summarize(TEMPERATURE=mean(TEMPERATURE, na.rm=T), PRECIPITATION = sum(PRECIPITATION, na.rm=T))
+
+library(rnoaa)
+#station_data <- ghcnd_stations()# long download
+#maxfield_coords <- data.frame(id = "RMBL", latitude = 38.9495, longitude = -106.9908)
+#meteo_nearby_stations(lat_lon_df = maxfield_coords, station_data = station_data,
+#                      radius = 10, var = c("PRCP", "TAVG"))#stations within 10 km
+# billy barr's cabin in Gothic, CO https://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:US1COGN0018/detail
+#All units are in tenths of mm, converted to mm here.
+ 
+daily_billy <- meteo_pull_monitors("US1COGN0018", keep_flags = T) %>% 
+  mutate(across(contains("flag"), as.factor)) %>% 
+  mutate(across(ghcnd_vars <- c("prcp","snow","snwd","wesd","wesf"), ~ as.integer(.x)/10, .names="{.col}_mm"), .keep="unused")
+
+#library(GSODR)
+#gsodr.inventory <- get_inventory() %>% #50 km away from Maxfield Meadow - only get Crested Butte and Aspen airports
+#  filter(STNID %in% nearest_stations(38.9495, -106.9908,50))
+
+#Get average snowmelt dates in plots
 normal_meltdate <- meltdates %>% group_by(year) %>% filter(snow=="Normal") %>% summarize(date=mean(sun_time)) %>%
   mutate(day = yday(date), mean_snow_depth_cm=0, notes="Mean time of snowmelt (sun_time) in normal plots")
 
@@ -106,18 +143,27 @@ snowcloth <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & 
   mutate(plots = as.character(plots), date = force_tz(date, "America/Denver")+hours(12), year=factor(year)) %>% 
   bind_rows(normal_meltdate)
 
-#sum precip from mean normal snowmelt date to last morphology/nectar measurement (dropped phenology)
-summer_precip_timing <- daily_precip %>% 
-  inner_join(normal_meltdate %>% rename(normal_meltdate=date)) %>% 
-  inner_join(mt %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) #mnps %>% filter(is.na(seeds))
-summer_precip <- summer_precip_timing %>% 
-  filter(date > normal_meltdate & julian < last_day) %>% 
-  group_by(year) %>% summarize(early_precip_mm=sum(precip_mm))
-
 groundcover <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="groundcover") %>% 
   mutate(across(starts_with("first"), list(day=yday)), year=year(first_0_cm))
 
 waterdates <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="water_dates")
+
+#Add summer precip estimates to treatments
+# snowmelt date in each plot - start of watering (100% of precip)
+# start of watering - last morphology/nectar measurement (100% for controls, 50% for water reduction, or 100% + 1.75 mm/day for water addition)
+precip_total <- function(yr, day_start, day_end) {
+  daily_precip %>% filter(precip_mm <200) %>%  # TODO figure out what precip_mm=351 mm was about on 2020-05-01
+    filter(year==as.character(yr), julian > day_start, julian < day_end) %>% 
+    summarize(tot=sum(precip_mm)) %>% pull(tot)
+}
+treatments <- treatments %>% 
+  inner_join(waterdates %>% select(-date) %>% pivot_wider(names_from=precip_treatments, values_from=day) %>% 
+               mutate(year=factor(year)) %>% rename(water_begin=started, water_end=ended)) %>% 
+  inner_join(mt %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) %>% #mnps %>% filter(is.na(seeds)) would include phenology measurements
+  mutate(precip_prewater_mm = pmap_dbl(list(year, sun_date, water_begin), precip_total),
+         precip_postwater_mm = pmap_dbl(list(year, water_begin, last_day), precip_total) * ifelse(water=="Reduction",.5,1) + 
+           ifelse(water=="Addition", 1.75 * (last_day - water_begin),0),
+         precip_est_mm = precip_prewater_mm + precip_postwater_mm)
 
 # soil --------------------------------------------------------------------
 
@@ -447,7 +493,7 @@ sds20.date <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet=
          year = "2020") %>% 
   mutate(flowers_buds_collected_last = ifelse(yday(date) >= 238, flowers_buds, 0),
          flowers_buds_collected_early = ifelse(yday(date) < 238, flowers_buds, 0)) %>% 
-  mutate(across(counts_19_20, replace_na, 0)) %>%
+  mutate(across(all_of(counts_19_20), replace_na, 0)) %>%
   left_join(treatments) %>%
   mutate_if(is.character, as.factor) 
 
@@ -501,7 +547,7 @@ megatally %>%
   write_csv("data/megatally.csv", na="")
   #write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="megatally")
 
-megatally.status <- megatally %>% select(!starts_with("census")) %>% 
+megatally.status <- megatally %>% select(!starts_with(c("census"))) %>% 
   mutate(across(starts_with(c("volatiles","seeds")), recode, `0`="no_record", .default="flowering"),
          across(starts_with(c("pheno","floral")), recode, `0`="no_record", `1` = "recheck", .default="flowering"),
          across(starts_with("leaf"), recode, `0`="no_record", .default="vegetative"),
@@ -510,7 +556,7 @@ megatally.status <- megatally %>% select(!starts_with("census")) %>%
   arrange(status_18, pheno18, seeds18, status_19, pheno19, seeds19, status_20, pheno20, seeds20, leaf18, leaf19, leaf20, status_18r2, total_obs) %>% 
   mutate(plantid = fct_reorder(plantid, row_number(), .desc=T))
 
-megatally.status.long <- megatally.status %>% select(!starts_with(c("transition","total_obs"))) %>% 
+megatally.status.long <- megatally.status %>% select(!starts_with(c("transition","total_obs")) & !contains(c("notes","check"))) %>% 
   pivot_longer(status_18:seeds20,names_to="dataset",values_to="status") %>% 
   mutate(across(.fns=factor),
          dataset = fct_relevel(dataset, c("status_18","status_18r2","status_19","status_20","pheno18","seeds18","floral18","pheno19","seeds19","floral19","pheno20","seeds20","floral20","volatiles20","leaf18","leaf19","leaf20")))
@@ -551,12 +597,32 @@ mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>%
 mnps.subplot <- mnps.plantyr %>%  
   group_by(year, water, water4, snow, snow_new, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA)) %>% drop_na(water4) #TODO figure out what entries in ph are causing NAs
-write_sheet(mnps.subplot %>% select(!starts_with(c("open_","buds_","nr_","snow_new","eggs_","fit."))), 
-                                    ss=filter(datasheets, name=="Maxfield Results"), sheet="subplot_means")
+#write_sheet(mnps.subplot %>% select(!starts_with(c("open_","buds_","nr_","snow_new","eggs_","fit."))), 
+#                                    ss=filter(datasheets, name=="Maxfield Results"), sheet="subplot_means")
+
+
+# timings -----------------------------------------------------------------
+
+timings <- bind_rows(
+  snowcloth=snowcloth %>% mutate(plots = recode(plots, "5"="2,5")) %>% # assume that plot 2 was uncovered with plot 5 in 2019
+    select(year, day, cloth, plots) %>% drop_na(cloth) %>% group_by(year,plots) %>% pivot_wider(names_from=cloth, values_from=day) %>% rename(begin=added, end=removed),
+  meltdates=meltdates %>% group_by(year,snow) %>% summarize_at("sun_date", mean) %>% mutate(sun_date=round(sun_date)) %>% pivot_wider(names_from=snow, values_from=sun_date) %>% rename(begin=Early, end=Normal),
+  summer_precip_timing = summer_precip %>% group_by(year) %>% summarize(begin=min(sun_date), end=max(last_day)),
+  waterdates = waterdates %>% select(-date) %>% pivot_wider(names_from=precip_treatments, values_from=day) %>% mutate(year=factor(year)) %>% rename(begin=started, end=ended),
+  sm = sm %>% group_by(year) %>% summarize(begin = min(yday(date)), end = max(yday(date))),
+  mt = mt %>% drop_na(corolla_length) %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
+  nt = nt %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
+  ph = ph %>% drop_na(height_cm) %>% group_by(year) %>% summarize(begin = min(julian), end = max(julian)),
+  sds= sds20.date %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)), 
+  .id="variable") %>% ungroup
+
+#timings %>% mutate(range=paste(begin,end,sep=" - "), .keep="unused") %>% 
+#  pivot_wider(names_from=year, values_from=range, names_sort=T) %>% 
+#  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="timings")
 
 # export ------------------------------------------------------------------
 
-remove(wx)
+remove(hourly_CORBIL, hourly_GTH161, hourly_CORJUD, hourly_CORKET)
 save.image("data/maxfield_data.rda")
 
 alldata <- list("treatments"=treatments,

@@ -1,0 +1,38 @@
+units_metric	description1	description2	name_metric	name_imperial	col_type
+:          	:   Date   	:YYYY/MM/DD	date	date	D
+  LST  	 Time  	 hh:mm 	time	time	t
+ W/m2	 Solar 	  Rad. 	solar_rad_Wm2	solar_rad	n
+ W/m2	Std dev	Sol.Rad	sd_solar_rad_Wm2	sd_solar_rad	n
+ m/s 	  Wind 	  Speed	wind_speed_ms	wind_speed_mph	n
+ m/s 	 Wind  	Vec Mag	wind_vec_mag_ms	wind_vec_mag_mph	n
+ Deg 	 Wind  	 Direc 	wind_direc_deg	wind_direc	n
+ Deg 	Std Dev	Wnd Dir	sd_wind_dir_deg	sd_wind_dir	n
+ m/s 	Mx Gust	 Speed 	mx_gust_spd_ms	mx_gust_spd_mph	n
+ Deg 	Std Dev	Wnd Spd	sd_wnd_spd_ms	sd_wnd_spd	n
+ m/s 	  Min  	Wnd Spd	min_wind_spd_ms	min_wind_spd_mph	n
+Deg C	 Mx Air	  Temp 	max_air_temp_C	max_air_temp_F	n
+Deg C	 Mn Air	  Temp 	min_air_temp_C	min_air_temp_F	n
+Deg C	 Av Air	  Temp 	av_air_temp_C	av_air_temp_f	n
+  %  	Mx Rel 	Humidty	max_rel_humidity	max_rel_humidity	n
+  %  	Mn Rel 	Humidty	mix_rel_humidity	mix_rel_humidity	n
+  %  	  Rel  	Humidty	rel_humidity	rel_humidity	n
+mbar 	 Barom 	 Press 	pressure_mbar	pressure_inhg	n
+ mm  	 Precip	       	precip_mm	precip_in	n
+ mm  	 Accum 	 Pcpn  	accum_precip_mm	accum_precip_in	n
+ mm  	 Snow  	 Depth 	snow_depth_mm	snow_depth_in	n
+  Q  	 SR50 Q	  sig  	sr50_q_sig	sr50_q_sig	n
+ mm  	 Snow  	Pillow 	snow_pillow_mm	snow_pillow_in	n
+Deg C	  2m   	Mx Temp	max_temp_2m_C	max_temp_2m_f	n
+Deg C	  2m   	Mn Temp	min_temp_2m_C	min_temp_2m_f	n
+Deg C	  2m   	Av Temp	av_temp_2m_C	av_temp_2m_f	n
+Deg C	Max T  	TC 10m 	max_t_tc_10m	max_t_tc_10m	n
+Deg C	Min T  	TC 10m 	min_t_tc_10m	min_t_tc_10m	n
+Deg C	Min T  	TC 10m 	min_t_tc_10m_2	min_t_tc_10m2	n
+Deg C	10m-2m 	 Mx dT 	mx_dt_10m_2m	mx_dt_10m_2m	n
+Deg C	10m-2m 	 Mn dT 	mn_dt_10m_2m	mn_dt_10m_2m	n
+Deg C	10m-2m 	Delta T	delta_t_10m_2m	delta_t_10m_2m	n
+volts	Max Bat	 Volts 	max_battery_V	max_bat_volts	n
+volts	Min Bat	 Volts 	min_battery_V	min_bat_volts	n
+volts	Battery	Voltage	battery_V	bat_volts	n
+Deg C	Dat Pan	  Temp 	dat_pan_temp_C	dat_pan_temp_f	n
+     	Station	 Id. # 	station_id	station_id	n
