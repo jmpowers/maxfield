@@ -48,7 +48,7 @@ treatments <- select(treatments, !ends_with(c("x","y")))
 melt_threshold_sun  <- 10000 # light units (probably lux = lumen / m2)
 melt_threshold_warm <- 1    # degrees Celsius difference (positive or negative) from 0C (inside snow)
 
-hobo <- drive_download(filter(datasheets, name=="data/maxfield_hobo_data.csv"), overwrite = T)$local_path %>% read_csv() %>% 
+hobo <- read_csv("data/maxfield_hobo_data.csv") %>% 
   mutate(time=with_tz(time, "Etc/GMT+6"), #the HOBOs do not account for DST, and were likely all set up during MST
          sun = intensity > melt_threshold_sun, 
          warm = abs(temp) > melt_threshold_warm) %>% 
@@ -87,6 +87,18 @@ water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$wat
 snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
 year_pal <- setNames(brewer.pal(8, name="Set2")[c(2,3,6)], levels(treatments$year))
 
+#Get average snowmelt dates in plots
+normal_meltdate <- meltdates %>% group_by(year) %>% filter(snow=="Normal") %>% summarize(date=mean(sun_time)) %>%
+  mutate(day = yday(date), mean_snow_depth_cm=0, notes="Mean time of snowmelt (sun_time) in normal plots")
+
+snowcloth <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="snowcloth") %>% 
+  mutate(plots = as.character(plots), date = force_tz(date, "America/Denver")+hours(12), year=factor(year)) %>% 
+  bind_rows(normal_meltdate)
+
+groundcover <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="groundcover") %>% 
+  mutate(across(starts_with("first"), list(day=yday)), year=year(first_0_cm))
+
+waterdates <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="water_dates")
 # weather -----------------------------------------------------------------
 
 # Weather data from billy barr's RMBL station in Gothic, CO, USA provided by the Western Regional Climate Center
@@ -129,40 +141,48 @@ library(rnoaa)
  
 daily_billy <- meteo_pull_monitors("US1COGN0018", keep_flags = T) %>% 
   mutate(across(contains("flag"), as.factor)) %>% 
-  mutate(across(ghcnd_vars <- c("prcp","snow","snwd","wesd","wesf"), ~ as.integer(.x)/10, .names="{.col}_mm"), .keep="unused")
+  mutate(across(ghcnd_vars <- c("prcp","snow","snwd","wesd","wesf"), ~ as.integer(.x)/10, .names="{.col}_mm"), .keep="unused") %>% 
+  mutate(date = date - days(1)) # comparision to other 3 stations shows the precip is recorded the next day
 
 #library(GSODR)
 #gsodr.inventory <- get_inventory() %>% #50 km away from Maxfield Meadow - only get Crested Butte and Aspen airports
 #  filter(STNID %in% nearest_stations(38.9495, -106.9908,50))
 
-#Get average snowmelt dates in plots
-normal_meltdate <- meltdates %>% group_by(year) %>% filter(snow=="Normal") %>% summarize(date=mean(sun_time)) %>%
-  mutate(day = yday(date), mean_snow_depth_cm=0, notes="Mean time of snowmelt (sun_time) in normal plots")
+#Combine weather station data
+stations <- c(GTH161="EPA_RsrchMdw",KCOMTCRE2="ESSDIVE_GoldLink",CORBIL="WRCC_billy",billy="NOAA_billy")#station="source_location"
+daily_all <- daily_billy %>% full_join(daily_GTH161) %>% full_join(daily_KCOMTCRE2) %>% full_join(daily_CORBIL) %>% 
+  rename(EPA_RsrchMdw=PRECIPITATION, ESSDIVE_GoldLink=Precip, WRCC_billy=precip_mm, NOAA_billy=prcp_mm) %>% 
+  mutate(yr = year(date), mo = month(date, label=F),
+         ground_covered = factor(c("smmr","wntr"))[1+date %in% do.call(c, map2(groundcover$first_snow, groundcover$first_0_cm, ~ seq(date(.x), date(.y), by="day")))]) %>% #TODO fill in first snow of 2020 (not yet on billy's website)
+  mutate(WRCC_billy = ifelse(WRCC_billy>50, NA, WRCC_billy)) #cut errors >50mm/day from daily_CORBIL
 
-snowcloth <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="snowcloth") %>% 
-  mutate(plots = as.character(plots), date = force_tz(date, "America/Denver")+hours(12), year=factor(year)) %>% 
-  bind_rows(normal_meltdate)
+#correlate daily EPA_RsrchMdw and NOAA_billy to predict what EPA would look like for 2012-2020
+EPA_NOAA_daily_model <-  lm(EPA_RsrchMdw ~ NOAA_billy*ground_covered, data=daily_all)
+#EPA_NOAA_monthly_model <-lm(EPA_RsrchMdw ~ NOAA_billy*season, data=monthly_all %>% mutate(season=factor(c("wntr","smmr"))[1+mo %in% 6:9]))
 
-groundcover <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="groundcover") %>% 
-  mutate(across(starts_with("first"), list(day=yday)), year=year(first_0_cm))
-
-waterdates <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="water_dates")
+daily_all <- daily_all %>% 
+  mutate(EPA_predicted = is.na(EPA_RsrchMdw) & !is.na(NOAA_billy),
+         EPA_NOAA_filled = ifelse(is.na(EPA_RsrchMdw), predict(EPA_NOAA_daily_model, newdata=daily_all), EPA_RsrchMdw),)
+stations <- c("EPA_NOAA_filled", stations)
+monthly_all <- daily_all %>% group_by(yr, mo) %>% 
+  summarize(across(unname(stations), ~ ifelse(sum(is.na(.x))>5, NA, sum(.x, na.rm=T))), .groups="drop") %>% arrange(yr, mo) 
 
 #Add summer precip estimates to treatments
 # snowmelt date in each plot - start of watering (100% of precip)
 # start of watering - last morphology/nectar measurement (100% for controls, 50% for water reduction, or 100% + 1.75 mm/day for water addition)
-precip_total <- function(yr, day_start, day_end) {
-  daily_precip %>% filter(precip_mm <200) %>%  # TODO figure out what precip_mm=351 mm was about on 2020-05-01
-    filter(year==as.character(yr), julian > day_start, julian < day_end) %>% 
-    summarize(tot=sum(precip_mm)) %>% pull(tot)
+precip_total <- function(year_start, day_start, day_end) {
+  daily_all %>% filter(year(date)==year_start, yday(date) > day_start, yday(date) < day_end) %>% 
+    summarize(tot=sum(EPA_NOAA_filled, na.rm=T)) %>% pull(tot)
 }
 treatments <- treatments %>% 
   inner_join(waterdates %>% select(-date) %>% pivot_wider(names_from=precip_treatments, values_from=day) %>% 
                mutate(year=factor(year)) %>% rename(water_begin=started, water_end=ended)) %>% 
-  inner_join(mt %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) %>% #mnps %>% filter(is.na(seeds)) would include phenology measurements
+  inner_join(data.frame(year=factor(2018:2020), last_day=c(212,219,210))) %>% # Maxfield Results - timings (mt)
+  #inner_join(mt %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) %>% #can't call mt before its made
+  #mnps %>% filter(is.na(seeds)) would include phenology measurements
   mutate(precip_prewater_mm = pmap_dbl(list(year, sun_date, water_begin), precip_total),
          precip_postwater_mm = pmap_dbl(list(year, water_begin, last_day), precip_total) * ifelse(water=="Reduction",.5,1) + 
-           ifelse(water=="Addition", 1.75 * (last_day - water_begin),0),
+           ifelse(water=="Addition", (14 / 4 / 2) * (last_day - water_begin),0),
          precip_est_mm = precip_prewater_mm + precip_postwater_mm)
 
 # soil --------------------------------------------------------------------
@@ -586,7 +606,7 @@ sds <- bind_rows(sds18, sds19, sds20) %>%
     seeds_per_flower = seeds_est / flowers_est)
 
 ######## Merge morphology, nectar, phenology, and seeds ####
-mnps <- bind_rows(mt, ph, sds) %>% left_join(summer_precip)
+mnps <- bind_rows(mt, ph, sds)
 
 #average by plant and year
 mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>% 
@@ -607,7 +627,7 @@ timings <- bind_rows(
   snowcloth=snowcloth %>% mutate(plots = recode(plots, "5"="2,5")) %>% # assume that plot 2 was uncovered with plot 5 in 2019
     select(year, day, cloth, plots) %>% drop_na(cloth) %>% group_by(year,plots) %>% pivot_wider(names_from=cloth, values_from=day) %>% rename(begin=added, end=removed),
   meltdates=meltdates %>% group_by(year,snow) %>% summarize_at("sun_date", mean) %>% mutate(sun_date=round(sun_date)) %>% pivot_wider(names_from=snow, values_from=sun_date) %>% rename(begin=Early, end=Normal),
-  summer_precip_timing = summer_precip %>% group_by(year) %>% summarize(begin=min(sun_date), end=max(last_day)),
+  #summer_precip_timing = summer_precip %>% group_by(year) %>% summarize(begin=min(sun_date), end=max(last_day)),
   waterdates = waterdates %>% select(-date) %>% pivot_wider(names_from=precip_treatments, values_from=day) %>% mutate(year=factor(year)) %>% rename(begin=started, end=ended),
   sm = sm %>% group_by(year) %>% summarize(begin = min(yday(date)), end = max(yday(date))),
   mt = mt %>% drop_na(corolla_length) %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
@@ -620,9 +640,18 @@ timings <- bind_rows(
 #  pivot_wider(names_from=year, values_from=range, names_sort=T) %>% 
 #  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="timings")
 
+
+# traitnames --------------------------------------------------------------
+
+traits <- c("corolla_length", "corolla_width", "style_length", "sepal_width", "nectar_24_h_ul", "nectar_conc","nectar_sugar_24_h_mg","height_cm","open","seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower") #exclude anthers
+traitnames <- setNames(c("Corolla length (mm)", "Corolla width (mm)", "Style length (mm)", "Sepal width (mm)", "Nectar production rate (uL/day)", "Nectar concentration (% sucrose by mass)", "Nectar sucrose (mg/day)", "Inflorescence height (cm)", "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits infested","Proportion of fruits that aborted","Estimated seeds per flower"), traits)
+
+seedtraits <- c("seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower")
+seedtraitnames <- setNames(c("Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits infested","Proportion of fruits that aborted","Estimated seeds per flower"), seedtraits)
+
 # export ------------------------------------------------------------------
 
-remove(hourly_CORBIL, hourly_GTH161, hourly_CORJUD, hourly_CORKET)
+remove(hourly_GTH161, tenmin_CORBIL)
 save.image("data/maxfield_data.rda")
 
 alldata <- list("treatments"=treatments,

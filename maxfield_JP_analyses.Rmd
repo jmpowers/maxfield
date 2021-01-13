@@ -127,49 +127,77 @@ sm.subplot %>% mutate(day=yday(date)) %>% group_by(year) %>% summarize(start=min
 ```
 
 # Weather data
-```{r weather}
-ggplot(daily_CORBIL, aes(y=precip_mm, x=julian)) + geom_col(fill=brewer.pal(3, "Greens")[3]) + facet_wrap(vars(year), ncol=1) + labs(x="Day of year", y="Precipiation (mm)") + theme_minimal() + coord_cartesian(xlim=c(120,325),ylim=c(0,20))+
-  geom_point(data=groundcover %>% filter(year>=2015) %>% mutate(year=factor(year)), aes(x=first_0_cm_day,y=10))+
-  geom_point(data=groundcover %>% filter(year>=2016) %>% mutate(year=factor(year-1)), aes(x=first_snow_day,y=10))
 
-inner_join(daily_CORBIL,daily_KCOMTCRE2) %>% mutate(precip_mm = ifelse(precip_mm>50, NA, precip_mm)) %>% 
-  ggplot(aes(x=Precip, y=precip_mm))+geom_point(alpha=0.6) +geom_smooth(method="lm") + geom_abline(slope=1, intercept=0)+ 
-  coord_fixed(xlim=c(0,50), ylim=c(0,50))+labs(x="KCOMTCRE2 daily precip (mm)",y="billy daily precip if <50 mm (mm)")
+## Daily weather
 
-inner_join(daily_billy,daily_KCOMTCRE2) %>% 
-  ggplot(aes(x=Precip, y=prcp_mm))+geom_point(alpha=0.6) +geom_smooth(method="lm") + geom_abline(slope=1, intercept=0)+ 
-  coord_fixed(xlim=c(0,50), ylim=c(0,50))+labs(x="KCOMTCRE2 daily precip (mm)",y="billy daily precip (mm)")
+```{r weather_daily}
+ggplot(daily_all %>% filter(year(date) %in% 2018:2020), aes(y=EPA_NOAA_filled, x=yday(date))) + geom_col(aes(fill=ground_covered)) + 
+  facet_wrap(vars(year(date)), ncol=1) + labs(x="Day of year", y="NOAA_billy precipiation (mm)", fill="Snow cover")
 
-inner_join(daily_billy,daily_CORBIL) %>% mutate(precip_mm = ifelse(precip_mm>50, NA, precip_mm)) %>%
-  ggplot(aes(y=precip_mm, x=prcp_mm))+geom_point(alpha=0.6) +geom_smooth(method="lm") + geom_abline(slope=1, intercept=0)+ 
-  coord_fixed(xlim=c(0,50), ylim=c(0,50))+labs(y="WRCC billy daily precip (mm)",x="GHCND billy daily precip if <50 mm (mm)")
+daily_all %>% pivot_longer(unname(stations), names_to="station", values_to="precipitation_mm") %>% 
+  filter(yday(date) >100, yday(date) < 240, year(date) %in% 2018:2020) %>%
+  ggplot(aes(x=yday(date), y=precipitation_mm, color=station, shape=ground_covered)) +  
+  geom_line() +  geom_point() + facet_wrap(vars(year), ncol=1) + theme(legend.position = "top", legend.direction="vertical") +
+  labs(x="Day of year", y = "Precipitation (mm)", color="Station", shape="Snow cover")
 
-inner_join(daily_GTH161,daily_KCOMTCRE2) %>%
-  ggplot(aes(x=Precip, y=PRECIPITATION))+geom_point(alpha=0.6) +geom_smooth(method="lm") + geom_abline(slope=1, intercept=0)+ coord_fixed(xlim=c(0,50), ylim=c(0,50))+labs(x="KCOMTCRE2 daily precip (mm)",y="EPA GTH161 daily precip (mm)")
+precip_max <- 50
+lower_continuous <- function (data, mapping, ...) {
+    ggally_smooth(data = data, mapping = mapping, ..., method = "loess") + scale_shape_manual(values=c(1,2))+
+    coord_cartesian(xlim=c(0,precip_max), ylim=c(0,precip_max)) + geom_abline(slope=1, intercept=0)+
+    scale_x_continuous(breaks=seq(0,precip_max, by=precip_max/5))+scale_y_continuous(breaks=seq(0,precip_max, by=precip_max/5))
+}
+lower_combo <- function (data, mapping, ...) {
+    ggally_facethist(data = data, mapping = mapping, binwidth=precip_max/50,...) +
+    coord_cartesian(xlim=c(0,precip_max)) + scale_x_continuous(breaks=seq(0,precip_max, by=precip_max/5))
+}
+ggpairs(daily_all %>% select(all_of(unname(stations[-1])), ground_covered), mapping=aes(color=ground_covered,shape=ground_covered), lower=list(continuous=wrap(lower_continuous), combo=wrap(lower_combo)))
 
-monthly_all <- daily_billy %>% left_join(daily_GTH161) %>% left_join(daily_KCOMTCRE2) %>% left_join(daily_CORBIL) %>% 
-  mutate(mo = month(date, label=F), yr = year(date)) %>% 
-  mutate(precip_mm = ifelse(precip_mm>50, NA, precip_mm)) %>% #for daily_CORBIL
-  group_by(mo, yr) %>% summarize(across(c("PRECIPITATION","Precip","precip_mm","prcp_mm"), #throw out month total if 5+ days missing
-                                        ~ ifelse(sum(is.na(.x))>5, NA, sum(.x, na.rm=T))), .groups="drop") %>% 
-  rename(EPA_RsrchMdw=PRECIPITATION, ESSDIVE_GoldLink=Precip, WRCC_billy=precip_mm, NOAA_billy=prcp_mm) %>% 
-  pivot_longer(EPA_RsrchMdw:NOAA_billy, names_to="station", values_to="precipitation_mm")
+filter(daily_all) %>% ggplot(aes(y=EPA_RsrchMdw,x= NOAA_billy, color=ground_covered)) + geom_point(shape=1) + geom_smooth(method="lm", se=F) + geom_abline(intercept=0, slope=1) + labs(color="Snow cover")
+```
 
-ggplot(monthly_all, aes(x=mo*30.4, y=precipitation_mm, color=station)) + facet_wrap(vars(yr)) +
-  geom_line() +  
+## Monthly weather
+
+```{r weather_monthly}
+#recalculate Campbell and Wendlandt 2013 July average, 1989 - 2006 EPA station
+(EPA_89_06_July_avg_mm <- daily_GTH161 %>% filter(month(date)==7, year(date) >= 1989, year(date) <= 2006) %>% 
+  group_by(year(date)) %>% summarize(PRECIPITATION = sum(PRECIPITATION)) %>% pull(PRECIPITATION) %>% mean)
+
+(water_addition_per_month_mm <- (14 / 4 / 2) * 31) #14 L applied to 4 m2 every 2 days = 1.75 mm daily precip * 31 days in July
+
+monthly_all %>% pivot_longer(unname(stations), names_to="station", values_to="precipitation_mm") %>% 
+ggplot(aes(x=mo*30.4-15.2, y=precipitation_mm, color=station)) + #place points at month midpoint
+  facet_wrap(vars(yr)) +  
+    geom_rect(data=waterdates %>% pivot_wider(names_from=precip_treatments, values_from=c(day, date)) %>% mutate(yr=factor(year)), 
+            aes(xmin=day_started, xmax=day_ended, ymin=0, ymax=(14 / 4 / 2) * 31), inherit.aes=F, fill=water_pal["Addition"])+
+  geom_line() +  geom_point()+
   geom_point(data=groundcover %>% filter(year>=2004) %>% mutate(yr=factor(year)), aes(x=first_0_cm_day,y=0), inherit.aes=F)+
   geom_point(data=groundcover %>% filter(year>=2005) %>% mutate(yr=factor(year-1)), aes(x=first_snow_day,y=0), inherit.aes=F)+
-  labs(y="Monthly precipitation (mm)", x="Day of the year, with snowmelt and first snow dates", color="Station") + theme(legend.position="top") 
+  labs(y="Monthly precipitation (mm)", x="Day of the year, with snowmelt and first snow dates", color="Station") +
+  theme(legend.position="top") + coord_cartesian(ylim=c(0,200))
 
-#recalculate Campbell and Wendlandt 2013 July average, 1989 - 2006 EPA station
-daily_GTH161 %>% filter(month(date)==7, year(date) >= 1989, year(date) <= 2006) %>% 
-  group_by(year(date)) %>% summarize(PRECIPITATION = sum(PRECIPITATION)) %>% pull(PRECIPITATION) %>% mean
+precip_max <- 250
+ggpairs(monthly_all %>% mutate(season=factor(c("wntr","smmr"))[1+mo %in% 6:9]) %>% select(all_of(unname(stations[-1])), season), mapping=aes(color=season,shape=season), lower=list(continuous=wrap(lower_continuous), combo=wrap(lower_combo)))
 
-(14 / 4 / 2) * 31 #14 L applied to 4 m2 every 2 days = 1.75 mm daily precip * 31 days in July
+filter(monthly_all) %>% ggplot(aes(y=EPA_RsrchMdw,x= NOAA_billy, color=ifelse(mo %in% 6:9,mo,"Oct - May"))) + geom_point() + geom_smooth(method="lm", se=F) + geom_abline(intercept=0, slope=1) + labs(color="Month")
 
-monthly_all %>% filter(mo %in% 5:7, yr %in% as.character(2018:2020)) %>% pivot_wider(names_from=station, values_from=precipitation_mm) %>% arrange(yr)
+monthly_all %>% filter(mo %in% 5:9) %>% 
+  ggplot(aes(x=mo,  y=EPA_NOAA_filled)) + geom_smooth(span=0.5, color="black") +
+  geom_line(aes(color=ifelse(yr>=2018, "study period (filled)", ifelse(yr>=2012,"filled from billy's NOAA data","original EPA data")), group=yr)) +
+  geom_point(x=7, y=EPA_89_06_July_avg_mm)+ scale_y_continuous(limits=c(0,100))+
+  geom_text(aes(label=ifelse(yr>=2018, yr, "")))  + 
+  labs(y="Monthly precipitation (mm)", x="Month", title="EPA Research Meadow 1989-2020 summer precipitation", 
+       subtitle="Black dot is mean July precipitation 1989-2006", color="Data filling") + theme(legend.position = "top")
 
+monthly_all %>% filter(mo %in% 5:9) %>% ggplot(aes(x=yr, color=factor(mo), group=mo, shape=ifelse(yr>=2018, "study period (filled)", ifelse(yr>=2012,"filled from billy's NOAA data","original EPA data")), y=EPA_NOAA_filled)) +
+  geom_vline(xintercept=2011.5) +geom_point() + geom_smooth(se=F, span=0.7) + 
+  scale_shape_manual(values=c(1,2,19)) + scale_y_continuous(limits=c(0,100))+
+  labs(x="Year",y="EPA Research Meadow monthly precipitation (mm)", color="Month", shape="Data filling") + 
+  geom_segment(data=monthly_all %>% filter(mo %in% 5:9, yr <= 2007) %>% 
+                 group_by(mo) %>% summarize(mean_precip=mean(EPA_NOAA_filled)), 
+               aes(x=1989, xend=2006, y=mean_precip, yend=mean_precip, color=factor(mo)), inherit.aes=F, size=1) 
 ```
+
+## Snowmelt timing
 
 ```{r groundcover}
 groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% 
@@ -194,9 +222,9 @@ ggplot(sm, aes(x=yday(date))) +
   facet_wrap(vars(year), ncol=1) +
   geom_jitter(aes(shape=snow, color=water, y = VWC), height=0, width=0.3) + 
   geom_smooth(aes(linetype=snow, color=water, y = VWC), se=F, span=0.5) +
-  geom_col(data=daily_precip %>% filter(year!="2017"), aes(x=julian, y=precip_mm), 
+  geom_col(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
            fill=brewer.pal(3, "Greens")[3]) +
-  geom_line(data=daily_temp %>% filter(year!="2017"), aes(x=julian, y=av_temp_2m_C), 
+  geom_line(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=av_temp_2m_C), 
             color=brewer.pal(3, "Oranges")[3]) + 
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=brewer.pal(3, "Purples")[3])+
   geom_line(data = snowcloth, aes(y=mean_snow_depth_cm/10, group=year))+
@@ -205,9 +233,9 @@ ggplot(sm, aes(x=yday(date))) +
               filter(threshold!="first_snow_day", year>2017) %>% 
               mutate(snow_depth_cm = as.integer(str_split_fixed(threshold,"_",n=4)[,2])),
             aes(x=day, y=snow_depth_cm/10), color="grey40")+
-  geom_segment(data=water_dates %>% pivot_wider(names_from=precip_treatments, values_from=c(day,date)),
+  geom_segment(data=waterdates %>% pivot_wider(names_from=precip_treatments, values_from=c(day,date)),
                aes(x=day_started, xend=day_ended, y=20, yend=20)) +
-  geom_point(data=water_dates, aes(x=day,y=20)) +
+  geom_point(data=waterdates, aes(x=day,y=20)) +
   geom_point(data=ph, aes(y= 17*(open+buds)/(open+buds)), color="grey", shape=0)+
   geom_point(data=mt, aes(y= 18*corolla_length/corolla_length), color="purple", shape=0)+
   geom_point(data=mt, aes(y= 19*nectar_24_h_ul/nectar_24_h_ul), color="orange", shape=0)+
@@ -221,7 +249,7 @@ ggplot(sm, aes(x=yday(date))) +
 
 Summer precipitation estimates
 ```{r summerprecip}
-summer_precip %>% ggplot(aes(x=snow, shape=snow, color=water, y=precip_est_mm))+geom_point()+ 
+treatments %>% ggplot(aes(x=snow, shape=snow, color=water, y=precip_est_mm))+geom_point()+ 
   facet_wrap(vars(year), nrow=1) + scale_color_manual(values=water_pal) + scale_y_continuous(limits=c(0,NA))+
   labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt", color="Precipitation", shape="Snowmelt")
 ```
@@ -239,7 +267,7 @@ ggplot(timings %>% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T
   geom_point(aes(x=begin), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2)+
   geom_point(aes(x=end), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2) +
   scale_color_manual("Year", values=year_pal, guide=guide_legend(override.aes = list(size=5))) + 
-  scale_y_discrete("", labels=c(snowcloth="Snow cloths applied to early plots", meltdates="Mean snowmelt timing (early plots - unmanipulated plots)", summer_precip_timing="Summer precipitation summation period", waterdates="Summer precipitation treatments applied",sm="Soil moisture recorded",ph="Inflorescence height recorded", mt="Floral morphology recorded", nt="Nectar traits recorded", sds="Flower collection period"))+
+  scale_y_discrete("", labels=c(snowcloth="Snow cloths applied to early plots", meltdates="Mean snowmelt timing (early plots - unmanipulated plots)", waterdates="Summer precipitation treatments applied",sm="Soil moisture recorded",ph="Inflorescence height recorded", mt="Floral morphology recorded", nt="Nectar traits recorded", sds="Flower collection period"))+
   scale_x_continuous("Day of year", breaks=seq(80,240, by=20)) +
   theme_minimal() + theme(legend.position = "top")
 ```
@@ -385,8 +413,6 @@ ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + sc
 
 ### Floral trait correlations
 ```{r correlations}
-traits <- c("corolla_length", "corolla_width", "style_length", "sepal_width", "nectar_24_h_ul", "nectar_conc","nectar_sugar_24_h_mg","height_cm","open","seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower") #exclude anthers
-traitnames <- setNames(c("Corolla length (mm)", "Corolla width (mm)", "Style length (mm)", "Sepal width (mm)", "Nectar production rate (uL/day)", "Nectar concentration (% sucrose by mass)", "Nectar sucrose (mg/day)", "Inflorescence height (cm)", "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits infested","Proportion of fruits that aborted","Estimated seeds per flower"), traits)
 
 ggpairs(mt %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width))
 
@@ -482,15 +508,15 @@ options(contrasts = c("contr.sum", "contr.poly"))
 
 mt.mod.raw <- mt.mod.plantyr <- mt.mod.subplot <- mt.mod.subplot.test <- mt.mod.plot <- coef.melt.precip <-emm.melt<- emm.precip <- list()
 for(tr in traits) {
-  #mt.mod.raw[[tr]]     <- lmer(mt[[tr]]         ~ year * water * melt_date + (1|plotid) + (1|plantid), data=mt)
-  #mt.mod.plantyr[[tr]] <- lmer(mt.plantyr[[tr]] ~ year * water * melt_date + (1|plotid), data=mt.plantyr)
-  mt.mod.subplot[[tr]] <- lmer(mnps.subplot[[tr]] ~ melt_date * precip_est_mm + (1|plot), data=mnps.subplot)
+  #mt.mod.raw[[tr]]     <- lmer(mt[[tr]]         ~ melt_date * precip_est_mm + (1|plotid) + (1|plantid), data=mt)
+  #mt.mod.plantyr[[tr]] <- lmer(mt.plantyr[[tr]] ~ melt_date * precip_est_mm + (1|plotid), data=mt.plantyr)
+  mt.mod.subplot[[tr]] <- lmer(mnps.subplot[[tr]] ~ melt_date + precip_est_mm + (1|plot), data=mnps.subplot)
   mnps.subplot[[paste0("fit.",tr)]] <- NA
   mnps.subplot[[paste0("fit.",tr)]][!is.na(mnps.subplot[[tr]])]<- predict(mt.mod.subplot[[tr]], re.form=NA)
   mt.mod.subplot.test[[tr]] <- anova(mt.mod.subplot[[tr]])
   
     #Z-score the data first to get standardized slopes
-  mt.mod.subplot[[tr]] <- lmer(scale(mnps.subplot[[tr]]) ~ melt_date * precip_est_mm + (1|plot), data=mnps.subplot)
+  mt.mod.subplot[[tr]] <- lmer(scale(mnps.subplot[[tr]]) ~ melt_date + precip_est_mm + (1|plot), data=mnps.subplot)
   coef.melt.precip[[tr]] <- summary(mt.mod.subplot[[tr]])$coefficients[c("melt_date", "precip_est_mm"),]
   emm.melt[[tr]] <- emtrends(mt.mod.subplot[[tr]],  ~ 1, var = "melt_date")
   emm.precip[[tr]] <- emtrends(mt.mod.subplot[[tr]],  ~ 1, var = "precip_est_mm")
@@ -522,8 +548,7 @@ ggplot(emm.melt.df, aes(x=fct_relevel(trait, rev(traits)), y=trend)) +
   facet_wrap(vars(predictor), nrow=1, scales="free_x", labeller=labeller(predictor=c(precip_est_mm="Estimated summer precip (mm)", melt_date="Snowmelt date"))) + 
   geom_hline(yintercept=0) + 
   geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), position=position_dodge(width=0.3), size=0.4) + 
-  labs(y="Slope of z-scored trait vs. predictor", x="Floral Trait", color="Water") +
-  theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
+  labs(y="Slope of z-scored trait vs. predictor", x="Floral Trait", color="Water") + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
   theme(legend.position = "top")
 ```
 
@@ -590,14 +615,14 @@ ggplot(emm.VWC.df %>% drop_na(), aes(x=trait, y=VWC.trend, color=year)) +
 ### Traits for plasticity paper
 ```{r emmeans_filtered, fig.width=8, fig.height=5}
 bind_rows(melt_date = emm.melt %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=melt_date.trend),
-          early_precip_mm = emm.precip %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=early_precip_mm.trend),      .id="predictor") %>% mutate(predictor=fct_relevel(predictor,"melt_date")) %>%
+          precip_est_mm = emm.precip %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=precip_est_mm.trend),      .id="predictor") %>% mutate(predictor=fct_relevel(predictor,"melt_date")) %>%
   filter(trait %in% traits[c(1:8, 13)]) %>% 
-  ggplot(aes(x=fct_relevel(trait, rev(traits)), y=trend, color=water)) +  
-  facet_wrap(vars(predictor), nrow=1, scales="free_x", labeller=labeller(predictor=c(early_precip_mm="Early summer precip (mm)", melt_date="Snowmelt date"))) + 
+  ggplot(aes(x=fct_relevel(trait, rev(traits)), y=trend)) +  
+  facet_wrap(vars(predictor), nrow=1, scales="free_x", labeller=labeller(predictor=c(precip_est_mm="Summer precip (mm)", melt_date="Snowmelt date"))) + 
   geom_hline(yintercept=0) + 
   geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), position=position_dodge(width=0.3), size=0.4) + 
-  labs(y="Slope of z-scored trait vs. predictor", x="Floral Trait", color="Water") +
-  theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
+  labs(y="Slope of z-scored trait vs. predictor", x="Floral Trait", color="Water") + 
+  scale_x_discrete(labels = traitnames) + coord_flip() +
   theme(legend.position = "top")
 
 ggplot(emm.VWC.df %>% drop_na() %>% filter(trait %in% traits[c(1:8, 13)]), aes(x=fct_relevel(trait, rev(traits)), y=VWC.trend, color=year)) +  
@@ -697,7 +722,6 @@ ggplot(data=nt, aes(x=yday(date), y= nectar_conc, color=water)) +
 
 # Phenology
 ```{r check_phenology}
-library(viridis)
 walk(list(ph18.raw, ph19.raw, ph20.raw), 
      function(ph.raw) {
   y = ph.raw$year[1]
@@ -796,9 +820,6 @@ ggplot(ph.plantid, aes(x=VWC, y=open, color=year)) + geom_point() + geom_smooth(
 ggplot(sds %>% drop_na(plot), aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
   scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) + theme_minimal() +
   labs(x="Counted fruits", y="Counted seeds", color="Precipitation")
-
-seedtraits <- c("seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower")
-seedtraitnames <- setNames(c("Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits infested","Proportion of fruits that aborted","Estimated seeds per flower"), seedtraits)
 
 for(tr in seedtraits) {
   print(ggplot(sds %>% drop_na(plot), aes_string(tr, x="water", color="snow")) + geom_boxplot() + 
