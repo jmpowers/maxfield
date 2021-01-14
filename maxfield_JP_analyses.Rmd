@@ -32,6 +32,7 @@ library(lme4)
 library(lmerTest)
 library(emmeans)
 library(broom)
+library(broom.mixed)
 library(vegan)
 
 library(RColorBrewer)
@@ -47,6 +48,13 @@ signif.num <- function(x) {
     as.character(symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
            cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
            symbols = c("***", "**", "*", ".", " ")))
+}
+print_anova_table <- function(df) {
+df %>% select(c("trait", "term", "p.value")) %>% 
+  mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
+           str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
+  pivot_wider(names_from=trait, values_from=p.value) %>% 
+  bind_rows(lapply(mt.mod, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
 }
 
 load("data/maxfield_data.rda")
@@ -159,16 +167,15 @@ filter(daily_all) %>% ggplot(aes(y=EPA_RsrchMdw,x= NOAA_billy, color=ground_cove
 
 ```{r weather_monthly}
 #recalculate Campbell and Wendlandt 2013 July average, 1989 - 2006 EPA station
-(EPA_89_06_July_avg_mm <- daily_GTH161 %>% filter(month(date)==7, year(date) >= 1989, year(date) <= 2006) %>% 
-  group_by(year(date)) %>% summarize(PRECIPITATION = sum(PRECIPITATION)) %>% pull(PRECIPITATION) %>% mean)
+(EPA_89_06_July_avg_mm <- monthly_all %>% filter(mo==7, yr >= 1989, yr <= 2006) %>% pull(EPA_NOAA_filled) %>% mean)
 
 (water_addition_per_month_mm <- (14 / 4 / 2) * 31) #14 L applied to 4 m2 every 2 days = 1.75 mm daily precip * 31 days in July
 
 monthly_all %>% pivot_longer(unname(stations), names_to="station", values_to="precipitation_mm") %>% 
-ggplot(aes(x=mo*30.4-15.2, y=precipitation_mm, color=station)) + #place points at month midpoint
-  facet_wrap(vars(yr)) +  
-    geom_rect(data=waterdates %>% pivot_wider(names_from=precip_treatments, values_from=c(day, date)) %>% mutate(yr=factor(year)), 
-            aes(xmin=day_started, xmax=day_ended, ymin=0, ymax=(14 / 4 / 2) * 31), inherit.aes=F, fill=water_pal["Addition"])+
+ggplot(aes(x=mo*30.4-15.2, y=precipitation_mm, color=station)) + facet_wrap(vars(yr)) + #place points at month midpoint
+  geom_rect(data=waterdates %>% pivot_wider(names_from=precip_treatments, values_from=c(day, date)) %>% mutate(yr=factor(year)), 
+            aes(xmin=day_started, xmax=day_ended, ymin=0, ymax=water_addition_per_month_mm), inherit.aes=F,
+            fill=water_pal["Addition"])+
   geom_line() +  geom_point()+
   geom_point(data=groundcover %>% filter(year>=2004) %>% mutate(yr=factor(year)), aes(x=first_0_cm_day,y=0), inherit.aes=F)+
   geom_point(data=groundcover %>% filter(year>=2005) %>% mutate(yr=factor(year-1)), aes(x=first_snow_day,y=0), inherit.aes=F)+
@@ -212,6 +219,11 @@ groundcover %>% mutate(first_snow_day=first_snow_day-365) %>%
 
 cat("SD of first bare ground =", round(sd(groundcover$first_0_cm_day),1),"days over",range(groundcover$year))
 summary(lm(first_0_cm_day ~ year, data=groundcover))
+
+treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point()+
+  geom_point(data=groundcover, aes(x=first_0_cm_day, color="Control", shape="1990-2017")) +
+  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(1, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
+  labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt date", color="Precipitation", shape="Year") 
 ```
 
 
@@ -247,16 +259,9 @@ ggplot(sm, aes(x=yday(date))) +
   theme(legend.key.size = unit(2, "lines"))
 ```
 
-Summer precipitation estimates
-```{r summerprecip}
-treatments %>% ggplot(aes(x=snow, shape=snow, color=water, y=precip_est_mm))+geom_point()+ 
-  facet_wrap(vars(year), nrow=1) + scale_color_manual(values=water_pal) + scale_y_continuous(limits=c(0,NA))+
-  labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt", color="Precipitation", shape="Snowmelt")
-```
-
 The timing of measurements and treatments differed between years
 ```{r timings}
-ggplot(timings %>% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T)), aes(y=variable, color=year))+ 
+ggplot(timings %>% filter(variable!="sds") %>% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T)), aes(y=variable, color=year))+ 
   geom_linerange(aes(xmin=begin, xmax=end), 
                  position = position_dodge2(width=0.7, reverse = T), size=1.2, show.legend=FALSE) + 
   #geom_text(aes(x=begin-10, label=begin), position = position_dodge(width=0.7), fontface="bold")+
@@ -456,10 +461,9 @@ for(tr in traits) {
   cat(paste(tr,"\n"))
   print(mt.mod.test[[tr]])
 }
+
 mt.mod.tests <- map_dfr(mt.mod.test, tidy, .id="trait")
-mt.mod.tests %>% select(c("trait", "term", "p.value")) %>% mutate(p.value = signif.num(p.value)) %>% 
-  pivot_wider(names_from=trait, values_from=p.value) %>% 
-  bind_rows(lapply(mt.mod, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
+mt.mod.tests %>% print_anova_table
 ```
 
 ### Floral plasticity: water treatments and snowmelt offset
@@ -495,12 +499,10 @@ for(tr in traits) {
   print(mt.mod.plot[[tr]])
 }
 mt.mod.subplot.tests <- map_dfr(mt.mod.subplot.test, tidy, .id="trait")
-mt.mod.subplot.tests %>% select(c("trait", "term", "p.value")) %>% mutate(p.value = signif.num(p.value)) %>% 
-  pivot_wider(names_from=trait, values_from=p.value) %>% 
-  bind_rows(lapply(mt.mod.subplot, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
+mt.mod.subplot.tests %>% print_anova_table
 ```
 
-### FLoral plasticity: absolute snowmelt date and estimated summer precipitation
+### Floral plasticity: absolute snowmelt date and estimated summer precipitation
 
 ```{r morphology_meltdate}
 #dropped total summer precipitation (early_precip_mm and water:early_precip_mm) since it has n = 3 years
@@ -510,12 +512,16 @@ mt.mod.raw <- mt.mod.plantyr <- mt.mod.subplot <- mt.mod.subplot.test <- mt.mod.
 for(tr in traits) {
   #mt.mod.raw[[tr]]     <- lmer(mt[[tr]]         ~ melt_date * precip_est_mm + (1|plotid) + (1|plantid), data=mt)
   #mt.mod.plantyr[[tr]] <- lmer(mt.plantyr[[tr]] ~ melt_date * precip_est_mm + (1|plotid), data=mt.plantyr)
-  mt.mod.subplot[[tr]] <- lmer(mnps.subplot[[tr]] ~ melt_date + precip_est_mm + (1|plot), data=mnps.subplot)
+  mt.mod.subplot[[tr]] <- lmer(mnps.subplot[[tr]] ~ melt_date * precip_est_mm + (1|plot), data=mnps.subplot)
+  #drop interaction if not significant
+  if(mt.mod.subplot[[tr]] %>% tidy %>% filter(term=="melt_date:precip_est_mm") %>% pull(p.value) > 0.05) {
+    mt.mod.subplot[[tr]] <- lmer(mnps.subplot[[tr]] ~ melt_date + precip_est_mm + (1|plot), data=mnps.subplot)
+  }
   mnps.subplot[[paste0("fit.",tr)]] <- NA
   mnps.subplot[[paste0("fit.",tr)]][!is.na(mnps.subplot[[tr]])]<- predict(mt.mod.subplot[[tr]], re.form=NA)
   mt.mod.subplot.test[[tr]] <- anova(mt.mod.subplot[[tr]])
   
-    #Z-score the data first to get standardized slopes
+  #Z-score the data first to get standardized slopes
   mt.mod.subplot[[tr]] <- lmer(scale(mnps.subplot[[tr]]) ~ melt_date + precip_est_mm + (1|plot), data=mnps.subplot)
   coef.melt.precip[[tr]] <- summary(mt.mod.subplot[[tr]])$coefficients[c("melt_date", "precip_est_mm"),]
   emm.melt[[tr]] <- emtrends(mt.mod.subplot[[tr]],  ~ 1, var = "melt_date")
@@ -529,10 +535,9 @@ for(tr in traits) {
         labs(x="Snow melt date (day of year)", y=traitnames[[tr]], color="Precipitation", shape="Year")
   print(mt.mod.plot[[tr]])
 }
+mt.mod.subplot.coefs <- map_dfr(mt.mod.subplot, tidy, .id="trait")
 mt.mod.subplot.tests <- map_dfr(mt.mod.subplot.test, tidy, .id="trait")
-mt.mod.subplot.tests %>% select(c("trait", "term", "p.value")) %>% mutate(p.value = signif.num(p.value)) %>% 
-  pivot_wider(names_from=trait, values_from=p.value) %>% 
-  bind_rows(lapply(mt.mod.subplot, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
+mt.mod.subplot.tests %>% print_anova_table
 
 emm.melt.df <- bind_rows(melt_date = emm.melt %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=melt_date.trend)
           ,precip_est_mm = emm.precip %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=precip_est_mm.trend)
@@ -548,7 +553,7 @@ ggplot(emm.melt.df, aes(x=fct_relevel(trait, rev(traits)), y=trend)) +
   facet_wrap(vars(predictor), nrow=1, scales="free_x", labeller=labeller(predictor=c(precip_est_mm="Estimated summer precip (mm)", melt_date="Snowmelt date"))) + 
   geom_hline(yintercept=0) + 
   geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), position=position_dodge(width=0.3), size=0.4) + 
-  labs(y="Slope of z-scored trait vs. predictor", x="Floral Trait", color="Water") + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
+  labs(y="Slope and SE of z-scored trait vs. predictor", x="Floral Trait", color="Water") + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
   theme(legend.position = "top")
 ```
 
@@ -590,10 +595,7 @@ for(tr in traits) {
   print(mt.sm.mod.plot[[tr]])
 }
 mt.sm.mod.tests <- map_dfr(mt.sm.mod.test, tidy, .id="trait")
-mt.sm.mod.tests %>% select(c("trait", "term", "p.value")) %>% mutate(p.value = signif.num(p.value)) %>% 
-  pivot_wider(names_from=trait, values_from=p.value) %>% 
-    bind_rows(lapply(mt.sm.mod, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
-
+mt.sm.mod.tests %>% print_anova_table
 coef.VWC.df <- as.data.frame(t(as.data.frame(coef.VWC))) %>% rownames_to_column("trait")
 emm.VWC.ls <- lapply(emm.VWC, as.data.frame)
 emm.VWC.ls$sepal_width[3,] <- NA

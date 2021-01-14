@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-01-12" />
+<meta name="date" content="2021-01-13" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-01-12</h4>
+<h4 class="date">2021-01-13</h4>
 
 </div>
 
@@ -303,6 +303,7 @@ library(lme4)
 library(lmerTest)
 library(emmeans)
 library(broom)
+library(broom.mixed)
 library(vegan)
 
 library(RColorBrewer)
@@ -318,6 +319,13 @@ signif.num &lt;- function(x) {
     as.character(symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
            cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
            symbols = c(&quot;***&quot;, &quot;**&quot;, &quot;*&quot;, &quot;.&quot;, &quot; &quot;)))
+}
+print_anova_table &lt;- function(df) {
+df %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
+  mutate(p.value=p.value %&gt;% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %&gt;% 
+           str_replace(&quot;e-0(\\d)&quot;,&quot; x 10^-\\1^&quot;) %&gt;% str_replace(&quot;e-(\\d+)&quot;,&quot; x 10^-\\1^&quot;)) %&gt;%
+  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
+  bind_rows(lapply(mt.mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable
 }
 
 load(&quot;data/maxfield_data.rda&quot;)</code></pre>
@@ -449,16 +457,15 @@ ggpairs(daily_all %&gt;% select(all_of(unname(stations[-1])), ground_covered), m
 <div id="monthly-weather" class="section level2">
 <h2>Monthly weather</h2>
 <pre class="r"><code>#recalculate Campbell and Wendlandt 2013 July average, 1989 - 2006 EPA station
-(EPA_89_06_July_avg_mm &lt;- daily_GTH161 %&gt;% filter(month(date)==7, year(date) &gt;= 1989, year(date) &lt;= 2006) %&gt;% 
-  group_by(year(date)) %&gt;% summarize(PRECIPITATION = sum(PRECIPITATION)) %&gt;% pull(PRECIPITATION) %&gt;% mean)</code></pre>
+(EPA_89_06_July_avg_mm &lt;- monthly_all %&gt;% filter(mo==7, yr &gt;= 1989, yr &lt;= 2006) %&gt;% pull(EPA_NOAA_filled) %&gt;% mean)</code></pre>
 <pre><code>[1] 53.70822</code></pre>
 <pre class="r"><code>(water_addition_per_month_mm &lt;- (14 / 4 / 2) * 31) #14 L applied to 4 m2 every 2 days = 1.75 mm daily precip * 31 days in July</code></pre>
 <pre><code>[1] 54.25</code></pre>
 <pre class="r"><code>monthly_all %&gt;% pivot_longer(unname(stations), names_to=&quot;station&quot;, values_to=&quot;precipitation_mm&quot;) %&gt;% 
-ggplot(aes(x=mo*30.4-15.2, y=precipitation_mm, color=station)) + #place points at month midpoint
-  facet_wrap(vars(yr)) +  
-    geom_rect(data=waterdates %&gt;% pivot_wider(names_from=precip_treatments, values_from=c(day, date)) %&gt;% mutate(yr=factor(year)), 
-            aes(xmin=day_started, xmax=day_ended, ymin=0, ymax=(14 / 4 / 2) * 31), inherit.aes=F, fill=water_pal[&quot;Addition&quot;])+
+ggplot(aes(x=mo*30.4-15.2, y=precipitation_mm, color=station)) + facet_wrap(vars(yr)) + #place points at month midpoint
+  geom_rect(data=waterdates %&gt;% pivot_wider(names_from=precip_treatments, values_from=c(day, date)) %&gt;% mutate(yr=factor(year)), 
+            aes(xmin=day_started, xmax=day_ended, ymin=0, ymax=water_addition_per_month_mm), inherit.aes=F,
+            fill=water_pal[&quot;Addition&quot;])+
   geom_line() +  geom_point()+
   geom_point(data=groundcover %&gt;% filter(year&gt;=2004) %&gt;% mutate(yr=factor(year)), aes(x=first_0_cm_day,y=0), inherit.aes=F)+
   geom_point(data=groundcover %&gt;% filter(year&gt;=2005) %&gt;% mutate(yr=factor(year-1)), aes(x=first_snow_day,y=0), inherit.aes=F)+
@@ -520,6 +527,11 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 Residual standard error: 13.32 on 43 degrees of freedom
 Multiple R-squared:  0.04174,   Adjusted R-squared:  0.01945 
 F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
+<pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point()+
+  geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;)) +
+  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(1, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
+  labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;) </code></pre>
+<p><img src="images/groundcover-2.png" width="672" /></p>
 </div>
 </div>
 <div id="soil-moisture-vs.-treatments" class="section level1">
@@ -552,13 +564,8 @@ F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/soil-1.png" width="1152" /></p>
-<p>Summer precipitation estimates</p>
-<pre class="r"><code>treatments %&gt;% ggplot(aes(x=snow, shape=snow, color=water, y=precip_est_mm))+geom_point()+ 
-  facet_wrap(vars(year), nrow=1) + scale_color_manual(values=water_pal) + scale_y_continuous(limits=c(0,NA))+
-  labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
-<p><img src="images/summerprecip-1.png" width="672" /></p>
 <p>The timing of measurements and treatments differed between years</p>
-<pre class="r"><code>ggplot(timings %&gt;% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T)), aes(y=variable, color=year))+ 
+<pre class="r"><code>ggplot(timings %&gt;% filter(variable!=&quot;sds&quot;) %&gt;% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T)), aes(y=variable, color=year))+ 
   geom_linerange(aes(xmin=begin, xmax=end), 
                  position = position_dodge2(width=0.7, reverse = T), size=1.2, show.legend=FALSE) + 
   #geom_text(aes(x=begin-10, label=begin), position = position_dodge(width=0.7), fontface=&quot;bold&quot;)+
@@ -1596,28 +1603,26 @@ year:snow:water  0.9513  0.2378     4    54  0.4312 0.7854706
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <pre class="r"><code>mt.mod.tests &lt;- map_dfr(mt.mod.test, tidy, .id=&quot;trait&quot;)
-mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
-  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
-  bind_rows(lapply(mt.mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
-<table style="width:100%;">
+mt.mod.tests %&gt;% print_anova_table</code></pre>
+<table>
 <colgroup>
 <col width="6%" />
-<col width="6%" />
-<col width="6%" />
 <col width="5%" />
 <col width="5%" />
-<col width="6%" />
 <col width="5%" />
-<col width="9%" />
-<col width="4%" />
-<col width="2%" />
-<col width="6%" />
-<col width="4%" />
-<col width="7%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="8%" />
+<col width="5%" />
 <col width="5%" />
 <col width="6%" />
 <col width="5%" />
 <col width="7%" />
+<col width="4%" />
+<col width="5%" />
+<col width="5%" />
+<col width="6%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1643,136 +1648,136 @@ mt.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&
 <tbody>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
+<td align="left">1.2 x 10<sup>-7</sup></td>
+<td align="left">1.5 x 10<sup>-13</sup></td>
+<td align="left">3.1 x 10<sup>-7</sup></td>
+<td align="left">0.88</td>
+<td align="left">2.4 x 10<sup>-3</sup></td>
+<td align="left">6.3 x 10<sup>-10</sup></td>
+<td align="left">8.8 x 10<sup>-4</sup></td>
+<td align="left">6.2 x 10<sup>-10</sup></td>
+<td align="left">1.9 x 10<sup>-11</sup></td>
+<td align="left">1.5 x 10<sup>-6</sup></td>
+<td align="left">4.2 x 10<sup>-3</sup></td>
+<td align="left">0.19</td>
+<td align="left">0.41</td>
+<td align="left">7.4 x 10<sup>-5</sup></td>
+<td align="left">9.7 x 10<sup>-4</sup></td>
+<td align="left">1.5 x 10<sup>-4</sup></td>
 </tr>
 <tr class="even">
 <td align="left">snow</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">.</td>
+<td align="left">0.69</td>
+<td align="left">0.73</td>
+<td align="left">0.77</td>
+<td align="left">0.75</td>
+<td align="left">0.043</td>
+<td align="left">0.38</td>
+<td align="left">0.20</td>
+<td align="left">0.046</td>
+<td align="left">0.53</td>
+<td align="left">0.43</td>
+<td align="left">0.52</td>
+<td align="left">0.41</td>
+<td align="left">0.68</td>
+<td align="left">0.17</td>
+<td align="left">0.17</td>
+<td align="left">0.092</td>
 </tr>
 <tr class="odd">
 <td align="left">water</td>
-<td align="left">.</td>
-<td align="left">***</td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left">*</td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.074</td>
+<td align="left">3 x 10<sup>-4</sup></td>
+<td align="left">0.12</td>
+<td align="left">1.8 x 10<sup>-3</sup></td>
+<td align="left">0.043</td>
+<td align="left">3.1 x 10<sup>-3</sup></td>
+<td align="left">0.56</td>
+<td align="left">0.70</td>
+<td align="left">0.80</td>
+<td align="left">0.35</td>
+<td align="left">0.79</td>
+<td align="left">0.36</td>
+<td align="left">0.62</td>
+<td align="left">0.51</td>
+<td align="left">0.89</td>
+<td align="left">0.58</td>
 </tr>
 <tr class="even">
 <td align="left">year:snow</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left">*</td>
-<td align="left">.</td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left">.</td>
+<td align="left">0.94</td>
+<td align="left">0.74</td>
+<td align="left">0.99</td>
+<td align="left">0.17</td>
+<td align="left">0.21</td>
+<td align="left">0.54</td>
+<td align="left">0.23</td>
+<td align="left">0.21</td>
+<td align="left">0.16</td>
+<td align="left">0.18</td>
+<td align="left">3.9 x 10<sup>-3</sup></td>
+<td align="left">0.037</td>
+<td align="left">0.094</td>
+<td align="left">0.033</td>
+<td align="left">0.50</td>
+<td align="left">0.066</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.62</td>
+<td align="left">0.27</td>
+<td align="left">0.53</td>
+<td align="left">7.1 x 10<sup>-3</sup></td>
+<td align="left">0.84</td>
+<td align="left">0.82</td>
+<td align="left">0.49</td>
+<td align="left">0.88</td>
+<td align="left">0.96</td>
+<td align="left">0.046</td>
+<td align="left">0.20</td>
+<td align="left">0.36</td>
+<td align="left">0.22</td>
+<td align="left">0.77</td>
+<td align="left">0.77</td>
+<td align="left">0.22</td>
 </tr>
 <tr class="even">
 <td align="left">snow:water</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">.</td>
+<td align="left">0.87</td>
+<td align="left">0.63</td>
+<td align="left">0.63</td>
+<td align="left">0.83</td>
+<td align="left">0.76</td>
+<td align="left">0.23</td>
+<td align="left">0.60</td>
+<td align="left">0.31</td>
+<td align="left">0.96</td>
+<td align="left">0.038</td>
+<td align="left">0.36</td>
+<td align="left">0.38</td>
+<td align="left">0.22</td>
+<td align="left">0.32</td>
+<td align="left">0.26</td>
+<td align="left">0.065</td>
 </tr>
 <tr class="odd">
 <td align="left">year:snow:water</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">.</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.77</td>
+<td align="left">0.14</td>
+<td align="left">0.19</td>
+<td align="left">0.14</td>
+<td align="left">0.55</td>
+<td align="left">0.18</td>
+<td align="left">0.41</td>
+<td align="left">0.19</td>
+<td align="left">0.99</td>
+<td align="left">5 x 10<sup>-2</sup></td>
+<td align="left">0.70</td>
+<td align="left">0.56</td>
+<td align="left">0.60</td>
+<td align="left">0.26</td>
+<td align="left">0.65</td>
+<td align="left">0.79</td>
 </tr>
 <tr class="even">
 <td align="left">Singular?</td>
@@ -1827,28 +1832,26 @@ for(tr in traits) {
 }</code></pre>
 <p><img src="images/morphology_model-1.png" width="672" /><img src="images/morphology_model-2.png" width="672" /><img src="images/morphology_model-3.png" width="672" /><img src="images/morphology_model-4.png" width="672" /><img src="images/morphology_model-5.png" width="672" /><img src="images/morphology_model-6.png" width="672" /><img src="images/morphology_model-7.png" width="672" /><img src="images/morphology_model-8.png" width="672" /><img src="images/morphology_model-9.png" width="672" /><img src="images/morphology_model-10.png" width="672" /><img src="images/morphology_model-11.png" width="672" /><img src="images/morphology_model-12.png" width="672" /><img src="images/morphology_model-13.png" width="672" /><img src="images/morphology_model-14.png" width="672" /><img src="images/morphology_model-15.png" width="672" /><img src="images/morphology_model-16.png" width="672" /></p>
 <pre class="r"><code>mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
-mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
-  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
-  bind_rows(lapply(mt.mod.subplot, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
+mt.mod.subplot.tests %&gt;% print_anova_table</code></pre>
 <table>
 <colgroup>
-<col width="9%" />
-<col width="6%" />
+<col width="8%" />
 <col width="5%" />
 <col width="5%" />
 <col width="5%" />
-<col width="6%" />
+<col width="4%" />
+<col width="5%" />
 <col width="5%" />
 <col width="8%" />
-<col width="4%" />
-<col width="2%" />
+<col width="5%" />
+<col width="5%" />
 <col width="6%" />
+<col width="5%" />
+<col width="7%" />
 <col width="4%" />
-<col width="7%" />
 <col width="5%" />
 <col width="5%" />
-<col width="5%" />
-<col width="7%" />
+<col width="6%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1874,147 +1877,147 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <tbody>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left">***</td>
-<td align="left">*</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left">***</td>
+<td align="left">5.1 x 10<sup>-5</sup></td>
+<td align="left">1.1 x 10<sup>-8</sup></td>
+<td align="left">2.5 x 10<sup>-6</sup></td>
+<td align="left">0.30</td>
+<td align="left">5.4 x 10<sup>-3</sup></td>
+<td align="left">1 x 10<sup>-5</sup></td>
+<td align="left">0.046</td>
+<td align="left">1.5 x 10<sup>-12</sup></td>
+<td align="left">2.9 x 10<sup>-11</sup></td>
+<td align="left">1.4 x 10<sup>-6</sup></td>
+<td align="left">5.6 x 10<sup>-5</sup></td>
+<td align="left">8.5 x 10<sup>-3</sup></td>
+<td align="left">0.67</td>
+<td align="left">0.16</td>
+<td align="left">1.2 x 10<sup>-3</sup></td>
+<td align="left">5.5 x 10<sup>-5</sup></td>
 </tr>
 <tr class="even">
 <td align="left">water</td>
-<td align="left"></td>
-<td align="left">***</td>
-<td align="left"></td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.43</td>
+<td align="left">2.8 x 10<sup>-4</sup></td>
+<td align="left">0.51</td>
+<td align="left">0.032</td>
+<td align="left">0.21</td>
+<td align="left">6.6 x 10<sup>-3</sup></td>
+<td align="left">0.64</td>
+<td align="left">0.60</td>
+<td align="left">0.93</td>
+<td align="left">0.48</td>
+<td align="left">0.82</td>
+<td align="left">0.73</td>
+<td align="left">0.84</td>
+<td align="left">0.92</td>
+<td align="left">0.36</td>
+<td align="left">0.68</td>
 </tr>
 <tr class="odd">
 <td align="left">melt_offset</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.48</td>
+<td align="left">0.75</td>
+<td align="left">0.63</td>
+<td align="left">0.97</td>
+<td align="left">0.048</td>
+<td align="left">0.23</td>
+<td align="left">0.25</td>
+<td align="left">1.9 x 10<sup>-3</sup></td>
+<td align="left">0.64</td>
+<td align="left">0.44</td>
+<td align="left">0.69</td>
+<td align="left">0.72</td>
+<td align="left">0.99</td>
+<td align="left">0.92</td>
+<td align="left">0.19</td>
+<td align="left">0.31</td>
 </tr>
 <tr class="even">
 <td align="left">year:water</td>
-<td align="left"></td>
-<td align="left">.</td>
-<td align="left"></td>
-<td align="left">.</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.83</td>
+<td align="left">0.073</td>
+<td align="left">0.86</td>
+<td align="left">0.089</td>
+<td align="left">0.99</td>
+<td align="left">0.65</td>
+<td align="left">0.98</td>
+<td align="left">0.19</td>
+<td align="left">0.94</td>
+<td align="left">0.16</td>
+<td align="left">0.37</td>
+<td align="left">0.77</td>
+<td align="left">0.35</td>
+<td align="left">0.33</td>
+<td align="left">0.87</td>
+<td align="left">0.56</td>
 </tr>
 <tr class="odd">
 <td align="left">year:melt_offset</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">.</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">.</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.73</td>
+<td align="left">0.74</td>
+<td align="left">0.52</td>
+<td align="left">0.28</td>
+<td align="left">0.33</td>
+<td align="left">0.35</td>
+<td align="left">0.51</td>
+<td align="left">0.059</td>
+<td align="left">0.29</td>
+<td align="left">0.25</td>
+<td align="left">0.063</td>
+<td align="left">0.13</td>
+<td align="left">0.21</td>
+<td align="left">0.23</td>
+<td align="left">0.65</td>
+<td align="left">0.40</td>
 </tr>
 <tr class="even">
 <td align="left">water:melt_offset</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.62</td>
+<td align="left">0.16</td>
+<td align="left">0.26</td>
+<td align="left">0.82</td>
+<td align="left">0.75</td>
+<td align="left">0.21</td>
+<td align="left">0.76</td>
+<td align="left">0.19</td>
+<td align="left">0.98</td>
+<td align="left">0.18</td>
+<td align="left">0.60</td>
+<td align="left">0.63</td>
+<td align="left">0.34</td>
+<td align="left">0.57</td>
+<td align="left">0.30</td>
+<td align="left">0.14</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water:melt_offset</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">.</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.76</td>
+<td align="left">0.34</td>
+<td align="left">0.32</td>
+<td align="left">0.30</td>
+<td align="left">0.55</td>
+<td align="left">0.14</td>
+<td align="left">0.57</td>
+<td align="left">0.057</td>
+<td align="left">0.98</td>
+<td align="left">0.18</td>
+<td align="left">0.52</td>
+<td align="left">0.65</td>
+<td align="left">0.45</td>
+<td align="left">0.14</td>
+<td align="left">0.75</td>
+<td align="left">0.96</td>
 </tr>
 <tr class="even">
 <td align="left">Singular?</td>
 <td align="left">N</td>
 <td align="left">N</td>
-<td align="left">Y</td>
+<td align="left">N</td>
 <td align="left">N</td>
 <td align="left">Y</td>
 <td align="left">N</td>
 <td align="left">Y</td>
-<td align="left">Y</td>
+<td align="left">N</td>
 <td align="left">Y</td>
 <td align="left">Y</td>
 <td align="left">N</td>
@@ -2028,7 +2031,7 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 </table>
 </div>
 <div id="floral-plasticity-absolute-snowmelt-date-and-estimated-summer-precipitation" class="section level3">
-<h3>FLoral plasticity: absolute snowmelt date and estimated summer precipitation</h3>
+<h3>Floral plasticity: absolute snowmelt date and estimated summer precipitation</h3>
 <pre class="r"><code>#dropped total summer precipitation (early_precip_mm and water:early_precip_mm) since it has n = 3 years
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 
@@ -2036,12 +2039,16 @@ mt.mod.raw &lt;- mt.mod.plantyr &lt;- mt.mod.subplot &lt;- mt.mod.subplot.test &
 for(tr in traits) {
   #mt.mod.raw[[tr]]     &lt;- lmer(mt[[tr]]         ~ melt_date * precip_est_mm + (1|plotid) + (1|plantid), data=mt)
   #mt.mod.plantyr[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ melt_date * precip_est_mm + (1|plotid), data=mt.plantyr)
-  mt.mod.subplot[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ melt_date + precip_est_mm + (1|plot), data=mnps.subplot)
+  mt.mod.subplot[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ melt_date * precip_est_mm + (1|plot), data=mnps.subplot)
+  #drop interaction if not significant
+  if(mt.mod.subplot[[tr]] %&gt;% tidy %&gt;% filter(term==&quot;melt_date:precip_est_mm&quot;) %&gt;% pull(p.value) &gt; 0.05) {
+    mt.mod.subplot[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ melt_date + precip_est_mm + (1|plot), data=mnps.subplot)
+  }
   mnps.subplot[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
   mnps.subplot[[paste0(&quot;fit.&quot;,tr)]][!is.na(mnps.subplot[[tr]])]&lt;- predict(mt.mod.subplot[[tr]], re.form=NA)
   mt.mod.subplot.test[[tr]] &lt;- anova(mt.mod.subplot[[tr]])
   
-    #Z-score the data first to get standardized slopes
+  #Z-score the data first to get standardized slopes
   mt.mod.subplot[[tr]] &lt;- lmer(scale(mnps.subplot[[tr]]) ~ melt_date + precip_est_mm + (1|plot), data=mnps.subplot)
   coef.melt.precip[[tr]] &lt;- summary(mt.mod.subplot[[tr]])$coefficients[c(&quot;melt_date&quot;, &quot;precip_est_mm&quot;),]
   emm.melt[[tr]] &lt;- emtrends(mt.mod.subplot[[tr]],  ~ 1, var = &quot;melt_date&quot;)
@@ -2056,29 +2063,28 @@ for(tr in traits) {
   print(mt.mod.plot[[tr]])
 }</code></pre>
 <p><img src="images/morphology_meltdate-1.png" width="672" /><img src="images/morphology_meltdate-2.png" width="672" /><img src="images/morphology_meltdate-3.png" width="672" /><img src="images/morphology_meltdate-4.png" width="672" /><img src="images/morphology_meltdate-5.png" width="672" /><img src="images/morphology_meltdate-6.png" width="672" /><img src="images/morphology_meltdate-7.png" width="672" /><img src="images/morphology_meltdate-8.png" width="672" /><img src="images/morphology_meltdate-9.png" width="672" /><img src="images/morphology_meltdate-10.png" width="672" /><img src="images/morphology_meltdate-11.png" width="672" /><img src="images/morphology_meltdate-12.png" width="672" /><img src="images/morphology_meltdate-13.png" width="672" /><img src="images/morphology_meltdate-14.png" width="672" /><img src="images/morphology_meltdate-15.png" width="672" /><img src="images/morphology_meltdate-16.png" width="672" /></p>
-<pre class="r"><code>mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
-mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
-  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
-  bind_rows(lapply(mt.mod.subplot, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
-<table style="width:100%;">
+<pre class="r"><code>mt.mod.subplot.coefs &lt;- map_dfr(mt.mod.subplot, tidy, .id=&quot;trait&quot;)
+mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
+mt.mod.subplot.tests %&gt;% print_anova_table</code></pre>
+<table>
 <colgroup>
-<col width="6%" />
-<col width="6%" />
-<col width="6%" />
-<col width="5%" />
-<col width="5%" />
-<col width="6%" />
-<col width="5%" />
 <col width="9%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
 <col width="4%" />
-<col width="2%" />
-<col width="6%" />
-<col width="4%" />
-<col width="7%" />
+<col width="5%" />
+<col width="5%" />
+<col width="8%" />
+<col width="5%" />
 <col width="5%" />
 <col width="6%" />
 <col width="5%" />
-<col width="7%" />
+<col width="6%" />
+<col width="4%" />
+<col width="5%" />
+<col width="5%" />
+<col width="6%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -2104,45 +2110,64 @@ mt.mod.subplot.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;
 <tbody>
 <tr class="odd">
 <td align="left">melt_date</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left">***</td>
-<td align="left"></td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left">***</td>
-<td align="left">***</td>
+<td align="left">4.5 x 10<sup>-5</sup></td>
+<td align="left">8.6 x 10<sup>-9</sup></td>
+<td align="left">6.1 x 10<sup>-9</sup></td>
+<td align="left">0.047</td>
+<td align="left">1.2 x 10<sup>-3</sup></td>
+<td align="left">4.1 x 10<sup>-12</sup></td>
+<td align="left">0.32</td>
+<td align="left">6.2 x 10<sup>-16</sup></td>
+<td align="left">3.9 x 10<sup>-17</sup></td>
+<td align="left">2.3 x 10<sup>-6</sup></td>
+<td align="left">4.4 x 10<sup>-5</sup></td>
+<td align="left">2.8 x 10<sup>-3</sup></td>
+<td align="left">0.68</td>
+<td align="left">5 x 10<sup>-3</sup></td>
+<td align="left">2.2 x 10<sup>-4</sup></td>
+<td align="left">9.6 x 10<sup>-7</sup></td>
 </tr>
 <tr class="even">
 <td align="left">precip_est_mm</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">**</td>
-<td align="left">*</td>
-<td align="left">***</td>
-<td align="left">***</td>
-<td align="left">.</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">4.3 x 10<sup>-4</sup></td>
+<td align="left">2.3 x 10<sup>-5</sup></td>
+<td align="left">5 x 10<sup>-3</sup></td>
+<td align="left">0.015</td>
+<td align="left">8.9 x 10<sup>-4</sup></td>
+<td align="left">3.8 x 10<sup>-4</sup></td>
+<td align="left">5 x 10<sup>-2</sup></td>
+<td align="left">0.56</td>
+<td align="left">0.77</td>
+<td align="left">0.35</td>
+<td align="left">0.57</td>
+<td align="left">0.38</td>
+<td align="left">0.59</td>
+<td align="left">0.28</td>
+<td align="left">0.22</td>
+<td align="left">0.71</td>
 </tr>
 <tr class="odd">
+<td align="left">melt_date:precip_est_mm</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">3 x 10<sup>-2</sup></td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
 <td align="left">Singular?</td>
-<td align="left">Y</td>
+<td align="left">N</td>
 <td align="left">N</td>
 <td align="left">N</td>
 <td align="left">N</td>
@@ -2175,7 +2200,7 @@ ggplot(emm.melt.df, aes(x=fct_relevel(trait, rev(traits)), y=trend)) +
   facet_wrap(vars(predictor), nrow=1, scales=&quot;free_x&quot;, labeller=labeller(predictor=c(precip_est_mm=&quot;Estimated summer precip (mm)&quot;, melt_date=&quot;Snowmelt date&quot;))) + 
   geom_hline(yintercept=0) + 
   geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), position=position_dodge(width=0.3), size=0.4) + 
-  labs(y=&quot;Slope of z-scored trait vs. predictor&quot;, x=&quot;Floral Trait&quot;, color=&quot;Water&quot;) + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
+  labs(y=&quot;Slope and SE of z-scored trait vs. predictor&quot;, x=&quot;Floral Trait&quot;, color=&quot;Water&quot;) + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
   theme(legend.position = &quot;top&quot;)</code></pre>
 <p><img src="images/morphology_meltdate-17.png" width="672" /></p>
 </div>
@@ -2216,26 +2241,24 @@ for(tr in traits) {
 }</code></pre>
 <p><img src="images/morphology_sm-1.png" width="672" /><img src="images/morphology_sm-2.png" width="672" /><img src="images/morphology_sm-3.png" width="672" /><img src="images/morphology_sm-4.png" width="672" /><img src="images/morphology_sm-5.png" width="672" /><img src="images/morphology_sm-6.png" width="672" /><img src="images/morphology_sm-7.png" width="672" /><img src="images/morphology_sm-8.png" width="672" /><img src="images/morphology_sm-9.png" width="672" /><img src="images/morphology_sm-10.png" width="672" /><img src="images/morphology_sm-11.png" width="672" /><img src="images/morphology_sm-12.png" width="672" /><img src="images/morphology_sm-13.png" width="672" /><img src="images/morphology_sm-14.png" width="672" /><img src="images/morphology_sm-15.png" width="672" /><img src="images/morphology_sm-16.png" width="672" /></p>
 <pre class="r"><code>mt.sm.mod.tests &lt;- map_dfr(mt.sm.mod.test, tidy, .id=&quot;trait&quot;)
-mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% mutate(p.value = signif.num(p.value)) %&gt;% 
-  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
-    bind_rows(lapply(mt.sm.mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable</code></pre>
+mt.sm.mod.tests %&gt;% print_anova_table</code></pre>
 <table>
 <colgroup>
 <col width="4%" />
 <col width="6%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
 <col width="6%" />
 <col width="5%" />
-<col width="5%" />
-<col width="6%" />
-<col width="5%" />
-<col width="9%" />
+<col width="8%" />
 <col width="4%" />
-<col width="2%" />
-<col width="7%" />
+<col width="5%" />
+<col width="6%" />
 <col width="4%" />
 <col width="7%" />
 <col width="5%" />
-<col width="6%" />
+<col width="5%" />
 <col width="5%" />
 <col width="7%" />
 </colgroup>
@@ -2263,60 +2286,60 @@ mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.val
 <tbody>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">**</td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left">***</td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left">***</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">6.3 x 10<sup>-3</sup></td>
+<td align="left">3.3 x 10<sup>-3</sup></td>
+<td align="left">0.17</td>
+<td align="left">8.7 x 10<sup>-3</sup></td>
+<td align="left">0.23</td>
+<td align="left">2.2 x 10<sup>-4</sup></td>
+<td align="left">3.1 x 10<sup>-3</sup></td>
+<td align="left">0.22</td>
+<td align="left">4.9 x 10<sup>-4</sup></td>
+<td align="left">0.71</td>
+<td align="left">0.78</td>
+<td align="left">0.81</td>
+<td align="left">0.71</td>
+<td align="left">0.34</td>
+<td align="left">0.37</td>
+<td align="left">0.74</td>
 </tr>
 <tr class="even">
 <td align="left">VWC</td>
-<td align="left">*</td>
-<td align="left">***</td>
-<td align="left">**</td>
-<td align="left">*</td>
-<td align="left">***</td>
-<td align="left">*</td>
-<td align="left">***</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">.</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.012</td>
+<td align="left">8.5 x 10<sup>-5</sup></td>
+<td align="left">1.7 x 10<sup>-3</sup></td>
+<td align="left">0.012</td>
+<td align="left">5.8 x 10<sup>-5</sup></td>
+<td align="left">0.011</td>
+<td align="left">7.9 x 10<sup>-4</sup></td>
+<td align="left">0.17</td>
+<td align="left">0.95</td>
+<td align="left">0.98</td>
+<td align="left">0.25</td>
+<td align="left">0.14</td>
+<td align="left">0.079</td>
+<td align="left">1.00</td>
+<td align="left">0.68</td>
+<td align="left">0.56</td>
 </tr>
 <tr class="odd">
 <td align="left">year:VWC</td>
-<td align="left"></td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left">**</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">*</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">0.45</td>
+<td align="left">0.035</td>
+<td align="left">0.83</td>
+<td align="left">3.4 x 10<sup>-3</sup></td>
+<td align="left">0.11</td>
+<td align="left">0.35</td>
+<td align="left">0.023</td>
+<td align="left">0.33</td>
+<td align="left">0.85</td>
+<td align="left">0.78</td>
+<td align="left">0.23</td>
+<td align="left">0.29</td>
+<td align="left">0.71</td>
+<td align="left">0.94</td>
+<td align="left">0.79</td>
+<td align="left">0.83</td>
 </tr>
 <tr class="even">
 <td align="left">Singular?</td>
@@ -2324,18 +2347,18 @@ mt.sm.mod.tests %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.val
 <td align="left">N</td>
 <td align="left">N</td>
 <td align="left">N</td>
-<td align="left">N</td>
+<td align="left">Y</td>
 <td align="left">N</td>
 <td align="left">Y</td>
 <td align="left">N</td>
-<td align="left">N</td>
+<td align="left">Y</td>
 <td align="left">Y</td>
 <td align="left">N</td>
 <td align="left">N</td>
 <td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
 <td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">N</td>
 </tr>
 </tbody>
 </table>

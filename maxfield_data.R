@@ -157,7 +157,8 @@ daily_all <- daily_billy %>% full_join(daily_GTH161) %>% full_join(daily_KCOMTCR
   mutate(WRCC_billy = ifelse(WRCC_billy>50, NA, WRCC_billy)) #cut errors >50mm/day from daily_CORBIL
 
 #correlate daily EPA_RsrchMdw and NOAA_billy to predict what EPA would look like for 2012-2020
-EPA_NOAA_daily_model <-  lm(EPA_RsrchMdw ~ NOAA_billy*ground_covered, data=daily_all)
+#TODO rerun models now that forced through zero
+EPA_NOAA_daily_model <-  lm(EPA_RsrchMdw ~ NOAA_billy:ground_covered+0, data=daily_all)
 #EPA_NOAA_monthly_model <-lm(EPA_RsrchMdw ~ NOAA_billy*season, data=monthly_all %>% mutate(season=factor(c("wntr","smmr"))[1+mo %in% 6:9]))
 
 daily_all <- daily_all %>% 
@@ -167,23 +168,27 @@ stations <- c("EPA_NOAA_filled", stations)
 monthly_all <- daily_all %>% group_by(yr, mo) %>% 
   summarize(across(unname(stations), ~ ifelse(sum(is.na(.x))>5, NA, sum(.x, na.rm=T))), .groups="drop") %>% arrange(yr, mo) 
 
-#Add summer precip estimates to treatments
+#Add summer precip estimates to treatments from NOAA-filled EPA Research Meadow dataset
 # snowmelt date in each plot - start of watering (100% of precip)
 # start of watering - last morphology/nectar measurement (100% for controls, 50% for water reduction, or 100% + 1.75 mm/day for water addition)
 precip_total <- function(year_start, day_start, day_end) {
   daily_all %>% filter(year(date)==year_start, yday(date) > day_start, yday(date) < day_end) %>% 
     summarize(tot=sum(EPA_NOAA_filled, na.rm=T)) %>% pull(tot)
 }
+mt.lastday <- data.frame(year=factor(2018:2020), last_day=c(212,219,210))
 treatments <- treatments %>% 
   inner_join(waterdates %>% select(-date) %>% pivot_wider(names_from=precip_treatments, values_from=day) %>% 
                mutate(year=factor(year)) %>% rename(water_begin=started, water_end=ended)) %>% 
-  inner_join(data.frame(year=factor(2018:2020), last_day=c(212,219,210))) %>% # Maxfield Results - timings (mt)
+  inner_join(mt.lastday) %>% # Maxfield Results - timings (mt)
   #inner_join(mt %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) %>% #can't call mt before its made
   #mnps %>% filter(is.na(seeds)) would include phenology measurements
   mutate(precip_prewater_mm = pmap_dbl(list(year, sun_date, water_begin), precip_total),
          precip_postwater_mm = pmap_dbl(list(year, water_begin, last_day), precip_total) * ifelse(water=="Reduction",.5,1) + 
            ifelse(water=="Addition", (14 / 4 / 2) * (last_day - water_begin),0),
          precip_est_mm = precip_prewater_mm + precip_postwater_mm)
+
+#Add summer precip for longer climate record, from snowmelt date to average last morphology/nectar day
+groundcover <- groundcover %>% mutate(precip_est_mm = pmap_dbl(list(year, first_0_cm_day, round(mean(mt.lastday$last_day))), precip_total), precip_est_mm = ifelse(year<1990, NA, precip_est_mm))
 
 # soil --------------------------------------------------------------------
 
