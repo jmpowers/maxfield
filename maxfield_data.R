@@ -150,10 +150,11 @@ daily_billy <- meteo_pull_monitors("US1COGN0018", keep_flags = T) %>%
 
 #Combine weather station data
 stations <- c(GTH161="EPA_RsrchMdw",KCOMTCRE2="ESSDIVE_GoldLink",CORBIL="WRCC_billy",billy="NOAA_billy")#station="source_location"
+first_snow_2020 <- as.POSIXct(c("2020-10-25", "2020-12-31"), tz="UTC") #TODO check this first permanent snow of 2020 (not yet on billy's website)
 daily_all <- daily_billy %>% full_join(daily_GTH161) %>% full_join(daily_KCOMTCRE2) %>% full_join(daily_CORBIL) %>% 
   rename(EPA_RsrchMdw=PRECIPITATION, ESSDIVE_GoldLink=Precip, WRCC_billy=precip_mm, NOAA_billy=prcp_mm) %>% 
   mutate(yr = year(date), mo = month(date, label=F),
-         ground_covered = factor(c("smmr","wntr"))[1+date %in% do.call(c, map2(groundcover$first_snow, groundcover$first_0_cm, ~ seq(date(.x), date(.y), by="day")))]) %>% #TODO fill in first snow of 2020 (not yet on billy's website)
+         ground_covered = factor(c("smmr","wntr"))[1+date %in% do.call(c, map2(c(groundcover$first_snow, first_snow_2020[1]), c(groundcover$first_0_cm, first_snow_2020[2]), ~ seq(date(.x), date(.y), by="day")))]) %>% 
   mutate(WRCC_billy = ifelse(WRCC_billy>50, NA, WRCC_billy)) #cut errors >50mm/day from daily_CORBIL
 
 #correlate daily EPA_RsrchMdw and NOAA_billy to predict what EPA would look like for 2012-2020
@@ -211,7 +212,7 @@ sm <- bind_rows(read_sheet(sm_sheets, sheet="2020"),
 
 # Means within each subplot across days, months, and years
 sm.subplot <- sm %>% group_by(year, date, plot, subplot, plotid, water, snow) %>% 
-  summarize(VWC = mean(VWC, na.rm=T), .groups="drop") 
+  summarize(VWC = mean(VWC, na.rm=T), .groups="drop") %>% mutate(day=yday(date))
 
 breaks_20 <- seq(160, 240, by=20)
 sm.subplot20d <- sm.subplot %>% 
@@ -227,6 +228,10 @@ sm.subplotyear <- sm.subplot %>% group_by(year, plot, subplot, plotid, water, sn
 
 #sm.subplotearly <- sm.subplot %>% filter(yday(date)<=183 & yday(date)>=175) %>% group_by(year, plot, subplot, plotid, water, snow) %>% 
 #  summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
+
+#Means for each treatment by date
+sm.water <- sm.subplot %>% group_by(year, date, water, snow) %>% 
+  summarize(VWC = mean(VWC, na.rm=T), .groups="drop") 
 
 # census ------------------------------------------------------------------
 
@@ -318,6 +323,8 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
 # 
 # This is automatic, but it may be better to resolve duplicates manually in some cases. The duplicates are written out to [spreadsheets](https://docs.google.com/spreadsheets/d/1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA/edit#gid=367829026)
 
+#TODO use megatally solutions here - make sure it is in the right place relative to deduplication
+
 # Write out the duplicates
 censuses <- c("2018","2018r2","2019","2020")
 joiners <- c("plot","subplot","plotid","plant","plantid")
@@ -405,6 +412,8 @@ ph20 <- ph20.raw %>%
   mutate(flowering = open + buds > 0,
          has_egg = eggs > 0)
 
+#TODO use megatally solutions here
+
 ph <- bind_rows(list("2018" = ph18, "2019" = ph19, "2020" = ph20), .id="year") %>% 
   mutate(julian=as.integer(as.character(julian)))
 
@@ -425,6 +434,8 @@ lt <- bind_rows(lapply(sheet_names(lt_sheets), function(x) read_sheet(lt_sheets,
          water_content = (wet_weight_g-dry_weight_g)/wet_weight_g) %>% 
   left_join(treatments) %>%
   mutate_if(is.character, as.factor)
+
+#TODO use megatally solutions here
 
 lt.subplotround <- lt %>% 
   group_by(year, round, plot, subplot, plotid, water, water4, snow) %>% 
@@ -456,6 +467,8 @@ nt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet=
   left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
+#TODO use megatally solutions here
+
 #Merge morphology and nectar
 mt <- bind_rows(mt, nt)  %>% 
   left_join(sm.subplotyear) #add avg soil moisture and snow melt date
@@ -479,6 +492,8 @@ vt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Volatiles"), she
          year=factor(year(date))) %>% 
   left_join(treatments) %>%
   mutate_if(is.character, as.factor)
+
+#TODO use megatally solutions here
 
 # seeds -------------------------------------------------------------------
 
@@ -537,8 +552,13 @@ sds20.date.zeroed <- sds20.date %>%
          prop_infested	= (fruits_fly_no_seeds + fruits_fly_with_seeds + fruits_caterpillar) / fruits_nonaborted,
          fruiting = fruits_nonaborted > 0)
 
+#TODO use megatally solutions here
+
 # megatally ---------------------------------------------------------------
 
+#this will now be the fixed up megatally with all the solutions incorporated
+#TODO change so it is using the fixed up datasets combined by year (cen, ph, sds)
+#problem - sds is cleaned up below!
 megatally <- list(
   cen.status,
   cen18 %>% group_by(plotid, plant) %>% tally(name="census18"),
@@ -569,8 +589,8 @@ megatally %>%
   mutate(index=row_number()) %>% 
   mutate(across(census18:seeds20, na_if, 0)) %>% 
   select(index,plot,subplot,plotid,plant,plantid,status_18,status_18r2,status_19,status_20,transition_1819,transition_1920,transition_181920,check_19_20_20,census18,notes_18,other_notes_18,census18r2,other_notes_18r2,pheno18,floral18,seeds18,leaf18,census19,notes_19,other_notes_19,pheno19,floral19,seeds19,leaf19,census20,notes_20,other_notes_20,pheno20,floral20,volatiles20,seeds20,leaf20,total_obs) %>% 
-  write_csv("data/megatally.csv", na="")
-  #write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="megatally")
+  write_csv("data/megatally_fixed.csv", na="")
+  #write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="megatally_fixed")
 
 megatally.status <- megatally %>% select(!starts_with(c("census"))) %>% 
   mutate(across(starts_with(c("volatiles","seeds")), recode, `0`="no_record", .default="flowering"),

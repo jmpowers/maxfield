@@ -49,15 +49,16 @@ signif.num <- function(x) {
            cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
            symbols = c("***", "**", "*", ".", " ")))
 }
-print_anova_table <- function(df) {
+print_anova_table <- function(df, mod) {
 df %>% select(c("trait", "term", "p.value")) %>% 
   mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
            str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
   pivot_wider(names_from=trait, values_from=p.value) %>% 
-  bind_rows(lapply(mt.mod, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
+  bind_rows(lapply(mod, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
 }
 
 load("data/maxfield_data.rda")
+#load("data/daily_precip_est.rda")#included in maxfield_data now
 ```
 
 ```{r map}
@@ -122,16 +123,6 @@ meltdates %>% ggplot(aes(x=melt_offset, fill=snow)) + geom_dotplot(method="histo
   scale_y_continuous(expand=expansion(0,0))+ scale_x_continuous(breaks=-10:4)+
   theme(panel.grid.minor = element_blank()) +
   labs(x="Offset from mean normal snow melt date (days)", y="Number of plots", fill="Snowmelt")
-
-left_join(filter(sm.subplot20d, mo20d!="221 - 240"), meltdates) %>% 
-  mutate(mo = paste0("Days ",mo20d)) %>% 
-  ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
-  facet_wrap(vars(mo), nrow=1)+
-  geom_point() + geom_smooth(se=F, method="lm") +
-  scale_color_manual(values=water_pal) +
-  labs(x="Snowmelt date", y="Mean soil moisture in subplot", color="Water", shape="Year")
-
-sm.subplot %>% mutate(day=yday(date)) %>% group_by(year) %>% summarize(start=min(day), end=max(day)) %>% kable(caption = "Soil moisture collection dates")
 ```
 
 # Weather data
@@ -257,6 +248,37 @@ ggplot(sm, aes(x=yday(date))) +
   scale_color_manual(values=water_pal) +
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
+
+left_join(filter(sm.subplot20d, mo20d!="221 - 240"), meltdates) %>% 
+  mutate(mo = paste0("Days ",mo20d)) %>% 
+  ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
+  facet_wrap(vars(mo), nrow=1)+
+  geom_point() + geom_smooth(se=F, method="lm") +
+  scale_color_manual(values=water_pal) +
+  labs(x="Snowmelt date", y="Mean soil moisture in subplot", color="Water", shape="Year")
+
+sm.subplot %>% mutate(day=yday(date)) %>% group_by(year) %>% summarize(start=min(day), end=max(day)) %>% kable(caption = "Soil moisture collection dates")
+
+ggplot(sm.subplot, aes(x=yday(date))) + 
+  facet_wrap(vars(year), ncol=1) +
+      geom_col(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
+           fill=brewer.pal(3, "Greens")[2]) +
+  geom_line(data=daily_precip_est, aes(y=VWC_Control_4*100), color=brewer.pal(3, "Greens")[2], size=1) +
+  geom_point(aes(shape=snow, color=water, y = VWC)) + 
+  geom_line(data=sm.water, aes(linetype=snow, color=water, y = VWC)) +
+    scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="black", show.legend=F) +
+  coord_cartesian(xlim=c(110, 230), ylim=c(0, round(max(sm.subplot$VWC, na.rm=T))), expand=F)+
+    labs(x="Day of year", y="Mean soil VWC in subplot (%) / Precipitation (mm)", color="Water", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"))
+
+# VWC split-plot analysis
+sm.mod <- lmer(VWC ~ year * snow * water + (1|plot), data=sm.subplotyear)
+anova(sm.mod) %>% kable(digits=3)
+(sm.emm.snow <- as.data.frame(emmeans(sm.mod, ~ snow))) %>% kable(digits=3)
+sm.emm.snow$emmean[1] - sm.emm.snow$emmean[2]
+(sm.emm.water <- as.data.frame(emmeans(sm.mod, ~ water))) %>% kable(digits=3)
+sm.emm.water$emmean[1] - sm.emm.water$emmean[2]
+sm.emm.water$emmean[3] - sm.emm.water$emmean[2]
 ```
 
 The timing of measurements and treatments differed between years
@@ -463,7 +485,18 @@ for(tr in traits) {
 }
 
 mt.mod.tests <- map_dfr(mt.mod.test, tidy, .id="trait")
-mt.mod.tests %>% print_anova_table
+mt.mod.tests %>% print_anova_table(mt.mod)
+
+#TODO compare early snowmelt + addition vs. normal snowmelt + control
+emm.mod <- mt.mod.comb <- list()
+mnps.subplot$snowwater <- paste0(mnps.subplot$snow, mnps.subplot$water)
+library(multcomp)
+for(tr in traits) {
+    emm.mod[[tr]] <- emmeans(mt.mod[[tr]], ~ water * snow, var=tr)
+    mt.mod.comb[[tr]] <- lmer(mnps.subplot[[tr]] ~ snowwater + (1|plot), data=mnps.subplot)# drop year??
+    print(tr)
+    print(summary(glht(mt.mod.comb[[tr]] , linfct = mcp(snowwater = c("EarlyAddition - NormalControl = 0")))))
+}
 ```
 
 ### Floral plasticity: water treatments and snowmelt offset
@@ -499,7 +532,7 @@ for(tr in traits) {
   print(mt.mod.plot[[tr]])
 }
 mt.mod.subplot.tests <- map_dfr(mt.mod.subplot.test, tidy, .id="trait")
-mt.mod.subplot.tests %>% print_anova_table
+mt.mod.subplot.tests %>% print_anova_table(mt.mod.subplot)
 ```
 
 ### Floral plasticity: absolute snowmelt date and estimated summer precipitation
@@ -537,7 +570,7 @@ for(tr in traits) {
 }
 mt.mod.subplot.coefs <- map_dfr(mt.mod.subplot, tidy, .id="trait")
 mt.mod.subplot.tests <- map_dfr(mt.mod.subplot.test, tidy, .id="trait")
-mt.mod.subplot.tests %>% print_anova_table
+mt.mod.subplot.tests %>% print_anova_table(mt.mod.subplot)
 
 emm.melt.df <- bind_rows(melt_date = emm.melt %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=melt_date.trend)
           ,precip_est_mm = emm.precip %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=precip_est_mm.trend)
@@ -574,18 +607,19 @@ The models are specified as:
 ```{r morphology_sm}
 options(contrasts = c("contr.sum", "contr.poly"))
 
-mt.sm.mod <- mt.sm.mod.test <- mt.sm.mod.raw <- coef.VWC <- emm.VWC <- mt.sm.mod.plot <-list()
+mt.sm.mod <- mt.sm.mod.test <- mt.sm.mod.raw <- coef.VWC <- emm.VWC <- emm.VWC.allyears <- mt.sm.mod.plot <-list()
 for(tr in traits) {
   #mt.sm.mod.raw[[tr]] <- lmer(mt[[tr]]    ~ year * VWC + (1|plot) + (1|plantid), data=mt)
   mt.sm.mod[[tr]] <-lmer(mnps.plantyr[[tr]] ~ year * VWC + (1|plotid), data=mnps.plantyr)
   mnps.plantyr[[paste0("fit.sm.",tr)]] <- NA
-  mnps.plantyr[[paste0("fit.sm.",tr)]][!is.na(mnps.plantyr[[tr]])]<- predict(mt.sm.mod[[tr]], re.form=NA)
+  mnps.plantyr[[paste0("fit.sm.",tr)]][!is.na(mnps.plantyr[[tr]])]<- predict(mt.sm.mod[[tr]], re.form=NA) #TODO why jumps?
   mt.sm.mod.test[[tr]] <- anova(mt.sm.mod[[tr]])
   
   #Z-score the data first to get standardized slopes
   mt.sm.mod[[tr]] <- lmer(scale(mnps.plantyr[[tr]]) ~ year * VWC + (1|plotid), data=mnps.plantyr)
   coef.VWC[[tr]] <- summary(mt.sm.mod[[tr]])$coefficients["VWC",]
   emm.VWC[[tr]] <- emtrends(mt.sm.mod[[tr]],  ~ year, var = "VWC")
+  emm.VWC.allyears[[tr]] <- emtrends(mt.sm.mod[[tr]],  ~ 1, var = "VWC")
 
    mt.sm.mod.plot[[tr]] <- 
     ggplot(mnps.plantyr, aes_string(x="VWC", color="year", y = tr)) + geom_point() +
@@ -595,7 +629,7 @@ for(tr in traits) {
   print(mt.sm.mod.plot[[tr]])
 }
 mt.sm.mod.tests <- map_dfr(mt.sm.mod.test, tidy, .id="trait")
-mt.sm.mod.tests %>% print_anova_table
+mt.sm.mod.tests %>% print_anova_table(mt.sm.mod)
 coef.VWC.df <- as.data.frame(t(as.data.frame(coef.VWC))) %>% rownames_to_column("trait")
 emm.VWC.ls <- lapply(emm.VWC, as.data.frame)
 emm.VWC.ls$sepal_width[3,] <- NA
