@@ -233,6 +233,49 @@ sm.subplotyear <- sm.subplot %>% group_by(year, plot, subplot, plotid, water, sn
 sm.water <- sm.subplot %>% group_by(year, date, water, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop") 
 
+
+# fixes -------------------------------------------------------------------
+
+fixes <- read_sheet(filter(datasheets, name=="Maxfield Results"), sheet="megatally", col_types="icccccccccccccccicciciiiiicciiiiicciiiiii") %>% 
+  separate(corrections, into=c("transition_fixed", "commands"), sep="/ ", fill="right", extra="merge") %>% 
+  separate(commands, into=c("command", "separate2"), sep="/ separate", fill="right") %>%
+  separate(command, into=c("verb","datasets"), sep=" ", extra="merge") %>% 
+  separate(datasets, into=c("datasets","plantid_new"), sep=" \"", fill="right") %>%
+  mutate(across(c("transition_fixed", "verb","datasets","plantid_new","separate2"), ~na_if(trimws(.x, whitespace="[ \"]"),""))) %>% 
+  pivot_wider(names_from=verb, values_from=datasets) %>% select(!c("NA")) %>%  
+  unite("separate", separate, separate2, sep=" ", na.rm=T) %>% 
+  mutate(across(c("separate","modify","discard"), replace_na, "")) %>% 
+  mutate(transition_fixed = ifelse(is.na(transition_fixed), transition_181920, transition_fixed)) %>% 
+  separate(transition_fixed, into=paste("status",18:20,"fixed", sep="_"), sep=" > ", remove=F)
+
+fixes.fixed <- fixes %>% mutate(plantid = ifelse(is.na(plantid_new), plantid, plantid_new))
+mergefixes <- fixes.fixed %>% group_by(plantid) %>% tally() %>% filter(n> 1) %>% pull(plantid)
+fixes.fixed %>% filter(plantid %in% mergefixes) %>% View()
+
+#View(fixes %>% select(!starts_with(c("notes","other","census","floral","pheno","leaf","volatiles","seeds"))))
+
+# take a dataset for one year (last two digits of name) and make the changes in fixes
+# make sure to run this function before merging with dfs like treatments that use the plotid
+#TODO make sure there are no status=no_record entries after fixing
+#TODO treatments are not merging on some of the modified entries
+#TODO check that multiple commands are working / in the right order
+fix_dataset <- function(dat, name) {
+  yr <- str_sub(name, -2) # _year added to the separated plantids - groups all records in a year!
+  dat_fixed <- dat %>% mutate(plantid = as.character(plantid)) %>% 
+    left_join(fixes %>% select(plantid, discard, separate, modify, plantid_new, ends_with("fixed")), by="plantid") %>% 
+    filter(!str_detect(discard,  name)) %>%  
+    mutate(modified = str_detect(separate, name) | str_detect(modify, name),
+           plantid = ifelse(str_detect(separate, name), paste(plantid, yr, sep="_"), plantid),
+           plantid = ifelse(str_detect(modify,   name), plantid_new, plantid),
+           plot = str_sub(plantid,1,1), subplot = str_sub(plantid,2,2), plotid = str_sub(plantid,1,2), plant = str_sub(plantid,3))
+  if(str_detect(name, "census") & !str_detect(name, "r2")) { # don't modify census18r2
+    status_name <- paste("status",yr,"fixed", sep="_")
+    dat_fixed <- dat_fixed %>% mutate(status = !!sym(status_name), .keep="unused") %>% 
+    mutate(status = ifelse(is.na(status), recode(paste(notes, rosettes, flowering), !!!translate_nrf[[paste0("20",yr)]], .default="recheck") %>% fct_expand(status_priority) %>% fct_relevel(status_priority) %>% as.character, status))
+  }
+  return(dat_fixed)
+}
+
 # census ------------------------------------------------------------------
 
 # Census of all plants at the beginning of each season to mark if they are dead, vegetative, or flowering
@@ -244,9 +287,7 @@ sm.water <- sm.subplot %>% group_by(year, date, water, snow) %>%
 
 allowed_nrf <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="status")
 status_priority <- c("flowering", "vegetative", "recheck",  "dead_nf", "tagnf") # determines order for deduplicating
-translate_nrf_18 <- with(filter(allowed_nrf, year==2018),  setNames(status, nrf))
-translate_nrf_19 <- with(filter(allowed_nrf, year==2019),  setNames(status, nrf))
-translate_nrf_20 <- with(filter(allowed_nrf, year==2020),  setNames(status, nrf))
+translate_nrf <- map(set_names(2018:2020), ~ with(filter(allowed_nrf, year==.x), setNames(status, nrf)))
 status_ok <- c("flowering", "vegetative", "dead_nf")
 status_pal <- setNames(brewer.pal(3, name="Set1")[c(1,3,2)], status_ok)
 
@@ -260,9 +301,8 @@ cen18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          notes =  fct_explicit_na(notes, "blank"),
          flowering = fct_explicit_na(flowering, "blank"),
          n_rosettes = as.integer(as.character(rosettes)),
-         rosettes = recode(as.character(rosettes), `NULL`="blank",.default="one_or_more"),
-         status = recode(paste(notes, rosettes, flowering), !!!translate_nrf_18, .default="recheck") %>% fct_relevel(status_priority),) %>% 
-  left_join(treatments) %>%
+         rosettes = recode(as.character(rosettes), `NULL`="blank",.default="one_or_more")) %>% 
+  fix_dataset("census18") %>% left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
 
 cen18r2 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2018round2") %>% 
@@ -277,7 +317,7 @@ cen18r2 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet=
          rosettes = recode(as.character(rosettes), .missing="blank",.default="one_or_more"),
          status = recode(factor(paste(notes, rosettes, flowering)), !!!translate_nrf_18, .default="recheck") %>% 
            fct_expand(status_priority) %>% fct_relevel(status_priority)) %>% 
-  left_join(treatments) %>%
+  fix_dataset("census18r2") %>% left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
 
 cen19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2019foranalysis") %>% drop_na(plot) %>% 
@@ -291,10 +331,9 @@ cen19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          flowering = flowering %>% tolower %>% factor %>% fct_explicit_na("blank"),
          n_rosettes = as.integer(as.character(rosettes)),
          rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more", ),
-         status = recode(paste(notes, rosettes, flowering), !!!translate_nrf_19, .default="recheck") %>% fct_relevel(status_priority),
          r1_longest	= ifelse(rosettes=="zero", NA, r1_longest),
          r1_leaves = ifelse(rosettes=="zero", NA, r1_leaves)) %>% 
-  left_join(treatments) %>%
+  fix_dataset("census19") %>% left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
 
 cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2020") %>% 
@@ -310,7 +349,7 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more", ),
          status = recode(paste(notes, rosettes, flowering), !!!translate_nrf_20, .default="recheck") %>% fct_relevel(status_priority),
          plotid = paste0(plot, subplot)) %>% 
-  left_join(treatments) %>%
+  fix_dataset("census20") %>% left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
 
 # duplicates --------------------------------------------------------------
@@ -323,8 +362,6 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
 # 
 # This is automatic, but it may be better to resolve duplicates manually in some cases. The duplicates are written out to [spreadsheets](https://docs.google.com/spreadsheets/d/1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA/edit#gid=367829026)
 
-#TODO use megatally solutions here - make sure it is in the right place relative to deduplication
-
 # Write out the duplicates
 censuses <- c("2018","2018r2","2019","2020")
 joiners <- c("plot","subplot","plotid","plant","plantid")
@@ -336,10 +373,16 @@ cen <- list(cen18, cen18r2, cen19, cen20) %>%
   map2(paste0("_",str_remove(censuses, "20")), 
        ~ .x %>% rename_with(paste0, !any_of(joiners), .y)) %>% 
   reduce(full_join)
-                                                                                                                           
-cen.status <- cen %>% select(any_of(joiners)|starts_with(c("status","check"))|contains("notes")) %>% 
+
+#roll over dead_nf to the next year if there is no_record
+#this information is in "fixes" but it doesn't get put into the individual censuses since I did not do a full_join of fixes.fixed and each census that would preserve that info - because fixes.fixed has duplicates for the modified entries that don't combine easily
+cen.status <- cen %>% select(any_of(joiners) | (starts_with(c("status","check")) & !contains("fixed")) | contains("notes")) %>% 
   mutate(across(starts_with("status"), 
-                . %>% fct_explicit_na("no_record") %>% fct_expand(status_priority) %>% fct_relevel(status_priority)),
+                ~ .x %>% fct_explicit_na("no_record") %>% fct_expand(status_priority) %>% fct_relevel(status_priority)),
+         status_19 = ifelse(status_19 == "no_record" & (status_18=="dead_nf" | status_18r2=="dead_nf"), "dead_nf", as.character(status_19)), 
+         status_20 = ifelse(status_20 == "no_record" & status_19=="dead_nf", "dead_nf", as.character(status_20)), 
+         across(starts_with("status"), 
+                ~ .x %>% fct_explicit_na("no_record") %>% fct_expand(status_priority) %>% fct_relevel(status_priority)),
          plantid = fct_reorder(factor(plantid), .desc=T, 
                           paste(as.integer(status_18),as.integer(status_19),as.integer(status_20),as.integer(status_18r2))),
          transition_1819 = paste(status_18, status_19, sep=" > "),
@@ -349,11 +392,13 @@ cen.status <- cen %>% select(any_of(joiners)|starts_with(c("status","check"))|co
 cen.status.long <- cen.status %>% select(!starts_with("transition")) %>% 
   pivot_longer(starts_with("status"),names_to="census",values_to="status") %>% 
   mutate(census = paste0("20",str_remove(census, "status_"))) %>% 
-  mutate(across(.fns=factor))
+  mutate(across(.fns=factor)) 
 
 cen.size.long <- cen %>% select(plantid|starts_with("n_rosettes")) %>% 
   pivot_longer(starts_with("n_rosettes"),names_to="census",values_to="n_rosettes") %>%
   mutate(census = paste0("20",str_remove(census, "n_rosettes_")))
+
+write_tsv(cen.status, file="data/census_status.tsv")
 
 # phenology ---------------------------------------------------------------
 
@@ -368,7 +413,7 @@ ph18.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
          open = rowSums(select(., starts_with("open")), na.rm=T),
          buds = rowSums(select(., starts_with("buds")), na.rm=T),
          eggs=eggs_total) %>% 
-  left_join(treatments) %>%
+  left_join(treatments) %>% fix_dataset("pheno18") %>% 
   mutate_if(is.character, as.factor) 
 
 ph18 <- ph18.raw %>% 
@@ -386,7 +431,7 @@ ph19.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
          open = rowSums(select(., starts_with("open")), na.rm=T),
          buds = rowSums(select(., starts_with("buds")), na.rm=T),
          eggs = rowSums(select(., starts_with("eggs")), na.rm=T)) %>% 
-  left_join(treatments) %>%
+  left_join(treatments) %>% fix_dataset("pheno19") %>% 
   mutate_if(is.character, as.factor)
 
 ph19 <- ph19.raw %>% 
@@ -404,15 +449,13 @@ ph20.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
          open = rowSums(select(., starts_with("open")), na.rm=T),
          buds = rowSums(select(., starts_with("buds")), na.rm=T),
          eggs = rowSums(select(., starts_with("eggs")), na.rm=T)) %>% 
-  left_join(treatments) %>%
+  left_join(treatments) %>% fix_dataset("pheno20") %>% 
   mutate_if(is.character, as.factor) 
 
 ph20 <- ph20.raw %>% 
   complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
   mutate(flowering = open + buds > 0,
          has_egg = eggs > 0)
-
-#TODO use megatally solutions here
 
 ph <- bind_rows(list("2018" = ph18, "2019" = ph19, "2020" = ph20), .id="year") %>% 
   mutate(julian=as.integer(as.character(julian)))
@@ -422,7 +465,7 @@ ph.plantid <- ph %>% left_join(sm.subplotyear) %>% group_by(year, water, water4,
 # leaftraits --------------------------------------------------------------
 
 lt_sheets <- filter(datasheets, name=="2020 Maxfield Leaf Traits")
-lt <- bind_rows(lapply(sheet_names(lt_sheets), function(x) read_sheet(lt_sheets, sheet=x))) %>% 
+lt <- map(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>% bind_rows %>% 
   mutate(plot = as.character(plot),
          plotid = paste0(plot, subplot),
          plant=as.character(plant),
@@ -432,7 +475,7 @@ lt <- bind_rows(lapply(sheet_names(lt_sheets), function(x) read_sheet(lt_sheets,
          sla = leaf_area_cm2 / dry_weight_g,
          sla_wet = leaf_area_cm2 / wet_weight_g,
          water_content = (wet_weight_g-dry_weight_g)/wet_weight_g) %>% 
-  left_join(treatments) %>%
+  left_join(treatments) %>% group_by(year)
   mutate_if(is.character, as.factor)
 
 #TODO use megatally solutions here

@@ -348,10 +348,10 @@ Visualize a plant's status in each census
 
 # ggplot(cen.size.long %>% filter(census!="2018r2"), aes(x=census, y=n_rosettes, group=plantid))+geom_path()+ geom_point() + scale_y_continuous(breaks=0:10)
 
-# ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
-#   scale_fill_manual(values=brewer.pal(8, name="Set1")[c(1,3,5,2,7,6)])+
-#   theme(axis.text.y=element_blank(), axis.ticks = element_blank()) + 
-#   labs(fill="Status", x="Census year",y="Plant ID")
+ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
+  scale_fill_manual(values=brewer.pal(8, name="Set1")[c(1,3,5,2,7,6)])+
+  theme(axis.text.y=element_blank(), axis.ticks = element_blank()) +
+  labs(fill="Status", x="Census year",y="Plant ID")
 
 ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_tile() +
   scale_fill_manual(values=c(brewer.pal(5, name="Set1")[c(1,3,5,2)],brewer.pal(8, "Set2")[7:8]))+
