@@ -50,6 +50,7 @@ licor.tally <- licor.plantid %>% select(group_cols(),n) %>%
 read_csv("data/megatally.csv") %>% mutate(plot=as.character(plot)) %>% 
   full_join(licor.tally) %>% write_tsv("data/megatally_licor.tsv", na="")
 
+
 # plot all the LICOR variables by date
 licor_date_pal <- sample(rainbow(nlevels(factor(licor$date))))
 
