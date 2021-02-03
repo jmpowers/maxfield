@@ -109,7 +109,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 1	C	1C	79	1C79	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 1	D	1D	1	1D1	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 1	D	1D	10	1D10	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
-1	D	1D	11	1D11	vegetative	vegetative	vegetative	dead_nf	died and nf?	NA	blank	NA	blank	below tag by 1 inch	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
+1	D	1D	11	1D11	vegetative	vegetative	vegetative	vegetative	died and nf?	NA	blank	NA	blank	below tag by 1 inch	blank	nf	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 1	D	1D	12	1D12	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 1	D	1D	13	1D13	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	NA	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 1	D	1D	14	1D14	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	NA	blank	tagnf	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
@@ -166,7 +166,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 2	A	2A	173	2A173	vegetative	dead_nf	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 2	A	2A	174	2A174	vegetative	vegetative	vegetative	dead_nf	died and nf?	NA	blank	NA	blank	above tag, ts	ts	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 2	A	2A	175	2A175	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	dead	dead	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
-2	A	2A	176	2A176	vegetative	vegetative	dead_nf	vegetative	refound?	NA	blank	NA	blank	nf	nf	blank	NA	vegetative > dead_nf	dead_nf > vegetative	vegetative > dead_nf > vegetative
+2	A	2A	176	2A176	vegetative	vegetative	vegetative	vegetative	refound?	NA	blank	NA	blank	nf	nf	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 2	A	2A	177	2A177	dead_nf	no_record	tagnf	tagnf	NA	no plant?	nf	NA	NA	tagnf	tagnf	tagnf	NA	dead_nf > tagnf	tagnf > tagnf	dead_nf > tagnf > tagnf
 2	A	2A	178	2A178	dead_nf	no_record	tagnf	tagnf	NA	no plant?	nf	NA	NA	tagnf	tagnf	tagnf	NA	dead_nf > tagnf	tagnf > tagnf	dead_nf > tagnf > tagnf
 2	A	2A	189	2A189	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
@@ -192,7 +192,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 2	B	2B	134	2B134	vegetative	no_record	vegetative	vegetative	NA	NA	tagnf	NA	NA	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 2	B	2B	135	2B135	vegetative	no_record	vegetative	tagnf	NA	NA	tagnf	NA	NA	up from tag	blank	tagnf	NA	vegetative > vegetative	vegetative > tagnf	vegetative > vegetative > tagnf
 2	B	2B	136	2B136	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	NA	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
-2	B	2B	137	2B137	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	NA	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
+2	B	2B	137	2B137	vegetative	vegetative	vegetative	vegetative	refound?	NA	blank	NA	blank	nf	nf	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 2	B	2B	138	2B138	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 2	B	2B	177	2B177	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
 2	B	2B	178	2B178	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	ID ts	ts	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
@@ -278,7 +278,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 2	C	2C	296	2C296	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 2	C	2C	297	2C297	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	dead	dead	NA	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 2	C	2C	298	2C298	vegetative	vegetative	flowering	dead_nf	died and nf?	NA	blank	NA	blank	3 ts	ts	nf	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
-2	C	2C	299	2C299	vegetative	no_record	tagnf	dead_nf	NA	NA	ts	NA	NA	tagnf	tagnf	nf	NA	vegetative > tagnf	tagnf > dead_nf	vegetative > tagnf > dead_nf
+2	C	2C	299	2C299	vegetative	no_record	vegetative	dead_nf	NA	NA	ts	NA	NA	tagnf	tagnf	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 2	C	2C	300	2C300	vegetative	no_record	flowering	vegetative	flowered and lived?	NA	ts	NA	NA	NA	blank	blank	NA	vegetative > flowering	flowering > vegetative	vegetative > flowering > vegetative
 2	C	2C	89	2C89	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	nf	nf	tagnf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 2	C	2C	90	2C90	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	dead	dead	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
@@ -331,7 +331,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 3	A	3A	126	3A126	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	dead	dead	NA	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 3	A	3A	127	3A127	flowering	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	dead	dead	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 3	A	3A	128	3A128	flowering	no_record	dead_nf	dead_nf	died and nf?	NA	blank	NA	NA	NA	blank	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
-3	A	3A	129	3A129	vegetative	vegetative	vegetative	dead_nf	died and nf?	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
+3	A	3A	129	3A129	vegetative	vegetative	vegetative	vegetative	died and nf?	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 3	A	3A	269	3A269	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 3	A	3A	270	3A270	vegetative	vegetative	vegetative	dead_nf	NA	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 3	A	3A	271	3A271	vegetative	no_record	dead_nf	dead_nf	NA	NA	tagnf	NA	NA	nf	nf	tagnf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
@@ -369,7 +369,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 3	A	3A	655	3A655	vegetative	vegetative	vegetative	dead_nf	died and nf?	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 3	A	3A	656	3A656	vegetative	no_record	vegetative	tagnf	NA	NA	blank	NA	NA	NA	blank	tagnf	NA	vegetative > vegetative	vegetative > tagnf	vegetative > vegetative > tagnf
 3	A	3A	657	3A657	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	eaten;ts	chewed	chewed	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
-3	A	3A	658	3A658	vegetative	vegetative	vegetative	dead_nf	chew death	NA	blank	NA	blank	eaten;ts	chewed	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
+3	A	3A	658	3A658	vegetative	vegetative	vegetative	vegetative	chew death	NA	blank	NA	blank	eaten;ts	chewed	nf	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 3	B	3B	601	3B601	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	dead	dead	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 3	B	3B	602	3B602	vegetative	vegetative	vegetative	no_record	NA	NA	blank	NA	blank	NA	blank	NA	NA	vegetative > vegetative	vegetative > no_record	vegetative > vegetative > no_record
 3	B	3B	603	3B603	vegetative	vegetative	vegetative	no_record	NA	NA	blank	NA	blank	NA	blank	NA	NA	vegetative > vegetative	vegetative > no_record	vegetative > vegetative > no_record
@@ -408,7 +408,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 3	B	3B	832	3B832	vegetative	vegetative	vegetative	tagnf	NA	NA	blank	NA	blank	NA	blank	tagnf	NA	vegetative > vegetative	vegetative > tagnf	vegetative > vegetative > tagnf
 3	B	3B	833	3B833	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	dead	dead	dead	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 3	B	3B	834	3B834	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
-3	B	3B	835	3B835	vegetative	vegetative	vegetative	dead_nf	died and nf?	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
+3	B	3B	835	3B835	vegetative	vegetative	vegetative	vegetative	died and nf?	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 3	B	3B	836	3B836	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	dead	dead	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 3	B	3B	837	3B837	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 3	B	3B	838	3B838	vegetative	vegetative	vegetative	flowering	NA	breaking	blank	NA	blank	NA	blank	blank	already flagged	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
@@ -521,7 +521,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 3	D	3D	884	3D884	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	dead	dead	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 3	D	3D	886	3D886	vegetative	no_record	vegetative	flowering	NA	NA	tagnf	NA	NA	NA	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 3	D	3D	887	3D887	vegetative	no_record	vegetative	tagnf	NA	NA	tagnf	NA	NA	NA	blank	tagnf	NA	vegetative > vegetative	vegetative > tagnf	vegetative > vegetative > tagnf
-3	D	3D	888	3D888	vegetative	vegetative	vegetative	dead_nf	died and nf?	could be 2 rosettes-check	blank	NA	blank	left of tag	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
+3	D	3D	888	3D888	vegetative	vegetative	vegetative	vegetative	died and nf?	could be 2 rosettes-check	blank	NA	blank	left of tag	blank	nf	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 3	D	3D	889	3D889	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 3	D	3D	890	3D890	vegetative	no_record	vegetative	vegetative	NA	NA	tagnf	NA	NA	ts	ts	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 3	D	3D	891	3D891	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
@@ -557,7 +557,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 4	A	4A	120	4A120	flowering	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 4	A	4A	60	4A60	vegetative	recheck	dead_nf	dead_nf	NA	NA	blank	gone	nf	dead	dead	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 4	A	4A	61	4A61	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
-4	A	4A	62	4A62	vegetative	no_record	dead_nf	dead_nf	died and nf?	NA	tagnf	NA	NA	NA	blank	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
+4	A	4A	62	4A62	vegetative	no_record	vegetative	dead_nf	died and nf?	NA	tagnf	NA	NA	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 4	A	4A	63	4A63	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	nf	nf	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 4	A	4A	64	4A64	vegetative	vegetative	vegetative	vegetative	rosettes?	NA	blank	NA	blank	NA	blank	chewed	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 4	A	4A	65	4A65	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
@@ -601,7 +601,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 4	B	4B	163	4B163	vegetative	no_record	vegetative	dead_nf	died and nf?	NA	ts	NA	NA	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 4	B	4B	164	4B164	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	nf	nf	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 4	B	4B	165	4B165	vegetative	no_record	dead_nf	dead_nf	NA	NA	ts	NA	NA	nf	nf	NA	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
-4	B	4B	166	4B166	vegetative	no_record	dead_nf	dead_nf	NA	NA	ts	NA	NA	nf	nf	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
+4	B	4B	166	4B166	vegetative	no_record	vegetative	dead_nf	NA	NA	ts	NA	NA	nf	nf	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 4	B	4B	167	4B167	vegetative	no_record	vegetative	dead_nf	died and nf?	NA	ts	NA	NA	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 4	B	4B	168	4B168	vegetative	vegetative	flowering	no_record	NA	NA	blank	NA	blank	NA	blank	NA	NA	vegetative > flowering	flowering > no_record	vegetative > flowering > no_record
 4	B	4B	169	4B169	vegetative	no_record	vegetative	dead_nf	died and nf?	NA	nf	NA	NA	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
@@ -648,7 +648,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 4	B	4B	210	4B210	vegetative	no_record	dead_nf	dead_nf	NA	NA	ts	NA	NA	nf	nf	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 4	C	4C	104	4C104	vegetative	no_record	vegetative	dead_nf	died and nf?	NA	tagnf	NA	NA	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 4	C	4C	105	4C105	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
-4	C	4C	106	4C106	vegetative	vegetative	vegetative	dead_nf	died and nf?	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
+4	C	4C	106	4C106	vegetative	vegetative	vegetative	vegetative	died and nf?	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 4	C	4C	107	4C107	vegetative	vegetative	vegetative	vegetative	regrew?	NA	blank	NA	blank	chewed, ts	chewed	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 4	C	4C	108	4C108	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 4	C	4C	109	4C109	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
@@ -764,8 +764,8 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 5	A	5A	191	5A191	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	plant above tag	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 5	A	5A	192	5A192	vegetative	recheck	vegetative	dead_nf	NA	NA	blank	NA	nf	plant right of tag	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 5	A	5A	193	5A193	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	NA	blank	dead	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
-5	A	5A	194	5A194	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	nf	nf	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
-5	A	5A	195	5A195	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	NA	blank	tagnf	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
+5	A	5A	194	5A194	vegetative	no_record	vegetative	vegetative	NA	NA	blank	NA	NA	nf	nf	nf	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
+5	A	5A	195	5A195	vegetative	vegetative	flowering	vegetative	NA	NA	blank	NA	blank	NA	blank	tagnf	NA	vegetative > flowering	flowering > vegetative	vegetative > flowering > vegetative
 5	A	5A	196	5A196	vegetative	vegetative	flowering	flowering	flowered twice?	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > flowering	flowering > flowering	vegetative > flowering > flowering
 5	A	5A	197	5A197	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 5	A	5A	198	5A198	vegetative	vegetative	vegetative	tagnf	NA	NA	blank	NA	blank	NA	blank	tagnf	NA	vegetative > vegetative	vegetative > tagnf	vegetative > vegetative > tagnf
@@ -790,7 +790,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 5	B	5B	24	5B24	vegetative	vegetative	tagnf	no_record	NA	NA	blank	NA	blank	tagnf	tagnf	NA	NA	vegetative > tagnf	tagnf > no_record	vegetative > tagnf > no_record
 5	B	5B	25	5B25	vegetative	no_record	tagnf	no_record	NA	NA	ts	NA	NA	tagnf	tagnf	NA	NA	vegetative > tagnf	tagnf > no_record	vegetative > tagnf > no_record
 5	B	5B	284	5B284	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	nf	nf	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
-5	B	5B	287	5B287	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	1 eaten, only 3 measurable	chewed	nf	nf	NA	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
+5	B	5B	287	5B287	vegetative	vegetative	vegetative	no_record	NA	NA	blank	1 eaten, only 3 measurable	chewed	nf	nf	NA	NA	vegetative > vegetative	vegetative > no_record	vegetative > vegetative > no_record
 5	B	5B	288	5B288	vegetative	vegetative	vegetative	flowering	NA	closer plant to tag on right of tag	blank	2 plants not sure which to measure	blank	closer plant to tag on right of tag	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 5	B	5B	289	5B289	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	left of tag	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 5	B	5B	290	5B290	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	ts	ts	nf	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
@@ -810,7 +810,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 5	B	5B	6	5B6	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
 5	B	5B	7	5B7	flowering	no_record	vegetative	vegetative	count leaves	NA	blank	NA	NA	ts	ts	blank	NA	flowering > vegetative	vegetative > vegetative	flowering > vegetative > vegetative
 5	B	5B	8	5B8	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	nf	nf	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
-5	B	5B	9	5B9	vegetative	vegetative	vegetative	dead_nf	NA	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
+5	B	5B	9	5B9	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	nf	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 5	C	5C	201	5C201	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	NA	blank	dead	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
 5	C	5C	202	5C202	vegetative	no_record	vegetative	flowering	NA	NA	ts	NA	NA	NA	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 5	C	5C	203	5C203	vegetative	no_record	vegetative	vegetative	NA	NA	ts	NA	NA	2ts	ts	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
@@ -833,7 +833,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 5	C	5C	220	5C220	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	dead	dead	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 5	C	5C	221	5C221	flowering	no_record	vegetative	flowering	NA	NA	blank	NA	NA	NA	blank	blank	NA	flowering > vegetative	vegetative > flowering	flowering > vegetative > flowering
 5	C	5C	222	5C222	flowering	flowering	dead_nf	dead_nf	NA	NA	blank	flowering plant	blank	nf	nf	dead	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
-5	C	5C	223	5C223	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	nf	nf	NA	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
+5	C	5C	223	5C223	vegetative	vegetative	vegetative	vegetative	refound?	NA	blank	NA	blank	nf	nf	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 5	C	5C	224	5C224	vegetative	vegetative	vegetative	flowering	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 5	C	5C	225	5C225	vegetative	no_record	vegetative	flowering	refound?	NA	ts	NA	NA	nf	nf	blank	NA	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 5	C	5C	226	5C226	vegetative	no_record	vegetative	vegetative	NA	NA	ts	NA	NA	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
@@ -925,7 +925,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 6	A	6A	150	6A150	vegetative	no_record	vegetative	vegetative	NA	NA	tagnf	NA	NA	plant right of tag	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 6	A	6A	151	6A151	flowering	no_record	dead_nf	dead_nf	NA	check for 2 rosettes	blank	NA	NA	dead	dead	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 6	A	6A	152	6A152	vegetative	no_record	dead_nf	dead_nf	NA	NA	tagnf	NA	NA	dead	dead	dead	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
-6	A	6A	153	6A153	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	3 dead	dead	dead	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
+6	A	6A	153	6A153	vegetative	vegetative	vegetative	dead_nf	NA	NA	blank	NA	blank	3 dead	dead	dead	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
 6	A	6A	154	6A154	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 6	A	6A	155	6A155	vegetative	no_record	vegetative	vegetative	NA	NA	tagnf	NA	NA	left of tag	blank	blank	3 plants - one on left of tag	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 6	A	6A	156	6A156	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	NA	blank	dead	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
@@ -944,7 +944,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 6	A	6A	169	6A169	vegetative	vegetative	vegetative	flowering	NA	NA	tagnf	NA	blank	NA	blank	blank	above tag	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering
 6	A	6A	170	6A170	vegetative	dead_nf	dead_nf	dead_nf	NA	NA	blank	kaput	dead	nf	nf	nf	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 6	B	6B	1	6B1	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	nf	nf	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
-6	B	6B	10	6B10	vegetative	no_record	flowering	dead_nf	flowered twice?	NA	nf	NA	NA	NA	blank	blank	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
+6	B	6B	10	6B10	vegetative	no_record	flowering	vegetative	flowered twice?	NA	nf	NA	NA	NA	blank	blank	NA	vegetative > flowering	flowering > vegetative	vegetative > flowering > vegetative
 6	B	6B	11	6B11	vegetative	vegetative	dead_nf	dead_nf	NA	NA	blank	NA	blank	dead	dead	dead	NA	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf
 6	B	6B	12	6B12	vegetative	vegetative	vegetative	vegetative	rosettes?	NA	blank	NA	blank	NA	blank	chewed	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 6	B	6B	13	6B13	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	NA	blank	dead	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
@@ -1004,7 +1004,7 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 6	C	6C	78	6C78	flowering	no_record	dead_nf	dead_nf	NA	NA	blank	NA	NA	nf	nf	nf	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 6	C	6C	79	6C79	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	blank	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 6	C	6C	80	6C80	vegetative	vegetative	flowering	vegetative	NA	NA	blank	NA	blank	1 ts, just left of tag	ts	blank	NA	vegetative > flowering	flowering > vegetative	vegetative > flowering > vegetative
-6	C	6C	81	6C81	vegetative	vegetative	flowering	dead_nf	NA	NA	blank	NA	blank	NA	blank	dead	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
+6	C	6C	81	6C81	vegetative	vegetative	vegetative	vegetative	NA	NA	blank	NA	blank	NA	blank	dead	NA	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative
 6	C	6C	82	6C82	flowering	no_record	dead_nf	dead_nf	NA	2 flowering stalks	blank	NA	NA	nf	nf	NA	NA	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf
 6	C	6C	83	6C83	vegetative	vegetative	flowering	dead_nf	NA	could have 3 rosettes, plant is DR from tag	blank	NA	blank	2 ts	ts	nf	NA	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf
 6	C	6C	84	6C84	vegetative	vegetative	vegetative	dead_nf	NA	plant is UR from tag	blank	NA	blank	plant is UR from tag	blank	nf	NA	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf
@@ -1136,7 +1136,6 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 2	A	2A	689_20	2A689_20	no_record	no_record	no_record	dead_nf	check tag #	NA	NA	NA	NA	NA	NA	nf	NA	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf
 2	A	2A	99	2A99	no_record	no_record	no_record	vegetative	check tag #	NA	NA	NA	NA	NA	NA	blank	NA	no_record > no_record	no_record > vegetative	no_record > no_record > vegetative
 2	B	2B	136_20	2B136_20	no_record	no_record	no_record	dead_nf	refound?	NA	NA	NA	NA	NA	NA	blank	NA	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf
-2	B	2B	137_20	2B137_20	no_record	no_record	no_record	dead_nf	refound?	NA	NA	NA	NA	NA	NA	blank	NA	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf
 2	B	2B	171_20	2B171_20	no_record	no_record	no_record	vegetative	check tag #	NA	NA	NA	NA	NA	NA	blank	NA	no_record > no_record	no_record > vegetative	no_record > no_record > vegetative
 2	B	2B	195_20	2B195_20	no_record	no_record	no_record	dead_nf	resurrected?	NA	NA	NA	NA	NA	NA	blank	NA	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf
 2	B	2B	196_20	2B196_20	no_record	no_record	no_record	dead_nf	resurrected?	NA	NA	NA	NA	NA	NA	blank	NA	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf
@@ -1187,7 +1186,6 @@ plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_20	chec
 5	B	5B	30	5B30	no_record	no_record	no_record	dead_nf	check tag #	NA	NA	NA	NA	NA	NA	nf	NA	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf
 5	B	5B	32	5B32	no_record	no_record	no_record	dead_nf	check tag #	NA	NA	NA	NA	NA	NA	nf	NA	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf
 5	B	5B	88_20	5B88_20	no_record	no_record	no_record	flowering	check tag #	NA	NA	NA	NA	NA	NA	blank	NA	no_record > no_record	no_record > flowering	no_record > no_record > flowering
-5	C	5C	223_20	5C223_20	no_record	no_record	no_record	dead_nf	refound?	NA	NA	NA	NA	NA	NA	blank	NA	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf
 5	C	5C	231_20	5C231_20	no_record	no_record	no_record	tagnf	NA	NA	NA	NA	NA	NA	NA	tagnf	NA	no_record > no_record	no_record > tagnf	no_record > no_record > tagnf
 5	C	5C	683	5C683	no_record	no_record	no_record	flowering	NA	NA	NA	NA	NA	NA	NA	blank	tagged in 2020	no_record > no_record	no_record > flowering	no_record > no_record > flowering
 5	D	5D	251_20	5D251_20	no_record	no_record	no_record	dead_nf	refound?	NA	NA	NA	NA	NA	NA	blank	NA	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf
