@@ -1,4 +1,4 @@
-year	plotid	plant	plantid	WUE_1819	discard	separate	modify	plantid_new	transition_fixed	status_18_fixed	status_19_fixed	status_20_fixed	modified	flowering	survival	plot	subplot
+year	plotid	plant	plantid	WUE_1819	discard	separate	modify	plantid_new	transition_fixed	status_18_fixed	status_19_fixed	status_20_fixed	modified	flowered	survived	plot	subplot
 2018	1B	270	1B270	60.862				NA	NA	NA	NA	NA	FALSE	NA	NA	1	B
 2018	1D	28	1D28	94.952		pheno18		NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	1	D
 2018	2A	173	2A173	69.592				NA	no_record > dead_nf > dead_nf	no_record	dead_nf	dead_nf	FALSE	0	0	2	A

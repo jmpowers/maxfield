@@ -58,7 +58,6 @@ df %>% select(c("trait", "term", "p.value")) %>%
 }
 
 load("data/maxfield_data.rda")
-#load("data/daily_precip_est.rda")#included in maxfield_data now
 ```
 
 ```{r map}

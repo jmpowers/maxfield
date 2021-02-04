@@ -4,6 +4,8 @@
 #  Optimization by genetic algorithm: Coopersmith et al. 2014, 2015, 2015
 #  John Powers 2020-01-17
 
+#TODO look at how continuous soil moisture data from Kettle Ponds S of Gothic, CO and Judd Falls compares to precip
+
 library(tidyverse)
 library(profvis)
 

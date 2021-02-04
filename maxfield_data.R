@@ -4,7 +4,6 @@
 # TODO write metadata  to /metadata for the final data files
 # TODO add the following datasets:
 #       + floral volatiles 2018, 2019
-#       + leaf physiology measures (LICOR) 2018, 2019, 2020
 
 # setup -------------------------------------------------------------------
 
@@ -101,6 +100,9 @@ groundcover <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture 
 waterdates <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="water_dates")
 # weather -----------------------------------------------------------------
 
+# Load output from maxfield_soil_moisture.R that fit soil moisture ~ precipitation model
+load("data/daily_precip_est.rda")
+
 # Weather data from billy barr's RMBL station in Gothic, CO, USA provided by the Western Regional Climate Center
 # Original (not FPA - unavailable) data from 2009-2021 in metric units
 # Downloaded as xls (which results in a tsv) from https://wrcc.dri.edu/cgi-bin/rawMAIN.pl?corbil
@@ -158,7 +160,6 @@ daily_all <- daily_billy %>% full_join(daily_GTH161) %>% full_join(daily_KCOMTCR
   mutate(WRCC_billy = ifelse(WRCC_billy>50, NA, WRCC_billy)) #cut errors >50mm/day from daily_CORBIL
 
 #correlate daily EPA_RsrchMdw and NOAA_billy to predict what EPA would look like for 2012-2020
-#TODO rerun models now that forced through zero
 EPA_NOAA_daily_model <-  lm(EPA_RsrchMdw ~ NOAA_billy:ground_covered+0, data=daily_all)
 #EPA_NOAA_monthly_model <-lm(EPA_RsrchMdw ~ NOAA_billy*season, data=monthly_all %>% mutate(season=factor(c("wntr","smmr"))[1+mo %in% 6:9]))
 
@@ -226,13 +227,9 @@ sm.subplotmonth <- sm.subplot %>% mutate(mo = month(date)) %>% group_by(year, mo
 sm.subplotyear <- sm.subplot %>% group_by(year, plot, subplot, plotid, water, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
 
-#sm.subplotearly <- sm.subplot %>% filter(yday(date)<=183 & yday(date)>=175) %>% group_by(year, plot, subplot, plotid, water, snow) %>% 
-#  summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
-
 #Means for each treatment by date
 sm.water <- sm.subplot %>% group_by(year, date, water, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop") 
-
 
 # fixes -------------------------------------------------------------------
 
@@ -250,8 +247,7 @@ fixes <- read_sheet(filter(datasheets, name=="Maxfield Results"), sheet="megatal
 
 fixes.fixed <- fixes %>% mutate(plantid = ifelse(is.na(plantid_new), plantid, plantid_new))
 mergefixes <- fixes.fixed %>% group_by(plantid) %>% tally() %>% filter(n> 1) %>% pull(plantid)
-View(fixes.fixed %>% filter(plantid %in% mergefixes))
-
+#View(fixes.fixed %>% filter(plantid %in% mergefixes))
 #View(fixes %>% select(!starts_with(c("notes","other","census","floral","pheno","leaf","volatiles","seeds"))))
 
 # take a dataset for one year (last two digits of name) and make the changes in fixes
@@ -268,7 +264,7 @@ fix_dataset <- function(dat, name) { #name must end with two-digit year 20XX
     mutate(modified = str_detect(separate, name) | str_detect(modify, name),
            plantid = ifelse(str_detect(separate, name), paste(plantid, yr, sep="_"), plantid),
            plantid = ifelse(str_detect(modify,   name), plantid_new, plantid))
-  if(str_detect(name, "census") & !str_detect(name, "r2")) { # don't modify census18r2
+  if(str_detect(name, "census") & name != "census18r2") { # don't have info to modify census18r2
     status_yr       <- paste("status",yr, sep="_")
     status_yr_fixed <- paste("status",yr,"fixed", sep="_") 
     dat_fixed <- dat_fixed %>% mutate(status = !!sym(status_yr_fixed), .keep="unused") %>% 
@@ -285,11 +281,11 @@ fix_dataset <- function(dat, name) { #name must end with two-digit year 20XX
                   select(plantid, discard, separate, modify, plantid_new, ends_with("fixed")) %>% 
                   rename(status=sym(status_yr_fixed))) %>% fill(year)
   }
-  if(str_detect(name, "leaf|licor") & yr!="20") { #for vegetative datasets, look at survival and flowering
+  if(yr!="20" & name !="census18r2") { #add survival and flowering. can't say "flowering" - a census column name
     status_nextyr_fixed <- paste("status",as.integer(yr)+1,"fixed", sep="_") 
     dat_fixed <- dat_fixed %>% mutate(
-      flowering = recode(!!sym(status_nextyr_fixed), "flowering"=1,"vegetative"=0,"dead_nf"=0,.default=as.double(NA)),
-      survival =  recode(!!sym(status_nextyr_fixed), "flowering"=1,"vegetative"=1,"dead_nf"=0,.default=as.double(NA)))
+      flowered = recode(!!sym(status_nextyr_fixed), "flowering"=1,"vegetative"=0,"dead_nf"=0,.default=as.double(NA)),
+      survived =  recode(!!sym(status_nextyr_fixed), "flowering"=1,"vegetative"=1,"dead_nf"=0,.default=as.double(NA)))
   }
   dat_fixed %>% mutate(plot =    str_sub(plantid,1,1), 
                       subplot = str_sub(plantid,2,2),
@@ -331,12 +327,12 @@ cen18r2 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet=
   mutate(plant = as.character(plant),
          plantid = paste0(plotid,plant),
          plot = factor(str_sub(plotid,1,1)), subplot = factor(str_sub(plotid,2,2)),
-         year="2018",round=2,date=cen18$date[1]+months(2), #TODO find date of second 2018 census
+         year="2018",round=2,date=cen18$date[1]+months(2), #TODO find date of second 2018 census in August
          flowering = recode(notes, "flowering"="y",.missing="n",.default="n"),
          notes =  notes %>% fct_explicit_na("blank") %>% recode("flowering"="blank"),
          n_rosettes = as.integer(as.character(rosettes)),
          rosettes = recode(as.character(rosettes), .missing="blank",.default="one_or_more"),
-         status = recode(factor(paste(notes, rosettes, flowering)), !!!translate_nrf_18, .default="recheck") %>% 
+         status = recode(factor(paste(notes, rosettes, flowering)), !!!translate_nrf[["2018"]], .default="recheck") %>% 
            fct_expand(status_priority) %>% fct_relevel(status_priority)) %>% 
   fix_dataset("census18r2") %>% left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
@@ -368,7 +364,6 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          flowering = flowering %>% as.character %>% fct_explicit_na("blank"),
          n_rosettes = as.integer(as.character(rosettes)),
          rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more", ),
-         status = recode(paste(notes, rosettes, flowering), !!!translate_nrf_20, .default="recheck") %>% fct_relevel(status_priority),
          plotid = paste0(plot, subplot)) %>% 
   fix_dataset("census20") %>% left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
@@ -387,9 +382,8 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
 censuses <- c("2018","2018r2","2019","2020")
 joiners <- c("plot","subplot","plotid","plant","plantid")
 cen <- list(cen18, cen18r2, cen19, cen20) %>% 
-#  skip writing for speed
-#  walk2(.y=censuses, .f = ~ .x %>% group_by(plantid) %>% filter(n()>1) %>% arrange(plantid, status, desc(date)) %>% 
-#          write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet=paste0(.y,"duplicates"))) %>% 
+  walk2(.y=censuses, .f = ~ .x %>% group_by(plantid) %>% filter(n()>1) %>% arrange(plantid, status, desc(date)) %>% 
+          write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet=paste0(.y,"duplicates"))) %>% 
   map(~ .x %>% arrange(plantid, status, desc(date)) %>% distinct(plantid, .keep_all = TRUE)) %>% # distinct() keeps the first row after sorting, discards the other rows
   map2(paste0("_",str_remove(censuses, "20")), 
        ~ .x %>% rename_with(paste0, !any_of(joiners), .y)) %>% 
@@ -414,8 +408,8 @@ cen.status <- cen %>% select(any_of(joiners) | (starts_with(c("status","check"))
                 ~ recode(.x, "flowering"=1,"vegetative"=0,"dead_nf"=0,.default=as.double(NA))),
          across(starts_with("status"), .names="alive_{.col}", 
                 ~ recode(.x, "flowering"=1,"vegetative"=1,"dead_nf"=0,.default=as.double(NA))))
-
-write_tsv(cen.status, file="data/census_status.tsv")
+census.status %>% write_tsv(file="data/census_status.tsv") %>% 
+  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="census_status")
 
 cen.status.long <- cen.status %>% select(!starts_with("transition|flowering|alive")) %>% 
   pivot_longer(starts_with("status"),names_to="census",values_to="status") %>% 
@@ -509,7 +503,6 @@ lt <- map_dfr(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>%
 lt.subplotround <- lt %>% 
   group_by(year, round, plot, subplot, plotid, water, water4, snow) %>% 
   summarize_if(is.numeric, mean, na.rm=T)
-
 
 # licor -------------------------------------------------------------------
 # Parser for LICOR files adapted from https://www.ericrscott.com/post/li-cor-wrangling/
@@ -709,8 +702,8 @@ megatally %>%
   mutate(index=row_number()) %>% 
   mutate(across(census18:seeds20, na_if, 0)) %>% 
   select(index,plot,subplot,plotid,plant,plantid,status_18,status_18r2,status_19,status_20,transition_1819,transition_1920,transition_181920,check_19_20_20,census18,notes_18,other_notes_18,census18r2,other_notes_18r2,pheno18,floral18,seeds18,leaf18,licor18,census19,notes_19,other_notes_19,pheno19,floral19,seeds19,leaf19,licor19,census20,notes_20,other_notes_20,pheno20,floral20,volatiles20,seeds20,leaf20,licor20,total_obs) %>% 
-  write_tsv("data/megatally_fixed.tsv", na="")
-#write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="megatally_fixed")
+  write_tsv("data/megatally_fixed.tsv", na="") %>% 
+  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="megatally_fixed")
 
 megatally.status <- megatally %>% select(!starts_with(c("census"))) %>% 
   mutate(across(starts_with(c("volatiles","seeds")), recode, `0`="no_record", .default="flowering"),
@@ -764,9 +757,8 @@ mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>%
 mnps.subplot <- mnps.plantyr %>%  
   group_by(year, water, water4, snow, snow_new, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA)) %>% drop_na(water4) #TODO figure out what entries in ph are causing NAs
-#write_sheet(mnps.subplot %>% select(!starts_with(c("open_","buds_","nr_","snow_new","eggs_","fit."))), 
-#                                    ss=filter(datasheets, name=="Maxfield Results"), sheet="subplot_means")
-
+write_sheet(mnps.subplot %>% select(!starts_with(c("open_","buds_","nr_","snow_new","eggs_","fit."))), 
+                                    ss=filter(datasheets, name=="Maxfield Results"), sheet="subplot_means")
 
 # timings -----------------------------------------------------------------
 
@@ -783,10 +775,9 @@ timings <- bind_rows(
   sds= sds20.date %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)), 
   .id="variable") %>% ungroup
 
-#timings %>% mutate(range=paste(begin,end,sep=" - "), .keep="unused") %>% 
-#  pivot_wider(names_from=year, values_from=range, names_sort=T) %>% 
-#  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="timings")
-
+timings %>% mutate(range=paste(begin,end,sep=" - "), .keep="unused") %>% 
+  pivot_wider(names_from=year, values_from=range, names_sort=T) %>% 
+  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="timings")
 
 # traitnames --------------------------------------------------------------
 
