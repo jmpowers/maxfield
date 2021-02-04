@@ -1,0 +1,256 @@
+year	plotid	plant	plantid	WUE_1819	discard	separate	modify	plantid_new	transition_fixed	status_18_fixed	status_19_fixed	status_20_fixed	modified	flowering	survival	plot	subplot
+2018	1B	270	1B270	60.862				NA	NA	NA	NA	NA	FALSE	NA	NA	1	B
+2018	1D	28	1D28	94.952		pheno18		NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	1	D
+2018	2A	173	2A173	69.592				NA	no_record > dead_nf > dead_nf	no_record	dead_nf	dead_nf	FALSE	0	0	2	A
+2018	3B	616	3B616	85.28				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	3	B
+2018	3D	869	3D869	167.589		pheno18		NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	3	D
+2018	4B	168	4B168	91.457		census20		NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	4	B
+2018	4C	28	4C28	139.904		census20 leaf20 licor20		NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	4	C
+2018	5B	299	5B299	158.999				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	5	B
+2018	5D	281	5D281	188.801				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	5	D
+2018	6A	134	6A134	220.912				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	A
+2018	6C	105	6C105	216.722				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	6	C
+2018	1B	684	1B684	59.444				NA	vegetative > flowering > vegetative	vegetative	flowering	vegetative	FALSE	1	1	1	B
+2018	2A	164	2A164	95.638				NA	no_record > vegetative > dead_nf	no_record	vegetative	dead_nf	FALSE	0	1	2	A
+2018	2B	184	2B184	101.241				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	2	B
+2018	3B	834	3B834	76.503				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	B
+2018	3D	875	3D875	130.097				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	3	D
+2018	4C	630	4C630	209.504				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	C
+2018	5B	6	5B6	107.711		pheno18		NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	5	B
+2018	5D	265	5D265	56.612				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	5	D
+2018	6A	136	6A136	110.293				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	6	A
+2018	1B	648	1B648	181.85				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	1	B
+2018	1D	7	1D7	123.787				NA	vegetative > vegetative > tagnf	vegetative	vegetative	tagnf	FALSE	0	1	1	D
+2018	2A	161	2A161	70.543				NA	no_record > dead_nf > dead_nf	no_record	dead_nf	dead_nf	FALSE	0	0	2	A
+2018	2B	190	2B190	111.97				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	2	B
+2018	3B	609	3B609	181.914				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	3	B
+2018	3D	875	3D875	143.418				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	3	D
+2018	4B	190	4B190	214.995				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	B
+2018	4C	36	4C36	221.68				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	4	C
+2018	5B	20	5B20	118.4		pheno18 pheno19		NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	5	B
+2018	5D	278	5D278	150.534				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	5	D
+2018	6A	164	6A164	142.239				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	A
+2018	6C	112	6C112	123.228				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	6	C
+2018	1B	654	1B654	135.178				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	1	B
+2018	1D	32	1D32	42.034				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	1	D
+2018	2A	160	2A160	89.485				NA	no_record > vegetative > dead_nf	no_record	vegetative	dead_nf	FALSE	0	1	2	A
+2018	2B	192	2B192	209.593				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	2	B
+2018	3B	619	3B619	34.145				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	3	B
+2018	3D	865	3D865	94.662				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	D
+2018	4B	161	4B161	103.822				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	4	B
+2018	4C	34	4C34	41.636				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	C
+2018	5B	24	5B24	72.997				NA	vegetative > tagnf > no_record	vegetative	tagnf	no_record	FALSE	NA	NA	5	B
+2018	5D	253	5D253	68.223				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	5	D
+2018	6A	153	6A153	78.902				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	6	A
+2018	6C	85	6C85	88.745				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	6	C
+2018	1B	650	1B650	56.028				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	1	B
+2018	1D	1	1D1	68.882				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	1	D
+2018	2A	168	2A168	140.445				NA	flowering > dead_nf > dead_nf	flowering	dead_nf	dead_nf	FALSE	0	0	2	A
+2018	2B	183	2B183	81.868				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	2	B
+2018	3D	602	3D602	77.835				NA	NA	NA	NA	NA	FALSE	NA	NA	3	D
+2018	4B	160	4B160	183.398				NA	flowering > dead_nf > dead_nf	flowering	dead_nf	dead_nf	FALSE	0	0	4	B
+2018	4C	107	4C107	98.383				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	C
+2018	5B	10	5B10	60.253				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	5	B
+2018	5D	241	5D241	26.161				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	5	D
+2018	6A	149	6A149	220.841				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	6	A
+2018	6C	100	6C100	105.539				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	C
+2018	1B	667	1B667	162.126				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	1	B
+2018	1D	24	1D24	130.428				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	1	D
+2018	2A	167	2A167	138.549				NA	no_record > vegetative > dead_nf	no_record	vegetative	dead_nf	FALSE	0	1	2	A
+2018	2B	130	2B130	173.801				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	2	B
+2018	3B	608	3B608	127.133				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	B
+2018	4B	180	4B180	98.648				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	4	B
+2018	4C	115	4C115	216.181				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	4	C
+2018	5B	11	5B11	225.442				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	5	B
+2018	5D	235	5D235	216.026				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	5	D
+2018	6A	647	6A647	NA				NA	NA	NA	NA	NA	FALSE	NA	NA	6	A
+2018	6C	108	6C108	111.665				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	6	C
+2018	1C	52	1C52	67.617				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	1	C
+2018	2C	267	2C267	142.086				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	2	C
+2018	3A	639	3A639	132.263				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	3	A
+2018	5C	209	5C209	106.718				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	5	C
+2018	6B	23	6B23	128.972				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	6	B
+2018	1C	46	1C46	159.012				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	1	C
+2018	2C	297	2C297	125.943		census20 pheno20 floral20 volatiles20 seeds20		NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	2	C
+2018	3A	657	3A657	47.288		pheno19		NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	3	A
+2018	4D	51	4D51	140.357				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	4	D
+2018	5C	218	5C218	121.524		seeds20	pheno19	5C229	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	5	C
+2018	6B	3	6B3	75.386				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	6	B
+2018	1C	67	1C67	116.263		pheno18		NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	1	C
+2018	2C	298	2C298	156.425				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	2	C
+2018	3A	637	3A637	123.768				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	A
+2018	4D	56	4D56	183.534				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	4	D
+2018	5C	217	5C217	67.262				NA	vegetative > flowering > flowering	vegetative	flowering	flowering	FALSE	1	1	5	C
+2018	6B	22	6B22	93.613				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	B
+2018	1C	72	1C72	74.21				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	1	C
+2018	2C	270	2C270	80.99				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	2	C
+2018	3A	126	3A126	80.036		census20 leaf20		NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	3	A
+2018	4D	48	4D48	81.549				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	4	D
+2018	5C	233	5C233	153.593				NA	NA	NA	NA	NA	FALSE	NA	NA	5	C
+2018	6B	2	6B2	137.455				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	6	B
+2018	1C	44	1C44	127.293				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	1	C
+2018	2C	258	2C258	166.823				NA	flowering > vegetative > vegetative	flowering	vegetative	vegetative	FALSE	0	1	2	C
+2018	3A	276	3A276	91.497				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	3	A
+2018	4D	66	4D66	199.041				NA	vegetative > no_record > dead_nf	vegetative	no_record	dead_nf	FALSE	NA	NA	4	D
+2018	5C	214	5C214	144.54				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	5	C
+2018	6B	29	6B29	169.545		seeds18		NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	6	B
+2018	1C	57	1C57	206.799				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	C
+2018	2C	272	2C272	186.369		pheno19		NA	vegetative > vegetative > tagnf	vegetative	vegetative	tagnf	FALSE	0	1	2	C
+2018	3A	647	3A647	210.168		census19		NA	flowering > vegetative > dead_nf	flowering	vegetative	dead_nf	FALSE	0	1	3	A
+2018	4D	47	4D47	125.94				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	4	D
+2018	6B	5	6B5	216.269				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	6	B
+2018	1A	252	1A252	94.879				NA	vegetative > vegetative > no_record	vegetative	vegetative	no_record	FALSE	0	1	1	A
+2018	2D	211	2D211	159.541				NA	vegetative > flowering > vegetative	vegetative	flowering	vegetative	FALSE	1	1	2	D
+2018	3C	167	3C167	104.908				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	3	C
+2018	4A	110	4A110	218.126				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	4	A
+2018	5A	188	5A188	37.705				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	5	A
+2018	1A	229	1A229	66.142				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	1	1	A
+2018	2D	194	2D194	177.132				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	2	D
+2018	3C	146	3C146	164.108				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	3	C
+2018	4A	111	4A111	183.098				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	A
+2018	5A	186	5A186	95.339				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	5	A
+2018	6D	39	6D39	123.065				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	6	D
+2018	1A	250	1A250	54.049				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	1	A
+2018	2D	196	2D196	79.05		census20 leaf20		NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	2	D
+2018	3C	150	3C150	45.72				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	3	C
+2018	4A	65	4A65	112.946				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	4	A
+2018	5A	193	5A193	43.844				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	5	A
+2018	6D	50	6D50	90.805				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	6	D
+2018	1A	243	1A243	51.249				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	1	A
+2018	2D	193	2D193	53.262				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	2	D
+2018	3C	165	3C165	55.788				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	C
+2018	4A	116	4A116	43.094				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	4	A
+2018	5A	191	5A191	43.923				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	5	A
+2018	6D	56	6D56	43.2				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	6	D
+2018	1A	239	1A239	39.669				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	1	A
+2018	2D	197	2D197	91.742		census20 leaf20		NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	2	D
+2018	3C	151	3C151	91.279				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	3	C
+2018	4A	104	4A104	89.917		census20		NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	4	A
+2018	5A	200	5A200	54.836				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	5	A
+2018	6D	70	6D70	45.02				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	1	1	6	D
+2018	2D	187	2D187	55.335				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	2	D
+2018	3C	153	3C153	127.864				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	3	C
+2018	4A	109	4A109	80.374				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	0	1	4	A
+2018	5A	174	5A174	153.282				NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	5	A
+2018	6D	60	6D60	41.041		seeds19		NA	vegetative > dead_nf > dead_nf	vegetative	dead_nf	dead_nf	FALSE	0	0	6	D
+2019	1B	660	1B660	31.081				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	B
+2019	1B	658	1B658	73.769				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	1	B
+2019	1B	662	1B662	78.356		pheno18		NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	B
+2019	1B	650	1B650	48.226				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	1	B
+2019	1B	647	1B647	54.421				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	B
+2019	1D	16	1D16	51.174				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	D
+2019	1D	25	1D25	63.255				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	1	D
+2019	1D	9	1D9	45.785				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	1	D
+2019	1D	20	1D20	40.668				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	1	D
+2019	1D	41	1D41	80.589		pheno20		NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	D
+2019	2A	95	2A95	24.443				NA	no_record > vegetative > vegetative	no_record	vegetative	vegetative	FALSE	0	1	2	A
+2019	2A	176	2A176	39.257				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	2	A
+2019	2A	164	2A164	49.965				NA	no_record > vegetative > dead_nf	no_record	vegetative	dead_nf	FALSE	0	0	2	A
+2019	2A	685	2A685	58.571				NA	no_record > vegetative > flowering	no_record	vegetative	flowering	FALSE	1	1	2	A
+2019	2A	164	2A164	56.628				NA	no_record > vegetative > dead_nf	no_record	vegetative	dead_nf	FALSE	0	0	2	A
+2019	2B	137	2B137	NA				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	2	B
+2019	2B	189	2B189	67.97				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	B
+2019	2B	85	2B85	83.475				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	B
+2019	2B	138	2B138	60.403				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	B
+2019	2B	86	2B86	89.721				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	B
+2019	2B	137	2B137	149.575				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	2	B
+2019	3B	838	3B838	29.443				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	B
+2019	3B	624	3B624	20.442				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	0	0	3	B
+2019	3B	621	3B621	56.707				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	B
+2019	3B	838	3B838	41.889				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	B
+2019	3B	619	3B619	74.198				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	3	B
+2019	3D	851	3D851	32.821				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	D
+2019	3D	891	3D891	45.47				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	D
+2019	3D	888	3D888	NA				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	D
+2019	3D	894	3D894	24.117				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	D
+2019	3D	881	3D881	52.447				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	D
+2019	3D	888	3D888	76.579				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	D
+2019	4B	190	4B190	25.094				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	B
+2019	4B	214	4B214	97.528				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	B
+2019	4B	206	4B206	44.735				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	4	B
+2019	4B	211	4B211	54.91				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	4	B
+2019	4C	195	4C195	22.684				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	4	C
+2019	4C	30	4C30	40.222				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	4	C
+2019	4C	163	4C163	79.578				NA	NA	NA	NA	NA	FALSE	NA	NA	4	C
+2019	4C	189	4C189	39.495				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	4	C
+2019	4C	630	4C630	77.535				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	C
+2019	4C	106	4C106	108.778				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	C
+2019	5B	289	5B289	NA				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	B
+2019	5B	7	5B7	41.412				NA	flowering > vegetative > vegetative	flowering	vegetative	vegetative	FALSE	0	1	5	B
+2019	5B	12	5B12	38.844				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	B
+2019	5B	287	5B287	66.426				NA	vegetative > vegetative > no_record	vegetative	vegetative	no_record	FALSE	NA	NA	5	B
+2019	5B	296	5B296	141.748				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	B
+2019	5B	289	5B289	94.431				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	B
+2019	5D	244	5D244	36.816				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	5	D
+2019	5D	281	5D281	61.187				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	5	D
+2019	5D	275	5D275	69.663				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	D
+2019	5D	250	5D250	65.267				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	D
+2019	5D	289	5D289	72.772				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	0	0	5	D
+2019	6A	168	6A168	21.074				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	A
+2019	6A	165	6A165	72.509				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	6	A
+2019	6A	169	6A169	59.697				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	6	A
+2019	6A	150	6A150	55.095				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	A
+2019	6A	153	6A153	41.358				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	6	A
+2019	6C	96	6C96	26.477				NA	vegetative > flowering > flowering	vegetative	flowering	flowering	FALSE	1	1	6	C
+2019	6C	86	6C86	77.793				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	6	C
+2019	6C	81	6C81	112.3		pheno19		NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	C
+2019	6C	113	6C113	33.305				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	6	C
+2019	6C	116	6C116	62.306				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	6	C
+2019	1C	55	1C55	103.027				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	C
+2019	1C	75	1C75	72.114				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	1	C
+2019	1C	60	1C60	39.951				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	1	C
+2019	1C	57	1C57	77.22				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	C
+2019	1C	54	1C54	62.312				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	1	C
+2019	2C	296	2C296	52.711				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	2	C
+2019	2C	271	2C271	21.813				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	C
+2019	2C	299	2C299	NA		pheno18		NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	2	C
+2019	2C	293	2C293	103.212				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	C
+2019	2C	299	2C299	194.765		pheno18		NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	2	C
+2019	3A	273	3A273	36.881				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	A
+2019	3A	657	3A657	55.109		pheno19		NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	A
+2019	3A	658	3A658	NA				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	A
+2019	3A	129	3A129	83.078				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	A
+2019	3A	655	3A655	46.146				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	3	A
+2019	3A	658	3A658	96.793				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	3	A
+2019	4D	37	4D37	101.697				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	4	D
+2019	4D	28	4D28	142.69		pheno18		NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	4	D
+2019	4D	47	4D47	41.244				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	4	D
+2019	4D	49	4D49	56.499				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	4	D
+2019	5C	223	5C223	NA				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	5	C
+2019	5C	207	5C207	33.628				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	C
+2019	5C	218	5C218	119.972		seeds20	pheno19	5C229	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	5	C
+2019	5C	202	5C202	131.892				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	C
+2019	5C	211	5C211	150.962				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	C
+2019	6B	9	6B9	86.999				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	B
+2019	6B	31	6B31	116.531				NA	vegetative > flowering > dead_nf	vegetative	flowering	dead_nf	FALSE	0	0	6	B
+2019	6B	22	6B22	61.001				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	B
+2019	6B	21	6B21	120.196				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	6	B
+2019	1A	249	1A249	17.483				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	A
+2019	1A	243	1A243	52.387				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	1	A
+2019	1A	222	1A222	163.86				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	1	A
+2019	1A	225	1A225	164.734		pheno18		NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	1	A
+2019	1A	230	1A230	48.225				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	1	A
+2019	2D	220	2D220	31.642				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	D
+2019	2D	194	2D194	56.35				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	D
+2019	2D	219	2D219	54.14				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	D
+2019	2D	210	2D210	59.878				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	2	D
+2019	2D	184	2D184	84.017				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	2	D
+2019	3C	174	3C174	19.06				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	C
+2019	3C	129	3C129	52.72				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	3	C
+2019	3C	126	3C126	34.238				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	3	C
+2019	3C	123	3C123	5.446				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	3	C
+2019	3C	208	3C208	131.445				NA	NA	NA	NA	NA	FALSE	NA	NA	3	C
+2019	4A	115	4A115	41.995		pheno19		NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	4	A
+2019	4A	116	4A116	5.192				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	4	A
+2019	4A	113	4A113	103.536				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	4	A
+2019	4A	71	4A71	58.13				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	4	A
+2019	4A	62	4A62	134.796				NA	vegetative > vegetative > dead_nf	vegetative	vegetative	dead_nf	FALSE	0	0	4	A
+2019	5A	191	5A191	42.399				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	A
+2019	5A	196	5A196	94.769				NA	vegetative > flowering > flowering	vegetative	flowering	flowering	FALSE	1	1	5	A
+2019	5A	185	5A185	55.775		pheno19		NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	5	A
+2019	5A	195	5A195	53.729				NA	vegetative > flowering > vegetative	vegetative	flowering	vegetative	FALSE	0	1	5	A
+2019	5A	198	5A198	75.323				NA	vegetative > vegetative > tagnf	vegetative	vegetative	tagnf	FALSE	NA	NA	5	A
+2019	6D	45	6D45	25.556				NA	flowering > vegetative > flowering	flowering	vegetative	flowering	FALSE	1	1	6	D
+2019	6D	64	6D64	30.166				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	6	D
+2019	6D	57	6D57	35.211				NA	vegetative > vegetative > vegetative	vegetative	vegetative	vegetative	FALSE	0	1	6	D
+2019	6D	56	6D56	49.015				NA	vegetative > vegetative > flowering	vegetative	vegetative	flowering	FALSE	1	1	6	D

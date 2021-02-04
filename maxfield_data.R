@@ -261,6 +261,7 @@ View(fixes.fixed %>% filter(plantid %in% mergefixes))
 # 2. for lines with mergefixes, just change the status and the ID in the "modify" census
 fix_dataset <- function(dat, name) { #name must end with two-digit year 20XX
   yr <- str_sub(name, -2) # _year added to the separated plantids - groups all records in a year!
+  
   dat_fixed <- dat %>% mutate(plantid = as.character(plantid)) %>% 
     left_join(fixes %>% select(plantid, discard, separate, modify, plantid_new, ends_with("fixed")), by="plantid") %>% 
     filter(!str_detect(discard,  name)) %>%  
@@ -269,7 +270,7 @@ fix_dataset <- function(dat, name) { #name must end with two-digit year 20XX
            plantid = ifelse(str_detect(modify,   name), plantid_new, plantid))
   if(str_detect(name, "census") & !str_detect(name, "r2")) { # don't modify census18r2
     status_yr       <- paste("status",yr, sep="_")
-    status_yr_fixed <- paste("status",yr,"fixed", sep="_") # use status_fixed from corrections column
+    status_yr_fixed <- paste("status",yr,"fixed", sep="_") 
     dat_fixed <- dat_fixed %>% mutate(status = !!sym(status_yr_fixed), .keep="unused") %>% 
     mutate(status = ifelse(is.na(status), #fill in the status from the census columns if missing
                            recode(paste(notes, rosettes, flowering), 
@@ -283,6 +284,12 @@ fix_dataset <- function(dat, name) { #name must end with two-digit year 20XX
                            !is.na(!!sym(status_yr_fixed)) & !!sym(status_yr_fixed) != "no_record") %>% 
                   select(plantid, discard, separate, modify, plantid_new, ends_with("fixed")) %>% 
                   rename(status=sym(status_yr_fixed))) %>% fill(year)
+  }
+  if(str_detect(name, "leaf|licor") & yr!="20") { #for vegetative datasets, look at survival and flowering
+    status_nextyr_fixed <- paste("status",as.integer(yr)+1,"fixed", sep="_") 
+    dat_fixed <- dat_fixed %>% mutate(
+      flowering = recode(!!sym(status_nextyr_fixed), "flowering"=1,"vegetative"=0,"dead_nf"=0,.default=as.double(NA)),
+      survival =  recode(!!sym(status_nextyr_fixed), "flowering"=1,"vegetative"=1,"dead_nf"=0,.default=as.double(NA)))
   }
   dat_fixed %>% mutate(plot =    str_sub(plantid,1,1), 
                       subplot = str_sub(plantid,2,2),
@@ -403,8 +410,12 @@ cen.status <- cen %>% select(any_of(joiners) | (starts_with(c("status","check"))
          transition_1819 = paste(status_18, status_19, sep=" > "),
          transition_1920 = paste(status_19, status_20, sep=" > "),
          transition_181920 = paste(status_18, status_19, status_20, sep=" > "),
-         across(starts_with("status"), .names="flowering_{.col}", ~ as.integer(.x == "flowering")),
-         across(starts_with("status"), .names="alive_{.col}", ~ as.integer(.x %in% c("flowering","vegetative"))))
+         across(starts_with("status"), .names="flowering_{.col}", 
+                ~ recode(.x, "flowering"=1,"vegetative"=0,"dead_nf"=0,.default=as.double(NA))),
+         across(starts_with("status"), .names="alive_{.col}", 
+                ~ recode(.x, "flowering"=1,"vegetative"=1,"dead_nf"=0,.default=as.double(NA))))
+
+write_tsv(cen.status, file="data/census_status.tsv")
 
 cen.status.long <- cen.status %>% select(!starts_with("transition|flowering|alive")) %>% 
   pivot_longer(starts_with("status"),names_to="census",values_to="status") %>% 
@@ -414,8 +425,6 @@ cen.status.long <- cen.status %>% select(!starts_with("transition|flowering|aliv
 cen.size.long <- cen %>% select(plantid|starts_with("n_rosettes")) %>% 
   pivot_longer(starts_with("n_rosettes"),names_to="census",values_to="n_rosettes") %>%
   mutate(census = paste0("20",str_remove(census, "n_rosettes_")))
-
-write_tsv(cen.status, file="data/census_status.tsv")
 
 # phenology ---------------------------------------------------------------
 
