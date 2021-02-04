@@ -434,6 +434,25 @@ ggplot(lt, aes(x=water, color=snow, y = water_content)) + geom_boxplot() + scale
 ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Trichome density (/cm2)", color="Snowmelt") + facet_wrap(vars(year, round), nrow=1)
 ```
 
+# Physiology traits
+
+```{r licor}
+# plot all the LICOR variables by date
+licor_date_pal <- sample(rainbow(nlevels(factor(licor$date))))
+licor %>% pivot_longer(Photo:StableF) %>% mutate(index=row_number()) %>% filter(!name %in% c("Area","BLC_1","BLCond","StmRat")) %>% 
+  ggplot(aes(x=index, y= value, color=factor(date), shape=year)) + facet_wrap(vars(name), scales="free_y", ncol=4) + geom_point() + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark() + labs(x="Measurement", y="", shape="Year")
+
+licor %>% ggplot(aes(x=Cond, y= Photo, color=factor(date), linetype=year, shape=year)) + geom_point() + geom_smooth(method="lm", se=F) + scale_linetype_manual(values=c(3,1,4)) + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark()
+
+licor %>% ggplot(aes(y=Photo/Cond, x=factor(date), color=year)) + geom_boxplot(size=1.5) + 
+  scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=year_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()
+
+licor %>% left_join(treatments)%>% ggplot(aes(y=Photo/Cond, x=factor(date), color=water)) + 
+  geom_boxplot(position=position_dodge2(preserve="single")) + 
+  scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()
+```
+
+
 # Floral traits
 
 ## Floral morphology, nectar, phenology, seeds
