@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-01-13" />
+<meta name="date" content="2021-02-04" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-01-13</h4>
+<h4 class="date">2021-02-04</h4>
 
 </div>
 
@@ -302,9 +302,11 @@ library(googlesheets4)
 library(lme4)
 library(lmerTest)
 library(emmeans)
+library(multcomp)
 library(broom)
 library(broom.mixed)
 library(vegan)
+library(dplyr)
 
 library(RColorBrewer)
 library(viridis)
@@ -320,12 +322,12 @@ signif.num &lt;- function(x) {
            cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
            symbols = c(&quot;***&quot;, &quot;**&quot;, &quot;*&quot;, &quot;.&quot;, &quot; &quot;)))
 }
-print_anova_table &lt;- function(df) {
-df %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
+print_anova_table &lt;- function(df, mod) {
+df %&gt;% dplyr::select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
   mutate(p.value=p.value %&gt;% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %&gt;% 
            str_replace(&quot;e-0(\\d)&quot;,&quot; x 10^-\\1^&quot;) %&gt;% str_replace(&quot;e-(\\d+)&quot;,&quot; x 10^-\\1^&quot;)) %&gt;%
   pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
-  bind_rows(lapply(mt.mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable
+  bind_rows(lapply(mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable
 }
 
 load(&quot;data/maxfield_data.rda&quot;)</code></pre>
@@ -368,7 +370,7 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
   facet_wrap(vars(year), scales=&quot;free_x&quot;, ncol=1) + 
   geom_hline(yintercept=melt_threshold_warm) + geom_hline(yintercept=-melt_threshold_warm) +geom_line() +
   geom_segment(data=meltdates, aes(x=warm_time, y=-10, xend=sun_time, yend=-15, color=plot), size=1) +
-    geom_line(data=daily_temp %&gt;% filter(year!=&quot;2017&quot;, month(date)%in%4:6), aes(x=as.POSIXct(date), y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, &quot;Oranges&quot;)[3]) +
+    geom_line(data=daily_CORBIL %&gt;% filter(year!=&quot;2017&quot;, month(date)%in%4:6), aes(x=as.POSIXct(date), y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, &quot;Oranges&quot;)[3]) +
   labs(x=&quot;Date&quot;,y=&quot;Temperature (C)&quot;, color=&quot;Plot&quot;)</code></pre>
 <p><img src="images/hobo-3.png" width="672" /></p>
 <pre class="r"><code>ggplot(hobo %&gt;% filter(month(time)%in%4:6), aes(x=time, y=intensity, color=plot)) + 
@@ -389,42 +391,6 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
   theme(panel.grid.minor = element_blank()) +
   labs(x=&quot;Offset from mean normal snow melt date (days)&quot;, y=&quot;Number of plots&quot;, fill=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/hobo-6.png" width="672" /></p>
-<pre class="r"><code>left_join(filter(sm.subplot20d, mo20d!=&quot;221 - 240&quot;), meltdates) %&gt;% 
-  mutate(mo = paste0(&quot;Days &quot;,mo20d)) %&gt;% 
-  ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
-  facet_wrap(vars(mo), nrow=1)+
-  geom_point() + geom_smooth(se=F, method=&quot;lm&quot;) +
-  scale_color_manual(values=water_pal) +
-  labs(x=&quot;Snowmelt date&quot;, y=&quot;Mean soil moisture in subplot&quot;, color=&quot;Water&quot;, shape=&quot;Year&quot;)</code></pre>
-<p><img src="images/hobo-7.png" width="672" /></p>
-<pre class="r"><code>sm.subplot %&gt;% mutate(day=yday(date)) %&gt;% group_by(year) %&gt;% summarize(start=min(day), end=max(day)) %&gt;% kable(caption = &quot;Soil moisture collection dates&quot;)</code></pre>
-<table>
-<caption>Soil moisture collection dates</caption>
-<thead>
-<tr class="header">
-<th align="left">year</th>
-<th align="right">start</th>
-<th align="right">end</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">2018</td>
-<td align="right">164</td>
-<td align="right">227</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">176</td>
-<td align="right">210</td>
-</tr>
-<tr class="odd">
-<td align="left">2020</td>
-<td align="right">169</td>
-<td align="right">224</td>
-</tr>
-</tbody>
-</table>
 </div>
 <div id="weather-data" class="section level1">
 <h1>Weather data</h1>
@@ -536,6 +502,8 @@ F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
 </div>
 <div id="soil-moisture-vs.-treatments" class="section level1">
 <h1>Soil moisture vs. treatments</h1>
+<div id="weather-plots" class="section level2">
+<h2>Weather plots</h2>
 <pre class="r"><code>ggplot(sm, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
   geom_jitter(aes(shape=snow, color=water, y = VWC), height=0, width=0.3) + 
@@ -564,7 +532,217 @@ F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/soil-1.png" width="1152" /></p>
-<p>The timing of measurements and treatments differed between years</p>
+<pre class="r"><code>ggplot(sm.subplot, aes(x=yday(date))) + 
+  facet_wrap(vars(year), ncol=1) +
+      geom_col(data=daily_all %&gt;% filter(yr%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
+           fill=brewer.pal(3, &quot;Greens&quot;)[2]) +
+  geom_line(data=daily_precip_est, aes(y=VWC_Control_4*100), color=brewer.pal(3, &quot;Greens&quot;)[2], size=1) +
+  geom_point(aes(shape=snow, color=water, y = VWC)) + 
+  geom_line(data=sm.water, aes(linetype=snow, color=water, y = VWC)) +
+    scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=&quot;black&quot;, show.legend=F) +
+  coord_cartesian(xlim=c(110, 230), ylim=c(0, round(max(sm.subplot$VWC, na.rm=T))), expand=F)+
+    labs(x=&quot;Day of year&quot;, y=&quot;Mean soil VWC in subplot (%) / Precipitation (mm)&quot;, color=&quot;Water&quot;, shape=&quot;Snowmelt&quot;, linetype=&quot;Snowmelt&quot;) + theme_minimal() + theme(legend.key.width = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/soil-2.png" width="1152" /></p>
+</div>
+</div>
+<div id="soil-moisture-vs.-snowmelt-date" class="section level1">
+<h1>Soil moisture vs. snowmelt date</h1>
+<pre class="r"><code>left_join(filter(sm.subplot20d, mo20d!=&quot;221 - 240&quot;), meltdates) %&gt;% 
+  mutate(mo = paste0(&quot;Days &quot;,mo20d)) %&gt;% 
+  ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
+  facet_wrap(vars(mo), nrow=1)+
+  geom_point() + geom_smooth(se=F, method=&quot;lm&quot;) +
+  scale_color_manual(values=water_pal) +
+  labs(x=&quot;Snowmelt date&quot;, y=&quot;Mean soil moisture in subplot&quot;, color=&quot;Water&quot;, shape=&quot;Year&quot;)</code></pre>
+<p><img src="images/soil_treatments-1.png" width="672" /></p>
+<pre class="r"><code>sm.subplot %&gt;% mutate(day=yday(date)) %&gt;% group_by(year) %&gt;% summarize(start=min(day), end=max(day)) %&gt;% kable(caption = &quot;Soil moisture collection dates&quot;)</code></pre>
+<table>
+<caption>Soil moisture collection dates</caption>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="right">start</th>
+<th align="right">end</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="right">164</td>
+<td align="right">227</td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="right">176</td>
+<td align="right">210</td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="right">169</td>
+<td align="right">224</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># VWC split-plot analysis
+sm.mod &lt;- lmer(VWC ~ year * snow * water + (1|plot), data=sm.subplotyear)
+anova(sm.mod) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Sum Sq</th>
+<th align="right">Mean Sq</th>
+<th align="right">NumDF</th>
+<th align="right">DenDF</th>
+<th align="right">F value</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">21.070</td>
+<td align="right">10.535</td>
+<td align="right">2</td>
+<td align="right">51.178</td>
+<td align="right">50.111</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">2.153</td>
+<td align="right">2.153</td>
+<td align="right">1</td>
+<td align="right">15.960</td>
+<td align="right">10.241</td>
+<td align="right">0.006</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">53.088</td>
+<td align="right">26.544</td>
+<td align="right">2</td>
+<td align="right">49.541</td>
+<td align="right">126.259</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">year:snow</td>
+<td align="right">2.240</td>
+<td align="right">1.120</td>
+<td align="right">2</td>
+<td align="right">50.597</td>
+<td align="right">5.328</td>
+<td align="right">0.008</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water</td>
+<td align="right">4.477</td>
+<td align="right">1.119</td>
+<td align="right">4</td>
+<td align="right">49.541</td>
+<td align="right">5.324</td>
+<td align="right">0.001</td>
+</tr>
+<tr class="even">
+<td align="left">snow:water</td>
+<td align="right">0.608</td>
+<td align="right">0.304</td>
+<td align="right">2</td>
+<td align="right">49.541</td>
+<td align="right">1.446</td>
+<td align="right">0.245</td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow:water</td>
+<td align="right">0.349</td>
+<td align="right">0.087</td>
+<td align="right">4</td>
+<td align="right">49.541</td>
+<td align="right">0.415</td>
+<td align="right">0.797</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>(sm.emm.snow &lt;- as.data.frame(emmeans(sm.mod, ~ snow))) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">snow</th>
+<th align="right">emmean</th>
+<th align="right">SE</th>
+<th align="right">df</th>
+<th align="right">lower.CL</th>
+<th align="right">upper.CL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Early</td>
+<td align="right">4.433</td>
+<td align="right">0.191</td>
+<td align="right">7.004</td>
+<td align="right">3.980</td>
+<td align="right">4.885</td>
+</tr>
+<tr class="even">
+<td align="left">Normal</td>
+<td align="right">5.124</td>
+<td align="right">0.174</td>
+<td align="right">6.157</td>
+<td align="right">4.701</td>
+<td align="right">5.547</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sm.emm.snow$emmean[1] - sm.emm.snow$emmean[2]</code></pre>
+<pre><code>[1] -0.6912101</code></pre>
+<pre class="r"><code>(sm.emm.water &lt;- as.data.frame(emmeans(sm.mod, ~ water))) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">water</th>
+<th align="right">emmean</th>
+<th align="right">SE</th>
+<th align="right">df</th>
+<th align="right">lower.CL</th>
+<th align="right">upper.CL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Addition</td>
+<td align="right">6.146</td>
+<td align="right">0.166</td>
+<td align="right">9.344</td>
+<td align="right">5.772</td>
+<td align="right">6.519</td>
+</tr>
+<tr class="even">
+<td align="left">Control</td>
+<td align="right">4.352</td>
+<td align="right">0.147</td>
+<td align="right">5.765</td>
+<td align="right">3.990</td>
+<td align="right">4.715</td>
+</tr>
+<tr class="odd">
+<td align="left">Reduction</td>
+<td align="right">3.837</td>
+<td align="right">0.166</td>
+<td align="right">9.344</td>
+<td align="right">3.463</td>
+<td align="right">4.211</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sm.emm.water$emmean[1] - sm.emm.water$emmean[2]</code></pre>
+<pre><code>[1] 1.793071</code></pre>
+<pre class="r"><code>sm.emm.water$emmean[3] - sm.emm.water$emmean[2]</code></pre>
+<pre><code>[1] -0.5151694</code></pre>
+<div id="timing-of-measurements" class="section level2">
+<h2>Timing of measurements</h2>
 <pre class="r"><code>ggplot(timings %&gt;% filter(variable!=&quot;sds&quot;) %&gt;% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T)), aes(y=variable, color=year))+ 
   geom_linerange(aes(xmin=begin, xmax=end), 
                  position = position_dodge2(width=0.7, reverse = T), size=1.2, show.legend=FALSE) + 
@@ -580,10 +758,13 @@ F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
   scale_x_continuous(&quot;Day of year&quot;, breaks=seq(80,240, by=20)) +
   theme_minimal() + theme(legend.position = &quot;top&quot;)</code></pre>
 <p><img src="images/timings-1.png" width="672" /></p>
+</div>
+<div id="sample-sizes" class="section level2">
+<h2>Sample sizes</h2>
 <pre class="r"><code>cat(&quot;Morphology measurements per plant:&quot;, mt %&gt;% drop_na(corolla_length) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup() %&gt;% summarize(n=mean(n)) %&gt;% pull(n) %&gt;% round(2))</code></pre>
-<pre><code>Morphology measurements per plant: 2.4</code></pre>
+<pre><code>Morphology measurements per plant: 2.42</code></pre>
 <pre class="r"><code>cat(&quot;Nectar measurements per plant:&quot;, mt %&gt;% drop_na(nectar_24_h_ul) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup() %&gt;% summarize(n=mean(n)) %&gt;% pull(n) %&gt;% round(2))</code></pre>
-<pre><code>Nectar measurements per plant: 1.71</code></pre>
+<pre><code>Nectar measurements per plant: 1.72</code></pre>
 <pre class="r"><code>cat(&quot;Inflo height measurements per plant:&quot;)</code></pre>
 <pre><code>Inflo height measurements per plant:</code></pre>
 <pre class="r"><code>ph %&gt;% drop_na(height_cm) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% summarize(n=mean(n)) %&gt;% kable</code></pre>
@@ -597,31 +778,32 @@ F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">2018</td>
-<td align="right">3.161137</td>
+<td align="right">3.191388</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
-<td align="right">1.641256</td>
+<td align="right">1.662100</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
-<td align="right">3.362903</td>
+<td align="right">3.390244</td>
 </tr>
 </tbody>
 </table>
 <pre class="r"><code>ph %&gt;% drop_na(height_cm) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% 
-  ggplot(aes(x=n, fill=year)) + geom_histogram() + 
+  ggplot(aes(x=n, fill=year)) + geom_histogram() + labs(title = &quot;Phenology entries per plant&quot;, x=&quot;Entries&quot;,y=&quot;Count&quot;)+
   facet_wrap(vars(year), ncol=1) + scale_fill_manual(values=year_pal)</code></pre>
 <p><img src="images/sample_sizes-1.png" width="672" /></p>
 <pre class="r"><code>#Total sample sizes
 mt %&gt;% drop_na(corolla_length) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 498</code></pre>
+<pre><code>[1] 494</code></pre>
 <pre class="r"><code>mt %&gt;% drop_na(nectar_24_h_ul) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 434</code></pre>
+<pre><code>[1] 432</code></pre>
 <pre class="r"><code>sds %&gt;% drop_na(flowers_est) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 613</code></pre>
+<pre><code>[1] 611</code></pre>
 <pre class="r"><code>ph %&gt;% drop_na(height_cm) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 682</code></pre>
+<pre><code>[1] 674</code></pre>
+</div>
 </div>
 <div id="census" class="section level1">
 <h1>Census</h1>
@@ -661,29 +843,11 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <tr class="even">
 <td align="left">2018</td>
 <td align="right">2018</td>
-<td align="left">dead</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td align="left">2018</td>
-<td align="right">2018</td>
 <td align="left">blank</td>
 <td align="left">one_or_more</td>
 <td align="left">y</td>
 <td align="left">flowering</td>
 <td align="right">142</td>
-</tr>
-<tr class="even">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">tagnf</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">recheck</td>
-<td align="right">25</td>
 </tr>
 <tr class="odd">
 <td align="left">2018</td>
@@ -692,9 +856,18 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">one_or_more</td>
 <td align="left">n</td>
 <td align="left">recheck</td>
-<td align="right">21</td>
+<td align="right">18</td>
 </tr>
 <tr class="even">
+<td align="left">2018</td>
+<td align="right">2018</td>
+<td align="left">tagnf</td>
+<td align="left">one_or_more</td>
+<td align="left">n</td>
+<td align="left">recheck</td>
+<td align="right">18</td>
+</tr>
+<tr class="odd">
 <td align="left">2018</td>
 <td align="right">2018</td>
 <td align="left">chewed</td>
@@ -703,16 +876,16 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2018</td>
 <td align="right">2018</td>
 <td align="left">tagnf</td>
 <td align="left">blank</td>
 <td align="left">n</td>
 <td align="left">tagnf</td>
-<td align="right">93</td>
+<td align="right">87</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2018</td>
 <td align="right">2018</td>
 <td align="left">blank</td>
@@ -721,7 +894,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">760</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2018</td>
 <td align="right">2018</td>
 <td align="left">ts</td>
@@ -730,7 +903,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">66</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2018</td>
 <td align="right">2018</td>
 <td align="left">chewed</td>
@@ -739,7 +912,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2018</td>
 <td align="right">2018</td>
 <td align="left">ts</td>
@@ -748,7 +921,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">3</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2018r2</td>
 <td align="right">2018</td>
 <td align="left">dead</td>
@@ -757,7 +930,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">dead_nf</td>
 <td align="right">17</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2018r2</td>
 <td align="right">2018</td>
 <td align="left">blank</td>
@@ -766,7 +939,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">dead_nf</td>
 <td align="right">6</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2018r2</td>
 <td align="right">2018</td>
 <td align="left">blank</td>
@@ -775,7 +948,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">flowering</td>
 <td align="right">11</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2018r2</td>
 <td align="right">2018</td>
 <td align="left">nf</td>
@@ -784,7 +957,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">18</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2018r2</td>
 <td align="right">2018</td>
 <td align="left">blank</td>
@@ -793,7 +966,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">702</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2018r2</td>
 <td align="right">2018</td>
 <td align="left">chewed</td>
@@ -802,25 +975,25 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">5</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">nf</td>
 <td align="left">blank</td>
 <td align="left">blank</td>
 <td align="left">dead_nf</td>
-<td align="right">215</td>
+<td align="right">208</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">dead</td>
 <td align="left">zero</td>
 <td align="left">n</td>
 <td align="left">dead_nf</td>
-<td align="right">143</td>
+<td align="right">141</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -829,7 +1002,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">dead_nf</td>
 <td align="right">8</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">nf</td>
@@ -838,7 +1011,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">dead_nf</td>
 <td align="right">7</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">dead</td>
@@ -847,7 +1020,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">dead_nf</td>
 <td align="right">3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">dead</td>
@@ -856,7 +1029,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">dead_nf</td>
 <td align="right">3</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -865,15 +1038,6 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">dead_nf</td>
 <td align="right">2</td>
 </tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">dead</td>
-<td align="left">zero</td>
-<td align="left">blank</td>
-<td align="left">dead_nf</td>
-<td align="right">1</td>
-</tr>
 <tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
@@ -884,6 +1048,15 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="right">1</td>
 </tr>
 <tr class="odd">
+<td align="left">2019</td>
+<td align="right">2019</td>
+<td align="left">dead</td>
+<td align="left">zero</td>
+<td align="left">blank</td>
+<td align="left">dead_nf</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">nf</td>
@@ -892,7 +1065,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">dead_nf</td>
 <td align="right">1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -901,7 +1074,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">flowering</td>
 <td align="right">110</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -910,7 +1083,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">flowering</td>
 <td align="right">47</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -919,7 +1092,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">flowering</td>
 <td align="right">3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">ts</td>
@@ -928,7 +1101,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">4</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">nf</td>
@@ -937,7 +1110,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -946,7 +1119,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">2</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -955,7 +1128,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">chewed</td>
@@ -964,7 +1137,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">nf</td>
@@ -973,7 +1146,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">tagnf</td>
@@ -982,16 +1155,16 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">tagnf</td>
 <td align="left">blank</td>
 <td align="left">blank</td>
 <td align="left">tagnf</td>
-<td align="right">46</td>
+<td align="right">40</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">tagnf</td>
@@ -1000,7 +1173,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">tagnf</td>
 <td align="right">3</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">tagnf</td>
@@ -1009,7 +1182,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">tagnf</td>
 <td align="right">1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -1018,7 +1191,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">390</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
@@ -1027,7 +1200,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">48</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">ts</td>
@@ -1036,7 +1209,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">43</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">ts</td>
@@ -1045,7 +1218,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">27</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">chewed</td>
@@ -1054,16 +1227,16 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">23</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">blank</td>
 <td align="left">one_or_more</td>
 <td align="left">blank</td>
 <td align="left">vegetative</td>
-<td align="right">18</td>
+<td align="right">13</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">ts</td>
@@ -1072,7 +1245,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">10</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">chewed</td>
@@ -1081,7 +1254,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">7</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">ts</td>
@@ -1090,7 +1263,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">4</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">chewed</td>
@@ -1099,7 +1272,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">2</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="right">2019</td>
 <td align="left">ts</td>
@@ -1108,25 +1281,25 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">nf</td>
 <td align="left">zero</td>
 <td align="left">blank</td>
 <td align="left">dead_nf</td>
-<td align="right">490</td>
+<td align="right">487</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">dead</td>
 <td align="left">zero</td>
 <td align="left">blank</td>
 <td align="left">dead_nf</td>
-<td align="right">120</td>
+<td align="right">119</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">blank</td>
@@ -1135,7 +1308,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">flowering</td>
 <td align="right">151</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">blank</td>
@@ -1144,7 +1317,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">flowering</td>
 <td align="right">50</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">chewed</td>
@@ -1153,7 +1326,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">flowering</td>
 <td align="right">17</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">chewed</td>
@@ -1162,7 +1335,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">flowering</td>
 <td align="right">1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">chewed</td>
@@ -1171,7 +1344,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">3</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">chewed</td>
@@ -1180,7 +1353,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">chewed</td>
@@ -1189,7 +1362,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">chewed</td>
@@ -1198,16 +1371,16 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">recheck</td>
 <td align="right">1</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">tagnf</td>
 <td align="left">blank</td>
 <td align="left">blank</td>
 <td align="left">tagnf</td>
-<td align="right">76</td>
+<td align="right">74</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">blank</td>
@@ -1216,7 +1389,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">233</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">chewed</td>
@@ -1225,7 +1398,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 <td align="left">vegetative</td>
 <td align="right">6</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">2020</td>
 <td align="left">chewed</td>
@@ -1237,9 +1410,7 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 </tbody>
 </table>
 <p>Visualize a plant’s status in each census</p>
-<pre class="r"><code># library(vegan)
-# library(viridis)
-# megatally %&gt;% select(where(is.numeric)) %&gt;% 
+<pre class="r"><code># megatally %&gt;% select(where(is.numeric)) %&gt;% 
 #   relocate(total_obs,census18,census18r2,census19,census20,pheno18,seeds18,floral18,pheno19,seeds19,floral19,pheno20,seeds20,floral20,volatiles20, leaf18,leaf19,leaf20,census18r2) %&gt;% 
 #   arrange(census18&gt;0,cut(pheno18,c(0,1,2,Inf),right=F),seeds18&gt;0,census19&gt;0,cut(pheno19,c(0,1,2,Inf),right=F),seeds19&gt;0,census20&gt;0,cut(pheno20,c(0,1,2,Inf),right=F),seeds20&gt;0, leaf18&gt;0,leaf19&gt;0,leaf20&gt;0,census18r2&gt;0,total_obs) %&gt;% 
 #   decostand(&quot;max&quot;) %&gt;% sqrt %&gt;% as.matrix %&gt;% 
@@ -1247,17 +1418,17 @@ nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;%
 
 # ggplot(cen.size.long %&gt;% filter(census!=&quot;2018r2&quot;), aes(x=census, y=n_rosettes, group=plantid))+geom_path()+ geom_point() + scale_y_continuous(breaks=0:10)
 
-# ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
-#   scale_fill_manual(values=brewer.pal(8, name=&quot;Set1&quot;)[c(1,3,5,2,7,6)])+
-#   theme(axis.text.y=element_blank(), axis.ticks = element_blank()) + 
-#   labs(fill=&quot;Status&quot;, x=&quot;Census year&quot;,y=&quot;Plant ID&quot;)
-
-ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_tile() +
+ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
+  scale_fill_manual(values=brewer.pal(8, name=&quot;Set1&quot;)[c(1,3,5,2,7,6)])+
+  theme(axis.text.y=element_blank(), axis.ticks = element_blank()) +
+  labs(fill=&quot;Status&quot;, x=&quot;Census year&quot;,y=&quot;Plant ID&quot;)</code></pre>
+<p><img src="images/status-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_tile() +
   scale_fill_manual(values=c(brewer.pal(5, name=&quot;Set1&quot;)[c(1,3,5,2)],brewer.pal(8, &quot;Set2&quot;)[7:8]))+
   scale_x_discrete(position=&quot;top&quot;) +
   theme(axis.text.y=element_blank(), axis.ticks = element_blank(), axis.text.x = element_text(angle=90, size=14)) + 
   labs(fill=&quot;Status&quot;, x=&quot;Dataset and year&quot;,y=&quot;Plant ID&quot;)</code></pre>
-<p><img src="images/status-1.png" width="672" /></p>
+<p><img src="images/status-2.png" width="672" /></p>
 </div>
 <div id="status-vs.-treatment" class="section level2">
 <h2>Status vs. treatment</h2>
@@ -1270,34 +1441,42 @@ ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_til
 <h2>Join 2019 and 2020 datasets</h2>
 <p>Check these tags missing in each year to make sure tags were not mis-read. When tags were not found in the other year, the part of the row for that year is “NA”.</p>
 <p>Recorded in 2019 but not in 2020:</p>
-<pre class="r"><code>sort(setdiff(cen19[cen19$notes != &quot;tagnf&quot;,]$id, cen20$id))</code></pre>
-<pre><code> [1] &quot;1B-244&quot; &quot;1B-245&quot; &quot;1B-246&quot; &quot;1B-247&quot; &quot;1B-248&quot; &quot;1B-252&quot; &quot;1B-662&quot; &quot;1B-679&quot;
- [9] &quot;1B-680&quot; &quot;1B-681&quot; &quot;1B-682&quot; &quot;1B-683&quot; &quot;1D-31&quot;  &quot;1D-32&quot;  &quot;3A-659&quot; &quot;3B-602&quot;
-[17] &quot;3B-603&quot; &quot;3B-604&quot; &quot;3B-605&quot; &quot;3B-611&quot; &quot;3B-612&quot; &quot;3B-615&quot; &quot;3B-617&quot; &quot;3B-618&quot;
-[25] &quot;3B-622&quot; &quot;3B-623&quot; &quot;3D-852&quot; &quot;4A-100&quot; &quot;4A-66&quot;  &quot;4A-83&quot;  &quot;4A-90&quot;  &quot;4B-162&quot;
-[33] &quot;4B-172&quot; &quot;4B-192&quot; &quot;4C-115&quot; &quot;4C-29&quot;  &quot;4C-32&quot;  &quot;4D-39&quot;  &quot;4D-61&quot;  &quot;5A-172&quot;
-[41] &quot;5A-177&quot; &quot;5B-14&quot;  &quot;5B-287&quot; &quot;5C-205&quot; &quot;5C-213&quot; &quot;5D-231&quot; &quot;5D-236&quot; &quot;5D-284&quot;
-[49] &quot;6B-32&quot;  &quot;6C-103&quot; &quot;6D-80&quot;  &quot;6D-81&quot; </code></pre>
+<pre class="r"><code>sort(setdiff(cen19[cen19$notes != &quot;tagnf&quot;,]$plantid, cen20$plantid))</code></pre>
+<pre><code> [1] &quot;1A247&quot;    &quot;1A252&quot;    &quot;1C59&quot;     &quot;1D13&quot;     &quot;1D2&quot;      &quot;1D39&quot;    
+ [7] &quot;1D5&quot;      &quot;2B136&quot;    &quot;2B195&quot;    &quot;2B196&quot;    &quot;2C275&quot;    &quot;2C284&quot;   
+[13] &quot;2C291&quot;    &quot;2C294&quot;    &quot;2C297&quot;    &quot;2D192&quot;    &quot;2D196&quot;    &quot;2D197&quot;   
+[19] &quot;2D216&quot;    &quot;2D223_19&quot; &quot;2D224_19&quot; &quot;3A126&quot;    &quot;3A174_19&quot; &quot;3A634&quot;   
+[25] &quot;3A645&quot;    &quot;3A647_19&quot; &quot;3B602&quot;    &quot;3B604&quot;    &quot;3B612&quot;    &quot;3B615&quot;   
+[31] &quot;3B617&quot;    &quot;3B622&quot;    &quot;3B623&quot;    &quot;3C136&quot;    &quot;3C147&quot;    &quot;3D852&quot;   
+[37] &quot;3D856&quot;    &quot;3D858&quot;    &quot;4A100&quot;    &quot;4A104&quot;    &quot;4A74&quot;     &quot;4A96&quot;    
+[43] &quot;4B165&quot;    &quot;4B168&quot;    &quot;4B170&quot;    &quot;4B171&quot;    &quot;4B172&quot;    &quot;4B179&quot;   
+[49] &quot;4B201&quot;    &quot;4B203&quot;    &quot;4B204&quot;    &quot;4C28&quot;     &quot;4D39&quot;     &quot;5B287&quot;   
+[55] &quot;5D251&quot;    &quot;5D254&quot;    &quot;5D269&quot;    &quot;5D270&quot;    &quot;5D277&quot;    &quot;5D288&quot;   
+[61] &quot;6B17&quot;     &quot;6C110&quot;    &quot;6C82&quot;    </code></pre>
 <p>Recorded in 2020 but not in 2019:</p>
-<pre class="r"><code>sort(setdiff(cen20[cen20$notes != &quot;tagnf&quot;,]$id, cen19$id))</code></pre>
-<pre><code> [1] &quot;-&quot;      &quot;-641&quot;   &quot;1A-244&quot; &quot;1B-199&quot; &quot;1B-66&quot;  &quot;2A-100&quot; &quot;2A-589&quot; &quot;2A-684&quot;
- [9] &quot;2A-689&quot; &quot;2A-99&quot;  &quot;2B-171&quot; &quot;2C-256&quot; &quot;2D-225&quot; &quot;3C-120&quot; &quot;3C-185&quot; &quot;3C-213&quot;
-[17] &quot;3C-86&quot;  &quot;3C-94&quot;  &quot;3D-255&quot; &quot;4A-124&quot; &quot;4A-168&quot; &quot;4B-594&quot; &quot;4B-596&quot; &quot;4B-680&quot;
-[25] &quot;4D-66&quot;  &quot;5B-30&quot;  &quot;5B-32&quot;  &quot;5B-88&quot;  &quot;5C-&quot;    &quot;5C-683&quot; &quot;6A-171&quot; &quot;6A-685&quot;
-[33] &quot;6B-120&quot; &quot;6B-243&quot; &quot;6B-266&quot; &quot;6C-271&quot; &quot;6C-447&quot; &quot;6D-18&quot;  &quot;6D-86&quot; </code></pre>
+<pre class="r"><code>sort(setdiff(cen20[cen20$notes != &quot;tagnf&quot;,]$plantid, cen19$plantid))</code></pre>
+<pre><code> [1] &quot;1B199_20&quot; &quot;1B99&quot;     &quot;1C59_20&quot;  &quot;1D13_20&quot;  &quot;1D2_20&quot;   &quot;1D39_20&quot; 
+ [7] &quot;1D5_20&quot;   &quot;2A689_20&quot; &quot;2B136_20&quot; &quot;2B171_20&quot; &quot;2B195_20&quot; &quot;2B196_20&quot;
+[13] &quot;2C256_20&quot; &quot;2C275_20&quot; &quot;2C284_20&quot; &quot;2C291_20&quot; &quot;2C294_20&quot; &quot;2C297_20&quot;
+[19] &quot;2D192_20&quot; &quot;2D196_20&quot; &quot;2D197_20&quot; &quot;2D216_20&quot; &quot;3A126_20&quot; &quot;3A634_20&quot;
+[25] &quot;3A645_20&quot; &quot;3A647&quot;    &quot;3C120_20&quot; &quot;3C136_20&quot; &quot;3C147_20&quot; &quot;3C98&quot;    
+[31] &quot;3D856_20&quot; &quot;3D858_20&quot; &quot;4A104_20&quot; &quot;4A74_20&quot;  &quot;4A96_20&quot;  &quot;4B165_20&quot;
+[37] &quot;4B168_20&quot; &quot;4B170_20&quot; &quot;4B171_20&quot; &quot;4B179_20&quot; &quot;4B201_20&quot; &quot;4B203_20&quot;
+[43] &quot;4B204_20&quot; &quot;4C28_20&quot;  &quot;4D66&quot;     &quot;5B88_20&quot;  &quot;5D251_20&quot; &quot;5D254_20&quot;
+[49] &quot;5D269_20&quot; &quot;5D270_20&quot; &quot;5D277_20&quot; &quot;5D288_20&quot; &quot;6B17_20&quot;  &quot;6C110_20&quot;
+[55] &quot;6C447_20&quot; &quot;6C82_20&quot;  &quot;6D18_20&quot;  &quot;6D86_20&quot; </code></pre>
 </div>
 <div id="status-transitions" class="section level2">
 <h2>Status transitions</h2>
 <p>What did plants of a given status in 2019 look like now in 2020?</p>
 <pre class="r"><code>with(cen, table(`2019`=paste(status_19), `2020`=paste(status_20)))</code></pre>
 <pre><code>            2020
-2019         dead_nf flowering  NA recheck tagnf vegetative
-  dead_nf        267        18  22       1    15         44
-  flowering      113        14   7       1     7         16
-  NA              19        15  38       1     1          4
-  recheck          9         0   0       0     3          1
-  tagnf           13         6  15       0    11          4
-  vegetative     155       162  23       4    39        170</code></pre>
+2019         dead_nf flowering  NA tagnf vegetative
+  dead_nf        308         0  43     2          0
+  flowering      160        14   6     0         20
+  NA              54         1   0     4          3
+  tagnf            8         0   8     9          0
+  vegetative     122       207  14    34        191</code></pre>
 <pre class="r"><code>ggplot(filter(cen, status_19 %in% status_ok, status_20 %in% status_ok), aes(x=status_19, fill=status_20)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(fill=&quot;2020 Status&quot;, y=&quot;Proportion&quot;, x=&quot;2019 Status&quot;)</code></pre>
 <p><img src="images/transitions-1.png" width="672" /></p>
 </div>
@@ -1347,6 +1526,23 @@ ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_til
 <p><img src="images/leaftraits-3.png" width="672" /></p>
 <pre class="r"><code>ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Trichome density (/cm2)&quot;, color=&quot;Snowmelt&quot;) + facet_wrap(vars(year, round), nrow=1)</code></pre>
 <p><img src="images/leaftraits-4.png" width="672" /></p>
+</div>
+<div id="physiology-traits" class="section level1">
+<h1>Physiology traits</h1>
+<pre class="r"><code># plot all the LICOR variables by date
+licor_date_pal &lt;- sample(rainbow(nlevels(factor(licor$date))))
+licor %&gt;% pivot_longer(Photo:StableF) %&gt;% mutate(index=row_number()) %&gt;% filter(!name %in% c(&quot;Area&quot;,&quot;BLC_1&quot;,&quot;BLCond&quot;,&quot;StmRat&quot;)) %&gt;% 
+  ggplot(aes(x=index, y= value, color=factor(date), shape=year)) + facet_wrap(vars(name), scales=&quot;free_y&quot;, ncol=4) + geom_point() + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark() + labs(x=&quot;Measurement&quot;, y=&quot;&quot;, shape=&quot;Year&quot;)</code></pre>
+<p><img src="images/licor_all-1.png" width="1152" /></p>
+<pre class="r"><code>licor %&gt;% ggplot(aes(x=Cond, y= Photo, color=factor(date), linetype=year, shape=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_linetype_manual(values=c(3,1,4)) + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark()</code></pre>
+<p><img src="images/licor-1.png" width="672" /></p>
+<pre class="r"><code>licor %&gt;% ggplot(aes(y=Photo/Cond, x=factor(date), color=year)) + geom_boxplot(size=1.5) + 
+  scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=year_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()</code></pre>
+<p><img src="images/licor-2.png" width="672" /></p>
+<pre class="r"><code>licor %&gt;% left_join(treatments)%&gt;% ggplot(aes(y=Photo/Cond, x=factor(date), color=water)) + 
+  geom_boxplot(position=position_dodge2(preserve=&quot;single&quot;)) + 
+  scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()</code></pre>
+<p><img src="images/licor-3.png" width="672" /></p>
 </div>
 <div id="floral-traits" class="section level1">
 <h1>Floral traits</h1>
@@ -1398,213 +1594,213 @@ for(tr in traits) {
 <pre><code>corolla_length 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                 Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
-year            79.898  39.949     2 50.123 22.2232 1.231e-07 ***
-snow             0.313   0.313     1  6.733  0.1738   0.68969    
-water            9.865   4.933     2 49.183  2.7439   0.07417 .  
-year:snow        0.218   0.109     2 51.925  0.0605   0.94136    
-year:water       4.777   1.194     4 49.183  0.6644   0.61972    
-snow:water       0.518   0.259     2 49.183  0.1440   0.86629    
-year:snow:water  3.254   0.813     4 49.183  0.4525   0.77005    
+year            80.486  40.243     2 50.117 22.4752 1.078e-07 ***
+snow             0.368   0.368     1  6.751  0.2054   0.66463    
+water           10.311   5.156     2 49.160  2.8793   0.06569 .  
+year:snow        0.160   0.080     2 51.898  0.0447   0.95633    
+year:water       4.781   1.195     4 49.160  0.6675   0.61760    
+snow:water       0.438   0.219     2 49.160  0.1223   0.88517    
+year:snow:water  3.029   0.757     4 49.160  0.4230   0.79129    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-2.png" width="672" /></p>
 <pre><code>corolla_width 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                  Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
-year            2.99723 1.49862     2 49.546 56.9010 1.462e-13 ***
-snow            0.00342 0.00342     1  7.538  0.1300 0.7283296    
-water           0.50804 0.25402     2 47.896  9.6448 0.0003021 ***
-year:snow       0.01566 0.00783     2 50.143  0.2974 0.7440619    
-year:water      0.14078 0.03520     4 47.896  1.3363 0.2701610    
-snow:water      0.02453 0.01226     2 47.896  0.4656 0.6305408    
-year:snow:water 0.19365 0.04841     4 47.896  1.8382 0.1369561    
+year            2.97851 1.48926     2 49.620 57.1811 1.319e-13 ***
+snow            0.00336 0.00336     1  7.749  0.1290 0.7290998    
+water           0.49738 0.24869     2 47.993  9.5486 0.0003228 ***
+year:snow       0.01519 0.00760     2 50.175  0.2917 0.7482836    
+year:water      0.13274 0.03318     4 47.993  1.2741 0.2932198    
+snow:water      0.02111 0.01055     2 47.993  0.4052 0.6691094    
+year:snow:water 0.18683 0.04671     4 47.993  1.7934 0.1456157    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-3.png" width="672" /></p>
 <pre><code>style_length 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                 Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
-year            69.663  34.832     2 50.026 20.5058 3.133e-07 ***
-snow             0.153   0.153     1  6.477  0.0898    0.7738    
-water            7.542   3.771     2 49.084  2.2200    0.1194    
-year:snow        0.049   0.024     2 51.928  0.0143    0.9858    
-year:water       5.425   1.356     4 49.084  0.7985    0.5320    
-snow:water       1.564   0.782     2 49.084  0.4604    0.6338    
-year:snow:water 10.740   2.685     4 49.084  1.5807    0.1943    
+year            69.658  34.829     2 50.026 20.5025 3.139e-07 ***
+snow             0.177   0.177     1  6.510  0.1043    0.7568    
+water            7.373   3.687     2 49.067  2.1702    0.1250    
+year:snow        0.038   0.019     2 51.903  0.0111    0.9890    
+year:water       5.116   1.279     4 49.067  0.7529    0.5609    
+snow:water       1.394   0.697     2 49.067  0.4102    0.6658    
+year:snow:water 10.907   2.727     4 49.067  1.6052    0.1879    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-4.png" width="672" /></p>
 <pre><code>sepal_width 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                   Sum Sq  Mean Sq NumDF  DenDF F value   Pr(&gt;F)   
-year            0.000199 0.000199     1 34.077  0.0241 0.877513   
-snow            0.000888 0.000888     1 11.500  0.1074 0.748998   
-water           0.128507 0.064253     2 31.783  7.7706 0.001789 **
-year:snow       0.016125 0.016125     1 34.183  1.9501 0.171583   
-year:water      0.095841 0.047920     2 31.783  5.7953 0.007148 **
-snow:water      0.003098 0.001549     2 31.783  0.1873 0.830090   
-year:snow:water 0.034221 0.017110     2 31.783  2.0693 0.142956   
+year            0.000135 0.000135     1 34.092  0.0160 0.899953   
+snow            0.000334 0.000334     1 11.039  0.0398 0.845554   
+water           0.126451 0.063225     2 31.852  7.5330 0.002095 **
+year:snow       0.016055 0.016055     1 34.371  1.9129 0.175560   
+year:water      0.094030 0.047015     2 31.852  5.6016 0.008231 **
+snow:water      0.003409 0.001705     2 31.852  0.2031 0.817256   
+year:snow:water 0.030890 0.015445     2 31.852  1.8402 0.175266   
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-5.png" width="672" /></p>
 <pre><code>nectar_24_h_ul 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                 Sum Sq Mean Sq NumDF DenDF F value   Pr(&gt;F)   
-year            4.8137 2.40683     2    54  6.7666 0.002386 **
-snow            1.5321 1.53213     1    54  4.3075 0.042722 * 
-water           2.3693 1.18467     2    54  3.3306 0.043255 * 
-year:snow       1.1263 0.56316     2    54  1.5833 0.214682   
-year:water      0.4961 0.12403     4    54  0.3487 0.843800   
-snow:water      0.2006 0.10030     2    54  0.2820 0.755398   
-year:snow:water 1.1010 0.27524     4    54  0.7738 0.547040   
+year            4.9471 2.47354     2    54  7.0830 0.001855 **
+snow            1.4788 1.47884     1    54  4.2346 0.044448 * 
+water           2.1953 1.09766     2    54  3.1431 0.051137 . 
+year:snow       1.1558 0.57790     2    54  1.6548 0.200675   
+year:water      0.4683 0.11707     4    54  0.3352 0.853040   
+snow:water      0.2368 0.11839     2    54  0.3390 0.713978   
+year:snow:water 1.1978 0.29945     4    54  0.8575 0.495410   
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-6.png" width="672" /></p>
 <pre><code>nectar_conc 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                 Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
-year            626.29 313.143     2 51.355 32.9352 6.255e-10 ***
-snow              8.03   8.028     1 12.023  0.8444  0.376216    
-water           123.73  61.863     2 49.819  6.5065  0.003087 ** 
-year:snow        11.87   5.934     2 51.246  0.6241  0.539760    
-year:water       14.38   3.594     4 49.819  0.3780  0.823275    
-snow:water       29.12  14.562     2 49.819  1.5315  0.226211    
-year:snow:water  62.30  15.574     4 49.819  1.6380  0.179412    
+year            617.35 308.674     2 51.355 32.2902 8.309e-10 ***
+snow              8.55   8.548     1 12.061  0.8942  0.362894    
+water           125.71  62.853     2 49.820  6.5750  0.002924 ** 
+year:snow        12.89   6.444     2 51.241  0.6741  0.514064    
+year:water       15.35   3.837     4 49.820  0.4013  0.806747    
+snow:water       28.54  14.269     2 49.820  1.4927  0.234655    
+year:snow:water  61.69  15.423     4 49.820  1.6134  0.185555    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-7.png" width="672" /></p>
 <pre><code>nectar_sugar_24_h_mg 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
-                Sum Sq Mean Sq NumDF DenDF F value    Pr(&gt;F)    
-year            4839.6 2419.78     2    54  8.0412 0.0008774 ***
-snow             499.7  499.67     1    54  1.6605 0.2030319    
-water            349.0  174.49     2    54  0.5799 0.5634262    
-year:snow        918.3  459.13     2    54  1.5257 0.2266851    
-year:water      1041.9  260.47     4    54  0.8656 0.4905963    
-snow:water       307.7  153.83     2    54  0.5112 0.6026421    
-year:snow:water 1223.4  305.86     4    54  1.0164 0.4071820    
+                Sum Sq Mean Sq NumDF DenDF F value   Pr(&gt;F)    
+year            4920.1 2460.04     2    54  8.3337 0.000701 ***
+snow             444.5  444.49     1    54  1.5058 0.225111    
+water            257.2  128.60     2    54  0.4357 0.649097    
+year:snow        969.6  484.80     2    54  1.6423 0.203045    
+year:water       914.7  228.67     4    54  0.7747 0.546510    
+snow:water       321.9  160.95     2    54  0.5452 0.582865    
+year:snow:water 1395.6  348.90     4    54  1.1819 0.329163    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-8.png" width="672" /></p>
 <pre><code>height_cm 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                  Sum Sq Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
-year            1030.92  515.46     2 50.113 33.3530 6.168e-10 ***
-snow              89.50   89.50     1  7.192  5.7912    0.0461 *  
-water             11.18    5.59     2 48.794  0.3618    0.6982    
-year:snow         49.03   24.51     2 51.629  1.5862    0.2145    
-year:water        18.28    4.57     4 48.793  0.2958    0.8793    
-snow:water        37.24   18.62     2 48.794  1.2047    0.3085    
-year:snow:water   98.95   24.74     4 48.793  1.6006    0.1892    
+year            1030.80  515.40     2 50.140 31.9417 1.134e-09 ***
+snow              94.02   94.02     1  7.140  5.8268   0.04584 *  
+water             13.23    6.62     2 48.866  0.4101   0.66586    
+year:snow         50.86   25.43     2 51.754  1.5762   0.21653    
+year:water        19.60    4.90     4 48.865  0.3037   0.87409    
+snow:water        28.42   14.21     2 48.866  0.8807   0.42096    
+year:snow:water   97.39   24.35     4 48.865  1.5089   0.21419    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-9.png" width="672" /></p>
 <pre><code>open 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                  Sum Sq Mean Sq NumDF DenDF F value    Pr(&gt;F)    
-year            290.652 145.326     2    54 40.3515 1.912e-11 ***
-snow              1.436   1.436     1    54  0.3986    0.5305    
-water             1.578   0.789     2    54  0.2191    0.8040    
-year:snow        13.486   6.743     2    54  1.8723    0.1636    
-year:water        2.166   0.542     4    54  0.1504    0.9620    
-snow:water        0.303   0.152     2    54  0.0421    0.9588    
-year:snow:water   0.785   0.196     4    54  0.0545    0.9943    
+year            286.043 143.021     2    54 39.4720 2.726e-11 ***
+snow              0.923   0.923     1    54  0.2548    0.6157    
+water             2.232   1.116     2    54  0.3080    0.7362    
+year:snow        10.678   5.339     2    54  1.4735    0.2382    
+year:water        2.885   0.721     4    54  0.1990    0.9378    
+snow:water        0.202   0.101     2    54  0.0279    0.9725    
+year:snow:water   0.695   0.174     4    54  0.0479    0.9955    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-10.png" width="672" /></p>
 <pre><code>seeds_per_fruit 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                 Sum Sq Mean Sq NumDF DenDF F value    Pr(&gt;F)    
-year            47.745 23.8727     2    54 17.3193 1.545e-06 ***
-snow             0.861  0.8605     1    54  0.6243   0.43292    
-water            2.964  1.4821     2    54  1.0753   0.34840    
-year:snow        4.883  2.4416     2    54  1.7713   0.17985    
-year:water      14.388  3.5969     4    54  2.6095   0.04551 *  
-snow:water       9.591  4.7954     2    54  3.4790   0.03791 *  
-year:snow:water 13.992  3.4979     4    54  2.5377   0.05037 .  
+year            47.662 23.8312     2    54 17.2745 1.587e-06 ***
+snow             0.847  0.8470     1    54  0.6140   0.43673    
+water            2.936  1.4682     2    54  1.0643   0.35210    
+year:snow        4.885  2.4427     2    54  1.7706   0.17996    
+year:water      14.386  3.5965     4    54  2.6070   0.04567 *  
+snow:water       9.605  4.8026     2    54  3.4813   0.03784 *  
+year:snow:water 13.921  3.4801     4    54  2.5226   0.05145 .  
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-11.png" width="672" /></p>
 <pre><code>seeds_est 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                 Sum Sq Mean Sq NumDF  DenDF F value   Pr(&gt;F)   
-year             31842 15921.1     2 50.981  6.0998 0.004216 **
-snow              1185  1184.7     1  6.601  0.4539 0.523365   
-water             1265   632.6     2 49.774  0.2424 0.785682   
-year:snow        32253 16126.7     2 53.020  6.1785 0.003872 **
-year:water       16178  4044.6     4 49.774  1.5496 0.202402   
-snow:water        5441  2720.6     2 49.774  1.0423 0.360199   
-year:snow:water   5715  1428.7     4 49.774  0.5474 0.701760   
+year             29610 14804.8     2 50.980  5.6386 0.006134 **
+snow              1166  1165.8     1  6.614  0.4440 0.527735   
+water             1223   611.6     2 49.766  0.2329 0.793071   
+year:snow        32101 16050.5     2 53.000  6.1130 0.004085 **
+year:water       16375  4093.7     4 49.766  1.5591 0.199792   
+snow:water        5263  2631.3     2 49.766  1.0022 0.374368   
+year:snow:water   5675  1418.7     4 49.766  0.5403 0.706779   
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-12.png" width="672" /></p>
 <pre><code>fruits_nonaborted 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                  Sum Sq Mean Sq NumDF  DenDF F value  Pr(&gt;F)  
-year             525.56  262.78     2 51.219  1.7287 0.18772  
-snow             114.26  114.26     1  7.006  0.7516 0.41467  
-water            318.78  159.39     2 50.139  1.0485 0.35801  
-year:snow       1064.84  532.42     2 53.218  3.5025 0.03724 *
-year:water       679.82  169.95     4 50.139  1.1180 0.35851  
-snow:water       298.44  149.22     2 50.139  0.9816 0.38179  
-year:snow:water  461.98  115.49     4 50.139  0.7598 0.55640  
+year             523.75  261.88     2 51.218  1.7256 0.18826  
+snow             117.79  117.79     1  6.994  0.7762 0.40756  
+water            318.93  159.46     2 50.141  1.0508 0.35724  
+year:snow       1062.36  531.18     2 53.227  3.5002 0.03731 *
+year:water       682.08  170.52     4 50.141  1.1236 0.35595  
+snow:water       301.15  150.57     2 50.141  0.9922 0.37793  
+year:snow:water  459.13  114.78     4 50.141  0.7564 0.55860  
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-13.png" width="672" /></p>
 <pre><code>flowers_est 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
-                 Sum Sq Mean Sq NumDF  DenDF F value Pr(&gt;F)  
-year             537.06  268.53     2 51.178  0.9135 0.4075  
-snow              52.97   52.97     1  6.825  0.1802 0.6843  
-water            280.97  140.49     2 50.119  0.4779 0.6229  
-year:snow       1454.98  727.49     2 53.288  2.4749 0.0938 .
-year:water      1761.08  440.27     4 50.119  1.4978 0.2170  
-snow:water       926.05  463.03     2 50.119  1.5752 0.2170  
-year:snow:water  811.55  202.89     4 50.119  0.6902 0.6022  
+                 Sum Sq Mean Sq NumDF  DenDF F value  Pr(&gt;F)  
+year             419.15  209.57     2 51.178  0.7147 0.49416  
+snow              54.97   54.97     1  6.865  0.1875 0.67832  
+water            296.11  148.05     2 50.103  0.5049 0.60660  
+year:snow       1428.25  714.12     2 53.254  2.4353 0.09726 .
+year:water      1780.40  445.10     4 50.103  1.5179 0.21117  
+snow:water       902.68  451.34     2 50.103  1.5392 0.22453  
+year:snow:water  799.45  199.86     4 50.103  0.6816 0.60800  
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-14.png" width="672" /></p>
 <pre><code>prop_infested 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                   Sum Sq  Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
-year            0.138751 0.069376     2 51.212 11.5259 7.363e-05 ***
-snow            0.013793 0.013793     1  8.663  2.2916   0.16567    
-water           0.008286 0.004143     2 49.779  0.6883   0.50716    
-year:snow       0.043785 0.021892     2 51.934  3.6372   0.03324 *  
-year:water      0.010965 0.002741     4 49.779  0.4554   0.76798    
-snow:water      0.014154 0.007077     2 49.779  1.1758   0.31699    
-year:snow:water 0.032622 0.008155     4 49.779  1.3549   0.26298    
+year            0.137509 0.068754     2 51.211 11.3766 8.163e-05 ***
+snow            0.013311 0.013311     1  8.646  2.2025   0.17330    
+water           0.008804 0.004402     2 49.779  0.7284   0.48776    
+year:snow       0.044599 0.022299     2 51.940  3.6898   0.03174 *  
+year:water      0.010721 0.002680     4 49.779  0.4435   0.77656    
+snow:water      0.013255 0.006628     2 49.779  1.0967   0.34192    
+year:snow:water 0.032184 0.008046     4 49.779  1.3313   0.27136    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-15.png" width="672" /></p>
 <pre><code>prop_aborted 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
-                  Sum Sq  Mean Sq NumDF  DenDF F value    Pr(&gt;F)    
-year            0.208158 0.104079     2 51.269  7.9698 0.0009686 ***
-snow            0.028869 0.028869     1  8.891  2.2106 0.1716417    
-water           0.002983 0.001492     2 49.854  0.1142 0.8922943    
-year:snow       0.018479 0.009240     2 51.944  0.7075 0.4975495    
-year:water      0.023780 0.005945     4 49.854  0.4552 0.7681164    
-snow:water      0.036559 0.018280     2 49.854  1.3997 0.2561839    
-year:snow:water 0.032140 0.008035     4 49.854  0.6153 0.6536476    
+                  Sum Sq  Mean Sq NumDF  DenDF F value   Pr(&gt;F)    
+year            0.209402 0.104701     2 51.270  8.0460 0.000914 ***
+snow            0.028540 0.028540     1  8.936  2.1932 0.172998    
+water           0.002998 0.001499     2 49.851  0.1152 0.891422    
+year:snow       0.018853 0.009426     2 51.926  0.7244 0.489451    
+year:water      0.023589 0.005897     4 49.851  0.4532 0.769584    
+snow:water      0.036104 0.018052     2 49.851  1.3872 0.259236    
+year:snow:water 0.032171 0.008043     4 49.851  0.6181 0.651701    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><img src="images/morphology_split-16.png" width="672" /></p>
 <pre><code>seeds_per_flower 
 Type III Analysis of Variance Table with Satterthwaite&#39;s method
                  Sum Sq Mean Sq NumDF DenDF F value    Pr(&gt;F)    
-year            11.5257  5.7628     2    54 10.4487 0.0001459 ***
-snow             1.6238  1.6238     1    54  2.9441 0.0919251 .  
-water            0.6098  0.3049     2    54  0.5528 0.5785561    
-year:snow        3.1510  1.5755     2    54  2.8565 0.0661856 .  
-year:water       3.2780  0.8195     4    54  1.4858 0.2193447    
-snow:water       3.1762  1.5881     2    54  2.8794 0.0648327 .  
-year:snow:water  0.9513  0.2378     4    54  0.4312 0.7854706    
+year            12.1584  6.0792     2    54 11.3903 7.462e-05 ***
+snow             1.3388  1.3388     1    54  2.5085   0.11907    
+water            0.7925  0.3963     2    54  0.7425   0.48073    
+year:snow        3.4136  1.7068     2    54  3.1979   0.04869 *  
+year:water       3.1655  0.7914     4    54  1.4828   0.22026    
+snow:water       2.8366  1.4183     2    54  2.6574   0.07929 .  
+year:snow:water  1.0479  0.2620     4    54  0.4908   0.74243    
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <pre class="r"><code>mt.mod.tests &lt;- map_dfr(mt.mod.test, tidy, .id=&quot;trait&quot;)
-mt.mod.tests %&gt;% print_anova_table</code></pre>
-<table>
+mt.mod.tests %&gt;% print_anova_table(mt.mod)</code></pre>
+<table style="width:100%;">
 <colgroup>
 <col width="6%" />
 <col width="5%" />
@@ -1648,136 +1844,136 @@ mt.mod.tests %&gt;% print_anova_table</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">1.2 x 10<sup>-7</sup></td>
-<td align="left">1.5 x 10<sup>-13</sup></td>
+<td align="left">1.1 x 10<sup>-7</sup></td>
+<td align="left">1.3 x 10<sup>-13</sup></td>
 <td align="left">3.1 x 10<sup>-7</sup></td>
-<td align="left">0.88</td>
-<td align="left">2.4 x 10<sup>-3</sup></td>
-<td align="left">6.3 x 10<sup>-10</sup></td>
-<td align="left">8.8 x 10<sup>-4</sup></td>
-<td align="left">6.2 x 10<sup>-10</sup></td>
-<td align="left">1.9 x 10<sup>-11</sup></td>
-<td align="left">1.5 x 10<sup>-6</sup></td>
-<td align="left">4.2 x 10<sup>-3</sup></td>
+<td align="left">0.90</td>
+<td align="left">1.9 x 10<sup>-3</sup></td>
+<td align="left">8.3 x 10<sup>-10</sup></td>
+<td align="left">7 x 10<sup>-4</sup></td>
+<td align="left">1.1 x 10<sup>-9</sup></td>
+<td align="left">2.7 x 10<sup>-11</sup></td>
+<td align="left">1.6 x 10<sup>-6</sup></td>
+<td align="left">6.1 x 10<sup>-3</sup></td>
 <td align="left">0.19</td>
-<td align="left">0.41</td>
-<td align="left">7.4 x 10<sup>-5</sup></td>
-<td align="left">9.7 x 10<sup>-4</sup></td>
-<td align="left">1.5 x 10<sup>-4</sup></td>
+<td align="left">0.49</td>
+<td align="left">8.2 x 10<sup>-5</sup></td>
+<td align="left">9.1 x 10<sup>-4</sup></td>
+<td align="left">7.5 x 10<sup>-5</sup></td>
 </tr>
 <tr class="even">
 <td align="left">snow</td>
-<td align="left">0.69</td>
+<td align="left">0.66</td>
 <td align="left">0.73</td>
-<td align="left">0.77</td>
-<td align="left">0.75</td>
-<td align="left">0.043</td>
-<td align="left">0.38</td>
-<td align="left">0.20</td>
+<td align="left">0.76</td>
+<td align="left">0.85</td>
+<td align="left">0.044</td>
+<td align="left">0.36</td>
+<td align="left">0.23</td>
 <td align="left">0.046</td>
+<td align="left">0.62</td>
+<td align="left">0.44</td>
 <td align="left">0.53</td>
-<td align="left">0.43</td>
-<td align="left">0.52</td>
 <td align="left">0.41</td>
 <td align="left">0.68</td>
 <td align="left">0.17</td>
 <td align="left">0.17</td>
-<td align="left">0.092</td>
+<td align="left">0.12</td>
 </tr>
 <tr class="odd">
 <td align="left">water</td>
-<td align="left">0.074</td>
-<td align="left">3 x 10<sup>-4</sup></td>
+<td align="left">0.066</td>
+<td align="left">3.2 x 10<sup>-4</sup></td>
 <td align="left">0.12</td>
-<td align="left">1.8 x 10<sup>-3</sup></td>
-<td align="left">0.043</td>
-<td align="left">3.1 x 10<sup>-3</sup></td>
-<td align="left">0.56</td>
-<td align="left">0.70</td>
-<td align="left">0.80</td>
+<td align="left">2.1 x 10<sup>-3</sup></td>
+<td align="left">0.051</td>
+<td align="left">2.9 x 10<sup>-3</sup></td>
+<td align="left">0.65</td>
+<td align="left">0.67</td>
+<td align="left">0.74</td>
 <td align="left">0.35</td>
 <td align="left">0.79</td>
 <td align="left">0.36</td>
-<td align="left">0.62</td>
-<td align="left">0.51</td>
+<td align="left">0.61</td>
+<td align="left">0.49</td>
 <td align="left">0.89</td>
-<td align="left">0.58</td>
+<td align="left">0.48</td>
 </tr>
 <tr class="even">
 <td align="left">year:snow</td>
-<td align="left">0.94</td>
-<td align="left">0.74</td>
+<td align="left">0.96</td>
+<td align="left">0.75</td>
 <td align="left">0.99</td>
-<td align="left">0.17</td>
-<td align="left">0.21</td>
-<td align="left">0.54</td>
-<td align="left">0.23</td>
-<td align="left">0.21</td>
-<td align="left">0.16</td>
 <td align="left">0.18</td>
-<td align="left">3.9 x 10<sup>-3</sup></td>
+<td align="left">0.20</td>
+<td align="left">0.51</td>
+<td align="left">0.20</td>
+<td align="left">0.22</td>
+<td align="left">0.24</td>
+<td align="left">0.18</td>
+<td align="left">4.1 x 10<sup>-3</sup></td>
 <td align="left">0.037</td>
-<td align="left">0.094</td>
-<td align="left">0.033</td>
-<td align="left">0.50</td>
-<td align="left">0.066</td>
+<td align="left">0.097</td>
+<td align="left">0.032</td>
+<td align="left">0.49</td>
+<td align="left">0.049</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
 <td align="left">0.62</td>
-<td align="left">0.27</td>
-<td align="left">0.53</td>
-<td align="left">7.1 x 10<sup>-3</sup></td>
-<td align="left">0.84</td>
-<td align="left">0.82</td>
-<td align="left">0.49</td>
-<td align="left">0.88</td>
-<td align="left">0.96</td>
+<td align="left">0.29</td>
+<td align="left">0.56</td>
+<td align="left">8.2 x 10<sup>-3</sup></td>
+<td align="left">0.85</td>
+<td align="left">0.81</td>
+<td align="left">0.55</td>
+<td align="left">0.87</td>
+<td align="left">0.94</td>
 <td align="left">0.046</td>
 <td align="left">0.20</td>
 <td align="left">0.36</td>
-<td align="left">0.22</td>
-<td align="left">0.77</td>
+<td align="left">0.21</td>
+<td align="left">0.78</td>
 <td align="left">0.77</td>
 <td align="left">0.22</td>
 </tr>
 <tr class="even">
 <td align="left">snow:water</td>
-<td align="left">0.87</td>
-<td align="left">0.63</td>
-<td align="left">0.63</td>
-<td align="left">0.83</td>
-<td align="left">0.76</td>
+<td align="left">0.89</td>
+<td align="left">0.67</td>
+<td align="left">0.67</td>
+<td align="left">0.82</td>
+<td align="left">0.71</td>
 <td align="left">0.23</td>
-<td align="left">0.60</td>
-<td align="left">0.31</td>
-<td align="left">0.96</td>
+<td align="left">0.58</td>
+<td align="left">0.42</td>
+<td align="left">0.97</td>
 <td align="left">0.038</td>
-<td align="left">0.36</td>
+<td align="left">0.37</td>
 <td align="left">0.38</td>
 <td align="left">0.22</td>
-<td align="left">0.32</td>
+<td align="left">0.34</td>
 <td align="left">0.26</td>
-<td align="left">0.065</td>
+<td align="left">0.079</td>
 </tr>
 <tr class="odd">
 <td align="left">year:snow:water</td>
-<td align="left">0.77</td>
-<td align="left">0.14</td>
-<td align="left">0.19</td>
-<td align="left">0.14</td>
-<td align="left">0.55</td>
-<td align="left">0.18</td>
-<td align="left">0.41</td>
-<td align="left">0.19</td>
-<td align="left">0.99</td>
-<td align="left">5 x 10<sup>-2</sup></td>
-<td align="left">0.70</td>
-<td align="left">0.56</td>
-<td align="left">0.60</td>
-<td align="left">0.26</td>
-<td align="left">0.65</td>
 <td align="left">0.79</td>
+<td align="left">0.15</td>
+<td align="left">0.19</td>
+<td align="left">0.18</td>
+<td align="left">0.50</td>
+<td align="left">0.19</td>
+<td align="left">0.33</td>
+<td align="left">0.21</td>
+<td align="left">1.00</td>
+<td align="left">0.051</td>
+<td align="left">0.71</td>
+<td align="left">0.56</td>
+<td align="left">0.61</td>
+<td align="left">0.27</td>
+<td align="left">0.65</td>
+<td align="left">0.74</td>
 </tr>
 <tr class="even">
 <td align="left">Singular?</td>
@@ -1800,6 +1996,248 @@ mt.mod.tests %&gt;% print_anova_table</code></pre>
 </tr>
 </tbody>
 </table>
+<div id="compensation-of-water-addition-for-early-snowmelt" class="section level4">
+<h4>Compensation of water addition for early snowmelt</h4>
+<pre class="r"><code>#compare early snowmelt + addition vs. normal snowmelt + control
+emm.mod &lt;- mt.mod.comb &lt;- list()
+mnps.subplot$snowwater &lt;- paste0(mnps.subplot$snow, mnps.subplot$water)
+
+for(tr in traits) {
+    emm.mod[[tr]] &lt;- emmeans(mt.mod[[tr]], ~ water * snow, var=tr)
+    mt.mod.comb[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ snowwater + (1|plot), data=mnps.subplot)# drop year??
+    print(tr)
+    print(summary(glht(mt.mod.comb[[tr]] , linfct = mcp(snowwater = c(&quot;EarlyAddition - NormalControl = 0&quot;)))))
+}</code></pre>
+<pre><code>[1] &quot;corolla_length&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0   0.6356     0.7231   0.879    0.379
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;corolla_width&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0  0.09428    0.11750   0.802    0.422
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;style_length&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0   0.4187     0.6968   0.601    0.548
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;sepal_width&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0  0.06235    0.06067   1.028    0.304
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;nectar_24_h_ul&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0  0.06172    0.26822    0.23    0.818
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;nectar_conc&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0   -1.088      2.105  -0.517    0.605
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;nectar_sugar_24_h_mg&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0   -1.415      7.930  -0.178    0.858
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;height_cm&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)  
+EarlyAddition - NormalControl == 0   -5.341      2.740  -1.949   0.0513 .
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;open&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0   -1.130      1.238  -0.913    0.361
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;seeds_per_fruit&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0  -0.7524     0.6408  -1.174     0.24
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;seeds_est&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0   -15.33      26.14  -0.587    0.557
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;fruits_nonaborted&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0   -2.919      5.699  -0.512    0.608
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;flowers_est&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0     4.55       7.50   0.607    0.544
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;prop_infested&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)
+EarlyAddition - NormalControl == 0  0.05599    0.03906   1.434    0.152
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;prop_aborted&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)  
+EarlyAddition - NormalControl == 0  0.11278    0.05949   1.896    0.058 .
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+(Adjusted p values reported -- single-step method)
+
+[1] &quot;seeds_per_flower&quot;
+
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: lmer(formula = mnps.subplot[[tr]] ~ snowwater + (1 | plot), data = mnps.subplot)
+
+Linear Hypotheses:
+                                   Estimate Std. Error z value Pr(&gt;|z|)  
+EarlyAddition - NormalControl == 0  -0.8095     0.3672  -2.204   0.0275 *
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+(Adjusted p values reported -- single-step method)</code></pre>
+</div>
 </div>
 <div id="floral-plasticity-water-treatments-and-snowmelt-offset" class="section level3">
 <h3>Floral plasticity: water treatments and snowmelt offset</h3>
@@ -1832,7 +2270,7 @@ for(tr in traits) {
 }</code></pre>
 <p><img src="images/morphology_model-1.png" width="672" /><img src="images/morphology_model-2.png" width="672" /><img src="images/morphology_model-3.png" width="672" /><img src="images/morphology_model-4.png" width="672" /><img src="images/morphology_model-5.png" width="672" /><img src="images/morphology_model-6.png" width="672" /><img src="images/morphology_model-7.png" width="672" /><img src="images/morphology_model-8.png" width="672" /><img src="images/morphology_model-9.png" width="672" /><img src="images/morphology_model-10.png" width="672" /><img src="images/morphology_model-11.png" width="672" /><img src="images/morphology_model-12.png" width="672" /><img src="images/morphology_model-13.png" width="672" /><img src="images/morphology_model-14.png" width="672" /><img src="images/morphology_model-15.png" width="672" /><img src="images/morphology_model-16.png" width="672" /></p>
 <pre class="r"><code>mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
-mt.mod.subplot.tests %&gt;% print_anova_table</code></pre>
+mt.mod.subplot.tests %&gt;% print_anova_table(mt.mod.subplot)</code></pre>
 <table>
 <colgroup>
 <col width="8%" />
@@ -1877,147 +2315,147 @@ mt.mod.subplot.tests %&gt;% print_anova_table</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">5.1 x 10<sup>-5</sup></td>
-<td align="left">1.1 x 10<sup>-8</sup></td>
+<td align="left">4.5 x 10<sup>-5</sup></td>
+<td align="left">1 x 10<sup>-8</sup></td>
 <td align="left">2.5 x 10<sup>-6</sup></td>
-<td align="left">0.30</td>
-<td align="left">5.4 x 10<sup>-3</sup></td>
-<td align="left">1 x 10<sup>-5</sup></td>
-<td align="left">0.046</td>
-<td align="left">1.5 x 10<sup>-12</sup></td>
-<td align="left">2.9 x 10<sup>-11</sup></td>
-<td align="left">1.4 x 10<sup>-6</sup></td>
-<td align="left">5.6 x 10<sup>-5</sup></td>
+<td align="left">0.31</td>
+<td align="left">3.9 x 10<sup>-3</sup></td>
+<td align="left">1.4 x 10<sup>-5</sup></td>
+<td align="left">0.036</td>
+<td align="left">3.6 x 10<sup>-12</sup></td>
+<td align="left">5.1 x 10<sup>-11</sup></td>
+<td align="left">1.5 x 10<sup>-6</sup></td>
+<td align="left">7.7 x 10<sup>-5</sup></td>
 <td align="left">8.5 x 10<sup>-3</sup></td>
-<td align="left">0.67</td>
-<td align="left">0.16</td>
-<td align="left">1.2 x 10<sup>-3</sup></td>
-<td align="left">5.5 x 10<sup>-5</sup></td>
+<td align="left">0.77</td>
+<td align="left">0.17</td>
+<td align="left">1.1 x 10<sup>-3</sup></td>
+<td align="left">2.2 x 10<sup>-5</sup></td>
 </tr>
 <tr class="even">
 <td align="left">water</td>
-<td align="left">0.43</td>
-<td align="left">2.8 x 10<sup>-4</sup></td>
-<td align="left">0.51</td>
-<td align="left">0.032</td>
-<td align="left">0.21</td>
-<td align="left">6.6 x 10<sup>-3</sup></td>
-<td align="left">0.64</td>
-<td align="left">0.60</td>
-<td align="left">0.93</td>
-<td align="left">0.48</td>
-<td align="left">0.82</td>
+<td align="left">0.39</td>
+<td align="left">3.3 x 10<sup>-4</sup></td>
+<td align="left">0.53</td>
+<td align="left">0.033</td>
+<td align="left">0.26</td>
+<td align="left">6.2 x 10<sup>-3</sup></td>
 <td align="left">0.73</td>
+<td align="left">0.78</td>
+<td align="left">0.88</td>
+<td align="left">0.48</td>
 <td align="left">0.84</td>
-<td align="left">0.92</td>
+<td align="left">0.72</td>
+<td align="left">0.83</td>
+<td align="left">0.93</td>
 <td align="left">0.36</td>
-<td align="left">0.68</td>
+<td align="left">0.67</td>
 </tr>
 <tr class="odd">
 <td align="left">melt_offset</td>
-<td align="left">0.48</td>
-<td align="left">0.75</td>
-<td align="left">0.63</td>
-<td align="left">0.97</td>
-<td align="left">0.048</td>
-<td align="left">0.23</td>
-<td align="left">0.25</td>
-<td align="left">1.9 x 10<sup>-3</sup></td>
-<td align="left">0.64</td>
-<td align="left">0.44</td>
+<td align="left">0.47</td>
+<td align="left">0.76</td>
+<td align="left">0.62</td>
+<td align="left">0.96</td>
+<td align="left">0.051</td>
+<td align="left">0.21</td>
+<td align="left">0.28</td>
+<td align="left">2 x 10<sup>-3</sup></td>
+<td align="left">0.65</td>
+<td align="left">0.45</td>
 <td align="left">0.69</td>
-<td align="left">0.72</td>
+<td align="left">0.71</td>
 <td align="left">0.99</td>
-<td align="left">0.92</td>
+<td align="left">0.90</td>
 <td align="left">0.19</td>
-<td align="left">0.31</td>
+<td align="left">0.39</td>
 </tr>
 <tr class="even">
 <td align="left">year:water</td>
-<td align="left">0.83</td>
-<td align="left">0.073</td>
-<td align="left">0.86</td>
-<td align="left">0.089</td>
-<td align="left">0.99</td>
-<td align="left">0.65</td>
-<td align="left">0.98</td>
-<td align="left">0.19</td>
-<td align="left">0.94</td>
+<td align="left">0.85</td>
+<td align="left">0.084</td>
+<td align="left">0.85</td>
+<td align="left">9 x 10<sup>-2</sup></td>
+<td align="left">0.97</td>
+<td align="left">0.64</td>
+<td align="left">0.97</td>
+<td align="left">0.21</td>
+<td align="left">0.90</td>
 <td align="left">0.16</td>
 <td align="left">0.37</td>
 <td align="left">0.77</td>
+<td align="left">0.34</td>
 <td align="left">0.35</td>
-<td align="left">0.33</td>
-<td align="left">0.87</td>
-<td align="left">0.56</td>
+<td align="left">0.88</td>
+<td align="left">0.57</td>
 </tr>
 <tr class="odd">
 <td align="left">year:melt_offset</td>
-<td align="left">0.73</td>
+<td align="left">0.76</td>
 <td align="left">0.74</td>
-<td align="left">0.52</td>
-<td align="left">0.28</td>
+<td align="left">0.53</td>
+<td align="left">0.27</td>
+<td align="left">0.31</td>
+<td align="left">0.32</td>
+<td align="left">0.45</td>
+<td align="left">0.069</td>
 <td align="left">0.33</td>
-<td align="left">0.35</td>
-<td align="left">0.51</td>
-<td align="left">0.059</td>
-<td align="left">0.29</td>
 <td align="left">0.25</td>
-<td align="left">0.063</td>
+<td align="left">0.065</td>
 <td align="left">0.13</td>
 <td align="left">0.21</td>
-<td align="left">0.23</td>
-<td align="left">0.65</td>
-<td align="left">0.40</td>
+<td align="left">0.22</td>
+<td align="left">0.64</td>
+<td align="left">0.35</td>
 </tr>
 <tr class="even">
 <td align="left">water:melt_offset</td>
-<td align="left">0.62</td>
-<td align="left">0.16</td>
-<td align="left">0.26</td>
-<td align="left">0.82</td>
-<td align="left">0.75</td>
-<td align="left">0.21</td>
-<td align="left">0.76</td>
-<td align="left">0.19</td>
-<td align="left">0.98</td>
+<td align="left">0.64</td>
+<td align="left">0.17</td>
+<td align="left">0.27</td>
+<td align="left">0.86</td>
+<td align="left">0.68</td>
+<td align="left">0.22</td>
+<td align="left">0.71</td>
+<td align="left">0.27</td>
+<td align="left">0.97</td>
 <td align="left">0.18</td>
+<td align="left">0.62</td>
+<td align="left">0.62</td>
+<td align="left">0.35</td>
 <td align="left">0.60</td>
-<td align="left">0.63</td>
-<td align="left">0.34</td>
-<td align="left">0.57</td>
-<td align="left">0.30</td>
-<td align="left">0.14</td>
+<td align="left">0.31</td>
+<td align="left">0.15</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water:melt_offset</td>
-<td align="left">0.76</td>
-<td align="left">0.34</td>
-<td align="left">0.32</td>
-<td align="left">0.30</td>
-<td align="left">0.55</td>
-<td align="left">0.14</td>
-<td align="left">0.57</td>
-<td align="left">0.057</td>
+<td align="left">0.77</td>
+<td align="left">0.35</td>
+<td align="left">0.31</td>
+<td align="left">0.35</td>
+<td align="left">0.49</td>
+<td align="left">0.15</td>
+<td align="left">0.46</td>
+<td align="left">0.075</td>
 <td align="left">0.98</td>
-<td align="left">0.18</td>
-<td align="left">0.52</td>
+<td align="left">0.19</td>
+<td align="left">0.53</td>
 <td align="left">0.65</td>
-<td align="left">0.45</td>
+<td align="left">0.46</td>
 <td align="left">0.14</td>
 <td align="left">0.75</td>
-<td align="left">0.96</td>
+<td align="left">0.94</td>
 </tr>
 <tr class="even">
 <td align="left">Singular?</td>
 <td align="left">N</td>
 <td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
 <td align="left">Y</td>
 <td align="left">N</td>
 <td align="left">Y</td>
 <td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">Y</td>
 <td align="left">Y</td>
 <td align="left">Y</td>
 <td align="left">N</td>
@@ -2065,7 +2503,7 @@ for(tr in traits) {
 <p><img src="images/morphology_meltdate-1.png" width="672" /><img src="images/morphology_meltdate-2.png" width="672" /><img src="images/morphology_meltdate-3.png" width="672" /><img src="images/morphology_meltdate-4.png" width="672" /><img src="images/morphology_meltdate-5.png" width="672" /><img src="images/morphology_meltdate-6.png" width="672" /><img src="images/morphology_meltdate-7.png" width="672" /><img src="images/morphology_meltdate-8.png" width="672" /><img src="images/morphology_meltdate-9.png" width="672" /><img src="images/morphology_meltdate-10.png" width="672" /><img src="images/morphology_meltdate-11.png" width="672" /><img src="images/morphology_meltdate-12.png" width="672" /><img src="images/morphology_meltdate-13.png" width="672" /><img src="images/morphology_meltdate-14.png" width="672" /><img src="images/morphology_meltdate-15.png" width="672" /><img src="images/morphology_meltdate-16.png" width="672" /></p>
 <pre class="r"><code>mt.mod.subplot.coefs &lt;- map_dfr(mt.mod.subplot, tidy, .id=&quot;trait&quot;)
 mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
-mt.mod.subplot.tests %&gt;% print_anova_table</code></pre>
+mt.mod.subplot.tests %&gt;% print_anova_table(mt.mod.subplot)</code></pre>
 <table>
 <colgroup>
 <col width="9%" />
@@ -2077,10 +2515,10 @@ mt.mod.subplot.tests %&gt;% print_anova_table</code></pre>
 <col width="5%" />
 <col width="8%" />
 <col width="5%" />
-<col width="5%" />
+<col width="4%" />
 <col width="6%" />
 <col width="5%" />
-<col width="6%" />
+<col width="7%" />
 <col width="4%" />
 <col width="5%" />
 <col width="5%" />
@@ -2110,48 +2548,48 @@ mt.mod.subplot.tests %&gt;% print_anova_table</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">melt_date</td>
-<td align="left">4.5 x 10<sup>-5</sup></td>
-<td align="left">8.6 x 10<sup>-9</sup></td>
-<td align="left">6.1 x 10<sup>-9</sup></td>
-<td align="left">0.047</td>
-<td align="left">1.2 x 10<sup>-3</sup></td>
-<td align="left">4.1 x 10<sup>-12</sup></td>
-<td align="left">0.32</td>
-<td align="left">6.2 x 10<sup>-16</sup></td>
-<td align="left">3.9 x 10<sup>-17</sup></td>
-<td align="left">2.3 x 10<sup>-6</sup></td>
-<td align="left">4.4 x 10<sup>-5</sup></td>
-<td align="left">2.8 x 10<sup>-3</sup></td>
-<td align="left">0.68</td>
-<td align="left">5 x 10<sup>-3</sup></td>
+<td align="left">4.8 x 10<sup>-5</sup></td>
+<td align="left">6.3 x 10<sup>-9</sup></td>
+<td align="left">4.8 x 10<sup>-9</sup></td>
+<td align="left">0.046</td>
+<td align="left">1.3 x 10<sup>-3</sup></td>
+<td align="left">5 x 10<sup>-12</sup></td>
+<td align="left">0.31</td>
+<td align="left">1.1 x 10<sup>-15</sup></td>
+<td align="left">8 x 10<sup>-17</sup></td>
+<td align="left">2.2 x 10<sup>-6</sup></td>
+<td align="left">5.6 x 10<sup>-5</sup></td>
+<td align="left">2.9 x 10<sup>-3</sup></td>
+<td align="left">0.76</td>
+<td align="left">5.1 x 10<sup>-3</sup></td>
 <td align="left">2.2 x 10<sup>-4</sup></td>
-<td align="left">9.6 x 10<sup>-7</sup></td>
+<td align="left">5 x 10<sup>-7</sup></td>
 </tr>
 <tr class="even">
 <td align="left">precip_est_mm</td>
-<td align="left">4.3 x 10<sup>-4</sup></td>
-<td align="left">2.3 x 10<sup>-5</sup></td>
-<td align="left">5 x 10<sup>-3</sup></td>
-<td align="left">0.015</td>
-<td align="left">8.9 x 10<sup>-4</sup></td>
-<td align="left">3.8 x 10<sup>-4</sup></td>
-<td align="left">5 x 10<sup>-2</sup></td>
-<td align="left">0.56</td>
-<td align="left">0.77</td>
-<td align="left">0.35</td>
-<td align="left">0.57</td>
-<td align="left">0.38</td>
-<td align="left">0.59</td>
-<td align="left">0.28</td>
-<td align="left">0.22</td>
+<td align="left">3.3 x 10<sup>-4</sup></td>
+<td align="left">1.7 x 10<sup>-5</sup></td>
+<td align="left">5.3 x 10<sup>-3</sup></td>
+<td align="left">0.016</td>
+<td align="left">1.2 x 10<sup>-3</sup></td>
+<td align="left">2.9 x 10<sup>-4</sup></td>
+<td align="left">7 x 10<sup>-2</sup></td>
+<td align="left">0.43</td>
 <td align="left">0.71</td>
+<td align="left">0.36</td>
+<td align="left">0.62</td>
+<td align="left">0.38</td>
+<td align="left">0.52</td>
+<td align="left">0.24</td>
+<td align="left">0.23</td>
+<td align="left">0.55</td>
 </tr>
 <tr class="odd">
 <td align="left">melt_date:precip_est_mm</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
-<td align="left">3 x 10<sup>-2</sup></td>
+<td align="left">0.031</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
@@ -2167,7 +2605,7 @@ mt.mod.subplot.tests %&gt;% print_anova_table</code></pre>
 </tr>
 <tr class="even">
 <td align="left">Singular?</td>
-<td align="left">N</td>
+<td align="left">Y</td>
 <td align="left">N</td>
 <td align="left">N</td>
 <td align="left">N</td>
@@ -2219,18 +2657,19 @@ ggplot(emm.melt.df, aes(x=fct_relevel(trait, rev(traits)), y=trend)) +
 </ul>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 
-mt.sm.mod &lt;- mt.sm.mod.test &lt;- mt.sm.mod.raw &lt;- coef.VWC &lt;- emm.VWC &lt;- mt.sm.mod.plot &lt;-list()
+mt.sm.mod &lt;- mt.sm.mod.test &lt;- mt.sm.mod.raw &lt;- coef.VWC &lt;- emm.VWC &lt;- emm.VWC.allyears &lt;- mt.sm.mod.plot &lt;-list()
 for(tr in traits) {
   #mt.sm.mod.raw[[tr]] &lt;- lmer(mt[[tr]]    ~ year * VWC + (1|plot) + (1|plantid), data=mt)
   mt.sm.mod[[tr]] &lt;-lmer(mnps.plantyr[[tr]] ~ year * VWC + (1|plotid), data=mnps.plantyr)
   mnps.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]] &lt;- NA
-  mnps.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]][!is.na(mnps.plantyr[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA)
+  mnps.plantyr[[paste0(&quot;fit.sm.&quot;,tr)]][!is.na(mnps.plantyr[[tr]])]&lt;- predict(mt.sm.mod[[tr]], re.form=NA) #TODO why jumps?
   mt.sm.mod.test[[tr]] &lt;- anova(mt.sm.mod[[tr]])
   
   #Z-score the data first to get standardized slopes
   mt.sm.mod[[tr]] &lt;- lmer(scale(mnps.plantyr[[tr]]) ~ year * VWC + (1|plotid), data=mnps.plantyr)
   coef.VWC[[tr]] &lt;- summary(mt.sm.mod[[tr]])$coefficients[&quot;VWC&quot;,]
   emm.VWC[[tr]] &lt;- emtrends(mt.sm.mod[[tr]],  ~ year, var = &quot;VWC&quot;)
+  emm.VWC.allyears[[tr]] &lt;- emtrends(mt.sm.mod[[tr]],  ~ 1, var = &quot;VWC&quot;)
 
    mt.sm.mod.plot[[tr]] &lt;- 
     ggplot(mnps.plantyr, aes_string(x=&quot;VWC&quot;, color=&quot;year&quot;, y = tr)) + geom_point() +
@@ -2241,7 +2680,7 @@ for(tr in traits) {
 }</code></pre>
 <p><img src="images/morphology_sm-1.png" width="672" /><img src="images/morphology_sm-2.png" width="672" /><img src="images/morphology_sm-3.png" width="672" /><img src="images/morphology_sm-4.png" width="672" /><img src="images/morphology_sm-5.png" width="672" /><img src="images/morphology_sm-6.png" width="672" /><img src="images/morphology_sm-7.png" width="672" /><img src="images/morphology_sm-8.png" width="672" /><img src="images/morphology_sm-9.png" width="672" /><img src="images/morphology_sm-10.png" width="672" /><img src="images/morphology_sm-11.png" width="672" /><img src="images/morphology_sm-12.png" width="672" /><img src="images/morphology_sm-13.png" width="672" /><img src="images/morphology_sm-14.png" width="672" /><img src="images/morphology_sm-15.png" width="672" /><img src="images/morphology_sm-16.png" width="672" /></p>
 <pre class="r"><code>mt.sm.mod.tests &lt;- map_dfr(mt.sm.mod.test, tidy, .id=&quot;trait&quot;)
-mt.sm.mod.tests %&gt;% print_anova_table</code></pre>
+mt.sm.mod.tests %&gt;% print_anova_table(mt.sm.mod)</code></pre>
 <table>
 <colgroup>
 <col width="4%" />
@@ -2286,77 +2725,77 @@ mt.sm.mod.tests %&gt;% print_anova_table</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">6.3 x 10<sup>-3</sup></td>
-<td align="left">3.3 x 10<sup>-3</sup></td>
-<td align="left">0.17</td>
-<td align="left">8.7 x 10<sup>-3</sup></td>
-<td align="left">0.23</td>
-<td align="left">2.2 x 10<sup>-4</sup></td>
+<td align="left">5.9 x 10<sup>-3</sup></td>
+<td align="left">3.2 x 10<sup>-3</sup></td>
+<td align="left">0.18</td>
+<td align="left">6.8 x 10<sup>-3</sup></td>
+<td align="left">0.26</td>
+<td align="left">1.6 x 10<sup>-4</sup></td>
 <td align="left">3.1 x 10<sup>-3</sup></td>
-<td align="left">0.22</td>
-<td align="left">4.9 x 10<sup>-4</sup></td>
+<td align="left">0.35</td>
+<td align="left">3.5 x 10<sup>-3</sup></td>
 <td align="left">0.71</td>
-<td align="left">0.78</td>
-<td align="left">0.81</td>
-<td align="left">0.71</td>
+<td align="left">0.82</td>
+<td align="left">0.80</td>
+<td align="left">0.72</td>
 <td align="left">0.34</td>
-<td align="left">0.37</td>
-<td align="left">0.74</td>
+<td align="left">0.39</td>
+<td align="left">0.82</td>
 </tr>
 <tr class="even">
 <td align="left">VWC</td>
-<td align="left">0.012</td>
-<td align="left">8.5 x 10<sup>-5</sup></td>
-<td align="left">1.7 x 10<sup>-3</sup></td>
-<td align="left">0.012</td>
-<td align="left">5.8 x 10<sup>-5</sup></td>
 <td align="left">0.011</td>
-<td align="left">7.9 x 10<sup>-4</sup></td>
-<td align="left">0.17</td>
-<td align="left">0.95</td>
+<td align="left">9.2 x 10<sup>-6</sup></td>
+<td align="left">1.8 x 10<sup>-3</sup></td>
+<td align="left">9.2 x 10<sup>-3</sup></td>
+<td align="left">7.4 x 10<sup>-5</sup></td>
+<td align="left">1 x 10<sup>-2</sup></td>
+<td align="left">1.7 x 10<sup>-3</sup></td>
+<td align="left">0.13</td>
+<td align="left">0.69</td>
 <td align="left">0.98</td>
-<td align="left">0.25</td>
+<td align="left">0.24</td>
 <td align="left">0.14</td>
-<td align="left">0.079</td>
-<td align="left">1.00</td>
-<td align="left">0.68</td>
-<td align="left">0.56</td>
+<td align="left">0.074</td>
+<td align="left">0.95</td>
+<td align="left">0.69</td>
+<td align="left">0.63</td>
 </tr>
 <tr class="odd">
 <td align="left">year:VWC</td>
-<td align="left">0.45</td>
-<td align="left">0.035</td>
-<td align="left">0.83</td>
-<td align="left">3.4 x 10<sup>-3</sup></td>
-<td align="left">0.11</td>
-<td align="left">0.35</td>
-<td align="left">0.023</td>
-<td align="left">0.33</td>
-<td align="left">0.85</td>
-<td align="left">0.78</td>
-<td align="left">0.23</td>
-<td align="left">0.29</td>
-<td align="left">0.71</td>
-<td align="left">0.94</td>
+<td align="left">0.44</td>
+<td align="left">0.044</td>
+<td align="left">0.81</td>
+<td align="left">2.9 x 10<sup>-3</sup></td>
+<td align="left">0.10</td>
+<td align="left">0.31</td>
+<td align="left">0.025</td>
+<td align="left">0.19</td>
+<td align="left">0.52</td>
 <td align="left">0.79</td>
-<td align="left">0.83</td>
+<td align="left">0.24</td>
+<td align="left">0.29</td>
+<td align="left">0.75</td>
+<td align="left">0.93</td>
+<td align="left">0.81</td>
+<td align="left">0.68</td>
 </tr>
 <tr class="even">
 <td align="left">Singular?</td>
 <td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">Y</td>
 <td align="left">Y</td>
 <td align="left">N</td>
 <td align="left">N</td>
 <td align="left">N</td>
 <td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">N</td>
+<td align="left">Y</td>
 <td align="left">N</td>
 <td align="left">Y</td>
 </tr>
@@ -2551,28 +2990,28 @@ Eigenvalues for unconstrained axes:
 <td align="right">2</td>
 <td align="right">0.0080217</td>
 <td align="right">0.9751170</td>
-<td align="right">0.371</td>
+<td align="right">0.404</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
 <td align="right">4</td>
 <td align="right">0.0289412</td>
 <td align="right">1.7590459</td>
-<td align="right">0.085</td>
+<td align="right">0.082</td>
 </tr>
 <tr class="even">
 <td align="left">melt_offset:water</td>
 <td align="right">2</td>
 <td align="right">0.0062569</td>
 <td align="right">0.7605915</td>
-<td align="right">0.518</td>
+<td align="right">0.532</td>
 </tr>
 <tr class="odd">
 <td align="left">year:melt_offset:water</td>
 <td align="right">4</td>
 <td align="right">0.0236900</td>
 <td align="right">1.4398801</td>
-<td align="right">0.190</td>
+<td align="right">0.165</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>

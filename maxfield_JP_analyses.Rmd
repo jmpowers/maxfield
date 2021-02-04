@@ -31,9 +31,11 @@ library(googlesheets4)
 library(lme4)
 library(lmerTest)
 library(emmeans)
+library(multcomp)
 library(broom)
 library(broom.mixed)
 library(vegan)
+library(dplyr)
 
 library(RColorBrewer)
 library(viridis)
@@ -50,7 +52,7 @@ signif.num <- function(x) {
            symbols = c("***", "**", "*", ".", " ")))
 }
 print_anova_table <- function(df, mod) {
-df %>% select(c("trait", "term", "p.value")) %>% 
+df %>% dplyr::select(c("trait", "term", "p.value")) %>% 
   mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
            str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
   pivot_wider(names_from=trait, values_from=p.value) %>% 
@@ -102,7 +104,7 @@ ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=temp, color=plot)) +
   facet_wrap(vars(year), scales="free_x", ncol=1) + 
   geom_hline(yintercept=melt_threshold_warm) + geom_hline(yintercept=-melt_threshold_warm) +geom_line() +
   geom_segment(data=meltdates, aes(x=warm_time, y=-10, xend=sun_time, yend=-15, color=plot), size=1) +
-    geom_line(data=daily_temp %>% filter(year!="2017", month(date)%in%4:6), aes(x=as.POSIXct(date), y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, "Oranges")[3]) +
+    geom_line(data=daily_CORBIL %>% filter(year!="2017", month(date)%in%4:6), aes(x=as.POSIXct(date), y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, "Oranges")[3]) +
   labs(x="Date",y="Temperature (C)", color="Plot")
   
 ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=intensity, color=plot)) + 
@@ -219,6 +221,8 @@ treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))
 
 # Soil moisture vs. treatments
 
+## Weather plots
+
 ```{r soil, fig.height=12, fig.width=12}
 ggplot(sm, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
@@ -248,16 +252,6 @@ ggplot(sm, aes(x=yday(date))) +
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
-left_join(filter(sm.subplot20d, mo20d!="221 - 240"), meltdates) %>% 
-  mutate(mo = paste0("Days ",mo20d)) %>% 
-  ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
-  facet_wrap(vars(mo), nrow=1)+
-  geom_point() + geom_smooth(se=F, method="lm") +
-  scale_color_manual(values=water_pal) +
-  labs(x="Snowmelt date", y="Mean soil moisture in subplot", color="Water", shape="Year")
-
-sm.subplot %>% mutate(day=yday(date)) %>% group_by(year) %>% summarize(start=min(day), end=max(day)) %>% kable(caption = "Soil moisture collection dates")
-
 ggplot(sm.subplot, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
       geom_col(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
@@ -269,6 +263,20 @@ ggplot(sm.subplot, aes(x=yday(date))) +
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="black", show.legend=F) +
   coord_cartesian(xlim=c(110, 230), ylim=c(0, round(max(sm.subplot$VWC, na.rm=T))), expand=F)+
     labs(x="Day of year", y="Mean soil VWC in subplot (%) / Precipitation (mm)", color="Water", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"))
+```
+
+# Soil moisture vs. snowmelt date
+
+```{r soil_treatments}
+left_join(filter(sm.subplot20d, mo20d!="221 - 240"), meltdates) %>% 
+  mutate(mo = paste0("Days ",mo20d)) %>% 
+  ggplot(aes(x=sun_date, y=VWC, shape=year,color=water)) + 
+  facet_wrap(vars(mo), nrow=1)+
+  geom_point() + geom_smooth(se=F, method="lm") +
+  scale_color_manual(values=water_pal) +
+  labs(x="Snowmelt date", y="Mean soil moisture in subplot", color="Water", shape="Year")
+
+sm.subplot %>% mutate(day=yday(date)) %>% group_by(year) %>% summarize(start=min(day), end=max(day)) %>% kable(caption = "Soil moisture collection dates")
 
 # VWC split-plot analysis
 sm.mod <- lmer(VWC ~ year * snow * water + (1|plot), data=sm.subplotyear)
@@ -280,7 +288,8 @@ sm.emm.water$emmean[1] - sm.emm.water$emmean[2]
 sm.emm.water$emmean[3] - sm.emm.water$emmean[2]
 ```
 
-The timing of measurements and treatments differed between years
+## Timing of measurements
+
 ```{r timings}
 ggplot(timings %>% filter(variable!="sds") %>% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T)), aes(y=variable, color=year))+ 
   geom_linerange(aes(xmin=begin, xmax=end), 
@@ -298,13 +307,15 @@ ggplot(timings %>% filter(variable!="sds") %>% mutate(variable=fct_reorder(varia
   theme_minimal() + theme(legend.position = "top")
 ```
 
+## Sample sizes
+
 ```{r sample_sizes}
 cat("Morphology measurements per plant:", mt %>% drop_na(corolla_length) %>% group_by(year, plantid) %>% tally() %>% ungroup() %>% summarize(n=mean(n)) %>% pull(n) %>% round(2))
 cat("Nectar measurements per plant:", mt %>% drop_na(nectar_24_h_ul) %>% group_by(year, plantid) %>% tally() %>% ungroup() %>% summarize(n=mean(n)) %>% pull(n) %>% round(2))
 cat("Inflo height measurements per plant:")
 ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>% summarize(n=mean(n)) %>% kable
 ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>% 
-  ggplot(aes(x=n, fill=year)) + geom_histogram() + 
+  ggplot(aes(x=n, fill=year)) + geom_histogram() + labs(title = "Phenology entries per plant", x="Entries",y="Count")+
   facet_wrap(vars(year), ncol=1) + scale_fill_manual(values=year_pal)
 
 
@@ -337,8 +348,6 @@ nrf_count %>% select(-nrf) %>% arrange(year_round, status, desc(n)) %>% drop_na(
 Visualize a plant's status in each census
 
 ```{r status}
-# library(vegan)
-# library(viridis)
 # megatally %>% select(where(is.numeric)) %>% 
 #   relocate(total_obs,census18,census18r2,census19,census20,pheno18,seeds18,floral18,pheno19,seeds19,floral19,pheno20,seeds20,floral20,volatiles20, leaf18,leaf19,leaf20,census18r2) %>% 
 #   arrange(census18>0,cut(pheno18,c(0,1,2,Inf),right=F),seeds18>0,census19>0,cut(pheno19,c(0,1,2,Inf),right=F),seeds19>0,census20>0,cut(pheno20,c(0,1,2,Inf),right=F),seeds20>0, leaf18>0,leaf19>0,leaf20>0,census18r2>0,total_obs) %>% 
@@ -371,12 +380,12 @@ Check these tags missing in each year to make sure tags were not mis-read. When 
 
 Recorded in 2019 but not in 2020:
 ```{r compare_years19}
-sort(setdiff(cen19[cen19$notes != "tagnf",]$id, cen20$id))
+sort(setdiff(cen19[cen19$notes != "tagnf",]$plantid, cen20$plantid))
 ```
 
 Recorded in 2020 but not in 2019:
 ```{r compare_years20}
-sort(setdiff(cen20[cen20$notes != "tagnf",]$id, cen19$id))
+sort(setdiff(cen20[cen20$notes != "tagnf",]$plantid, cen19$plantid))
 ```
 
 ## Status transitions
@@ -435,12 +444,14 @@ ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + sc
 
 # Physiology traits
 
-```{r licor}
+```{r licor_all, fig.width=12, fig.height=12}
 # plot all the LICOR variables by date
 licor_date_pal <- sample(rainbow(nlevels(factor(licor$date))))
 licor %>% pivot_longer(Photo:StableF) %>% mutate(index=row_number()) %>% filter(!name %in% c("Area","BLC_1","BLCond","StmRat")) %>% 
   ggplot(aes(x=index, y= value, color=factor(date), shape=year)) + facet_wrap(vars(name), scales="free_y", ncol=4) + geom_point() + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark() + labs(x="Measurement", y="", shape="Year")
+```
 
+```{r licor}
 licor %>% ggplot(aes(x=Cond, y= Photo, color=factor(date), linetype=year, shape=year)) + geom_point() + geom_smooth(method="lm", se=F) + scale_linetype_manual(values=c(3,1,4)) + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark()
 
 licor %>% ggplot(aes(y=Photo/Cond, x=factor(date), color=year)) + geom_boxplot(size=1.5) + 
@@ -504,11 +515,15 @@ for(tr in traits) {
 
 mt.mod.tests <- map_dfr(mt.mod.test, tidy, .id="trait")
 mt.mod.tests %>% print_anova_table(mt.mod)
+```
 
-#TODO compare early snowmelt + addition vs. normal snowmelt + control
+#### Compensation of water addition for early snowmelt
+
+```{r compensation}
+#compare early snowmelt + addition vs. normal snowmelt + control
 emm.mod <- mt.mod.comb <- list()
 mnps.subplot$snowwater <- paste0(mnps.subplot$snow, mnps.subplot$water)
-library(multcomp)
+
 for(tr in traits) {
     emm.mod[[tr]] <- emmeans(mt.mod[[tr]], ~ water * snow, var=tr)
     mt.mod.comb[[tr]] <- lmer(mnps.subplot[[tr]] ~ snowwater + (1|plot), data=mnps.subplot)# drop year??
@@ -516,6 +531,7 @@ for(tr in traits) {
     print(summary(glht(mt.mod.comb[[tr]] , linfct = mcp(snowwater = c("EarlyAddition - NormalControl = 0")))))
 }
 ```
+
 
 ### Floral plasticity: water treatments and snowmelt offset
 
