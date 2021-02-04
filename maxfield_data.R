@@ -558,6 +558,11 @@ licor.tally <- licor.plantid %>% select(group_cols(),n) %>%
 read_csv("data/megatally.csv") %>% mutate(plot=as.character(plot)) %>% #read in the original megatally
   full_join(licor.tally) %>% write_tsv("data/megatally_licor.tsv", na="") #add licor columns
 
+# read in the WUE survival analysis
+WUE_1819 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_1819") %>% 
+  select(year:WUE_1819) %>% group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:19), fix_dataset) %>% 
+  write_tsv("data/WUE_1819_fixed.tsv")
+
 # floraltraits ------------------------------------------------------------------
 
 mt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Morphology") %>% 
