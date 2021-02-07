@@ -478,9 +478,10 @@ ph20 <- ph20.raw %>%
          has_egg = eggs > 0)
 
 ph <- bind_rows(list("2018" = ph18, "2019" = ph19, "2020" = ph20), .id="year") %>% 
-  mutate(julian=as.integer(as.character(julian)))
+  mutate(julian=as.integer(as.character(julian))) %>% 
+  left_join(sm.subplotyear) 
 
-ph.plantid <- ph %>% left_join(sm.subplotyear) %>% group_by(year, water, water4, snow, snow_new, plot, plotid, plant, plantid) %>% summarize_at(c("open","height_cm", "VWC"), mean, na.rm=T) 
+ph.plantid <- ph %>% group_by(year, water, water4, snow, snow_new, plot, plotid, plant, plantid) %>% summarize_at(c("open","height_cm", "VWC"), mean, na.rm=T) 
 
 # leaftraits --------------------------------------------------------------
 
@@ -578,7 +579,7 @@ nt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet=
          nectar_density = 1.852e-5 * nectar_conc^2 + 3.665e-3 * nectar_conc + 1, # mg/uL of sucrose solution at 20 C 
          # Density depends on percentage sucrose by mass. polynomial fit to table at:
          # https://www.mt.com/us/en/home/supportive_content/concentration-tables-ana/Sucrose_de_e.html
-         nectar_sugar_24_h_mg = nectar_24_h_ul * nectar_density * nectar_conc ) %>% 
+         nectar_sugar_24_h_mg = nectar_24_h_ul * nectar_density * nectar_conc/100 ) %>% 
   select(-c("nectar_48_h_mm","nectar_density")) %>% 
   group_by(year) %>% group_split() %>% map2_dfr(paste0("floral",18:20), fix_dataset) %>% 
   left_join(treatments) %>%
@@ -612,6 +613,7 @@ vt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Volatiles"), she
 # seeds -------------------------------------------------------------------
 
 sds18 <- read_sheet(filter(datasheets, name=="2020 Maxfield Seeds"), sheet="2018", skip=2) %>% 
+  filter(!is.na(plot)) %>%  # discard envelope with no plot
   mutate(plot = as.character(plot), 
          subplot = toupper(subplot),
          plotid = paste0(plot, subplot),
@@ -781,15 +783,16 @@ timings %>% mutate(range=paste(begin,end,sep=" - "), .keep="unused") %>%
 
 # traitnames --------------------------------------------------------------
 
-traits <- c("corolla_length", "corolla_width", "style_length", "sepal_width", "nectar_24_h_ul", "nectar_conc","nectar_sugar_24_h_mg","height_cm","open","seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower") #exclude anthers
-traitnames <- setNames(c("Corolla length (mm)", "Corolla width (mm)", "Style length (mm)", "Sepal width (mm)", "Nectar production rate (uL/day)", "Nectar concentration (% sucrose by mass)", "Nectar sucrose (mg/day)", "Inflorescence height (cm)", "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits infested","Proportion of fruits that aborted","Estimated seeds per flower"), traits)
+traits <- c("corolla_length", "style_length", "corolla_width", "sepal_width", "nectar_24_h_ul", "nectar_conc","nectar_sugar_24_h_mg","height_cm","open","seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower") #exclude anthers
+traitnames <- set_names(c("Corolla length (mm)", "Style length (mm)", "Corolla width (mm)", "Sepal width (mm)", "Nectar production (\U00B5L/day)", "Nectar conc. (% by mass)", "Nectar sucrose (mg/day)", "Inflorescence height (cm)", "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower"), traits)
 
-seedtraits <- c("seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower")
-seedtraitnames <- setNames(c("Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Proportion of nonaborted fruits infested","Proportion of fruits that aborted","Estimated seeds per flower"), seedtraits)
+seedtraits <- traits[10:16] 
+seedtraitnames <- traitnames[10:16]
 
 # export ------------------------------------------------------------------
 
 remove(hourly_GTH161, tenmin_CORBIL)
+#load("data/maxfield_data.rda")
 save.image("data/maxfield_data.rda")
 
 alldata <- list("treatments"=treatments,
