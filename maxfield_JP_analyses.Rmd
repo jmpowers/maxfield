@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -30,6 +30,7 @@ library(lubridate)
 
 library(lme4)
 library(lmerTest)
+library(MuMIn)
 library(emmeans)
 library(broom)
 library(broom.mixed)
@@ -51,11 +52,13 @@ signif.num <- function(x) {
            symbols = c("***", "**", "*", ".", " ")))
 }
 print_anova_table <- function(df, mod) {
-df %>% select(c("trait", "term", "p.value")) %>% 
-  mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
-           str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
-  pivot_wider(names_from=trait, values_from=p.value) %>% 
-  bind_rows(lapply(mod, function(x) ifelse(isSingular(x),"Y","N"))) %>% mutate(term = replace_na(term,"Singular?")) %>% kable
+  df %>% select(c("trait", "term", "p.value")) %>% 
+    mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
+             str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
+    pivot_wider(names_from=term, values_from=p.value) %>% 
+    mutate(singular = map_lgl(mod, isSingular),
+           R2m = map_dbl(mod, ~ MuMIn::r.squaredGLMM(.x)[[1,"R2m"]])) %>% 
+    kable
 }
 
 load("data/maxfield_data.rda")
@@ -211,10 +214,11 @@ groundcover %>% mutate(first_snow_day=first_snow_day-365) %>%
 cat("SD of first bare ground =", round(sd(groundcover$first_0_cm_day),1),"days over",range(groundcover$year))
 summary(lm(first_0_cm_day ~ year, data=groundcover))
 
-treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point()+
-  geom_point(data=groundcover, aes(x=first_0_cm_day, color="Control", shape="1990-2017")) +
-  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(1, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
-  labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt date", color="Precipitation", shape="Year") 
+treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_count()+
+  geom_point(data=groundcover, aes(x=first_0_cm_day, color="Control", shape="1990-2017"), fill="white") +
+  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
+  labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt date", color="Precipitation", shape="Year",size="# Plots") + 
+  theme_minimal()
 ```
 
 
@@ -513,7 +517,7 @@ for(tr in traits) {
 }
 
 mt.mod.tests <- map_dfr(mt.mod.test, tidy, .id="trait")
-mt.mod.tests %>% print_anova_table(mt.mod)
+mt.mod.tests %>%  print_anova_table(mt.mod)
 ```
 
 ```{r multi_splitplot, fig.width=9, fig.height=11}
@@ -535,8 +539,9 @@ mod.emm.plots[[i]] <- mod.emm %>% bind_rows(.id="trait") %>% filter(trait %in% t
   ggplot(aes(x=water, color=snow)) + 
   facet_grid(trait ~ year, scales="free_y", labeller = as_labeller(c(traitnames, set_names(2018:2020))), switch="y") + 
   geom_violin(data=mnps.plantyr.long %>% drop_na(value, water) %>% filter(trait %in% traits.plot), aes(y=value), 
-              position=position_dodge(width=0.8), show.legend=F) + 
-  #geom_point(data=mnps.subplot.long, aes(y=value), position=position_dodge(width=0.6), shape=3) +  
+            position=position_dodge(width=0.8), show.legend=F) + 
+  #geom_point(data=mnps.subplot.long %>% filter(trait %in% traits.plot) , aes(y=value),
+  #           position=position_dodge(width=0.6), shape=4) +  
   geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE,), position=position_dodge(width=0.8), size=2, show.legend=F) +
   geom_point(aes(y=emmean), position=position_dodge(width=0.8), shape="-", size=16) +  
   labs(x="Precipitation", y="", color="Snowmelt") + 
@@ -602,7 +607,7 @@ for(tr in traits) {
   print(mt.mod.plot[[tr]])
 }
 mt.mod.subplot.tests <- map_dfr(mt.mod.subplot.test, tidy, .id="trait")
-mt.mod.subplot.tests %>% print_anova_table(mt.mod.subplot)
+mt.mod.subplot.tests %>%  print_anova_table(mt.mod.subplot)
 ```
 
 ### Floral plasticity: absolute snowmelt date and estimated summer precipitation
@@ -642,7 +647,7 @@ for(tr in traits) {
 }
 mt.mod.subplot.coefs <- map_dfr(mt.mod.subplot, tidy, .id="trait")
 mt.mod.subplot.tests <- map_dfr(mt.mod.subplot.test, tidy, .id="trait")
-mt.mod.subplot.tests %>% print_anova_table(mt.mod.subplot)
+mt.mod.subplot.tests %>%  print_anova_table(mt.mod.subplot)
 
 emm.melt.df <- bind_rows(melt_date = emm.melt %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=melt_date.trend)
           ,precip_est_mm = emm.precip %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=precip_est_mm.trend)
@@ -720,7 +725,7 @@ for(tr in traits) {
   # print(mt.sm.mod.plot[[tr]])
 }
 mt.sm.mod.tests <- map_dfr(mt.sm.mod.test, tidy, .id="trait")
-mt.sm.mod.tests %>% print_anova_table(mt.sm.mod)
+mt.sm.mod.tests %>%  print_anova_table(mt.sm.mod)
 coef.VWC.df <- as.data.frame(t(as.data.frame(coef.VWC))) %>% rownames_to_column("trait")
 emm.VWC.ls <- lapply(emm.VWC, as.data.frame)
 emm.VWC.ls$sepal_width[3,] <- NA

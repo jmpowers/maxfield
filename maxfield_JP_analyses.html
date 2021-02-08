@@ -301,6 +301,7 @@ library(lubridate)
 
 library(lme4)
 library(lmerTest)
+library(MuMIn)
 library(emmeans)
 library(broom)
 library(broom.mixed)
@@ -322,11 +323,13 @@ signif.num &lt;- function(x) {
            symbols = c(&quot;***&quot;, &quot;**&quot;, &quot;*&quot;, &quot;.&quot;, &quot; &quot;)))
 }
 print_anova_table &lt;- function(df, mod) {
-df %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
-  mutate(p.value=p.value %&gt;% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %&gt;% 
-           str_replace(&quot;e-0(\\d)&quot;,&quot; x 10^-\\1^&quot;) %&gt;% str_replace(&quot;e-(\\d+)&quot;,&quot; x 10^-\\1^&quot;)) %&gt;%
-  pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
-  bind_rows(lapply(mod, function(x) ifelse(isSingular(x),&quot;Y&quot;,&quot;N&quot;))) %&gt;% mutate(term = replace_na(term,&quot;Singular?&quot;)) %&gt;% kable
+  df %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
+    mutate(p.value=p.value %&gt;% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %&gt;% 
+             str_replace(&quot;e-0(\\d)&quot;,&quot; x 10^-\\1^&quot;) %&gt;% str_replace(&quot;e-(\\d+)&quot;,&quot; x 10^-\\1^&quot;)) %&gt;%
+    pivot_wider(names_from=term, values_from=p.value) %&gt;% 
+    mutate(singular = map_lgl(mod, isSingular),
+           R2m = map_dbl(mod, ~ MuMIn::r.squaredGLMM(.x)[[1,&quot;R2m&quot;]])) %&gt;% 
+    kable
 }
 
 load(&quot;data/maxfield_data.rda&quot;)</code></pre>
@@ -492,10 +495,11 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 Residual standard error: 13.32 on 43 degrees of freedom
 Multiple R-squared:  0.04174,   Adjusted R-squared:  0.01945 
 F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
-<pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point()+
-  geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;)) +
-  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(1, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
-  labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;) </code></pre>
+<pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_count()+
+  geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;), fill=&quot;white&quot;) +
+  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
+  labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;,size=&quot;# Plots&quot;) + 
+  theme_minimal()</code></pre>
 <p><img src="images/groundcover-2.png" width="672" /></p>
 </div>
 </div>
@@ -1591,200 +1595,226 @@ for(tr in traits) {
 }
 
 mt.mod.tests &lt;- map_dfr(mt.mod.test, tidy, .id=&quot;trait&quot;)
-mt.mod.tests %&gt;% print_anova_table(mt.mod)</code></pre>
-<table style="width:100%;">
+mt.mod.tests %&gt;%  print_anova_table(mt.mod)</code></pre>
+<table>
 <colgroup>
-<col width="6%" />
-<col width="5%" />
-<col width="5%" />
-<col width="5%" />
-<col width="5%" />
-<col width="5%" />
-<col width="5%" />
-<col width="8%" />
-<col width="5%" />
-<col width="5%" />
-<col width="6%" />
-<col width="5%" />
-<col width="7%" />
+<col width="16%" />
+<col width="11%" />
 <col width="4%" />
-<col width="5%" />
-<col width="5%" />
-<col width="6%" />
+<col width="10%" />
+<col width="10%" />
+<col width="10%" />
+<col width="8%" />
+<col width="12%" />
+<col width="7%" />
+<col width="7%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">term</th>
-<th align="left">corolla_length</th>
-<th align="left">style_length</th>
-<th align="left">corolla_width</th>
-<th align="left">sepal_width</th>
-<th align="left">nectar_24_h_ul</th>
-<th align="left">nectar_conc</th>
-<th align="left">nectar_sugar_24_h_mg</th>
-<th align="left">height_cm</th>
-<th align="left">open</th>
-<th align="left">seeds_per_fruit</th>
-<th align="left">seeds_est</th>
-<th align="left">fruits_nonaborted</th>
-<th align="left">flowers_est</th>
-<th align="left">prop_infested</th>
-<th align="left">prop_aborted</th>
-<th align="left">seeds_per_flower</th>
+<th align="left">trait</th>
+<th align="left">year</th>
+<th align="left">snow</th>
+<th align="left">water</th>
+<th align="left">year:snow</th>
+<th align="left">year:water</th>
+<th align="left">snow:water</th>
+<th align="left">year:snow:water</th>
+<th align="left">singular</th>
+<th align="right">R2m</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">year</td>
+<td align="left">corolla_length</td>
 <td align="left">1.1 x 10<sup>-7</sup></td>
-<td align="left">3.1 x 10<sup>-7</sup></td>
-<td align="left">1.3 x 10<sup>-13</sup></td>
-<td align="left">0.90</td>
-<td align="left">1.9 x 10<sup>-3</sup></td>
-<td align="left">8.3 x 10<sup>-10</sup></td>
-<td align="left">7 x 10<sup>-4</sup></td>
-<td align="left">1.1 x 10<sup>-9</sup></td>
-<td align="left">2.7 x 10<sup>-11</sup></td>
-<td align="left">1.6 x 10<sup>-6</sup></td>
-<td align="left">6.1 x 10<sup>-3</sup></td>
-<td align="left">0.19</td>
-<td align="left">0.49</td>
-<td align="left">8.2 x 10<sup>-5</sup></td>
-<td align="left">9.1 x 10<sup>-4</sup></td>
-<td align="left">7.5 x 10<sup>-5</sup></td>
-</tr>
-<tr class="even">
-<td align="left">snow</td>
 <td align="left">0.66</td>
-<td align="left">0.76</td>
-<td align="left">0.73</td>
-<td align="left">0.85</td>
-<td align="left">0.044</td>
-<td align="left">0.36</td>
-<td align="left">0.23</td>
-<td align="left">0.046</td>
-<td align="left">0.62</td>
-<td align="left">0.44</td>
-<td align="left">0.53</td>
-<td align="left">0.41</td>
-<td align="left">0.68</td>
-<td align="left">0.17</td>
-<td align="left">0.17</td>
-<td align="left">0.12</td>
-</tr>
-<tr class="odd">
-<td align="left">water</td>
 <td align="left">0.066</td>
-<td align="left">0.12</td>
-<td align="left">3.2 x 10<sup>-4</sup></td>
-<td align="left">2.1 x 10<sup>-3</sup></td>
-<td align="left">0.051</td>
-<td align="left">2.9 x 10<sup>-3</sup></td>
-<td align="left">0.65</td>
-<td align="left">0.67</td>
-<td align="left">0.74</td>
-<td align="left">0.35</td>
-<td align="left">0.79</td>
-<td align="left">0.36</td>
-<td align="left">0.61</td>
-<td align="left">0.49</td>
-<td align="left">0.89</td>
-<td align="left">0.48</td>
-</tr>
-<tr class="even">
-<td align="left">year:snow</td>
 <td align="left">0.96</td>
-<td align="left">0.99</td>
-<td align="left">0.75</td>
-<td align="left">0.18</td>
-<td align="left">0.20</td>
-<td align="left">0.51</td>
-<td align="left">0.20</td>
-<td align="left">0.22</td>
-<td align="left">0.24</td>
-<td align="left">0.18</td>
-<td align="left">4.1 x 10<sup>-3</sup></td>
-<td align="left">0.037</td>
-<td align="left">0.097</td>
-<td align="left">0.032</td>
-<td align="left">0.49</td>
-<td align="left">0.049</td>
-</tr>
-<tr class="odd">
-<td align="left">year:water</td>
 <td align="left">0.62</td>
-<td align="left">0.56</td>
-<td align="left">0.29</td>
-<td align="left">8.2 x 10<sup>-3</sup></td>
-<td align="left">0.85</td>
-<td align="left">0.81</td>
-<td align="left">0.55</td>
-<td align="left">0.87</td>
-<td align="left">0.94</td>
-<td align="left">0.046</td>
-<td align="left">0.20</td>
-<td align="left">0.36</td>
-<td align="left">0.21</td>
-<td align="left">0.78</td>
-<td align="left">0.77</td>
-<td align="left">0.22</td>
+<td align="left">0.89</td>
+<td align="left">0.79</td>
+<td align="left">FALSE</td>
+<td align="right">0.4662908</td>
 </tr>
 <tr class="even">
-<td align="left">snow:water</td>
-<td align="left">0.89</td>
+<td align="left">style_length</td>
+<td align="left">3.1 x 10<sup>-7</sup></td>
+<td align="left">0.76</td>
+<td align="left">0.12</td>
+<td align="left">0.99</td>
+<td align="left">0.56</td>
 <td align="left">0.67</td>
-<td align="left">0.67</td>
-<td align="left">0.82</td>
-<td align="left">0.71</td>
-<td align="left">0.23</td>
-<td align="left">0.58</td>
-<td align="left">0.42</td>
-<td align="left">0.97</td>
-<td align="left">0.038</td>
-<td align="left">0.37</td>
-<td align="left">0.38</td>
-<td align="left">0.22</td>
-<td align="left">0.34</td>
-<td align="left">0.26</td>
-<td align="left">0.079</td>
+<td align="left">0.19</td>
+<td align="left">FALSE</td>
+<td align="right">0.4619458</td>
 </tr>
 <tr class="odd">
-<td align="left">year:snow:water</td>
-<td align="left">0.79</td>
-<td align="left">0.19</td>
+<td align="left">corolla_width</td>
+<td align="left">1.3 x 10<sup>-13</sup></td>
+<td align="left">0.73</td>
+<td align="left">3.2 x 10<sup>-4</sup></td>
+<td align="left">0.75</td>
+<td align="left">0.29</td>
+<td align="left">0.67</td>
 <td align="left">0.15</td>
-<td align="left">0.18</td>
-<td align="left">0.50</td>
-<td align="left">0.19</td>
-<td align="left">0.33</td>
-<td align="left">0.21</td>
-<td align="left">1.00</td>
-<td align="left">0.051</td>
-<td align="left">0.71</td>
-<td align="left">0.56</td>
-<td align="left">0.61</td>
-<td align="left">0.27</td>
-<td align="left">0.65</td>
-<td align="left">0.74</td>
+<td align="left">FALSE</td>
+<td align="right">0.6577845</td>
 </tr>
 <tr class="even">
-<td align="left">Singular?</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
+<td align="left">sepal_width</td>
+<td align="left">0.90</td>
+<td align="left">0.85</td>
+<td align="left">2.1 x 10<sup>-3</sup></td>
+<td align="left">0.18</td>
+<td align="left">8.2 x 10<sup>-3</sup></td>
+<td align="left">0.82</td>
+<td align="left">0.18</td>
+<td align="left">FALSE</td>
+<td align="right">0.3598053</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_24_h_ul</td>
+<td align="left">1.9 x 10<sup>-3</sup></td>
+<td align="left">0.044</td>
+<td align="left">0.051</td>
+<td align="left">0.20</td>
+<td align="left">0.85</td>
+<td align="left">0.71</td>
+<td align="left">0.50</td>
+<td align="left">TRUE</td>
+<td align="right">0.3500501</td>
+</tr>
+<tr class="even">
+<td align="left">nectar_conc</td>
+<td align="left">8.3 x 10<sup>-10</sup></td>
+<td align="left">0.36</td>
+<td align="left">2.9 x 10<sup>-3</sup></td>
+<td align="left">0.51</td>
+<td align="left">0.81</td>
+<td align="left">0.23</td>
+<td align="left">0.19</td>
+<td align="left">FALSE</td>
+<td align="right">0.5332066</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_sugar_24_h_mg</td>
+<td align="left">7 x 10<sup>-4</sup></td>
+<td align="left">0.23</td>
+<td align="left">0.65</td>
+<td align="left">0.20</td>
+<td align="left">0.55</td>
+<td align="left">0.58</td>
+<td align="left">0.33</td>
+<td align="left">TRUE</td>
+<td align="right">0.2955828</td>
+</tr>
+<tr class="even">
+<td align="left">height_cm</td>
+<td align="left">1.1 x 10<sup>-9</sup></td>
+<td align="left">0.046</td>
+<td align="left">0.67</td>
+<td align="left">0.22</td>
+<td align="left">0.87</td>
+<td align="left">0.42</td>
+<td align="left">0.21</td>
+<td align="left">FALSE</td>
+<td align="right">0.6150799</td>
+</tr>
+<tr class="odd">
+<td align="left">open</td>
+<td align="left">2.7 x 10<sup>-11</sup></td>
+<td align="left">0.62</td>
+<td align="left">0.74</td>
+<td align="left">0.24</td>
+<td align="left">0.94</td>
+<td align="left">0.97</td>
+<td align="left">1.00</td>
+<td align="left">TRUE</td>
+<td align="right">0.6075457</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_fruit</td>
+<td align="left">1.6 x 10<sup>-6</sup></td>
+<td align="left">0.44</td>
+<td align="left">0.35</td>
+<td align="left">0.18</td>
+<td align="left">0.046</td>
+<td align="left">0.038</td>
+<td align="left">0.051</td>
+<td align="left">TRUE</td>
+<td align="right">0.4750098</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_est</td>
+<td align="left">6.1 x 10<sup>-3</sup></td>
+<td align="left">0.53</td>
+<td align="left">0.79</td>
+<td align="left">4.1 x 10<sup>-3</sup></td>
+<td align="left">0.20</td>
+<td align="left">0.37</td>
+<td align="left">0.71</td>
+<td align="left">FALSE</td>
+<td align="right">0.3851464</td>
+</tr>
+<tr class="even">
+<td align="left">fruits_nonaborted</td>
+<td align="left">0.19</td>
+<td align="left">0.41</td>
+<td align="left">0.36</td>
+<td align="left">0.037</td>
+<td align="left">0.36</td>
+<td align="left">0.38</td>
+<td align="left">0.56</td>
+<td align="left">FALSE</td>
+<td align="right">0.2783753</td>
+</tr>
+<tr class="odd">
+<td align="left">flowers_est</td>
+<td align="left">0.49</td>
+<td align="left">0.68</td>
+<td align="left">0.61</td>
+<td align="left">0.097</td>
+<td align="left">0.21</td>
+<td align="left">0.22</td>
+<td align="left">0.61</td>
+<td align="left">FALSE</td>
+<td align="right">0.1965573</td>
+</tr>
+<tr class="even">
+<td align="left">prop_infested</td>
+<td align="left">8.2 x 10<sup>-5</sup></td>
+<td align="left">0.17</td>
+<td align="left">0.49</td>
+<td align="left">0.032</td>
+<td align="left">0.78</td>
+<td align="left">0.34</td>
+<td align="left">0.27</td>
+<td align="left">FALSE</td>
+<td align="right">0.3325936</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_aborted</td>
+<td align="left">9.1 x 10<sup>-4</sup></td>
+<td align="left">0.17</td>
+<td align="left">0.89</td>
+<td align="left">0.49</td>
+<td align="left">0.77</td>
+<td align="left">0.26</td>
+<td align="left">0.65</td>
+<td align="left">FALSE</td>
+<td align="right">0.2900036</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_flower</td>
+<td align="left">7.5 x 10<sup>-5</sup></td>
+<td align="left">0.12</td>
+<td align="left">0.48</td>
+<td align="left">0.049</td>
+<td align="left">0.22</td>
+<td align="left">0.079</td>
+<td align="left">0.74</td>
+<td align="left">TRUE</td>
+<td align="right">0.4273719</td>
 </tr>
 </tbody>
 </table>
@@ -1959,200 +1989,226 @@ for(tr in traits) {
 }</code></pre>
 <p><img src="images/morphology_meltoffset-1.png" width="672" /><img src="images/morphology_meltoffset-2.png" width="672" /><img src="images/morphology_meltoffset-3.png" width="672" /><img src="images/morphology_meltoffset-4.png" width="672" /><img src="images/morphology_meltoffset-5.png" width="672" /><img src="images/morphology_meltoffset-6.png" width="672" /><img src="images/morphology_meltoffset-7.png" width="672" /><img src="images/morphology_meltoffset-8.png" width="672" /><img src="images/morphology_meltoffset-9.png" width="672" /><img src="images/morphology_meltoffset-10.png" width="672" /><img src="images/morphology_meltoffset-11.png" width="672" /><img src="images/morphology_meltoffset-12.png" width="672" /><img src="images/morphology_meltoffset-13.png" width="672" /><img src="images/morphology_meltoffset-14.png" width="672" /><img src="images/morphology_meltoffset-15.png" width="672" /><img src="images/morphology_meltoffset-16.png" width="672" /></p>
 <pre class="r"><code>mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
-mt.mod.subplot.tests %&gt;% print_anova_table(mt.mod.subplot)</code></pre>
+mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <table>
 <colgroup>
+<col width="14%" />
+<col width="9%" />
 <col width="8%" />
-<col width="5%" />
-<col width="5%" />
-<col width="5%" />
-<col width="4%" />
-<col width="5%" />
-<col width="5%" />
 <col width="8%" />
-<col width="5%" />
-<col width="5%" />
-<col width="6%" />
-<col width="5%" />
 <col width="7%" />
-<col width="4%" />
-<col width="5%" />
-<col width="5%" />
+<col width="11%" />
+<col width="12%" />
+<col width="15%" />
+<col width="6%" />
 <col width="6%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">term</th>
-<th align="left">corolla_length</th>
-<th align="left">style_length</th>
-<th align="left">corolla_width</th>
-<th align="left">sepal_width</th>
-<th align="left">nectar_24_h_ul</th>
-<th align="left">nectar_conc</th>
-<th align="left">nectar_sugar_24_h_mg</th>
-<th align="left">height_cm</th>
-<th align="left">open</th>
-<th align="left">seeds_per_fruit</th>
-<th align="left">seeds_est</th>
-<th align="left">fruits_nonaborted</th>
-<th align="left">flowers_est</th>
-<th align="left">prop_infested</th>
-<th align="left">prop_aborted</th>
-<th align="left">seeds_per_flower</th>
+<th align="left">trait</th>
+<th align="left">year</th>
+<th align="left">water</th>
+<th align="left">melt_offset</th>
+<th align="left">year:water</th>
+<th align="left">year:melt_offset</th>
+<th align="left">water:melt_offset</th>
+<th align="left">year:water:melt_offset</th>
+<th align="left">singular</th>
+<th align="right">R2m</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">year</td>
+<td align="left">corolla_length</td>
 <td align="left">4.5 x 10<sup>-5</sup></td>
-<td align="left">2.5 x 10<sup>-6</sup></td>
-<td align="left">1 x 10<sup>-8</sup></td>
-<td align="left">0.31</td>
-<td align="left">3.9 x 10<sup>-3</sup></td>
-<td align="left">1.4 x 10<sup>-5</sup></td>
-<td align="left">0.036</td>
-<td align="left">3.6 x 10<sup>-12</sup></td>
-<td align="left">5.1 x 10<sup>-11</sup></td>
-<td align="left">1.5 x 10<sup>-6</sup></td>
-<td align="left">7.7 x 10<sup>-5</sup></td>
-<td align="left">8.5 x 10<sup>-3</sup></td>
-<td align="left">0.77</td>
-<td align="left">0.17</td>
-<td align="left">1.1 x 10<sup>-3</sup></td>
-<td align="left">2.2 x 10<sup>-5</sup></td>
-</tr>
-<tr class="even">
-<td align="left">water</td>
 <td align="left">0.39</td>
-<td align="left">0.53</td>
-<td align="left">3.3 x 10<sup>-4</sup></td>
-<td align="left">0.033</td>
-<td align="left">0.26</td>
-<td align="left">6.2 x 10<sup>-3</sup></td>
-<td align="left">0.73</td>
-<td align="left">0.78</td>
-<td align="left">0.88</td>
-<td align="left">0.48</td>
-<td align="left">0.84</td>
-<td align="left">0.72</td>
-<td align="left">0.83</td>
-<td align="left">0.93</td>
-<td align="left">0.36</td>
-<td align="left">0.67</td>
-</tr>
-<tr class="odd">
-<td align="left">melt_offset</td>
 <td align="left">0.47</td>
-<td align="left">0.62</td>
+<td align="left">0.85</td>
 <td align="left">0.76</td>
-<td align="left">0.96</td>
-<td align="left">0.051</td>
-<td align="left">0.21</td>
-<td align="left">0.28</td>
-<td align="left">2 x 10<sup>-3</sup></td>
-<td align="left">0.65</td>
-<td align="left">0.45</td>
-<td align="left">0.69</td>
-<td align="left">0.71</td>
-<td align="left">0.99</td>
-<td align="left">0.90</td>
-<td align="left">0.19</td>
-<td align="left">0.39</td>
+<td align="left">0.64</td>
+<td align="left">0.77</td>
+<td align="left">FALSE</td>
+<td align="right">0.4773744</td>
 </tr>
 <tr class="even">
-<td align="left">year:water</td>
+<td align="left">style_length</td>
+<td align="left">2.5 x 10<sup>-6</sup></td>
+<td align="left">0.53</td>
+<td align="left">0.62</td>
 <td align="left">0.85</td>
-<td align="left">0.85</td>
+<td align="left">0.53</td>
+<td align="left">0.27</td>
+<td align="left">0.31</td>
+<td align="left">TRUE</td>
+<td align="right">0.4694666</td>
+</tr>
+<tr class="odd">
+<td align="left">corolla_width</td>
+<td align="left">1 x 10<sup>-8</sup></td>
+<td align="left">3.3 x 10<sup>-4</sup></td>
+<td align="left">0.76</td>
 <td align="left">0.084</td>
-<td align="left">9 x 10<sup>-2</sup></td>
-<td align="left">0.97</td>
-<td align="left">0.64</td>
-<td align="left">0.97</td>
-<td align="left">0.21</td>
-<td align="left">0.90</td>
-<td align="left">0.16</td>
-<td align="left">0.37</td>
-<td align="left">0.77</td>
-<td align="left">0.34</td>
-<td align="left">0.35</td>
-<td align="left">0.88</td>
-<td align="left">0.57</td>
-</tr>
-<tr class="odd">
-<td align="left">year:melt_offset</td>
-<td align="left">0.76</td>
-<td align="left">0.53</td>
 <td align="left">0.74</td>
-<td align="left">0.27</td>
-<td align="left">0.31</td>
-<td align="left">0.32</td>
-<td align="left">0.45</td>
-<td align="left">0.069</td>
-<td align="left">0.33</td>
-<td align="left">0.25</td>
-<td align="left">0.065</td>
-<td align="left">0.13</td>
-<td align="left">0.21</td>
-<td align="left">0.22</td>
-<td align="left">0.64</td>
+<td align="left">0.17</td>
 <td align="left">0.35</td>
+<td align="left">FALSE</td>
+<td align="right">0.6558595</td>
 </tr>
 <tr class="even">
-<td align="left">water:melt_offset</td>
-<td align="left">0.64</td>
-<td align="left">0.27</td>
-<td align="left">0.17</td>
-<td align="left">0.86</td>
-<td align="left">0.68</td>
-<td align="left">0.22</td>
-<td align="left">0.71</td>
-<td align="left">0.27</td>
-<td align="left">0.97</td>
-<td align="left">0.18</td>
-<td align="left">0.62</td>
-<td align="left">0.62</td>
-<td align="left">0.35</td>
-<td align="left">0.60</td>
+<td align="left">sepal_width</td>
 <td align="left">0.31</td>
-<td align="left">0.15</td>
+<td align="left">0.033</td>
+<td align="left">0.96</td>
+<td align="left">9 x 10<sup>-2</sup></td>
+<td align="left">0.27</td>
+<td align="left">0.86</td>
+<td align="left">0.35</td>
+<td align="left">FALSE</td>
+<td align="right">0.3472040</td>
 </tr>
 <tr class="odd">
-<td align="left">year:water:melt_offset</td>
-<td align="left">0.77</td>
+<td align="left">nectar_24_h_ul</td>
+<td align="left">3.9 x 10<sup>-3</sup></td>
+<td align="left">0.26</td>
+<td align="left">0.051</td>
+<td align="left">0.97</td>
 <td align="left">0.31</td>
-<td align="left">0.35</td>
-<td align="left">0.35</td>
+<td align="left">0.68</td>
 <td align="left">0.49</td>
-<td align="left">0.15</td>
-<td align="left">0.46</td>
-<td align="left">0.075</td>
-<td align="left">0.98</td>
-<td align="left">0.19</td>
-<td align="left">0.53</td>
-<td align="left">0.65</td>
-<td align="left">0.46</td>
-<td align="left">0.14</td>
-<td align="left">0.75</td>
-<td align="left">0.94</td>
+<td align="left">TRUE</td>
+<td align="right">0.3794874</td>
 </tr>
 <tr class="even">
-<td align="left">Singular?</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">Y</td>
-<td align="left">Y</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
+<td align="left">nectar_conc</td>
+<td align="left">1.4 x 10<sup>-5</sup></td>
+<td align="left">6.2 x 10<sup>-3</sup></td>
+<td align="left">0.21</td>
+<td align="left">0.64</td>
+<td align="left">0.32</td>
+<td align="left">0.22</td>
+<td align="left">0.15</td>
+<td align="left">FALSE</td>
+<td align="right">0.5264656</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_sugar_24_h_mg</td>
+<td align="left">0.036</td>
+<td align="left">0.73</td>
+<td align="left">0.28</td>
+<td align="left">0.97</td>
+<td align="left">0.45</td>
+<td align="left">0.71</td>
+<td align="left">0.46</td>
+<td align="left">TRUE</td>
+<td align="right">0.2879241</td>
+</tr>
+<tr class="even">
+<td align="left">height_cm</td>
+<td align="left">3.6 x 10<sup>-12</sup></td>
+<td align="left">0.78</td>
+<td align="left">2 x 10<sup>-3</sup></td>
+<td align="left">0.21</td>
+<td align="left">0.069</td>
+<td align="left">0.27</td>
+<td align="left">0.075</td>
+<td align="left">TRUE</td>
+<td align="right">0.6989946</td>
+</tr>
+<tr class="odd">
+<td align="left">open</td>
+<td align="left">5.1 x 10<sup>-11</sup></td>
+<td align="left">0.88</td>
+<td align="left">0.65</td>
+<td align="left">0.90</td>
+<td align="left">0.33</td>
+<td align="left">0.97</td>
+<td align="left">0.98</td>
+<td align="left">TRUE</td>
+<td align="right">0.6152024</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_fruit</td>
+<td align="left">1.5 x 10<sup>-6</sup></td>
+<td align="left">0.48</td>
+<td align="left">0.45</td>
+<td align="left">0.16</td>
+<td align="left">0.25</td>
+<td align="left">0.18</td>
+<td align="left">0.19</td>
+<td align="left">TRUE</td>
+<td align="right">0.4480388</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_est</td>
+<td align="left">7.7 x 10<sup>-5</sup></td>
+<td align="left">0.84</td>
+<td align="left">0.69</td>
+<td align="left">0.37</td>
+<td align="left">0.065</td>
+<td align="left">0.62</td>
+<td align="left">0.53</td>
+<td align="left">FALSE</td>
+<td align="right">0.3450470</td>
+</tr>
+<tr class="even">
+<td align="left">fruits_nonaborted</td>
+<td align="left">8.5 x 10<sup>-3</sup></td>
+<td align="left">0.72</td>
+<td align="left">0.71</td>
+<td align="left">0.77</td>
+<td align="left">0.13</td>
+<td align="left">0.62</td>
+<td align="left">0.65</td>
+<td align="left">FALSE</td>
+<td align="right">0.2587999</td>
+</tr>
+<tr class="odd">
+<td align="left">flowers_est</td>
+<td align="left">0.77</td>
+<td align="left">0.83</td>
+<td align="left">0.99</td>
+<td align="left">0.34</td>
+<td align="left">0.21</td>
+<td align="left">0.35</td>
+<td align="left">0.46</td>
+<td align="left">FALSE</td>
+<td align="right">0.1806553</td>
+</tr>
+<tr class="even">
+<td align="left">prop_infested</td>
+<td align="left">0.17</td>
+<td align="left">0.93</td>
+<td align="left">0.90</td>
+<td align="left">0.35</td>
+<td align="left">0.22</td>
+<td align="left">0.60</td>
+<td align="left">0.14</td>
+<td align="left">FALSE</td>
+<td align="right">0.2749680</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_aborted</td>
+<td align="left">1.1 x 10<sup>-3</sup></td>
+<td align="left">0.36</td>
+<td align="left">0.19</td>
+<td align="left">0.88</td>
+<td align="left">0.64</td>
+<td align="left">0.31</td>
+<td align="left">0.75</td>
+<td align="left">FALSE</td>
+<td align="right">0.3071544</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_flower</td>
+<td align="left">2.2 x 10<sup>-5</sup></td>
+<td align="left">0.67</td>
+<td align="left">0.39</td>
+<td align="left">0.57</td>
+<td align="left">0.35</td>
+<td align="left">0.15</td>
+<td align="left">0.94</td>
+<td align="left">TRUE</td>
+<td align="right">0.3981885</td>
 </tr>
 </tbody>
 </table>
@@ -2193,124 +2249,146 @@ for(tr in traits) {
 }
 mt.mod.subplot.coefs &lt;- map_dfr(mt.mod.subplot, tidy, .id=&quot;trait&quot;)
 mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
-mt.mod.subplot.tests %&gt;% print_anova_table(mt.mod.subplot)</code></pre>
+mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <table>
-<colgroup>
-<col width="9%" />
-<col width="5%" />
-<col width="5%" />
-<col width="5%" />
-<col width="4%" />
-<col width="5%" />
-<col width="5%" />
-<col width="8%" />
-<col width="5%" />
-<col width="4%" />
-<col width="6%" />
-<col width="5%" />
-<col width="7%" />
-<col width="4%" />
-<col width="5%" />
-<col width="5%" />
-<col width="6%" />
-</colgroup>
 <thead>
 <tr class="header">
-<th align="left">term</th>
-<th align="left">corolla_length</th>
-<th align="left">style_length</th>
-<th align="left">corolla_width</th>
-<th align="left">sepal_width</th>
-<th align="left">nectar_24_h_ul</th>
-<th align="left">nectar_conc</th>
-<th align="left">nectar_sugar_24_h_mg</th>
-<th align="left">height_cm</th>
-<th align="left">open</th>
-<th align="left">seeds_per_fruit</th>
-<th align="left">seeds_est</th>
-<th align="left">fruits_nonaborted</th>
-<th align="left">flowers_est</th>
-<th align="left">prop_infested</th>
-<th align="left">prop_aborted</th>
-<th align="left">seeds_per_flower</th>
+<th align="left">trait</th>
+<th align="left">melt_date</th>
+<th align="left">precip_est_mm</th>
+<th align="left">melt_date:precip_est_mm</th>
+<th align="left">singular</th>
+<th align="right">R2m</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">melt_date</td>
+<td align="left">corolla_length</td>
 <td align="left">4.8 x 10<sup>-5</sup></td>
-<td align="left">4.8 x 10<sup>-9</sup></td>
-<td align="left">6.3 x 10<sup>-9</sup></td>
-<td align="left">0.046</td>
-<td align="left">1.3 x 10<sup>-3</sup></td>
-<td align="left">5 x 10<sup>-12</sup></td>
-<td align="left">0.31</td>
-<td align="left">1.1 x 10<sup>-15</sup></td>
-<td align="left">8 x 10<sup>-17</sup></td>
-<td align="left">2.2 x 10<sup>-6</sup></td>
-<td align="left">5.6 x 10<sup>-5</sup></td>
-<td align="left">2.9 x 10<sup>-3</sup></td>
-<td align="left">0.76</td>
-<td align="left">5.1 x 10<sup>-3</sup></td>
-<td align="left">2.2 x 10<sup>-4</sup></td>
-<td align="left">5 x 10<sup>-7</sup></td>
+<td align="left">3.3 x 10<sup>-4</sup></td>
+<td align="left">NA</td>
+<td align="left">TRUE</td>
+<td align="right">0.2991778</td>
 </tr>
 <tr class="even">
-<td align="left">precip_est_mm</td>
-<td align="left">3.3 x 10<sup>-4</sup></td>
+<td align="left">style_length</td>
+<td align="left">4.8 x 10<sup>-9</sup></td>
 <td align="left">5.3 x 10<sup>-3</sup></td>
-<td align="left">1.7 x 10<sup>-5</sup></td>
-<td align="left">0.016</td>
-<td align="left">1.2 x 10<sup>-3</sup></td>
-<td align="left">2.9 x 10<sup>-4</sup></td>
-<td align="left">7 x 10<sup>-2</sup></td>
-<td align="left">0.43</td>
-<td align="left">0.71</td>
-<td align="left">0.36</td>
-<td align="left">0.62</td>
-<td align="left">0.38</td>
-<td align="left">0.52</td>
-<td align="left">0.24</td>
-<td align="left">0.23</td>
-<td align="left">0.55</td>
+<td align="left">NA</td>
+<td align="left">FALSE</td>
+<td align="right">0.4146467</td>
 </tr>
 <tr class="odd">
-<td align="left">melt_date:precip_est_mm</td>
+<td align="left">corolla_width</td>
+<td align="left">6.3 x 10<sup>-9</sup></td>
+<td align="left">1.7 x 10<sup>-5</sup></td>
 <td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">0.031</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
+<td align="left">FALSE</td>
+<td align="right">0.4535379</td>
 </tr>
 <tr class="even">
-<td align="left">Singular?</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
+<td align="left">sepal_width</td>
+<td align="left">0.046</td>
+<td align="left">0.016</td>
+<td align="left">0.031</td>
+<td align="left">FALSE</td>
+<td align="right">0.1043536</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_24_h_ul</td>
+<td align="left">1.3 x 10<sup>-3</sup></td>
+<td align="left">1.2 x 10<sup>-3</sup></td>
+<td align="left">NA</td>
+<td align="left">TRUE</td>
+<td align="right">0.2242484</td>
+</tr>
+<tr class="even">
+<td align="left">nectar_conc</td>
+<td align="left">5 x 10<sup>-12</sup></td>
+<td align="left">2.9 x 10<sup>-4</sup></td>
+<td align="left">NA</td>
+<td align="left">FALSE</td>
+<td align="right">0.5038888</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_sugar_24_h_mg</td>
+<td align="left">0.31</td>
+<td align="left">7 x 10<sup>-2</sup></td>
+<td align="left">NA</td>
+<td align="left">TRUE</td>
+<td align="right">0.0641211</td>
+</tr>
+<tr class="even">
+<td align="left">height_cm</td>
+<td align="left">1.1 x 10<sup>-15</sup></td>
+<td align="left">0.43</td>
+<td align="left">NA</td>
+<td align="left">FALSE</td>
+<td align="right">0.6161644</td>
+</tr>
+<tr class="odd">
+<td align="left">open</td>
+<td align="left">8 x 10<sup>-17</sup></td>
+<td align="left">0.71</td>
+<td align="left">NA</td>
+<td align="left">TRUE</td>
+<td align="right">0.6343600</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_fruit</td>
+<td align="left">2.2 x 10<sup>-6</sup></td>
+<td align="left">0.36</td>
+<td align="left">NA</td>
+<td align="left">TRUE</td>
+<td align="right">0.2882350</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_est</td>
+<td align="left">5.6 x 10<sup>-5</sup></td>
+<td align="left">0.62</td>
+<td align="left">NA</td>
+<td align="left">FALSE</td>
+<td align="right">0.2141229</td>
+</tr>
+<tr class="even">
+<td align="left">fruits_nonaborted</td>
+<td align="left">2.9 x 10<sup>-3</sup></td>
+<td align="left">0.38</td>
+<td align="left">NA</td>
+<td align="left">FALSE</td>
+<td align="right">0.1219088</td>
+</tr>
+<tr class="odd">
+<td align="left">flowers_est</td>
+<td align="left">0.76</td>
+<td align="left">0.52</td>
+<td align="left">NA</td>
+<td align="left">FALSE</td>
+<td align="right">0.0065210</td>
+</tr>
+<tr class="even">
+<td align="left">prop_infested</td>
+<td align="left">5.1 x 10<sup>-3</sup></td>
+<td align="left">0.24</td>
+<td align="left">NA</td>
+<td align="left">FALSE</td>
+<td align="right">0.1114442</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_aborted</td>
+<td align="left">2.2 x 10<sup>-4</sup></td>
+<td align="left">0.23</td>
+<td align="left">NA</td>
+<td align="left">FALSE</td>
+<td align="right">0.1719107</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_flower</td>
+<td align="left">5 x 10<sup>-7</sup></td>
+<td align="left">0.55</td>
+<td align="left">NA</td>
+<td align="left">TRUE</td>
+<td align="right">0.3112477</td>
 </tr>
 </tbody>
 </table>
@@ -2386,124 +2464,146 @@ for(tr in traits) {
   # print(mt.sm.mod.plot[[tr]])
 }
 mt.sm.mod.tests &lt;- map_dfr(mt.sm.mod.test, tidy, .id=&quot;trait&quot;)
-mt.sm.mod.tests %&gt;% print_anova_table(mt.sm.mod)</code></pre>
-<table style="width:100%;">
-<colgroup>
-<col width="4%" />
-<col width="6%" />
-<col width="5%" />
-<col width="5%" />
-<col width="5%" />
-<col width="6%" />
-<col width="5%" />
-<col width="8%" />
-<col width="4%" />
-<col width="4%" />
-<col width="6%" />
-<col width="4%" />
-<col width="7%" />
-<col width="5%" />
-<col width="5%" />
-<col width="5%" />
-<col width="7%" />
-</colgroup>
+mt.sm.mod.tests %&gt;%  print_anova_table(mt.sm.mod)</code></pre>
+<table>
 <thead>
 <tr class="header">
-<th align="left">term</th>
-<th align="left">corolla_length</th>
-<th align="left">style_length</th>
-<th align="left">corolla_width</th>
-<th align="left">sepal_width</th>
-<th align="left">nectar_24_h_ul</th>
-<th align="left">nectar_conc</th>
-<th align="left">nectar_sugar_24_h_mg</th>
-<th align="left">height_cm</th>
-<th align="left">open</th>
-<th align="left">seeds_per_fruit</th>
-<th align="left">seeds_est</th>
-<th align="left">fruits_nonaborted</th>
-<th align="left">flowers_est</th>
-<th align="left">prop_infested</th>
-<th align="left">prop_aborted</th>
-<th align="left">seeds_per_flower</th>
+<th align="left">trait</th>
+<th align="left">year</th>
+<th align="left">VWC</th>
+<th align="left">year:VWC</th>
+<th align="left">singular</th>
+<th align="right">R2m</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">year</td>
+<td align="left">corolla_length</td>
 <td align="left">5.9 x 10<sup>-3</sup></td>
-<td align="left">0.18</td>
-<td align="left">3.2 x 10<sup>-3</sup></td>
-<td align="left">6.8 x 10<sup>-3</sup></td>
-<td align="left">0.26</td>
-<td align="left">1.6 x 10<sup>-4</sup></td>
-<td align="left">3.1 x 10<sup>-3</sup></td>
-<td align="left">0.51</td>
-<td align="left">6 x 10<sup>-4</sup></td>
-<td align="left">0.71</td>
-<td align="left">0.82</td>
-<td align="left">0.80</td>
-<td align="left">0.72</td>
-<td align="left">0.34</td>
-<td align="left">0.39</td>
-<td align="left">0.82</td>
+<td align="left">0.011</td>
+<td align="left">0.44</td>
+<td align="left">FALSE</td>
+<td align="right">0.2068999</td>
 </tr>
 <tr class="even">
-<td align="left">VWC</td>
-<td align="left">0.011</td>
+<td align="left">style_length</td>
+<td align="left">0.18</td>
 <td align="left">1.8 x 10<sup>-3</sup></td>
-<td align="left">9.2 x 10<sup>-6</sup></td>
-<td align="left">9.2 x 10<sup>-3</sup></td>
-<td align="left">7.4 x 10<sup>-5</sup></td>
-<td align="left">1 x 10<sup>-2</sup></td>
-<td align="left">1.7 x 10<sup>-3</sup></td>
-<td align="left">0.075</td>
-<td align="left">0.65</td>
-<td align="left">0.98</td>
-<td align="left">0.24</td>
-<td align="left">0.14</td>
-<td align="left">0.074</td>
-<td align="left">0.95</td>
-<td align="left">0.69</td>
-<td align="left">0.63</td>
+<td align="left">0.81</td>
+<td align="left">FALSE</td>
+<td align="right">0.1767118</td>
 </tr>
 <tr class="odd">
-<td align="left">year:VWC</td>
-<td align="left">0.44</td>
-<td align="left">0.81</td>
+<td align="left">corolla_width</td>
+<td align="left">3.2 x 10<sup>-3</sup></td>
+<td align="left">9.2 x 10<sup>-6</sup></td>
 <td align="left">0.044</td>
-<td align="left">2.9 x 10<sup>-3</sup></td>
-<td align="left">0.10</td>
-<td align="left">0.31</td>
-<td align="left">0.025</td>
-<td align="left">0.17</td>
-<td align="left">0.93</td>
-<td align="left">0.79</td>
-<td align="left">0.24</td>
-<td align="left">0.29</td>
-<td align="left">0.75</td>
-<td align="left">0.93</td>
-<td align="left">0.81</td>
-<td align="left">0.68</td>
+<td align="left">TRUE</td>
+<td align="right">0.2872278</td>
 </tr>
 <tr class="even">
-<td align="left">Singular?</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">N</td>
-<td align="left">Y</td>
-<td align="left">N</td>
-<td align="left">Y</td>
+<td align="left">sepal_width</td>
+<td align="left">6.8 x 10<sup>-3</sup></td>
+<td align="left">9.2 x 10<sup>-3</sup></td>
+<td align="left">2.9 x 10<sup>-3</sup></td>
+<td align="left">FALSE</td>
+<td align="right">0.0749237</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_24_h_ul</td>
+<td align="left">0.26</td>
+<td align="left">7.4 x 10<sup>-5</sup></td>
+<td align="left">0.10</td>
+<td align="left">FALSE</td>
+<td align="right">0.1591228</td>
+</tr>
+<tr class="even">
+<td align="left">nectar_conc</td>
+<td align="left">1.6 x 10<sup>-4</sup></td>
+<td align="left">1 x 10<sup>-2</sup></td>
+<td align="left">0.31</td>
+<td align="left">FALSE</td>
+<td align="right">0.2835345</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_sugar_24_h_mg</td>
+<td align="left">3.1 x 10<sup>-3</sup></td>
+<td align="left">1.7 x 10<sup>-3</sup></td>
+<td align="left">0.025</td>
+<td align="left">TRUE</td>
+<td align="right">0.1004421</td>
+</tr>
+<tr class="even">
+<td align="left">height_cm</td>
+<td align="left">0.51</td>
+<td align="left">0.075</td>
+<td align="left">0.17</td>
+<td align="left">FALSE</td>
+<td align="right">0.2177241</td>
+</tr>
+<tr class="odd">
+<td align="left">open</td>
+<td align="left">6 x 10<sup>-4</sup></td>
+<td align="left">0.65</td>
+<td align="left">0.93</td>
+<td align="left">FALSE</td>
+<td align="right">0.2474151</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_fruit</td>
+<td align="left">0.71</td>
+<td align="left">0.98</td>
+<td align="left">0.79</td>
+<td align="left">TRUE</td>
+<td align="right">0.0619134</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_est</td>
+<td align="left">0.82</td>
+<td align="left">0.24</td>
+<td align="left">0.24</td>
+<td align="left">FALSE</td>
+<td align="right">0.0776607</td>
+</tr>
+<tr class="even">
+<td align="left">fruits_nonaborted</td>
+<td align="left">0.80</td>
+<td align="left">0.14</td>
+<td align="left">0.29</td>
+<td align="left">FALSE</td>
+<td align="right">0.0368612</td>
+</tr>
+<tr class="odd">
+<td align="left">flowers_est</td>
+<td align="left">0.72</td>
+<td align="left">0.074</td>
+<td align="left">0.75</td>
+<td align="left">FALSE</td>
+<td align="right">0.0105290</td>
+</tr>
+<tr class="even">
+<td align="left">prop_infested</td>
+<td align="left">0.34</td>
+<td align="left">0.95</td>
+<td align="left">0.93</td>
+<td align="left">TRUE</td>
+<td align="right">0.0380341</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_aborted</td>
+<td align="left">0.39</td>
+<td align="left">0.69</td>
+<td align="left">0.81</td>
+<td align="left">FALSE</td>
+<td align="right">0.0500304</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_flower</td>
+<td align="left">0.82</td>
+<td align="left">0.63</td>
+<td align="left">0.68</td>
+<td align="left">TRUE</td>
+<td align="right">0.0755739</td>
 </tr>
 </tbody>
 </table>
