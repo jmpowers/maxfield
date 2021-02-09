@@ -498,11 +498,12 @@ The models are specified as:
 ```{r morphology_split}
 options(contrasts = c("contr.sum", "contr.poly"))
 
-mt.mod <- mt.mod.test <- mod.emm <- mt.mod.plot <- list()
+mt.mod <- mt.mod.test <- mod.emm <- mod.emm.snow <- mt.mod.plot <- list()
 for(tr in traits) {
   mt.mod[[tr]] <- lmer(mnps.subplot[[tr]] ~ year * snow * water + (1|plot), data=mnps.subplot)
   mt.mod.test[[tr]] <- anova(mt.mod[[tr]])
   mod.emm[[tr]] <- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year + snow * water))
+  mod.emm.snow[[tr]] <- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ snow))
   
   # mt.mod.plot[[tr]] <- 
   #   ggplot(mod.emm[[tr]] %>% mutate(year=factor(year, levels=2018:2020)), aes(x=water, color=snow, y = emmean)) + facet_wrap(vars(year), nrow=1) +
@@ -653,11 +654,12 @@ emm.melt.df <- bind_rows(melt_date = emm.melt %>% map(as.data.frame) %>% bind_ro
           ,precip_est_mm = emm.precip %>% map(as.data.frame) %>% bind_rows(.id="trait") %>% rename(trend=precip_est_mm.trend)
           ,.id="predictor") %>% mutate(predictor=fct_relevel(predictor,"melt_date"))
 
+# library(googlesheets4)
 # write_sheet(left_join(emm.melt.df %>% mutate(traitname=traitnames[trait], .before="trait"),
-#                       mnps.subplot %>% group_by(water) %>% select(traits) %>% 
-#                         summarize(across(traits, ~ sum(!is.na(.x)))) %>% 
-#                         pivot_longer(traits, names_to="trait", values_to="n"))
-#             , ss=filter(datasheets, name=="Maxfield Results"), sheet="slopes_melt")
+#                        mnps.subplot %>% group_by(water) %>% select(traits) %>% 
+#                          summarize(across(traits, ~ sum(!is.na(.x)))) %>% 
+#                          pivot_longer(traits, names_to="trait", values_to="n"))
+#              , ss=filter(datasheets, name=="Maxfield Results"), sheet="slopes_melt")
 
 ggplot(emm.melt.df, aes(x=fct_relevel(trait, rev(traits)), y=trend)) +  
   facet_wrap(vars(predictor), nrow=1, scales="free_x", labeller=labeller(predictor=c(precip_est_mm="Estimated summer precip (mm)", melt_date="Snowmelt date"))) + 
@@ -727,14 +729,16 @@ for(tr in traits) {
 mt.sm.mod.tests <- map_dfr(mt.sm.mod.test, tidy, .id="trait")
 mt.sm.mod.tests %>%  print_anova_table(mt.sm.mod)
 coef.VWC.df <- as.data.frame(t(as.data.frame(coef.VWC))) %>% rownames_to_column("trait")
-emm.VWC.ls <- lapply(emm.VWC, as.data.frame)
+emm.VWC.ls <- map(emm.VWC, as.data.frame)
 emm.VWC.ls$sepal_width[3,] <- NA
 emm.VWC.df  <- bind_rows(emm.VWC.ls, .id="trait")
+emm.VWC.allyears[c(1:3,5)] %>% map(as.data.frame) %>% bind_rows(.id="trait")
 
-# write_sheet(left_join(emm.VWC.df %>% mutate(predictor="VWC", .before=1) %>% 
+# library(googlesheets4)
+# write_sheet(left_join(emm.VWC.df %>% mutate(predictor="VWC", .before=1) %>%
 #                         mutate(traitname=traitnames[trait], .before="trait"),
-#                       mnps.subplot %>% group_by(year) %>% select(traits) %>% 
-#                         summarize(across(traits, ~ sum(!is.na(.x)))) %>% 
+#                       mnps.subplot %>% group_by(year) %>% select(traits) %>%
+#                         summarize(across(traits, ~ sum(!is.na(.x)))) %>%
 #                         pivot_longer(traits, names_to="trait", values_to="n"))
 #             , ss=filter(datasheets, name=="Maxfield Results"), sheet="slopes_VWC")
 

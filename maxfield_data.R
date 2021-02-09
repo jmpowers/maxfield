@@ -212,7 +212,7 @@ sm <- bind_rows(read_sheet(sm_sheets, sheet="2020"),
   filter(!(format(date) %in% c("2018-06-06", "2018-06-07")))
 
 # Means within each subplot across days, months, and years
-sm.subplot <- sm %>% group_by(year, date, plot, subplot, plotid, water, snow) %>% 
+sm.subplot <- sm %>% group_by(year, date, plot, subplot, plotid, water, water4, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop") %>% mutate(day=yday(date))
 
 breaks_20 <- seq(160, 240, by=20)
@@ -221,15 +221,8 @@ sm.subplot20d <- sm.subplot %>%
   group_by(year, mo20d, plot, subplot, plotid, water, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
 
-sm.subplotmonth <- sm.subplot %>% mutate(mo = month(date)) %>% group_by(year, mo, plot, subplot, plotid, water, snow) %>% 
+sm.subplotyear <- sm.subplot %>% group_by(year, plot, subplot, plotid, water, water4, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
-
-sm.subplotyear <- sm.subplot %>% group_by(year, plot, subplot, plotid, water, snow) %>% 
-  summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
-
-#Means for each treatment by date
-sm.water <- sm.subplot %>% group_by(year, date, water, snow) %>% 
-  summarize(VWC = mean(VWC, na.rm=T), .groups="drop") 
 
 # fixes -------------------------------------------------------------------
 
@@ -437,7 +430,7 @@ ph18.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
   mutate_if(is.character, as.factor) 
 
 ph18 <- ph18.raw %>% 
-  complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+  complete(nesting(plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
   mutate(flowering = open + buds > 0,
          has_egg = eggs > 0)
 
@@ -455,7 +448,7 @@ ph19.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
   mutate_if(is.character, as.factor)
 
 ph19 <- ph19.raw %>% 
-  complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+  complete(nesting(plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
   mutate(flowering = open + buds > 0,
          has_egg = eggs > 0)
 
@@ -473,7 +466,7 @@ ph20.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
   mutate_if(is.character, as.factor) 
 
 ph20 <- ph20.raw %>% 
-  complete(nesting(plantid, plotid, plot, subplot, snow, water),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+  complete(nesting(plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
   mutate(flowering = open + buds > 0,
          has_egg = eggs > 0)
 
@@ -660,7 +653,7 @@ sds20 <- sds20.date %>%
 sds20.date.zeroed <- sds20.date %>% 
   mutate(julian=recode(julian, "215"="216")) %>% 
   filter(date %in% (sds20.date %>% drop_na(date) %>% count(date) %>% filter(n>1) %>% pull(date))) %>% 
-  complete(nesting(plantid, plotid, plot, subplot, snow, water), nesting(julian, date), fill=list(seeds=0, fruits=0, fruits_split=0, fruits_fly_no_seeds=0, fruits_fly_with_seeds=0, seeds_fly=0, fruits_caterpillar=0)) %>% 
+  complete(nesting(plantid, plotid, plot, subplot, snow, water, water4), nesting(julian, date), fill=list(seeds=0, fruits=0, fruits_split=0, fruits_fly_no_seeds=0, fruits_fly_with_seeds=0, seeds_fly=0, fruits_caterpillar=0)) %>% 
   mutate(julian=as.integer(as.character(julian)),
          seeds_per_fruit = seeds/fruits,
          fruits_with_seeds = fruits + fruits_split + fruits_fly_with_seeds,
