@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-02-09" />
+<meta name="date" content="2021-02-10" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-02-09</h4>
+<h4 class="date">2021-02-10</h4>
 
 </div>
 
@@ -1546,6 +1546,252 @@ licor %&gt;% pivot_longer(Photo:StableF) %&gt;% mutate(index=row_number()) %&gt;
   geom_boxplot(position=position_dodge2(preserve=&quot;single&quot;)) + 
   scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()</code></pre>
 <p><img src="images/licor-3.png" width="672" /></p>
+<pre class="r"><code>ggplot(wue, aes(x=water, color=snow, y = photosynthesis)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Photosynthesis&quot;, color=&quot;Snowmelt&quot;) + facet_wrap(vars(year), nrow=1)</code></pre>
+<p><img src="images/wue-1.png" width="672" /></p>
+<pre class="r"><code>photo.mod &lt;- lmer(photosynthesis ~ year * snow * water + (1|plot), data=wue.subplot)
+anova(photo.mod) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Sum Sq</th>
+<th align="right">Mean Sq</th>
+<th align="right">NumDF</th>
+<th align="right">DenDF</th>
+<th align="right">F value</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">567.454</td>
+<td align="right">283.727</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">7.358</td>
+<td align="right">0.001</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">0.128</td>
+<td align="right">0.128</td>
+<td align="right">1</td>
+<td align="right">54</td>
+<td align="right">0.003</td>
+<td align="right">0.954</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">136.665</td>
+<td align="right">68.333</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">1.772</td>
+<td align="right">0.180</td>
+</tr>
+<tr class="even">
+<td align="left">year:snow</td>
+<td align="right">34.549</td>
+<td align="right">17.274</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">0.448</td>
+<td align="right">0.641</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water</td>
+<td align="right">132.461</td>
+<td align="right">33.115</td>
+<td align="right">4</td>
+<td align="right">54</td>
+<td align="right">0.859</td>
+<td align="right">0.495</td>
+</tr>
+<tr class="even">
+<td align="left">snow:water</td>
+<td align="right">18.132</td>
+<td align="right">9.066</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">0.235</td>
+<td align="right">0.791</td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow:water</td>
+<td align="right">14.586</td>
+<td align="right">3.647</td>
+<td align="right">4</td>
+<td align="right">54</td>
+<td align="right">0.095</td>
+<td align="right">0.984</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>ggplot(wue, aes(x=water, color=snow, y = conductance)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Conductance&quot;, color=&quot;Snowmelt&quot;) + facet_wrap(vars(year), nrow=1)</code></pre>
+<p><img src="images/wue-2.png" width="672" /></p>
+<pre class="r"><code>cond.mod &lt;- lmer(conductance ~ year * snow * water + (1|plot), data=wue.subplot)
+anova(cond.mod) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Sum Sq</th>
+<th align="right">Mean Sq</th>
+<th align="right">NumDF</th>
+<th align="right">DenDF</th>
+<th align="right">F value</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">0.616</td>
+<td align="right">0.308</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">48.772</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">0.008</td>
+<td align="right">0.008</td>
+<td align="right">1</td>
+<td align="right">54</td>
+<td align="right">1.276</td>
+<td align="right">0.264</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">0.159</td>
+<td align="right">0.079</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">12.573</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">year:snow</td>
+<td align="right">0.011</td>
+<td align="right">0.006</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">0.894</td>
+<td align="right">0.415</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water</td>
+<td align="right">0.106</td>
+<td align="right">0.026</td>
+<td align="right">4</td>
+<td align="right">54</td>
+<td align="right">4.180</td>
+<td align="right">0.005</td>
+</tr>
+<tr class="even">
+<td align="left">snow:water</td>
+<td align="right">0.009</td>
+<td align="right">0.004</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">0.702</td>
+<td align="right">0.500</td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow:water</td>
+<td align="right">0.013</td>
+<td align="right">0.003</td>
+<td align="right">4</td>
+<td align="right">54</td>
+<td align="right">0.497</td>
+<td align="right">0.738</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>ggplot(wue, aes(x=water, color=snow, y = WUE)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Water use efficiency (photo/cond)&quot;, color=&quot;Snowmelt&quot;) + facet_wrap(vars(year), nrow=1)</code></pre>
+<p><img src="images/wue-3.png" width="672" /></p>
+<pre class="r"><code>WUE.mod &lt;- lmer(WUE ~ year * snow * water + (1|plot), data=wue.subplot)
+anova(WUE.mod) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Sum Sq</th>
+<th align="right">Mean Sq</th>
+<th align="right">NumDF</th>
+<th align="right">DenDF</th>
+<th align="right">F value</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">84706.814</td>
+<td align="right">42353.407</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">102.797</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">1332.992</td>
+<td align="right">1332.992</td>
+<td align="right">1</td>
+<td align="right">54</td>
+<td align="right">3.235</td>
+<td align="right">0.078</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">15447.119</td>
+<td align="right">7723.559</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">18.746</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">year:snow</td>
+<td align="right">922.159</td>
+<td align="right">461.079</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">1.119</td>
+<td align="right">0.334</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water</td>
+<td align="right">5595.954</td>
+<td align="right">1398.989</td>
+<td align="right">4</td>
+<td align="right">54</td>
+<td align="right">3.396</td>
+<td align="right">0.015</td>
+</tr>
+<tr class="even">
+<td align="left">snow:water</td>
+<td align="right">701.358</td>
+<td align="right">350.679</td>
+<td align="right">2</td>
+<td align="right">54</td>
+<td align="right">0.851</td>
+<td align="right">0.433</td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow:water</td>
+<td align="right">379.835</td>
+<td align="right">94.959</td>
+<td align="right">4</td>
+<td align="right">54</td>
+<td align="right">0.230</td>
+<td align="right">0.920</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="floral-traits" class="section level1">
 <h1>Floral traits</h1>

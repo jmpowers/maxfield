@@ -465,6 +465,23 @@ licor %>% left_join(treatments)%>% ggplot(aes(y=Photo/Cond, x=factor(date), colo
   scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()
 ```
 
+```{r wue}
+ggplot(wue, aes(x=water, color=snow, y = photosynthesis)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Photosynthesis", color="Snowmelt") + facet_wrap(vars(year), nrow=1)
+
+photo.mod <- lmer(photosynthesis ~ year * snow * water + (1|plot), data=wue.subplot)
+anova(photo.mod) %>% kable(digits=3)
+
+ggplot(wue, aes(x=water, color=snow, y = conductance)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Conductance", color="Snowmelt") + facet_wrap(vars(year), nrow=1)
+
+cond.mod <- lmer(conductance ~ year * snow * water + (1|plot), data=wue.subplot)
+anova(cond.mod) %>% kable(digits=3)
+
+ggplot(wue, aes(x=water, color=snow, y = WUE)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Water use efficiency (photo/cond)", color="Snowmelt") + facet_wrap(vars(year), nrow=1)
+
+WUE.mod <- lmer(WUE ~ year * snow * water + (1|plot), data=wue.subplot)
+anova(WUE.mod) %>% kable(digits=3)
+```
+
 
 # Floral traits
 

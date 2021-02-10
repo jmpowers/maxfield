@@ -196,6 +196,28 @@ anova(trichome_density.mod) %>% kable(digits=3)
 glht(trichome_density.mod, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summary
 ```
 
+# Physiology traits
+
+```{r wue}
+ggplot(wue, aes(x=water4, color=snow, y = photosynthesis)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Photosynthesis", color="Snowmelt") + facet_wrap(vars(year), nrow=1)
+
+photo.mod <- lmer(photosynthesis ~ year * snow * water4 + (1|plot), data=wue.subplot)
+anova(photo.mod) %>% kable(digits=3)
+glht(photo.mod, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summary
+
+ggplot(wue, aes(x=water4, color=snow, y = conductance)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Conductance", color="Snowmelt") + facet_wrap(vars(year), nrow=1)
+
+cond.mod <- lmer(conductance ~ year * snow * water4 + (1|plot), data=wue.subplot)
+anova(cond.mod) %>% kable(digits=3)
+glht(cond.mod, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summary
+
+ggplot(wue, aes(x=water4, color=snow, y = WUE)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Water use efficiency (photo/cond)", color="Snowmelt") + facet_wrap(vars(year), nrow=1)
+
+WUE.mod <- lmer(WUE ~ year * snow * water4 + (1|plot), data=wue.subplot)
+anova(WUE.mod) %>% kable(digits=3)
+glht(WUE.mod, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summary
+```
+
 # Floral traits
 
 ## Floral morphology, nectar, phenology, seeds

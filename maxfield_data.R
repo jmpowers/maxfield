@@ -539,10 +539,28 @@ licor.tally <- licor.plantid %>% select(group_cols(),n) %>%
 read_csv("data/megatally.csv") %>% mutate(plot=as.character(plot)) %>% #read in the original megatally
   full_join(licor.tally) %>% write_tsv("data/megatally_licor.tsv", na="") #add licor columns
 
-# read in the WUE survival analysis
-WUE_1819 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_1819") %>% 
-  select(year:WUE_1819) %>% group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:19), fix_dataset) %>% 
-  write_tsv("data/WUE_1819_fixed.tsv")
+# read in the corrected WUE survival analysis
+WUE_1819 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_1819_cleanedDRC") %>%
+  mutate(plantid = paste0(plotid,plant), plot = str_sub(plotid,1,1), subplot=str_sub(plotid,2,2), 
+         year=factor(year)) %>% 
+  group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:19), fix_dataset) %>% 
+  left_join(treatments)
+
+WUE_1819.plantyr <- WUE_1819 %>% group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% 
+  summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA))
+
+#This sheet has incorrect data for 2018 and 2019, and missing plantids for 2020 - still useful for subplot means
+WUE_20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_181920") %>%
+  mutate(plot=as.character(plot), year=factor(year)) %>%  
+  filter(year==2020) %>% select(-c(plant,plantid)) %>% left_join(treatments)
+
+wue <- bind_rows(WUE_1819, WUE_20)
+wue.plantyr <- bind_rows(WUE_1819.plantyr, WUE_20)#Assume there are no duplicate measures of plants in WUE_20
+
+wue.subplot <- wue.plantyr %>% group_by(year, water, water4, snow, plot, plotid) %>% 
+  summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
 # floraltraits ------------------------------------------------------------------
 
@@ -793,6 +811,7 @@ alldata <- list("treatments"=treatments,
                 "phenology_2020"=ph20,
                 "leaf_traits"=lt,
                 "licor"=licor,
+                "wue"=wue,
                 "floral_traits"=mt,
                 "floral_volatiles"=vt,
                 "seeds_2018"=sds18,
