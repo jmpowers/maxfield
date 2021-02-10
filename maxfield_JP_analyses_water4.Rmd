@@ -1,0 +1,462 @@
+--- 
+title: "Maxfield Meadow Ipomopsis Experiment"
+author: "[John Powers](http://sites.uci.edu/powers/)"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    self_contained: no
+    lib_dir: libs
+    code_folding: hide
+    toc: yes
+    toc_float: TRUE
+editor_options: 
+  chunk_output_type: console
+---
+<style type="text/css">
+.main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
+img{ max-width:200%; height: auto; }
+td, th { padding : 6px }
+</style>
+
+# Purpose
+Analyze selection on and plastic responses of floral and vegetative traits of *Ipomopsis aggregata* to manipulations of snowmelt and summer precipitation. Determine whether plasticity is adaptive (improves survival and reproduction). Part of a [larger project](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1654655) to understand the potential for evolutionary rescue in alpine plants under climate change.
+
+# Treatments
+
+```{r setup, message=FALSE, cache=FALSE}
+library(tidyverse)
+library(lubridate)
+#library(googlesheets4)
+
+library(lme4)
+library(lmerTest)
+library(MuMIn)
+library(emmeans)
+library(multcomp)#careful, this loads MASS, which overrides dplyr::select
+select <- dplyr::select
+library(broom)
+library(broom.mixed)
+library(vegan)
+
+library(RColorBrewer)
+library(viridis)
+library(gridExtra)
+library(GGally)
+library(ggvegan)
+library(ggnewscale)
+
+library(knitr)
+knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = "images_water4/")
+
+signif.num <- function(x) {
+    as.character(symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
+           cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+           symbols = c("***", "**", "*", ".", " ")))
+}
+print_anova_table <- function(df, mod) {
+  df %>% select(c("trait", "term", "p.value")) %>% 
+    mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
+             str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
+    pivot_wider(names_from=term, values_from=p.value) %>% 
+    mutate(singular = map_lgl(mod, isSingular),
+           R2m = map_dbl(mod, ~ MuMIn::r.squaredGLMM(.x)[[1,"R2m"]])) %>% 
+    kable
+}
+
+load("data/maxfield_data.rda")
+```
+
+# Soil moisture vs. treatments
+
+## Weather plots
+
+```{r soil, fig.height=12, fig.width=12}
+ggplot(sm, aes(x=yday(date))) + 
+  facet_wrap(vars(year), ncol=1) +
+  geom_jitter(aes(shape=snow, color=water4, y = VWC), height=0, width=0.3) + 
+  geom_smooth(aes(linetype=snow, color=water4, y = VWC), se=F, span=0.5) +
+  geom_col(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
+           fill=brewer.pal(3, "Greens")[3]) +
+  geom_line(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=av_temp_2m_C), 
+            color=brewer.pal(3, "Oranges")[3]) + 
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=brewer.pal(3, "Purples")[3])+
+  geom_line(data = snowcloth, aes(y=mean_snow_depth_cm/10, group=year))+
+  geom_point(data = snowcloth, aes(y=mean_snow_depth_cm/10))+
+  geom_line(data=groundcover %>% pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>%
+              filter(threshold!="first_snow_day", year>2017) %>% 
+              mutate(snow_depth_cm = as.integer(str_split_fixed(threshold,"_",n=4)[,2])),
+            aes(x=day, y=snow_depth_cm/10), color="grey40")+
+  geom_segment(data=waterdates %>% pivot_wider(names_from=precip_treatments, values_from=c(day,date)),
+               aes(x=day_started, xend=day_ended, y=20, yend=20)) +
+  geom_point(data=waterdates, aes(x=day,y=20)) +
+  geom_point(data=ph, aes(y= 17*(open+buds)/(open+buds)), color="grey", shape=0)+
+  geom_point(data=mt, aes(y= 18*corolla_length/corolla_length), color="purple", shape=0)+
+  geom_point(data=mt, aes(y= 19*nectar_24_h_ul/nectar_24_h_ul), color="orange", shape=0)+
+  scale_x_continuous(limits=c(85, 230), breaks=scales::breaks_extended(10), expand=expansion(0,0)) + scale_y_continuous(limits=c(-3, 20)) +
+  labs(y="Soil VWC (%) / Daily precipitation (mm) / Mean temp. (C) / Snowpack (dm)", 
+       x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
+  scale_color_manual(values=water4_pal) +
+  scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+ggplot(sm.subplot, aes(x=yday(date))) + 
+  facet_wrap(vars(year), ncol=1) +
+      geom_col(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
+           fill=brewer.pal(3, "Greens")[2]) +
+  geom_line(data=daily_precip_est, aes(y=VWC_Control_4*100), color=brewer.pal(3, "Greens")[2], size=1) +
+  geom_point(aes(shape=snow, color=water4, y = VWC)) + 
+  geom_line(data=sm.subplot %>% group_by(water4, snow, year, date) %>% summarize(VWC=mean(VWC, na.rm=T)), aes(linetype=snow, color=water4, y = VWC)) +
+    scale_color_manual(values=water4_pal) +  scale_linetype_manual(values=c(2,1)) + 
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="black", show.legend=F) +
+  coord_cartesian(xlim=c(110, 230), ylim=c(0, round(max(sm.subplot$VWC, na.rm=T))), expand=F)+
+    labs(x="Day of year", y="Mean soil VWC in subplot (%) / Precipitation (mm)", color="Water", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"))
+```
+
+# Soil moisture vs. snowmelt date
+
+```{r soil_treatments}
+left_join(filter(sm.subplot20d, mo20d!="221 - 240"), meltdates) %>% 
+  mutate(mo = paste0("Days ",mo20d)) %>% 
+  ggplot(aes(x=sun_date, y=VWC, shape=year,color=water4)) + 
+  facet_wrap(vars(mo), nrow=1)+
+  geom_point() + geom_smooth(se=F, method="lm") +
+  scale_color_manual(values=water4_pal) +
+  labs(x="Snowmelt date", y="Mean soil moisture in subplot", color="Water", shape="Year")
+
+sm.subplot %>% mutate(day=yday(date)) %>% group_by(year) %>% summarize(start=min(day), end=max(day)) %>% kable(caption = "Soil moisture collection dates")
+
+# VWC split-plot analysis
+sm.mod <- lmer(VWC ~ year * snow * water4 + (1|plot), data=sm.subplotyear)
+anova(sm.mod) %>% kable(digits=3)
+(sm.emm.snow <- as.data.frame(emmeans(sm.mod, ~ snow))) %>% kable(digits=3)
+sm.emm.snow$emmean[1] - sm.emm.snow$emmean[2]
+(sm.emm.water <- as.data.frame(emmeans(sm.mod, ~ water4))) %>% kable(digits=3)
+sm.emm.water$emmean[1] - sm.emm.water$emmean[2]
+sm.emm.water$emmean[4] - sm.emm.water$emmean[2]
+
+glht(sm.mod, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summary
+
+sm.mod.date <- lmer(VWC ~ snow * water4 + (1|plotid)+ (1|date), data=mutate(sm.subplot,date=factor(date)))
+anova(sm.mod.date) %>% kable(digits=3)
+glht(sm.mod.date, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summary
+```
+
+# Census
+
+## Census status
+
+The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).
+
+## Status vs. treatment
+```{r inventory}
+ggplot(drop_na(cen19, water4, snow) %>% filter(status %in% status_ok), aes(x=water4, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position="fill") + scale_fill_manual(values=status_pal) + labs(title="2019 status", x="Precipitation", y="Proportion", fill="Status")
+ggplot(drop_na(cen20, water4, snow) %>% filter(status %in% status_ok), aes(x=water4, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position="fill") + scale_fill_manual(values=status_pal) + labs(title="2020 status", x="Precipitation", y="Proportion", fill="Status")
+```
+
+
+## Plant growth vs. treatments
+
+Only includes plants that remained vegetative and did not die or flower.
+```{r growth}
+ggplot(drop_na(cen, water4_19, snow_19), aes(x=r1_longest_19, y=r1_longest_20, color=water4_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) + scale_color_manual(values=water4_pal) + theme_minimal()+ labs(x="2019 Rosette 1 Longest Leaf (mm)", y="2020 Rosette 1 Longest Leaf (mm)",  color="Precipitation", shape="Snowmelt")
+ggplot(drop_na(cen, water4_19, snow_19), aes(x=r1_leaves_19, y=r1_leaves_20, color=water4_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1 )+ scale_color_manual(values=water4_pal) + theme_minimal()+ labs(x="2019 Rosette 1 # Leaves", y="2020 Rosette 1 # Leaves",  color="Precipitation", shape="Snowmelt")
+```
+
+## Plant size vs. treatments
+```{r plantsize}
+ggplot(drop_na(cen19, water4, snow), aes(x=water4, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="2019 Rosette 1 Longest Leaf (mm)",  color="Snowmelt")
+ggplot(drop_na(cen19, water4, snow), aes(x=water4, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x="Precipitation", y="2019 Rosette 1 # Leaves",  color="Snowmelt")
+
+ggplot(drop_na(cen20, water4, snow), aes(x=water4, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="2020 Rosette 1 Longest Leaf (mm)",  color="Snowmelt")
+ggplot(drop_na(cen20, water4, snow), aes(x=water4, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="2020 Rosette 1 # Leaves",  color="Snowmelt")
+```
+
+# Leaf traits
+
+```{r leaftraits}
+ggplot(lt, aes(x=water4, color=snow, y = sla)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Specific Leaf Area (cm2/g)", color="Snowmelt") + facet_wrap(vars(year, round), nrow=1) + scale_y_continuous(limits=c(0,300))
+
+sla.mod <- lmer(sla ~ yearround * snow * water4 + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
+anova(sla.mod) %>% kable(digits=3)
+glht(sla.mod, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summary
+
+ggplot(lt, aes(x=sla, y=water_content, color=water4, shape=snow, linetype=snow)) + geom_point() +  scale_color_manual(values=water4_pal) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+water_content.mod <- lmer(water_content ~ yearround * snow * water4 + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
+anova(water_content.mod) %>% kable(digits=3)
+glht(water_content.mod, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summary
+
+ggplot(lt, aes(x=water4, color=snow, y = water_content)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Water content", color="Snowmelt") + facet_wrap(vars(year, round), nrow=1)
+
+ggplot(lt, aes(x=water4, color=snow, y = trichome_density)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Trichome density (/cm2)", color="Snowmelt") + facet_wrap(vars(year, round), nrow=1)
+
+trichome_density.mod <- lmer(trichome_density ~ yearround * snow * water4 + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
+anova(trichome_density.mod) %>% kable(digits=3)
+glht(trichome_density.mod, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summary
+```
+
+# Floral traits
+
+## Floral morphology, nectar, phenology, seeds
+
+### Floral plasticity: water treatments and snowmelt treatments
+
+This is a split-plot analysis, based on the original experimental design. The models use:
+
+* *mnps.subplot*, the 24 * 3 subplot means within each year
+* *snow*, the snowmelt treatment (except for plot 2 in 2019)
+* *water4*, the water treatments with mock rainouts and controls not combined
+* *plot* as a random effect (subplots vary within this larger unit)
+
+The models are specified as:
+
+    lmer(trait ~ year * snow * water4 + (1|plot), data = mnps.subplot)
+
+* The models for nectar volume and total sugar are singular (variance at plot level near 0)
+* Removing the interactions with year does not make those two models not singular
+* The model fits are mostly singular when a random effect of *plotid* (subplot) is added for repeated measures among years
+
+```{r morphology_split}
+options(contrasts = c("contr.sum", "contr.poly"))
+
+mt.mod <- mt.mod.glht <- mt.mod.test <- mod.emm <- mod.emm.snow <- mt.mod.plot <- list()
+for(tr in traits) {
+  mt.mod[[tr]] <- lmer(mnps.subplot[[tr]] ~ year * snow * water4 + (1|plot), data=mnps.subplot)
+  mt.mod.test[[tr]] <- anova(mt.mod[[tr]])
+  mod.emm[[tr]] <- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year + snow * water4))
+  mod.emm.snow[[tr]] <- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ snow))
+  mt.mod.glht[[tr]] <- glht(mt.mod[[tr]],  linfct = mcp(water4 = c("Control - `Mock rainout` = 0")))
+  
+  # mt.mod.plot[[tr]] <- 
+  #   ggplot(mod.emm[[tr]] %>% mutate(year=factor(year, levels=2018:2020)), aes(x=water4, color=snow, y = emmean)) + facet_wrap(vars(year), nrow=1) +
+  #       labs(x="Precipitation", y=traitnames[[tr]], color="Snowmelt") +
+  #       geom_point(data=mnps.subplot, aes_string(x="water4", color="snow", y = tr), inherit.aes = F, position=position_dodge(0.7)) + 
+  #       geom_point(position=position_dodge(0.7), size=4, shape=0) + 
+  #       geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE), position=position_dodge2(0.7)) +
+  #       guides(x=guide_axis(angle = 90)) + scale_color_manual(values=snow_pal)
+  # print(mt.mod.plot[[tr]])
+  #cat(paste(tr,"\n"))
+  #print(mt.mod.test[[tr]])
+}
+
+mt.mod.tests <- map_dfr(mt.mod.test, tidy, .id="trait")
+mt.mod.tests %>%  print_anova_table(mt.mod)
+
+map_dfr(mt.mod.glht, ~ tibble(Control_minus_MockRainout = coef(.x), p=summary(.x)$test$pvalues), .id="trait") %>% kable(digits=3)
+```
+
+```{r multi_splitplot, fig.width=9, fig.height=11}
+traits.include <- traits[c(1:4,8,5:7,13)]
+
+mnps.subplot.long <- mnps.subplot %>% select(all_of(traits.include), water4, snow, year, VWC, sun_date, precip_est_mm) %>% 
+  pivot_longer(all_of(traits.include), names_to="trait") %>% 
+  mutate(trait = fct_relevel(trait, traits.include), snow=fct_relevel(snow, "Normal"))
+
+mnps.plantyr.long <- mnps.plantyr %>% select(all_of(traits.include), water4, snow, year, VWC, sun_date, precip_est_mm) %>% 
+  pivot_longer(all_of(traits.include), names_to="trait") %>% 
+  mutate(trait = fct_relevel(trait, traits.include), snow=fct_relevel(snow, "Normal"))
+
+mod.emm.plots <- list()
+for(i in 1:2) {
+traits.plot <- list(traits.include[1:5], traits.include[6:9])[[i]]
+mod.emm.plots[[i]] <- mod.emm %>% bind_rows(.id="trait") %>% filter(trait %in% traits.plot) %>% 
+  mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal")) %>% 
+  ggplot(aes(x=water4, color=snow)) + 
+  facet_grid(trait ~ year, scales="free_y", labeller = as_labeller(c(traitnames, set_names(2018:2020))), switch="y") + 
+  geom_violin(data=mnps.plantyr.long %>% drop_na(value, water4) %>% filter(trait %in% traits.plot), aes(y=value), 
+            position=position_dodge(width=0.8), show.legend=F) + 
+  #geom_point(data=mnps.subplot.long %>% filter(trait %in% traits.plot) , aes(y=value),
+  #           position=position_dodge(width=0.6), shape=4) +  
+  geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE,), position=position_dodge(width=0.8), size=2, show.legend=F) +
+  geom_point(aes(y=emmean), position=position_dodge(width=0.8), shape="-", size=16) +  
+  labs(x="Precipitation", y="", color="Snowmelt") + 
+  coord_cartesian(ylim=c(0,NA)) + scale_y_continuous(position="right", expand=expansion(mult=c(0,0.05)))+
+  scale_x_discrete(guide=guide_axis(angle=90)) + 
+  scale_color_manual(values=snow_pal, guide=guide_legend(override.aes = list(shape=15, size=5))) + 
+  theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
+        panel.border = element_rect(fill=NA, colour = "black"), panel.spacing=unit(12, "pt"),
+        legend.position = "top")
+  if(i !=2) mod.emm.plots[[i]] <- mod.emm.plots[[i]] + guides(color=F)
+}
+
+grid.arrange(mod.emm.plots[[1]], mod.emm.plots[[2]], nrow=1)
+```
+
+### Floral plasticity: water treatments and snowmelt offset
+
+The differences in snowmelt dates vary among years and plots, so this analysis uses a melt date offset. The models use:
+
+* *mnps.subplot*, the 24 * 3 subplot means within each year
+* *water4*, the water treatments with mock rainouts and controls not combined
+* *melt_offset*, the number of days between the snowmelt date (when the light entering the HOBO logger exceeds 10,000 lux) and the mean snowmelt date for the normal plots in that year (according to *snow*)
+* *plotid* (subplot) as a random effect (plants vary within this larger unit)
+
+The models are specified as: 
+
+    lmer(trait ~ year * water4 * melt_offset + (1|plotid), data = mnps.subplot)
+
+```{r morphology_meltoffset}
+options(contrasts = c("contr.sum", "contr.poly"))
+
+mt.mod.raw <- mt.mod.plantyr <- mt.mod.subplot <- mt.mod.subplot.test <- mt.mod.plot <- list()
+for(tr in traits) {
+  #mt.mod.raw[[tr]]     <- lmer(mt[[tr]]         ~ year * water4 * melt_offset + (1|plotid) + (1|plantid), data=mt)
+  #mt.mod.plantyr[[tr]] <- lmer(mt.plantyr[[tr]] ~ year * water4 * melt_offset + (1|plotid), data=mt.plantyr)
+  mt.mod.subplot[[tr]] <- lmer(mnps.subplot[[tr]] ~ year * water4 * melt_offset + (1|plot), data=mnps.subplot)
+  mnps.subplot[[paste0("fit.",tr)]] <- NA
+  mnps.subplot[[paste0("fit.",tr)]][!is.na(mnps.subplot[[tr]])]<- predict(mt.mod.subplot[[tr]], re.form=NA)
+  mt.mod.subplot.test[[tr]] <- anova(mt.mod.subplot[[tr]])
+  
+  mt.mod.plot[[tr]] <- 
+    ggplot(mnps.subplot, aes_string(x="melt_offset", color="water4", y = tr)) + geom_point() +
+    geom_line(data=mnps.subplot %>% drop_na(paste0("fit.",tr)), aes_string(y=paste0("fit.",tr)), size=2)+
+     scale_color_manual(values=water4_pal)+ facet_wrap(vars(year))+
+        labs(x="Offset from mean normal snow melt date (days)", y=traitnames[[tr]], color="Precipitation")
+  print(mt.mod.plot[[tr]])
+}
+mt.mod.subplot.tests <- map_dfr(mt.mod.subplot.test, tidy, .id="trait")
+mt.mod.subplot.tests %>%  print_anova_table(mt.mod.subplot)
+```
+
+### Floral traits within season
+
+No obvious effect of time within a season for corolla length/width or sepal width. The timing of trait measurements was different each year:
+
+```{r morph_season}
+ggplot(data=mt, aes(x=yday(date), y= corolla_length, color=water4)) + 
+  facet_wrap(vars(year), ncol=1) +
+  geom_point()+   geom_smooth(se=F)+ 
+  labs(y=traitnames[["corolla_length"]], x="Day of year")+
+  scale_color_manual(values=water4_pal) + theme_minimal()
+
+ggplot(data=mt, aes(x=yday(date), y= nectar_24_h_ul, color=water4)) + 
+  facet_wrap(vars(year), ncol=1) +
+  geom_point()+   geom_smooth(se=F)+ 
+  labs(y=traitnames[["nectar_24_h_ul"]], x="Day of year")+
+  scale_color_manual(values=water4_pal) + theme_minimal()
+
+ggplot(data=nt, aes(x=yday(date), y= nectar_conc, color=water4)) + 
+  facet_wrap(vars(year), ncol=1) +
+  geom_point()+   geom_smooth(se=F)+ 
+  labs(y=traitnames[["nectar_conc"]], x="Day of year")+
+  scale_color_manual(values=water4_pal) + theme_minimal()
+```
+
+# Phenology
+
+```{r phenology}
+ggplot(ph %>% drop_na(height_cm), aes(x=julian, y=height_cm, shape=snow, color=water4))+ geom_point() + geom_path(aes(group=plantid))+
+  facet_wrap(vars(year), ncol=1)+
+    geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
+  labs(y="Plant height", 
+       x="Day of year", color="Precipitation", shape="Snow") +
+  scale_x_continuous(breaks=seq(120,240, by=20))+
+  scale_color_manual(values=water4_pal) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+ph %>% group_by(year, snow, water4, julian) %>% summarize_at(c("open","buds"), mean, na.rm=T) %>% 
+  ggplot(aes(x=julian, y=open, shape=snow, linetype=snow, color=water4))+ geom_point() + 
+  facet_wrap(vars(year), ncol=1)+
+  geom_path(aes(group=paste(snow, water4))) +
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
+  labs(y="Mean total flowers", 
+       x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
+    scale_x_continuous(breaks=seq(120,240, by=20))+
+  scale_color_manual(values=water4_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+ph %>% group_by(year, snow, water4, julian) %>% summarize_at("flowering", mean, na.rm=T) %>% 
+  ggplot(aes(x=julian, y=flowering, shape=snow, linetype=snow, color=water4))+ geom_point() + 
+    facet_wrap(vars(year), ncol=1)+
+  geom_path(aes(group=paste(snow, water4))) +
+    geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
+  labs(y="Proportion flowering", 
+       x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
+  scale_x_continuous(breaks=seq(120,240, by=20))+
+  scale_y_continuous(labels = scales::percent)+
+  scale_color_manual(values=water4_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+ph %>% group_by(year, snow, water4, julian) %>% summarize_at("eggs", mean, na.rm=T) %>% 
+  ggplot(aes(x=julian, y=eggs, shape=snow, linetype=snow, color=water4))+ geom_point() + 
+    facet_wrap(vars(year), ncol=1)+
+  geom_path(aes(group=paste(snow, water4))) +
+    geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
+  labs(y="Mean total eggs", 
+       x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
+    scale_x_continuous(breaks=seq(120,240, by=20))+
+  scale_color_manual(values=water4_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+ph %>% group_by(year, snow, water4, julian) %>% summarize_at("has_egg", mean, na.rm=T) %>% 
+  ggplot(aes(x=julian, y=has_egg, shape=snow, linetype=snow, color=water4))+ geom_point() + 
+    facet_wrap(vars(year), ncol=1)+
+  geom_path(aes(group=paste(snow, water4))) +
+    geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
+  labs(y="Proportion of plants with eggs", 
+       x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
+    scale_x_continuous(breaks=seq(120,240, by=20))+
+  scale_y_continuous(labels = scales::percent)+
+  scale_color_manual(values=water4_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+```
+
+## Floral display size
+### 2020
+```{r display_size}
+ggplot(ph.plantid, aes(x=height_cm, y=open, color=water4)) + geom_point() + geom_smooth(method="lm", se=F) + scale_color_manual(values=water4_pal) + facet_wrap(vars(year), nrow=1) +
+  labs(x="Mean inflorescence height (cm)", y="Mean number of open flowers", color="Precipitation")
+
+ggplot(ph.plantid, aes(x=water4, color=snow, y = height_cm)) +
+    labs(x="Precipitation", y="Mean inflorescence height (cm)", color="Snowmelt") +
+    geom_boxplot() + scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1)
+
+ggplot(ph.plantid, aes(x=water4, color=snow, y = open)) +
+    labs(x="Precipitation", y="Mean number of open flowers", color="Snowmelt") +
+    geom_boxplot() + scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1)
+```
+
+# Seeds
+
+```{r seeds}
+ggplot(sds %>% drop_na(plot), aes(color=water4, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
+  scale_color_manual(values=water4_pal) + facet_wrap(vars(year), nrow=1) + theme_minimal() +
+  labs(x="Counted fruits", y="Counted seeds", color="Precipitation")
+
+for(tr in seedtraits) {
+  print(ggplot(sds %>% drop_na(plot), aes_string(tr, x="water4", color="snow")) + geom_boxplot() + 
+    scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1) + 
+    scale_y_continuous(trans=ifelse(tr %in% c("seeds_est", "fruits_nonaborted"),"sqrt","identity"))+
+    labs(x="Precipitation", y=seedtraitnames[[tr]], color="Precipitation") +
+        guides(x=guide_axis(angle = 90)))
+}
+```
+
+## Fruiting phenology (2020)
+
+```{r seed_phenology}
+ggplot(sds20.date.zeroed, aes(x=julian, y=fruits_nonaborted, color=water4, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun="mean", geom="line") + scale_y_sqrt() + scale_color_manual(values=water4_pal)+
+  labs(y="Nonaborted fruits", x="Day of year", color="Precipitation", shape="Snow", linetype="Snow")+ scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+ggplot(sds20.date.zeroed, aes(x=julian, y=seeds, color=water4, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun="mean", geom="line") + scale_y_sqrt() + scale_color_manual(values=water4_pal)+
+  labs(y="Seeds", x="Day of year", color="Precipitation", shape="Snow", linetype="Snow")+ scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+ggplot(sds20.date.zeroed, aes(x=julian, y=prop_infested, color=water4, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun="mean", geom="line") + scale_color_manual(values=water4_pal)+
+  labs(y="Proportion of nonaborted fruits infested", x="Day of year", color="Precipitation", shape="Snow", linetype="Snow")+ scale_linetype_manual(values=c(2,1)) +
+  scale_y_continuous(labels = scales::percent)+ theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+
+sds20.date.zeroed %>% group_by(snow, water4, julian) %>% summarize_at("fruiting", mean, na.rm=T) %>% 
+  ggplot(aes(x=julian, y=fruiting, shape=snow, linetype=snow, color=water4))+ geom_point() +
+  geom_path(aes(group=paste(snow, water4))) +
+  labs(y="Proportion fruiting (nonaborted fruits)", 
+       x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
+  scale_y_continuous(labels = scales::percent)+
+  scale_color_manual(values=water4_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
+  theme(legend.key.size = unit(2, "lines"))
+```
+

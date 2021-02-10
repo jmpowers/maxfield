@@ -41,8 +41,6 @@ treatments <- select(treatments, !ends_with(c("x","y")))
 # HOBO manual: https://www.onsetcomp.com/files/manual_pdfs/9556-M%20UA-002%20Manual.pdf
 # When the snow melts, the temperature rises above freezing and the light intensifies.
 # The day of snowmelt can be calculated from the following thresholds.
-# DRC also provided a list of the melt_date - this uses 
-# HOBO light thresholds of 10000 lux, except for 2 plots in 2020.
 
 melt_threshold_sun  <- 10000 # light units (probably lux = lumen / m2)
 melt_threshold_warm <- 1    # degrees Celsius difference (positive or negative) from 0C (inside snow)
@@ -60,17 +58,13 @@ meltdates <- full_join(
   hobo %>% filter(month(time)%in%4:6, warm==TRUE) %>% 
     group_by(year, plot) %>% summarize_at("time", min) %>% 
     mutate(warm_date=yday(time)) %>%  rename(warm_time=time)) %>% 
-  # In 2018 the HOBO logger for plot 4 did not record any data - impute data from plot 5's melt_date
+  # In 2018 the HOBO logger for plot 4 did not record any data - impute data from plot 5's sun_date
   bind_rows(data.frame(year=factor("2018"), plot=factor("4"), sun_date=114, warm_date=114)) %>% 
   left_join(treatments %>% select(plot, snow) %>% distinct) %>% 
-  left_join(read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="snowmelt") %>% 
-              mutate(year=factor(year), plot=as.factor(plot)) %>% select(-notes),
-            snow_new = factor(recode(snow_new, "early"="Early","normal"="Normal"))) %>% 
-  mutate(plot=factor(plot),
-         melt_time = parse_date_time(paste(year,melt_date,12,0), "y j H M", tz="Etc/GMT+6")) %>%
   # In 2019 the avalanche caused plot 2 to melt after the normal snowmelt plots, so this is recoded as normal
   # This still records plot 5 as an "early" (1 day earlier)
-  mutate(snow = factor(ifelse(year=="2019" & plot=="2", "Normal", as.character(snow))))
+  mutate(snow = factor(ifelse(year=="2019" & plot=="2", "Normal", as.character(snow))),
+         plot = factor(plot))
 
 # Calculate an offset from the mean sun_date in the normal plots
 meltdates <- meltdates %>% left_join(meltdates %>% group_by(year,snow) %>% summarize_at("sun_date", mean) %>% 
@@ -218,7 +212,7 @@ sm.subplot <- sm %>% group_by(year, date, plot, subplot, plotid, water, water4, 
 breaks_20 <- seq(160, 240, by=20)
 sm.subplot20d <- sm.subplot %>% 
   mutate(mo20d = cut(yday(date), breaks_20, labels=paste(breaks_20[1:4]+1, breaks_20[2:5], sep=" - "))) %>% 
-  group_by(year, mo20d, plot, subplot, plotid, water, snow) %>% 
+  group_by(year, mo20d, plot, subplot, plotid, water, water4, snow) %>% 
   summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
 
 sm.subplotyear <- sm.subplot %>% group_by(year, plot, subplot, plotid, water, water4, snow) %>% 
@@ -474,7 +468,7 @@ ph <- bind_rows(list("2018" = ph18, "2019" = ph19, "2020" = ph20), .id="year") %
   mutate(julian=as.integer(as.character(julian))) %>% 
   left_join(sm.subplotyear) 
 
-ph.plantid <- ph %>% group_by(year, water, water4, snow, snow_new, plot, plotid, plant, plantid) %>% summarize_at(c("open","height_cm", "VWC"), mean, na.rm=T) 
+ph.plantid <- ph %>% group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% summarize_at(c("open","height_cm", "VWC"), mean, na.rm=T) 
 
 # leaftraits --------------------------------------------------------------
 
@@ -584,12 +578,12 @@ mt <- bind_rows(mt, nt)  %>%
 
 #average by plant and year
 mt.plantyr <- mt %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(year, water, water4, snow, snow_new, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  group_by(year, water, water4, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
 #average by plant and year, then by subplot
 mt.subplot <- mt.plantyr %>%  
-  group_by(year, water, water4, snow, snow_new, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
+  group_by(year, water, water4, snow, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
 # floralvolatiles ---------------------------------------------------------------
@@ -745,14 +739,14 @@ mnps <- bind_rows(mt, ph, sds)
 
 #average by plant and year
 mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(year, water, water4, snow, snow_new, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  group_by(year, water, water4, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
 #average by plant and year, then by subplot
 mnps.subplot <- mnps.plantyr %>%  
-  group_by(year, water, water4, snow, snow_new, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
+  group_by(year, water, water4, snow, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA)) %>% drop_na(water4) #TODO figure out what entries in ph are causing NAs
-write_sheet(mnps.subplot %>% select(!starts_with(c("open_","buds_","nr_","snow_new","eggs_","fit."))), 
+write_sheet(mnps.subplot %>% select(!starts_with(c("open_","buds_","nr_","eggs_","fit."))), 
                                     ss=filter(datasheets, name=="Maxfield Results"), sheet="subplot_means")
 
 # timings -----------------------------------------------------------------
