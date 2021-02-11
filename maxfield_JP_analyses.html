@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-02-10" />
+<meta name="date" content="2021-02-11" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-02-10</h4>
+<h4 class="date">2021-02-11</h4>
 
 </div>
 
@@ -302,6 +302,7 @@ library(lubridate)
 library(lme4)
 library(lmerTest)
 library(MuMIn)
+library(glmmTMB)
 library(emmeans)
 library(broom)
 library(broom.mixed)
@@ -317,11 +318,8 @@ library(ggnewscale)
 library(knitr)
 knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, fig.path = &quot;images/&quot;)
 
-signif.num &lt;- function(x) {
-    as.character(symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
-           cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
-           symbols = c(&quot;***&quot;, &quot;**&quot;, &quot;*&quot;, &quot;.&quot;, &quot; &quot;)))
-}
+options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;)) #needed for Type III SS
+
 print_anova_table &lt;- function(df, mod) {
   df %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
     mutate(p.value=p.value %&gt;% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %&gt;% 
@@ -498,7 +496,7 @@ F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
 <pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_count()+
   geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;), fill=&quot;white&quot;) +
   scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
-  labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;,size=&quot;# Plots&quot;) + 
+  labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;,size=&quot;# Subplots&quot;) + 
   theme_minimal()</code></pre>
 <p><img src="images/groundcover-2.png" width="672" /></p>
 </div>
@@ -863,6 +861,196 @@ ggplot(aes(x=water, fill=status_20)) + facet_wrap(status_19 ~ snow, labeller=lab
   labs(y=&quot;2020 Status&quot;, fill=&quot;2020 Status&quot;, x=&quot;Precipitation&quot;) +
   geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + theme_minimal()</code></pre>
 <p><img src="images/transitions-2.png" width="672" /></p>
+<pre class="r"><code>#Model effect of treatments on survival and flowering of vegetative plants - both years combined
+cen.status.veg1819 &lt;- bind_rows(
+  `2018`=cen.status %&gt;% filter(status_18==&quot;vegetative&quot;) %&gt;% drop_na(alive_status_19, flowering_status_19) %&gt;% mutate(year=&quot;2018&quot;) %&gt;%
+    left_join(treatments) %&gt;% select(alive_status = alive_status_19, flowering_status = flowering_status_19, water, snow, plot),
+  `2019`=cen.status %&gt;% filter(status_19==&quot;vegetative&quot;) %&gt;% drop_na(alive_status_20, flowering_status_20) %&gt;% mutate(year=&quot;2019&quot;) %&gt;%
+    left_join(treatments) %&gt;% select(alive_status = alive_status_20, flowering_status = flowering_status_20, water, snow, plot), .id=&quot;year&quot;)
+
+library(glmmTMB)
+options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+
+(survival1819.mod &lt;- glmmTMB(alive_status ~ year * water * snow + (1|plot), data=cen.status.veg1819, family=binomial))</code></pre>
+<pre><code>Formula:          alive_status ~ year * water * snow + (1 | plot)
+Data: cen.status.veg1819
+      AIC       BIC    logLik  df.resid 
+1519.6217 1588.2618 -746.8108      1438 
+Random-effects (co)variances:
+
+Conditional model:
+ Groups Name        Std.Dev.
+ plot   (Intercept) 0.1571  
+
+Number of obs: 1451 / Conditional model: plot, 6
+
+Fixed Effects:
+
+Conditional model:
+       (Intercept)               year1              water1              water2  
+           1.31600             0.15487             0.10755            -0.08339  
+             snow1        year1:water1        year1:water2         year1:snow1  
+          -0.06863            -0.09378            -0.07297             0.07260  
+      water1:snow1        water2:snow1  year1:water1:snow1  year1:water2:snow1  
+          -0.15501            -0.04878            -0.30650            -0.06211  </code></pre>
+<pre class="r"><code>car::Anova(survival1819.mod, type=3) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Chisq</th>
+<th align="right">Df</th>
+<th align="right">Pr(&gt;Chisq)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">165.250</td>
+<td align="right">1</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">year</td>
+<td align="right">3.975</td>
+<td align="right">1</td>
+<td align="right">0.046</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">1.252</td>
+<td align="right">2</td>
+<td align="right">0.535</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">0.503</td>
+<td align="right">1</td>
+<td align="right">0.478</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water</td>
+<td align="right">1.993</td>
+<td align="right">2</td>
+<td align="right">0.369</td>
+</tr>
+<tr class="even">
+<td align="left">year:snow</td>
+<td align="right">0.839</td>
+<td align="right">1</td>
+<td align="right">0.360</td>
+</tr>
+<tr class="odd">
+<td align="left">water:snow</td>
+<td align="right">3.012</td>
+<td align="right">2</td>
+<td align="right">0.222</td>
+</tr>
+<tr class="even">
+<td align="left">year:water:snow</td>
+<td align="right">10.340</td>
+<td align="right">2</td>
+<td align="right">0.006</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>emmeans(survival1819.mod, ~ year * water * snow) %&gt;% as_tibble %&gt;% 
+  mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %&gt;% 
+  ggplot(aes(x=water, color=snow, y=prob))+ facet_wrap(vars(year))+
+  geom_pointrange(aes(ymin=lSE, ymax=uSE), position=position_dodge2(0.9)) + 
+  labs(x=&quot;Precipitation&quot;, y=&quot;Survival to next year&quot;, color=&quot;Snowmelt&quot;)+
+  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()</code></pre>
+<p><img src="images/transitions-3.png" width="672" /></p>
+<pre class="r"><code>(flowering1819.mod &lt;- glmmTMB(flowering_status ~ year * water * snow + (1|plot), data=cen.status.veg1819, family=binomial))</code></pre>
+<pre><code>Formula:          flowering_status ~ year * water * snow + (1 | plot)
+Data: cen.status.veg1819
+      AIC       BIC    logLik  df.resid 
+1622.2721 1690.9122 -798.1361      1438 
+Random-effects (co)variances:
+
+Conditional model:
+ Groups Name        Std.Dev.
+ plot   (Intercept) 0.4359  
+
+Number of obs: 1451 / Conditional model: plot, 6
+
+Fixed Effects:
+
+Conditional model:
+       (Intercept)               year1              water1              water2  
+          -0.84413            -0.47567             0.25859            -0.29242  
+             snow1        year1:water1        year1:water2         year1:snow1  
+          -0.13295            -0.09647             0.02052             0.09523  
+      water1:snow1        water2:snow1  year1:water1:snow1  year1:water2:snow1  
+          -0.12551             0.13707            -0.20712             0.08940  </code></pre>
+<pre class="r"><code>car::Anova(flowering1819.mod, type=3) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Chisq</th>
+<th align="right">Df</th>
+<th align="right">Pr(&gt;Chisq)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">19.257</td>
+<td align="right">1</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">year</td>
+<td align="right">42.645</td>
+<td align="right">1</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">12.988</td>
+<td align="right">2</td>
+<td align="right">0.002</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">0.841</td>
+<td align="right">1</td>
+<td align="right">0.359</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water</td>
+<td align="right">0.943</td>
+<td align="right">2</td>
+<td align="right">0.624</td>
+</tr>
+<tr class="even">
+<td align="left">year:snow</td>
+<td align="right">1.656</td>
+<td align="right">1</td>
+<td align="right">0.198</td>
+</tr>
+<tr class="odd">
+<td align="left">water:snow</td>
+<td align="right">2.924</td>
+<td align="right">2</td>
+<td align="right">0.232</td>
+</tr>
+<tr class="even">
+<td align="left">year:water:snow</td>
+<td align="right">4.358</td>
+<td align="right">2</td>
+<td align="right">0.113</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>emmeans(flowering1819.mod, ~ year * water * snow) %&gt;% as_tibble %&gt;% 
+  mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %&gt;% 
+  ggplot(aes(x=water, color=snow, y=prob))+ facet_wrap(vars(year))+
+  geom_pointrange(aes(ymin=lSE, ymax=uSE), position=position_dodge2(0.9)) + 
+  labs(x=&quot;Precipitation&quot;, y=&quot;Flowering the next year&quot;, color=&quot;Snowmelt&quot;)+
+  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()</code></pre>
+<p><img src="images/transitions-4.png" width="672" /></p>
 </div>
 <div id="survival-and-flowering-vs.-vegetative-plant-size" class="section level2">
 <h2>Survival and flowering vs. vegetative plant size</h2>
@@ -909,9 +1097,9 @@ ggplot(aes(x=water, fill=status_20)) + facet_wrap(status_19 ~ snow, labeller=lab
 </div>
 <div id="plant-size-vs.-treatments" class="section level2">
 <h2>Plant size vs. treatments</h2>
-<pre class="r"><code>ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2018 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2018 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-2.png" width="672" /></p>
 <pre class="r"><code>ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-3.png" width="672" /></p>
@@ -933,13 +1121,255 @@ ggplot(aes(x=water, fill=status_20)) + facet_wrap(status_19 ~ snow, labeller=lab
 <p><img src="images/checkleaftraits-3.png" width="672" /></p>
 <pre class="r"><code>ggplot(lt, aes(x=water, color=snow, y = sla)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Specific Leaf Area (cm2/g)&quot;, color=&quot;Snowmelt&quot;) + facet_wrap(vars(year, round), nrow=1) + scale_y_continuous(limits=c(0,300))</code></pre>
 <p><img src="images/leaftraits-1.png" width="672" /></p>
+<pre class="r"><code>sla.mod &lt;- lmer(sla ~ yearround * snow * water + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
+anova(sla.mod) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Sum Sq</th>
+<th align="right">Mean Sq</th>
+<th align="right">NumDF</th>
+<th align="right">DenDF</th>
+<th align="right">F value</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">yearround</td>
+<td align="right">60611.486</td>
+<td align="right">12122.297</td>
+<td align="right">5</td>
+<td align="right">107</td>
+<td align="right">22.166</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">396.110</td>
+<td align="right">396.110</td>
+<td align="right">1</td>
+<td align="right">107</td>
+<td align="right">0.724</td>
+<td align="right">0.397</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">1084.262</td>
+<td align="right">542.131</td>
+<td align="right">2</td>
+<td align="right">107</td>
+<td align="right">0.991</td>
+<td align="right">0.374</td>
+</tr>
+<tr class="even">
+<td align="left">yearround:snow</td>
+<td align="right">4887.491</td>
+<td align="right">977.498</td>
+<td align="right">5</td>
+<td align="right">107</td>
+<td align="right">1.787</td>
+<td align="right">0.122</td>
+</tr>
+<tr class="odd">
+<td align="left">yearround:water</td>
+<td align="right">9348.220</td>
+<td align="right">934.822</td>
+<td align="right">10</td>
+<td align="right">107</td>
+<td align="right">1.709</td>
+<td align="right">0.088</td>
+</tr>
+<tr class="even">
+<td align="left">snow:water</td>
+<td align="right">1615.432</td>
+<td align="right">807.716</td>
+<td align="right">2</td>
+<td align="right">107</td>
+<td align="right">1.477</td>
+<td align="right">0.233</td>
+</tr>
+<tr class="odd">
+<td align="left">yearround:snow:water</td>
+<td align="right">3117.753</td>
+<td align="right">311.775</td>
+<td align="right">10</td>
+<td align="right">107</td>
+<td align="right">0.570</td>
+<td align="right">0.835</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>ggplot(lt, aes(x=sla, y=water_content, color=water, shape=snow, linetype=snow)) + geom_point() +  scale_color_manual(values=water_pal) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/leaftraits-2.png" width="672" /></p>
 <pre class="r"><code>ggplot(lt, aes(x=water, color=snow, y = water_content)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Water content&quot;, color=&quot;Snowmelt&quot;) + facet_wrap(vars(year, round), nrow=1)</code></pre>
 <p><img src="images/leaftraits-3.png" width="672" /></p>
-<pre class="r"><code>ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Trichome density (/cm2)&quot;, color=&quot;Snowmelt&quot;) + facet_wrap(vars(year, round), nrow=1)</code></pre>
+<pre class="r"><code>water_content.mod &lt;- lmer(water_content ~ yearround * snow * water + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
+anova(water_content.mod) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Sum Sq</th>
+<th align="right">Mean Sq</th>
+<th align="right">NumDF</th>
+<th align="right">DenDF</th>
+<th align="right">F value</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">yearround</td>
+<td align="right">0.325</td>
+<td align="right">0.065</td>
+<td align="right">5</td>
+<td align="right">107</td>
+<td align="right">34.285</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">0.001</td>
+<td align="right">0.001</td>
+<td align="right">1</td>
+<td align="right">107</td>
+<td align="right">0.475</td>
+<td align="right">0.492</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">0.010</td>
+<td align="right">0.005</td>
+<td align="right">2</td>
+<td align="right">107</td>
+<td align="right">2.625</td>
+<td align="right">0.077</td>
+</tr>
+<tr class="even">
+<td align="left">yearround:snow</td>
+<td align="right">0.044</td>
+<td align="right">0.009</td>
+<td align="right">5</td>
+<td align="right">107</td>
+<td align="right">4.662</td>
+<td align="right">0.001</td>
+</tr>
+<tr class="odd">
+<td align="left">yearround:water</td>
+<td align="right">0.070</td>
+<td align="right">0.007</td>
+<td align="right">10</td>
+<td align="right">107</td>
+<td align="right">3.672</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">snow:water</td>
+<td align="right">0.002</td>
+<td align="right">0.001</td>
+<td align="right">2</td>
+<td align="right">107</td>
+<td align="right">0.411</td>
+<td align="right">0.664</td>
+</tr>
+<tr class="odd">
+<td align="left">yearround:snow:water</td>
+<td align="right">0.011</td>
+<td align="right">0.001</td>
+<td align="right">10</td>
+<td align="right">107</td>
+<td align="right">0.556</td>
+<td align="right">0.846</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>ggplot(lt, aes(x=water, color=snow, y = water_content)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Water content&quot;, color=&quot;Snowmelt&quot;) + facet_wrap(vars(year, round), nrow=1)</code></pre>
 <p><img src="images/leaftraits-4.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Trichome density (/cm2)&quot;, color=&quot;Snowmelt&quot;) + facet_wrap(vars(year, round), nrow=1)</code></pre>
+<p><img src="images/leaftraits-5.png" width="672" /></p>
+<pre class="r"><code>trichome_density.mod &lt;- lmer(trichome_density ~ yearround * snow * water + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
+anova(trichome_density.mod) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Sum Sq</th>
+<th align="right">Mean Sq</th>
+<th align="right">NumDF</th>
+<th align="right">DenDF</th>
+<th align="right">F value</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">yearround</td>
+<td align="right">245963.071</td>
+<td align="right">61490.768</td>
+<td align="right">4</td>
+<td align="right">85.539</td>
+<td align="right">29.716</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">16.819</td>
+<td align="right">16.819</td>
+<td align="right">1</td>
+<td align="right">6.093</td>
+<td align="right">0.008</td>
+<td align="right">0.931</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">6141.812</td>
+<td align="right">3070.906</td>
+<td align="right">2</td>
+<td align="right">84.350</td>
+<td align="right">1.484</td>
+<td align="right">0.233</td>
+</tr>
+<tr class="even">
+<td align="left">yearround:snow</td>
+<td align="right">13706.329</td>
+<td align="right">3426.582</td>
+<td align="right">4</td>
+<td align="right">85.912</td>
+<td align="right">1.656</td>
+<td align="right">0.168</td>
+</tr>
+<tr class="odd">
+<td align="left">yearround:water</td>
+<td align="right">49501.740</td>
+<td align="right">6187.718</td>
+<td align="right">8</td>
+<td align="right">84.336</td>
+<td align="right">2.990</td>
+<td align="right">0.005</td>
+</tr>
+<tr class="even">
+<td align="left">snow:water</td>
+<td align="right">9580.410</td>
+<td align="right">4790.205</td>
+<td align="right">2</td>
+<td align="right">84.350</td>
+<td align="right">2.315</td>
+<td align="right">0.105</td>
+</tr>
+<tr class="odd">
+<td align="left">yearround:snow:water</td>
+<td align="right">28578.297</td>
+<td align="right">3572.287</td>
+<td align="right">8</td>
+<td align="right">84.336</td>
+<td align="right">1.726</td>
+<td align="right">0.104</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="physiology-traits" class="section level1">
 <h1>Physiology traits</h1>

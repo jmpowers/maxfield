@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-02-10" />
+<meta name="date" content="2021-02-11" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-02-10</h4>
+<h4 class="date">2021-02-11</h4>
 
 </div>
 
@@ -302,9 +302,9 @@ library(lubridate)
 library(lme4)
 library(lmerTest)
 library(MuMIn)
+library(glmmTMB)
 library(emmeans)
-library(multcomp)#careful, this loads MASS, which overrides dplyr::select
-select &lt;- dplyr::select
+library(multcomp); select &lt;- dplyr::select#careful, multcomp loads MASS, which overrides dplyr::select
 library(broom)
 library(broom.mixed)
 library(vegan)
@@ -319,11 +319,8 @@ library(ggnewscale)
 library(knitr)
 knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, fig.path = &quot;images_water4/&quot;)
 
-signif.num &lt;- function(x) {
-    as.character(symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
-           cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
-           symbols = c(&quot;***&quot;, &quot;**&quot;, &quot;*&quot;, &quot;.&quot;, &quot; &quot;)))
-}
+options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;)) #needed for Type III SS
+
 print_anova_table &lt;- function(df, mod) {
   df %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
     mutate(p.value=p.value %&gt;% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %&gt;% 
@@ -665,29 +662,295 @@ Control - `Mock rainout` == 0  0.08092    0.37502   0.216    0.829
 </div>
 <div id="status-vs.-treatment" class="section level2">
 <h2>Status vs. treatment</h2>
-<pre class="r"><code>ggplot(drop_na(cen19, water4, snow) %&gt;% filter(status %in% status_ok), aes(x=water4, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(title=&quot;2019 status&quot;, x=&quot;Precipitation&quot;, y=&quot;Proportion&quot;, fill=&quot;Status&quot;)</code></pre>
+<pre class="r"><code>cen.status.long %&gt;% left_join(treatments) %&gt;% drop_na(water4, snow) %&gt;% filter(status %in% status_ok, census !=&quot;2018r2&quot;) %&gt;% 
+  ggplot(aes(x=water4, fill=status)) + facet_grid(snow ~ census, labeller=labeller(.cols=label_both)) + geom_bar(position=&quot;fill&quot;) +
+  scale_fill_manual(values=status_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Proportion&quot;, fill=&quot;Status&quot;)</code></pre>
 <p><img src="images_water4/inventory-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen20, water4, snow) %&gt;% filter(status %in% status_ok), aes(x=water4, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(title=&quot;2020 status&quot;, x=&quot;Precipitation&quot;, y=&quot;Proportion&quot;, fill=&quot;Status&quot;)</code></pre>
-<p><img src="images_water4/inventory-2.png" width="672" /></p>
+</div>
+<div id="status-transitions-vs.-treatment" class="section level2">
+<h2>Status transitions vs. treatment</h2>
+<p>What did plants of a given status in one year look like in the next?</p>
+<pre class="r"><code>cen.status %&gt;% mutate(year = &quot;2018&quot;) %&gt;% left_join(treatments) %&gt;% filter(status_18 %in% status_ok[-3], status_19 %in% status_ok) %&gt;% 
+ggplot(aes(x=water4, fill=status_19)) + facet_wrap(status_18 ~ snow, labeller=labeller(.cols=label_both)) +  
+  labs(y=&quot;2019 Status&quot;, fill=&quot;2019 Status&quot;, x=&quot;Precipitation&quot;) +
+  geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + theme_minimal()</code></pre>
+<p><img src="images_water4/transitions-1.png" width="672" /></p>
+<pre class="r"><code>cen.status %&gt;% mutate(year = &quot;2019&quot;) %&gt;% left_join(treatments) %&gt;% filter(status_19 %in% status_ok[-3], status_20 %in% status_ok) %&gt;% 
+ggplot(aes(x=water4, fill=status_20)) + facet_wrap(status_19 ~ snow, labeller=labeller(.cols=label_both)) +  
+  labs(y=&quot;2020 Status&quot;, fill=&quot;2020 Status&quot;, x=&quot;Precipitation&quot;) +
+  geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + theme_minimal()</code></pre>
+<p><img src="images_water4/transitions-2.png" width="672" /></p>
+<pre class="r"><code>#Model effect of treatments on survival and flowering of vegetative plants - both years combined
+cen.status.veg1819 &lt;- bind_rows(
+  `2018`=cen.status %&gt;% filter(status_18==&quot;vegetative&quot;) %&gt;% drop_na(alive_status_19, flowering_status_19) %&gt;% mutate(year=&quot;2018&quot;) %&gt;%
+    left_join(treatments) %&gt;% select(alive_status = alive_status_19, flowering_status = flowering_status_19, water4, snow, plot),
+  `2019`=cen.status %&gt;% filter(status_19==&quot;vegetative&quot;) %&gt;% drop_na(alive_status_20, flowering_status_20) %&gt;% mutate(year=&quot;2019&quot;) %&gt;%
+    left_join(treatments) %&gt;% select(alive_status = alive_status_20, flowering_status = flowering_status_20, water4, snow, plot), .id=&quot;year&quot;)
+
+library(glmmTMB)
+options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+
+(survival1819.mod &lt;- glmmTMB(alive_status ~ year * water4 * snow + (1|plot), data=cen.status.veg1819, family=binomial))</code></pre>
+<pre><code>Formula:          alive_status ~ year * water4 * snow + (1 | plot)
+Data: cen.status.veg1819
+      AIC       BIC    logLik  df.resid 
+1518.7504 1608.5106 -742.3752      1434 
+Random-effects (co)variances:
+
+Conditional model:
+ Groups Name        Std.Dev.
+ plot   (Intercept) 0.1799  
+
+Number of obs: 1451 / Conditional model: plot, 6
+
+Fixed Effects:
+
+Conditional model:
+        (Intercept)                year1              water41  
+            1.30227              0.13281              0.13080  
+            water42              water43                snow1  
+            0.03992             -0.16357             -0.08031  
+      year1:water41        year1:water42        year1:water43  
+           -0.07508             -0.14210              0.02788  
+        year1:snow1        water41:snow1        water42:snow1  
+            0.05956             -0.13362              0.20037  
+      water43:snow1  year1:water41:snow1  year1:water42:snow1  
+           -0.28519             -0.29621             -0.23822  
+year1:water43:snow1  
+            0.15207  </code></pre>
+<pre class="r"><code>car::Anova(survival1819.mod, type=3) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Chisq</th>
+<th align="right">Df</th>
+<th align="right">Pr(&gt;Chisq)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">156.171</td>
+<td align="right">1</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">year</td>
+<td align="right">3.419</td>
+<td align="right">1</td>
+<td align="right">0.064</td>
+</tr>
+<tr class="odd">
+<td align="left">water4</td>
+<td align="right">2.378</td>
+<td align="right">3</td>
+<td align="right">0.498</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">0.688</td>
+<td align="right">1</td>
+<td align="right">0.407</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water4</td>
+<td align="right">2.870</td>
+<td align="right">3</td>
+<td align="right">0.412</td>
+</tr>
+<tr class="even">
+<td align="left">year:snow</td>
+<td align="right">0.655</td>
+<td align="right">1</td>
+<td align="right">0.419</td>
+</tr>
+<tr class="odd">
+<td align="left">water4:snow</td>
+<td align="right">9.595</td>
+<td align="right">3</td>
+<td align="right">0.022</td>
+</tr>
+<tr class="even">
+<td align="left">year:water4:snow</td>
+<td align="right">14.571</td>
+<td align="right">3</td>
+<td align="right">0.002</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>emmeans(survival1819.mod, ~ year * water4 * snow) %&gt;% as_tibble %&gt;% 
+  mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %&gt;% 
+  ggplot(aes(x=water4, color=snow, y=prob))+ facet_wrap(vars(year))+
+  geom_pointrange(aes(ymin=lSE, ymax=uSE), position=position_dodge2(0.9)) + 
+  labs(x=&quot;Precipitation&quot;, y=&quot;Survival to next year&quot;, color=&quot;Snowmelt&quot;)+
+  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()</code></pre>
+<p><img src="images_water4/transitions-3.png" width="672" /></p>
+<pre class="r"><code>glht(survival1819.mod, linfct = mcp(water4 = c(&quot;Control - `Mock rainout` = 0&quot;))) %&gt;% summary</code></pre>
+<pre><code>
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: glmmTMB(formula = alive_status ~ year * water4 * snow + (1 | 
+    plot), data = cen.status.veg1819, family = binomial, ziformula = ~0, 
+    dispformula = ~1)
+
+Linear Hypotheses:
+                              Estimate Std. Error z value Pr(&gt;|z|)
+Control - `Mock rainout` == 0   0.2035     0.1898   1.072    0.284
+(Adjusted p values reported -- single-step method)</code></pre>
+<pre class="r"><code>(flowering1819.mod &lt;- glmmTMB(flowering_status ~ year * water4 * snow + (1|plot), data=cen.status.veg1819, family=binomial))</code></pre>
+<pre><code>Formula:          flowering_status ~ year * water4 * snow + (1 | plot)
+Data: cen.status.veg1819
+      AIC       BIC    logLik  df.resid 
+1624.5942 1714.3543 -795.2971      1434 
+Random-effects (co)variances:
+
+Conditional model:
+ Groups Name        Std.Dev.
+ plot   (Intercept) 0.4269  
+
+Number of obs: 1451 / Conditional model: plot, 6
+
+Fixed Effects:
+
+Conditional model:
+        (Intercept)                year1              water41  
+          -0.919423            -0.479761             0.336031  
+            water42              water43                snow1  
+          -0.319457            -0.128347            -0.076506  
+      year1:water41        year1:water42        year1:water43  
+          -0.095657             0.053952            -0.034558  
+        year1:snow1        water41:snow1        water42:snow1  
+           0.117115            -0.160713             0.265574  
+      water43:snow1  year1:water41:snow1  year1:water42:snow1  
+          -0.057749            -0.228516             0.140518  
+year1:water43:snow1  
+          -0.007416  </code></pre>
+<pre class="r"><code>car::Anova(flowering1819.mod, type=3) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Chisq</th>
+<th align="right">Df</th>
+<th align="right">Pr(&gt;Chisq)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">23.971</td>
+<td align="right">1</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">year</td>
+<td align="right">47.518</td>
+<td align="right">1</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">water4</td>
+<td align="right">14.361</td>
+<td align="right">3</td>
+<td align="right">0.002</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">0.294</td>
+<td align="right">1</td>
+<td align="right">0.588</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water4</td>
+<td align="right">1.114</td>
+<td align="right">3</td>
+<td align="right">0.774</td>
+</tr>
+<tr class="even">
+<td align="left">year:snow</td>
+<td align="right">2.727</td>
+<td align="right">1</td>
+<td align="right">0.099</td>
+</tr>
+<tr class="odd">
+<td align="left">water4:snow</td>
+<td align="right">5.880</td>
+<td align="right">3</td>
+<td align="right">0.118</td>
+</tr>
+<tr class="even">
+<td align="left">year:water4:snow</td>
+<td align="right">4.925</td>
+<td align="right">3</td>
+<td align="right">0.177</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>emmeans(flowering1819.mod, ~ year * water4 * snow) %&gt;% as_tibble %&gt;% 
+  mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %&gt;% 
+  ggplot(aes(x=water4, color=snow, y=prob))+ facet_wrap(vars(year))+
+  geom_pointrange(aes(ymin=lSE, ymax=uSE), position=position_dodge2(0.9)) + 
+  labs(x=&quot;Precipitation&quot;, y=&quot;Flowering the next year&quot;, color=&quot;Snowmelt&quot;)+
+  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()</code></pre>
+<p><img src="images_water4/transitions-4.png" width="672" /></p>
+<pre class="r"><code>glht(flowering1819.mod, linfct = mcp(water4 = c(&quot;Control - `Mock rainout` = 0&quot;))) %&gt;% summary</code></pre>
+<pre><code>
+     Simultaneous Tests for General Linear Hypotheses
+
+Multiple Comparisons of Means: User-defined Contrasts
+
+
+Fit: glmmTMB(formula = flowering_status ~ year * water4 * snow + (1 | 
+    plot), data = cen.status.veg1819, family = binomial, ziformula = ~0, 
+    dispformula = ~1)
+
+Linear Hypotheses:
+                              Estimate Std. Error z value Pr(&gt;|z|)
+Control - `Mock rainout` == 0  -0.1911     0.1896  -1.008    0.314
+(Adjusted p values reported -- single-step method)</code></pre>
 </div>
 <div id="plant-growth-vs.-treatments" class="section level2">
 <h2>Plant growth vs. treatments</h2>
 <p>Only includes plants that remained vegetative and did not die or flower.</p>
-<pre class="r"><code>ggplot(drop_na(cen, water4_19, snow_19), aes(x=r1_longest_19, y=r1_longest_20, color=water4_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) + scale_color_manual(values=water4_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>cen %&gt;% drop_na(water_18, snow_18) %&gt;% filter(status_18==&quot;vegetative&quot;, status_19==&quot;vegetative&quot;) %&gt;% 
+  ggplot(aes(x=r1_longest_18, y=r1_longest_19, color=water4_18, shape=snow_18)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water4_pal) + theme_minimal()+coord_fixed(xlim=c(0,80), ylim=c(0,80)) +
+  labs(x=&quot;2018 Rosette 1 Longest Leaf (mm)&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images_water4/growth-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen, water4_19, snow_19), aes(x=r1_leaves_19, y=r1_leaves_20, color=water4_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1 )+ scale_color_manual(values=water4_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 # Leaves&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>cen %&gt;% drop_na(water_19, snow_19) %&gt;% filter(status_19==&quot;vegetative&quot;, status_20==&quot;vegetative&quot;) %&gt;% 
+  ggplot(aes(x=r1_longest_19, y=r1_longest_20, color=water4_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water4_pal) + theme_minimal()+  coord_fixed(xlim=c(0,80), ylim=c(0,80)) +
+    labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images_water4/growth-2.png" width="672" /></p>
+<pre class="r"><code>cen %&gt;% drop_na(water_18, snow_18) %&gt;% filter(status_18==&quot;vegetative&quot;, status_19==&quot;vegetative&quot;) %&gt;% 
+  ggplot(aes(x=r1_leaves_18, y=r1_leaves_19, color=water4_18, shape=snow_18)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water4_pal) + theme_minimal()+coord_fixed(xlim=c(0,100), ylim=c(0,100)) +
+  labs(x=&quot;2018 Rosette 1 # Leaves&quot;, y=&quot;2019 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images_water4/growth-3.png" width="672" /></p>
+<pre class="r"><code>cen %&gt;% drop_na(water_19, snow_19) %&gt;% filter(status_19==&quot;vegetative&quot;, status_20==&quot;vegetative&quot;) %&gt;% 
+  ggplot(aes(x=r1_leaves_19, y=r1_leaves_20, color=water4_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water4_pal) + theme_minimal()+  coord_fixed(xlim=c(0,100), ylim=c(0,100)) +
+    labs(x=&quot;2019 Rosette 1 # Leaves&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images_water4/growth-4.png" width="672" /></p>
 </div>
 <div id="plant-size-vs.-treatments" class="section level2">
 <h2>Plant size vs. treatments</h2>
-<pre class="r"><code>ggplot(drop_na(cen19, water4, snow), aes(x=water4, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen18, water4, snow), aes(x=water4, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2018 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images_water4/plantsize-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen19, water4, snow), aes(x=water4, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen18, water4, snow), aes(x=water4, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2018 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images_water4/plantsize-2.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen20, water4, snow), aes(x=water4, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen19, water4, snow), aes(x=water4, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images_water4/plantsize-3.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen20, water4, snow), aes(x=water4, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen19, water4, snow), aes(x=water4, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images_water4/plantsize-4.png" width="672" /></p>
+<pre class="r"><code>ggplot(drop_na(cen20, water4, snow), aes(x=water4, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images_water4/plantsize-5.png" width="672" /></p>
+<pre class="r"><code>ggplot(drop_na(cen20, water4, snow), aes(x=water4, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images_water4/plantsize-6.png" width="672" /></p>
 </div>
 </div>
 <div id="leaf-traits" class="section level1">
@@ -1634,6 +1897,16 @@ mt.mod.tests %&gt;%  print_anova_table(mt.mod)</code></pre>
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>summary(emmeans(ref_grid(mt.mod[[&quot;nectar_24_h_ul&quot;]]), ~ water4)) #nectar volume differed between mock rainot and control</code></pre>
+<pre><code> water4       emmean    SE   df lower.CL upper.CL
+ Addition       2.03 0.138 35.4     1.75     2.31
+ Control        1.41 0.138 35.4     1.13     1.69
+ Mock rainout   1.81 0.138 35.4     1.53     2.09
+ Reduction      1.63 0.138 35.4     1.35     1.91
+
+Results are averaged over the levels of: year, snow 
+Degrees-of-freedom method: kenward-roger 
+Confidence level used: 0.95 </code></pre>
 <pre class="r"><code>traits.include &lt;- traits[c(1:4,8,5:7,13)]
 
 mnps.subplot.long &lt;- mnps.subplot %&gt;% select(all_of(traits.include), water4, snow, year, VWC, sun_date, precip_est_mm) %&gt;% 

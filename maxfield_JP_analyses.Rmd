@@ -31,6 +31,7 @@ library(lubridate)
 library(lme4)
 library(lmerTest)
 library(MuMIn)
+library(glmmTMB)
 library(emmeans)
 library(broom)
 library(broom.mixed)
@@ -46,11 +47,8 @@ library(ggnewscale)
 library(knitr)
 knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = "images/")
 
-signif.num <- function(x) {
-    as.character(symnum(x, corr = FALSE, na = FALSE, legend = FALSE,
-           cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
-           symbols = c("***", "**", "*", ".", " ")))
-}
+options(contrasts = c("contr.sum", "contr.poly")) #needed for Type III SS
+
 print_anova_table <- function(df, mod) {
   df %>% select(c("trait", "term", "p.value")) %>% 
     mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
@@ -217,7 +215,7 @@ summary(lm(first_0_cm_day ~ year, data=groundcover))
 treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_count()+
   geom_point(data=groundcover, aes(x=first_0_cm_day, color="Control", shape="1990-2017"), fill="white") +
   scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
-  labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt date", color="Precipitation", shape="Year",size="# Plots") + 
+  labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt date", color="Precipitation", shape="Year",size="# Subplots") + 
   theme_minimal()
 ```
 
@@ -377,6 +375,34 @@ cen.status %>% mutate(year = "2019") %>% left_join(treatments) %>% filter(status
 ggplot(aes(x=water, fill=status_20)) + facet_wrap(status_19 ~ snow, labeller=labeller(.cols=label_both)) +  
   labs(y="2020 Status", fill="2020 Status", x="Precipitation") +
   geom_bar(position="fill") + scale_fill_manual(values=status_pal) + theme_minimal()
+
+#Model effect of treatments on survival and flowering of vegetative plants - both years combined
+cen.status.veg1819 <- bind_rows(
+  `2018`=cen.status %>% filter(status_18=="vegetative") %>% drop_na(alive_status_19, flowering_status_19) %>% mutate(year="2018") %>%
+    left_join(treatments) %>% select(alive_status = alive_status_19, flowering_status = flowering_status_19, water, snow, plot),
+  `2019`=cen.status %>% filter(status_19=="vegetative") %>% drop_na(alive_status_20, flowering_status_20) %>% mutate(year="2019") %>%
+    left_join(treatments) %>% select(alive_status = alive_status_20, flowering_status = flowering_status_20, water, snow, plot), .id="year")
+
+library(glmmTMB)
+options(contrasts = c("contr.sum", "contr.poly"))
+
+(survival1819.mod <- glmmTMB(alive_status ~ year * water * snow + (1|plot), data=cen.status.veg1819, family=binomial))
+car::Anova(survival1819.mod, type=3) %>% kable(digits=3)
+emmeans(survival1819.mod, ~ year * water * snow) %>% as_tibble %>% 
+  mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %>% 
+  ggplot(aes(x=water, color=snow, y=prob))+ facet_wrap(vars(year))+
+  geom_pointrange(aes(ymin=lSE, ymax=uSE), position=position_dodge2(0.9)) + 
+  labs(x="Precipitation", y="Survival to next year", color="Snowmelt")+
+  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()
+
+(flowering1819.mod <- glmmTMB(flowering_status ~ year * water * snow + (1|plot), data=cen.status.veg1819, family=binomial))
+car::Anova(flowering1819.mod, type=3) %>% kable(digits=3)
+emmeans(flowering1819.mod, ~ year * water * snow) %>% as_tibble %>% 
+  mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %>% 
+  ggplot(aes(x=water, color=snow, y=prob))+ facet_wrap(vars(year))+
+  geom_pointrange(aes(ymin=lSE, ymax=uSE), position=position_dodge2(0.9)) + 
+  labs(x="Precipitation", y="Flowering the next year", color="Snowmelt")+
+  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()
 ```
 
 ## Survival and flowering vs. vegetative plant size
@@ -421,8 +447,8 @@ cen %>% drop_na(water_19, snow_19) %>% filter(status_19=="vegetative", status_20
 
 ## Plant size vs. treatments
 ```{r plantsize}
-ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="2019 Rosette 1 Longest Leaf (mm)",  color="Snowmelt")
-ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x="Precipitation", y="2019 Rosette 1 # Leaves",  color="Snowmelt")
+ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="2018 Rosette 1 Longest Leaf (mm)",  color="Snowmelt")
+ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x="Precipitation", y="2018 Rosette 1 # Leaves",  color="Snowmelt")
 
 ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="2019 Rosette 1 Longest Leaf (mm)",  color="Snowmelt")
 ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x="Precipitation", y="2019 Rosette 1 # Leaves",  color="Snowmelt")
@@ -443,12 +469,22 @@ ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(me
 ```{r leaftraits}
 ggplot(lt, aes(x=water, color=snow, y = sla)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Specific Leaf Area (cm2/g)", color="Snowmelt") + facet_wrap(vars(year, round), nrow=1) + scale_y_continuous(limits=c(0,300))
 
+sla.mod <- lmer(sla ~ yearround * snow * water + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
+anova(sla.mod) %>% kable(digits=3)
+
 ggplot(lt, aes(x=sla, y=water_content, color=water, shape=snow, linetype=snow)) + geom_point() +  scale_color_manual(values=water_pal) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
 ggplot(lt, aes(x=water, color=snow, y = water_content)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Water content", color="Snowmelt") + facet_wrap(vars(year, round), nrow=1)
+water_content.mod <- lmer(water_content ~ yearround * snow * water + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
+anova(water_content.mod) %>% kable(digits=3)
+
+ggplot(lt, aes(x=water, color=snow, y = water_content)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Water content", color="Snowmelt") + facet_wrap(vars(year, round), nrow=1)
 
 ggplot(lt, aes(x=water, color=snow, y = trichome_density)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Trichome density (/cm2)", color="Snowmelt") + facet_wrap(vars(year, round), nrow=1)
+
+trichome_density.mod <- lmer(trichome_density ~ yearround * snow * water + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
+anova(trichome_density.mod) %>% kable(digits=3)
 ```
 
 # Physiology traits
