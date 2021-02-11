@@ -813,703 +813,114 @@ mt %&gt;% drop_na(corolla_length) %&gt;% group_by(year, plantid) %&gt;% tally() 
 <div id="census-status" class="section level2">
 <h2>Census status</h2>
 <p>The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).</p>
-<p>Tally the number of each status combination for each year. Note this this is now happening after duplicates are resolved.</p>
-<pre class="r"><code>nrf_count &lt;- bind_rows(
-    &quot;2018&quot;=allowed_nrf %&gt;% filter(year==2018) %&gt;% left_join(cen18 %&gt;% mutate(nrf=paste(notes, rosettes, flowering)) %&gt;% group_by(nrf) %&gt;% tally()),
-  &quot;2018r2&quot;=allowed_nrf %&gt;% filter(year==2018) %&gt;% left_join(cen18r2 %&gt;% mutate(nrf=paste(notes, rosettes, flowering)) %&gt;% group_by(nrf) %&gt;% tally()),
-  &quot;2019&quot;=allowed_nrf %&gt;% filter(year==2019) %&gt;% left_join(cen19 %&gt;% mutate(nrf=paste(notes, rosettes, flowering)) %&gt;% group_by(nrf) %&gt;% tally()),
-  &quot;2020&quot;=allowed_nrf %&gt;% filter(year==2020) %&gt;% left_join(cen20 %&gt;% mutate(nrf=paste(notes, rosettes, flowering)) %&gt;% group_by(nrf) %&gt;% tally()), .id=&quot;year_round&quot;)
-
-nrf_count %&gt;% select(-nrf) %&gt;% arrange(year_round, status, desc(n)) %&gt;% drop_na(n) %&gt;% kable</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">year_round</th>
-<th align="right">year</th>
-<th align="left">notes</th>
-<th align="left">rosettes</th>
-<th align="left">flowering</th>
-<th align="left">status</th>
-<th align="right">n</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">nf</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">2</td>
-</tr>
-<tr class="even">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">blank</td>
-<td align="left">one_or_more</td>
-<td align="left">y</td>
-<td align="left">flowering</td>
-<td align="right">142</td>
-</tr>
-<tr class="odd">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">nf</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">recheck</td>
-<td align="right">18</td>
-</tr>
-<tr class="even">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">tagnf</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">recheck</td>
-<td align="right">18</td>
-</tr>
-<tr class="odd">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">chewed</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">recheck</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">tagnf</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">tagnf</td>
-<td align="right">87</td>
-</tr>
-<tr class="odd">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">blank</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">760</td>
-</tr>
-<tr class="even">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">ts</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">66</td>
-</tr>
-<tr class="odd">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">chewed</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">3</td>
-</tr>
-<tr class="even">
-<td align="left">2018</td>
-<td align="right">2018</td>
-<td align="left">ts</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">3</td>
-</tr>
-<tr class="odd">
-<td align="left">2018r2</td>
-<td align="right">2018</td>
-<td align="left">dead</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">17</td>
-</tr>
-<tr class="even">
-<td align="left">2018r2</td>
-<td align="right">2018</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">6</td>
-</tr>
-<tr class="odd">
-<td align="left">2018r2</td>
-<td align="right">2018</td>
-<td align="left">blank</td>
-<td align="left">one_or_more</td>
-<td align="left">y</td>
-<td align="left">flowering</td>
-<td align="right">11</td>
-</tr>
-<tr class="even">
-<td align="left">2018r2</td>
-<td align="right">2018</td>
-<td align="left">nf</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">recheck</td>
-<td align="right">18</td>
-</tr>
-<tr class="odd">
-<td align="left">2018r2</td>
-<td align="right">2018</td>
-<td align="left">blank</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">702</td>
-</tr>
-<tr class="even">
-<td align="left">2018r2</td>
-<td align="right">2018</td>
-<td align="left">chewed</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">5</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">nf</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">dead_nf</td>
-<td align="right">208</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">dead</td>
-<td align="left">zero</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">141</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">zero</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">8</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">nf</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">7</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">dead</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">3</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">dead</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">3</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">2</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">dead</td>
-<td align="left">zero</td>
-<td align="left">blank</td>
-<td align="left">dead_nf</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">dead</td>
-<td align="left">zero</td>
-<td align="left">blank</td>
-<td align="left">dead_nf</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">nf</td>
-<td align="left">zero</td>
-<td align="left">n</td>
-<td align="left">dead_nf</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">y</td>
-<td align="left">flowering</td>
-<td align="right">110</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">one_or_more</td>
-<td align="left">y</td>
-<td align="left">flowering</td>
-<td align="right">47</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">indist</td>
-<td align="left">y</td>
-<td align="left">flowering</td>
-<td align="right">3</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">ts</td>
-<td align="left">one_or_more</td>
-<td align="left">y</td>
-<td align="left">recheck</td>
-<td align="right">4</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">nf</td>
-<td align="left">one_or_more</td>
-<td align="left">blank</td>
-<td align="left">recheck</td>
-<td align="right">3</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">zero</td>
-<td align="left">y</td>
-<td align="left">recheck</td>
-<td align="right">2</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">recheck</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">chewed</td>
-<td align="left">zero</td>
-<td align="left">y</td>
-<td align="left">recheck</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">nf</td>
-<td align="left">blank</td>
-<td align="left">y</td>
-<td align="left">recheck</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">tagnf</td>
-<td align="left">one_or_more</td>
-<td align="left">blank</td>
-<td align="left">recheck</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">tagnf</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">tagnf</td>
-<td align="right">40</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">tagnf</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">tagnf</td>
-<td align="right">3</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">tagnf</td>
-<td align="left">zero</td>
-<td align="left">blank</td>
-<td align="left">tagnf</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">390</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">indist</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">48</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">ts</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">43</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">ts</td>
-<td align="left">indist</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">27</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">chewed</td>
-<td align="left">zero</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">23</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">blank</td>
-<td align="left">one_or_more</td>
-<td align="left">blank</td>
-<td align="left">vegetative</td>
-<td align="right">13</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">ts</td>
-<td align="left">zero</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">10</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">chewed</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">7</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">ts</td>
-<td align="left">blank</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">4</td>
-</tr>
-<tr class="odd">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">chewed</td>
-<td align="left">indist</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">2</td>
-</tr>
-<tr class="even">
-<td align="left">2019</td>
-<td align="right">2019</td>
-<td align="left">ts</td>
-<td align="left">one_or_more</td>
-<td align="left">blank</td>
-<td align="left">vegetative</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">nf</td>
-<td align="left">zero</td>
-<td align="left">blank</td>
-<td align="left">dead_nf</td>
-<td align="right">487</td>
-</tr>
-<tr class="even">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">dead</td>
-<td align="left">zero</td>
-<td align="left">blank</td>
-<td align="left">dead_nf</td>
-<td align="right">119</td>
-</tr>
-<tr class="odd">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">blank</td>
-<td align="left">one_or_more</td>
-<td align="left">y</td>
-<td align="left">flowering</td>
-<td align="right">151</td>
-</tr>
-<tr class="even">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">y</td>
-<td align="left">flowering</td>
-<td align="right">50</td>
-</tr>
-<tr class="odd">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">chewed</td>
-<td align="left">one_or_more</td>
-<td align="left">y</td>
-<td align="left">flowering</td>
-<td align="right">17</td>
-</tr>
-<tr class="even">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">chewed</td>
-<td align="left">indist</td>
-<td align="left">y</td>
-<td align="left">flowering</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">chewed</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">recheck</td>
-<td align="right">3</td>
-</tr>
-<tr class="even">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">chewed</td>
-<td align="left">blank</td>
-<td align="left">y</td>
-<td align="left">recheck</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">chewed</td>
-<td align="left">zero</td>
-<td align="left">blank</td>
-<td align="left">recheck</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">chewed</td>
-<td align="left">zero</td>
-<td align="left">y</td>
-<td align="left">recheck</td>
-<td align="right">1</td>
-</tr>
-<tr class="odd">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">tagnf</td>
-<td align="left">blank</td>
-<td align="left">blank</td>
-<td align="left">tagnf</td>
-<td align="right">74</td>
-</tr>
-<tr class="even">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">blank</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">233</td>
-</tr>
-<tr class="odd">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">chewed</td>
-<td align="left">one_or_more</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">6</td>
-</tr>
-<tr class="even">
-<td align="left">2020</td>
-<td align="right">2020</td>
-<td align="left">chewed</td>
-<td align="left">zero</td>
-<td align="left">n</td>
-<td align="left">vegetative</td>
-<td align="right">2</td>
-</tr>
-</tbody>
-</table>
 <p>Visualize a plant’s status in each census</p>
-<pre class="r"><code># megatally %&gt;% select(where(is.numeric)) %&gt;% 
-#   relocate(total_obs,census18,census18r2,census19,census20,pheno18,seeds18,floral18,pheno19,seeds19,floral19,pheno20,seeds20,floral20,volatiles20, leaf18,leaf19,leaf20,census18r2) %&gt;% 
-#   arrange(census18&gt;0,cut(pheno18,c(0,1,2,Inf),right=F),seeds18&gt;0,census19&gt;0,cut(pheno19,c(0,1,2,Inf),right=F),seeds19&gt;0,census20&gt;0,cut(pheno20,c(0,1,2,Inf),right=F),seeds20&gt;0, leaf18&gt;0,leaf19&gt;0,leaf20&gt;0,census18r2&gt;0,total_obs) %&gt;% 
-#   decostand(&quot;max&quot;) %&gt;% sqrt %&gt;% as.matrix %&gt;% 
-#   heatmap(Colv=NA, Rowv = NA, scale=&quot;none&quot;, col=viridis(512))
-
-# ggplot(cen.size.long %&gt;% filter(census!=&quot;2018r2&quot;), aes(x=census, y=n_rosettes, group=plantid))+geom_path()+ geom_point() + scale_y_continuous(breaks=0:10)
-
-ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
+<pre class="r"><code>ggplot(cen.size.long %&gt;% filter(census!=&quot;2018r2&quot;), aes(x=census, y=n_rosettes, group=plantid))+geom_path()+ geom_point() + scale_y_continuous(breaks=0:10)</code></pre>
+<p><img src="images/status-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
   scale_fill_manual(values=brewer.pal(8, name=&quot;Set1&quot;)[c(1,3,5,2,7,6)])+
   theme(axis.text.y=element_blank(), axis.ticks = element_blank()) +
   labs(fill=&quot;Status&quot;, x=&quot;Census year&quot;,y=&quot;Plant ID&quot;)</code></pre>
-<p><img src="images/status-1.png" width="672" /></p>
+<p><img src="images/status-2.png" width="672" /></p>
 <pre class="r"><code>ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_tile() +
   scale_fill_manual(values=c(brewer.pal(5, name=&quot;Set1&quot;)[c(1,3,5,2)],brewer.pal(8, &quot;Set2&quot;)[7:8]))+
   scale_x_discrete(position=&quot;top&quot;) +
   theme(axis.text.y=element_blank(), axis.ticks = element_blank(), axis.text.x = element_text(angle=90, size=14)) + 
   labs(fill=&quot;Status&quot;, x=&quot;Dataset and year&quot;,y=&quot;Plant ID&quot;)</code></pre>
-<p><img src="images/status-2.png" width="672" /></p>
+<p><img src="images/status-3.png" width="672" /></p>
 </div>
 <div id="status-vs.-treatment" class="section level2">
 <h2>Status vs. treatment</h2>
-<pre class="r"><code>ggplot(drop_na(cen19, water, snow) %&gt;% filter(status %in% status_ok), aes(x=water, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(title=&quot;2019 status&quot;, x=&quot;Precipitation&quot;, y=&quot;Proportion&quot;, fill=&quot;Status&quot;)</code></pre>
+<pre class="r"><code>cen.status.long %&gt;% left_join(treatments) %&gt;% drop_na(water, snow) %&gt;% filter(status %in% status_ok, census !=&quot;2018r2&quot;) %&gt;% 
+  ggplot(aes(x=water, fill=status)) + facet_grid(snow ~ census, labeller=labeller(.cols=label_both)) + geom_bar(position=&quot;fill&quot;) +
+  scale_fill_manual(values=status_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Proportion&quot;, fill=&quot;Status&quot;)</code></pre>
 <p><img src="images/inventory-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen20, water, snow) %&gt;% filter(status %in% status_ok), aes(x=water, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(title=&quot;2020 status&quot;, x=&quot;Precipitation&quot;, y=&quot;Proportion&quot;, fill=&quot;Status&quot;)</code></pre>
-<p><img src="images/inventory-2.png" width="672" /></p>
 </div>
-<div id="join-2019-and-2020-datasets" class="section level2">
-<h2>Join 2019 and 2020 datasets</h2>
-<p>Check these tags missing in each year to make sure tags were not mis-read. When tags were not found in the other year, the part of the row for that year is “NA”.</p>
-<p>Recorded in 2019 but not in 2020:</p>
-<pre class="r"><code>sort(setdiff(cen19[cen19$notes != &quot;tagnf&quot;,]$plantid, cen20$plantid))</code></pre>
-<pre><code> [1] &quot;1A247&quot;    &quot;1A252&quot;    &quot;1C59&quot;     &quot;1D13&quot;     &quot;1D2&quot;      &quot;1D39&quot;    
- [7] &quot;1D5&quot;      &quot;2B136&quot;    &quot;2B195&quot;    &quot;2B196&quot;    &quot;2C275&quot;    &quot;2C284&quot;   
-[13] &quot;2C291&quot;    &quot;2C294&quot;    &quot;2C297&quot;    &quot;2D192&quot;    &quot;2D196&quot;    &quot;2D197&quot;   
-[19] &quot;2D216&quot;    &quot;2D223_19&quot; &quot;2D224_19&quot; &quot;3A126&quot;    &quot;3A174_19&quot; &quot;3A634&quot;   
-[25] &quot;3A645&quot;    &quot;3A647_19&quot; &quot;3B602&quot;    &quot;3B604&quot;    &quot;3B612&quot;    &quot;3B615&quot;   
-[31] &quot;3B617&quot;    &quot;3B622&quot;    &quot;3B623&quot;    &quot;3C136&quot;    &quot;3C147&quot;    &quot;3D852&quot;   
-[37] &quot;3D856&quot;    &quot;3D858&quot;    &quot;4A100&quot;    &quot;4A104&quot;    &quot;4A74&quot;     &quot;4A96&quot;    
-[43] &quot;4B165&quot;    &quot;4B168&quot;    &quot;4B170&quot;    &quot;4B171&quot;    &quot;4B172&quot;    &quot;4B179&quot;   
-[49] &quot;4B201&quot;    &quot;4B203&quot;    &quot;4B204&quot;    &quot;4C28&quot;     &quot;4D39&quot;     &quot;5B287&quot;   
-[55] &quot;5D251&quot;    &quot;5D254&quot;    &quot;5D269&quot;    &quot;5D270&quot;    &quot;5D277&quot;    &quot;5D288&quot;   
-[61] &quot;6B17&quot;     &quot;6C110&quot;    &quot;6C82&quot;    </code></pre>
-<p>Recorded in 2020 but not in 2019:</p>
-<pre class="r"><code>sort(setdiff(cen20[cen20$notes != &quot;tagnf&quot;,]$plantid, cen19$plantid))</code></pre>
-<pre><code> [1] &quot;1B199_20&quot; &quot;1B99&quot;     &quot;1C59_20&quot;  &quot;1D13_20&quot;  &quot;1D2_20&quot;   &quot;1D39_20&quot; 
- [7] &quot;1D5_20&quot;   &quot;2A689_20&quot; &quot;2B136_20&quot; &quot;2B171_20&quot; &quot;2B195_20&quot; &quot;2B196_20&quot;
-[13] &quot;2C256_20&quot; &quot;2C275_20&quot; &quot;2C284_20&quot; &quot;2C291_20&quot; &quot;2C294_20&quot; &quot;2C297_20&quot;
-[19] &quot;2D192_20&quot; &quot;2D196_20&quot; &quot;2D197_20&quot; &quot;2D216_20&quot; &quot;3A126_20&quot; &quot;3A634_20&quot;
-[25] &quot;3A645_20&quot; &quot;3A647&quot;    &quot;3C120_20&quot; &quot;3C136_20&quot; &quot;3C147_20&quot; &quot;3C98&quot;    
-[31] &quot;3D856_20&quot; &quot;3D858_20&quot; &quot;4A104_20&quot; &quot;4A74_20&quot;  &quot;4A96_20&quot;  &quot;4B165_20&quot;
-[37] &quot;4B168_20&quot; &quot;4B170_20&quot; &quot;4B171_20&quot; &quot;4B179_20&quot; &quot;4B201_20&quot; &quot;4B203_20&quot;
-[43] &quot;4B204_20&quot; &quot;4C28_20&quot;  &quot;4D66&quot;     &quot;5B88_20&quot;  &quot;5D251_20&quot; &quot;5D254_20&quot;
-[49] &quot;5D269_20&quot; &quot;5D270_20&quot; &quot;5D277_20&quot; &quot;5D288_20&quot; &quot;6B17_20&quot;  &quot;6C110_20&quot;
-[55] &quot;6C447_20&quot; &quot;6C82_20&quot;  &quot;6D18_20&quot;  &quot;6D86_20&quot; </code></pre>
-</div>
-<div id="status-transitions" class="section level2">
-<h2>Status transitions</h2>
-<p>What did plants of a given status in 2019 look like now in 2020?</p>
-<pre class="r"><code>with(cen, table(`2019`=paste(status_19), `2020`=paste(status_20)))</code></pre>
-<pre><code>            2020
-2019         dead_nf flowering  NA tagnf vegetative
-  dead_nf        308         0  43     2          0
-  flowering      160        14   6     0         20
-  NA              54         1   0     4          3
-  tagnf            8         0   8     9          0
-  vegetative     122       207  14    34        191</code></pre>
-<pre class="r"><code>ggplot(filter(cen, status_19 %in% status_ok, status_20 %in% status_ok), aes(x=status_19, fill=status_20)) + geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + labs(fill=&quot;2020 Status&quot;, y=&quot;Proportion&quot;, x=&quot;2019 Status&quot;)</code></pre>
+<div id="status-transitions-vs.-treatment" class="section level2">
+<h2>Status transitions vs. treatment</h2>
+<p>What did plants of a given status in one year look like in the next?</p>
+<pre class="r"><code>with(cen.status, table(`2018`=paste(status_18), `2019`=paste(status_19)))</code></pre>
+<pre><code>            2019
+2018         dead_nf flowering no_record tagnf vegetative
+  dead_nf         10         0         0     2          0
+  flowering      151         4         0     0         22
+  no_record        0         3        60     0          1
+  vegetative     193       193         1    23        545</code></pre>
+<pre class="r"><code>cen.status %&gt;% mutate(year = &quot;2018&quot;) %&gt;% left_join(treatments) %&gt;% filter(status_18 %in% status_ok[-3], status_19 %in% status_ok) %&gt;% 
+ggplot(aes(x=water, fill=status_19)) + facet_wrap(status_18 ~ snow, labeller=labeller(.cols=label_both)) +  
+  labs(y=&quot;2019 Status&quot;, fill=&quot;2019 Status&quot;, x=&quot;Precipitation&quot;) +
+  geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + theme_minimal()</code></pre>
 <p><img src="images/transitions-1.png" width="672" /></p>
+<pre class="r"><code>with(cen.status, table(`2019`=paste(status_19), `2020`=paste(status_20)))</code></pre>
+<pre><code>            2020
+2019         dead_nf flowering no_record tagnf vegetative
+  dead_nf        352         0         0     2          0
+  flowering      166        14         0     0         20
+  no_record       53         1         0     4          3
+  tagnf            8         0         8     9          0
+  vegetative     122       207        14    34        191</code></pre>
+<pre class="r"><code>cen.status %&gt;% mutate(year = &quot;2019&quot;) %&gt;% left_join(treatments) %&gt;% filter(status_19 %in% status_ok[-3], status_20 %in% status_ok) %&gt;% 
+ggplot(aes(x=water, fill=status_20)) + facet_wrap(status_19 ~ snow, labeller=labeller(.cols=label_both)) +  
+  labs(y=&quot;2020 Status&quot;, fill=&quot;2020 Status&quot;, x=&quot;Precipitation&quot;) +
+  geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + theme_minimal()</code></pre>
+<p><img src="images/transitions-2.png" width="672" /></p>
 </div>
-<div id="survival-and-flowering-vs.-plant-size" class="section level2">
-<h2>Survival and flowering vs. plant size</h2>
-<pre class="r"><code>ggplot(filter(cen, status_20 %in% status_ok), aes(x=r1_longest_19, fill=status_20)) + facet_wrap(vars(status_20), ncol=1) +
-  geom_density() + scale_fill_manual(values=status_pal) + labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, fill=&quot;2020 status&quot;)</code></pre>
+<div id="survival-and-flowering-vs.-vegetative-plant-size" class="section level2">
+<h2>Survival and flowering vs. vegetative plant size</h2>
+<pre class="r"><code>ggplot(filter(cen, status_19 %in% status_ok, status_18 == &quot;vegetative&quot;), aes(x=r1_longest_18, fill=status_19)) +
+  facet_wrap(vars(status_19), ncol=1) + labs(x=&quot;2018 Rosette 1 Longest Leaf (mm)&quot;, fill=&quot;2019 status&quot;) +
+  geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 85))</code></pre>
 <p><img src="images/surv_size-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(filter(cen, status_20 %in% status_ok), aes(x=r1_leaves_19, fill=status_20)) + facet_wrap(vars(status_20), ncol=1) +
-  geom_density() + scale_fill_manual(values=status_pal) + labs(x=&quot;2019 Rosette 1 # Leaves&quot;, fill=&quot;2020 status&quot;)</code></pre>
+<pre class="r"><code>ggplot(filter(cen, status_20 %in% status_ok, status_19 == &quot;vegetative&quot;), aes(x=r1_longest_19, fill=status_20)) +
+  facet_wrap(vars(status_20), ncol=1) + labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, fill=&quot;2020 status&quot;) +
+   geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 85))</code></pre>
 <p><img src="images/surv_size-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(filter(cen, status_19 %in% status_ok, status_18 == &quot;vegetative&quot;), aes(x=r1_leaves_18, fill=status_19)) +
+  facet_wrap(vars(status_19), ncol=1) + labs(x=&quot;2018 Rosette 1 # Leaves&quot;, fill=&quot;2019 status&quot;) +
+  geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 100))</code></pre>
+<p><img src="images/surv_size-3.png" width="672" /></p>
+<pre class="r"><code>ggplot(filter(cen, status_20 %in% status_ok, status_19 == &quot;vegetative&quot;), aes(x=r1_leaves_19, fill=status_20)) +
+  facet_wrap(vars(status_20), ncol=1) + labs(x=&quot;2019 Rosette 1 # Leaves&quot;, fill=&quot;2020 status&quot;) +
+  geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 100))</code></pre>
+<p><img src="images/surv_size-4.png" width="672" /></p>
 </div>
 <div id="plant-growth-vs.-treatments" class="section level2">
 <h2>Plant growth vs. treatments</h2>
 <p>Only includes plants that remained vegetative and did not die or flower.</p>
-<pre class="r"><code>ggplot(drop_na(cen, water_19, snow_19), aes(x=r1_longest_19, y=r1_longest_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) + scale_color_manual(values=water_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>cen %&gt;% drop_na(water_18, snow_18) %&gt;% filter(status_18==&quot;vegetative&quot;, status_19==&quot;vegetative&quot;) %&gt;% 
+  ggplot(aes(x=r1_longest_18, y=r1_longest_19, color=water_18, shape=snow_18)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water_pal) + theme_minimal()+coord_fixed(xlim=c(0,80), ylim=c(0,80)) +
+  labs(x=&quot;2018 Rosette 1 Longest Leaf (mm)&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/growth-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen, water_19, snow_19), aes(x=r1_leaves_19, y=r1_leaves_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1 )+ scale_color_manual(values=water_pal) + theme_minimal()+ labs(x=&quot;2019 Rosette 1 # Leaves&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>cen %&gt;% drop_na(water_19, snow_19) %&gt;% filter(status_19==&quot;vegetative&quot;, status_20==&quot;vegetative&quot;) %&gt;% 
+  ggplot(aes(x=r1_longest_19, y=r1_longest_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water_pal) + theme_minimal()+  coord_fixed(xlim=c(0,80), ylim=c(0,80)) +
+    labs(x=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/growth-2.png" width="672" /></p>
+<pre class="r"><code>cen %&gt;% drop_na(water_18, snow_18) %&gt;% filter(status_18==&quot;vegetative&quot;, status_19==&quot;vegetative&quot;) %&gt;% 
+  ggplot(aes(x=r1_leaves_18, y=r1_leaves_19, color=water_18, shape=snow_18)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water_pal) + theme_minimal()+coord_fixed(xlim=c(0,100), ylim=c(0,100)) +
+  labs(x=&quot;2018 Rosette 1 # Leaves&quot;, y=&quot;2019 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/growth-3.png" width="672" /></p>
+<pre class="r"><code>cen %&gt;% drop_na(water_19, snow_19) %&gt;% filter(status_19==&quot;vegetative&quot;, status_20==&quot;vegetative&quot;) %&gt;% 
+  ggplot(aes(x=r1_leaves_19, y=r1_leaves_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water_pal) + theme_minimal()+  coord_fixed(xlim=c(0,100), ylim=c(0,100)) +
+    labs(x=&quot;2019 Rosette 1 # Leaves&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/growth-4.png" width="672" /></p>
 </div>
 <div id="plant-size-vs.-treatments" class="section level2">
 <h2>Plant size vs. treatments</h2>
-<pre class="r"><code>ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-2.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-3.png" width="672" /></p>
-<pre class="r"><code>ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<pre class="r"><code>ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2019 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-4.png" width="672" /></p>
+<pre class="r"><code>ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/plantsize-5.png" width="672" /></p>
+<pre class="r"><code>ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images/plantsize-6.png" width="672" /></p>
 </div>
 </div>
 <div id="leaf-traits" class="section level1">

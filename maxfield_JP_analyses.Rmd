@@ -336,28 +336,10 @@ ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>% ungroup %>
 
 The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).
 
-Tally the number of each status combination for each year. Note this this is now happening after duplicates are resolved.
-
-```{r load_census}
-nrf_count <- bind_rows(
-    "2018"=allowed_nrf %>% filter(year==2018) %>% left_join(cen18 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()),
-  "2018r2"=allowed_nrf %>% filter(year==2018) %>% left_join(cen18r2 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()),
-  "2019"=allowed_nrf %>% filter(year==2019) %>% left_join(cen19 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()),
-  "2020"=allowed_nrf %>% filter(year==2020) %>% left_join(cen20 %>% mutate(nrf=paste(notes, rosettes, flowering)) %>% group_by(nrf) %>% tally()), .id="year_round")
-
-nrf_count %>% select(-nrf) %>% arrange(year_round, status, desc(n)) %>% drop_na(n) %>% kable
-```
-
 Visualize a plant's status in each census
 
 ```{r status}
-# megatally %>% select(where(is.numeric)) %>% 
-#   relocate(total_obs,census18,census18r2,census19,census20,pheno18,seeds18,floral18,pheno19,seeds19,floral19,pheno20,seeds20,floral20,volatiles20, leaf18,leaf19,leaf20,census18r2) %>% 
-#   arrange(census18>0,cut(pheno18,c(0,1,2,Inf),right=F),seeds18>0,census19>0,cut(pheno19,c(0,1,2,Inf),right=F),seeds19>0,census20>0,cut(pheno20,c(0,1,2,Inf),right=F),seeds20>0, leaf18>0,leaf19>0,leaf20>0,census18r2>0,total_obs) %>% 
-#   decostand("max") %>% sqrt %>% as.matrix %>% 
-#   heatmap(Colv=NA, Rowv = NA, scale="none", col=viridis(512))
-
-# ggplot(cen.size.long %>% filter(census!="2018r2"), aes(x=census, y=n_rosettes, group=plantid))+geom_path()+ geom_point() + scale_y_continuous(breaks=0:10)
+ggplot(cen.size.long %>% filter(census!="2018r2"), aes(x=census, y=n_rosettes, group=plantid))+geom_path()+ geom_point() + scale_y_continuous(breaks=0:10)
 
 ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
   scale_fill_manual(values=brewer.pal(8, name="Set1")[c(1,3,5,2,7,6)])+
@@ -373,51 +355,75 @@ ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_til
 
 ## Status vs. treatment
 ```{r inventory}
-ggplot(drop_na(cen19, water, snow) %>% filter(status %in% status_ok), aes(x=water, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position="fill") + scale_fill_manual(values=status_pal) + labs(title="2019 status", x="Precipitation", y="Proportion", fill="Status")
-ggplot(drop_na(cen20, water, snow) %>% filter(status %in% status_ok), aes(x=water, fill=status)) + facet_wrap(vars(snow), labeller=labeller(.cols=label_both)) + geom_bar(position="fill") + scale_fill_manual(values=status_pal) + labs(title="2020 status", x="Precipitation", y="Proportion", fill="Status")
+cen.status.long %>% left_join(treatments) %>% drop_na(water, snow) %>% filter(status %in% status_ok, census !="2018r2") %>% 
+  ggplot(aes(x=water, fill=status)) + facet_grid(snow ~ census, labeller=labeller(.cols=label_both)) + geom_bar(position="fill") +
+  scale_fill_manual(values=status_pal) + labs(x="Precipitation", y="Proportion", fill="Status")
 ```
 
-## Join 2019 and 2020 datasets
+## Status transitions vs. treatment
 
-Check these tags missing in each year to make sure tags were not mis-read. When tags were not found in the other year, the part of the row for that year is "NA".
-
-Recorded in 2019 but not in 2020:
-```{r compare_years19}
-sort(setdiff(cen19[cen19$notes != "tagnf",]$plantid, cen20$plantid))
-```
-
-Recorded in 2020 but not in 2019:
-```{r compare_years20}
-sort(setdiff(cen20[cen20$notes != "tagnf",]$plantid, cen19$plantid))
-```
-
-## Status transitions
-
-What did plants of a given status in 2019 look like now in 2020?
+What did plants of a given status in one year look like in the next?
 ```{r transitions}
-with(cen, table(`2019`=paste(status_19), `2020`=paste(status_20)))
+with(cen.status, table(`2018`=paste(status_18), `2019`=paste(status_19)))
 
-ggplot(filter(cen, status_19 %in% status_ok, status_20 %in% status_ok), aes(x=status_19, fill=status_20)) + geom_bar(position="fill") + scale_fill_manual(values=status_pal) + labs(fill="2020 Status", y="Proportion", x="2019 Status")
+cen.status %>% mutate(year = "2018") %>% left_join(treatments) %>% filter(status_18 %in% status_ok[-3], status_19 %in% status_ok) %>% 
+ggplot(aes(x=water, fill=status_19)) + facet_wrap(status_18 ~ snow, labeller=labeller(.cols=label_both)) +  
+  labs(y="2019 Status", fill="2019 Status", x="Precipitation") +
+  geom_bar(position="fill") + scale_fill_manual(values=status_pal) + theme_minimal()
+
+with(cen.status, table(`2019`=paste(status_19), `2020`=paste(status_20)))
+
+cen.status %>% mutate(year = "2019") %>% left_join(treatments) %>% filter(status_19 %in% status_ok[-3], status_20 %in% status_ok) %>% 
+ggplot(aes(x=water, fill=status_20)) + facet_wrap(status_19 ~ snow, labeller=labeller(.cols=label_both)) +  
+  labs(y="2020 Status", fill="2020 Status", x="Precipitation") +
+  geom_bar(position="fill") + scale_fill_manual(values=status_pal) + theme_minimal()
 ```
 
-## Survival and flowering vs. plant size
+## Survival and flowering vs. vegetative plant size
 ```{r surv_size}
-ggplot(filter(cen, status_20 %in% status_ok), aes(x=r1_longest_19, fill=status_20)) + facet_wrap(vars(status_20), ncol=1) +
-  geom_density() + scale_fill_manual(values=status_pal) + labs(x="2019 Rosette 1 Longest Leaf (mm)", fill="2020 status")
-ggplot(filter(cen, status_20 %in% status_ok), aes(x=r1_leaves_19, fill=status_20)) + facet_wrap(vars(status_20), ncol=1) +
-  geom_density() + scale_fill_manual(values=status_pal) + labs(x="2019 Rosette 1 # Leaves", fill="2020 status")
+ggplot(filter(cen, status_19 %in% status_ok, status_18 == "vegetative"), aes(x=r1_longest_18, fill=status_19)) +
+  facet_wrap(vars(status_19), ncol=1) + labs(x="2018 Rosette 1 Longest Leaf (mm)", fill="2019 status") +
+  geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 85))
+ggplot(filter(cen, status_20 %in% status_ok, status_19 == "vegetative"), aes(x=r1_longest_19, fill=status_20)) +
+  facet_wrap(vars(status_20), ncol=1) + labs(x="2019 Rosette 1 Longest Leaf (mm)", fill="2020 status") +
+   geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 85))
+
+ggplot(filter(cen, status_19 %in% status_ok, status_18 == "vegetative"), aes(x=r1_leaves_18, fill=status_19)) +
+  facet_wrap(vars(status_19), ncol=1) + labs(x="2018 Rosette 1 # Leaves", fill="2019 status") +
+  geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 100))
+ggplot(filter(cen, status_20 %in% status_ok, status_19 == "vegetative"), aes(x=r1_leaves_19, fill=status_20)) +
+  facet_wrap(vars(status_20), ncol=1) + labs(x="2019 Rosette 1 # Leaves", fill="2020 status") +
+  geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 100))
 ```
 
 ## Plant growth vs. treatments
 
 Only includes plants that remained vegetative and did not die or flower.
 ```{r growth}
-ggplot(drop_na(cen, water_19, snow_19), aes(x=r1_longest_19, y=r1_longest_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) + scale_color_manual(values=water_pal) + theme_minimal()+ labs(x="2019 Rosette 1 Longest Leaf (mm)", y="2020 Rosette 1 Longest Leaf (mm)",  color="Precipitation", shape="Snowmelt")
-ggplot(drop_na(cen, water_19, snow_19), aes(x=r1_leaves_19, y=r1_leaves_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1 )+ scale_color_manual(values=water_pal) + theme_minimal()+ labs(x="2019 Rosette 1 # Leaves", y="2020 Rosette 1 # Leaves",  color="Precipitation", shape="Snowmelt")
+cen %>% drop_na(water_18, snow_18) %>% filter(status_18=="vegetative", status_19=="vegetative") %>% 
+  ggplot(aes(x=r1_longest_18, y=r1_longest_19, color=water_18, shape=snow_18)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water_pal) + theme_minimal()+coord_fixed(xlim=c(0,80), ylim=c(0,80)) +
+  labs(x="2018 Rosette 1 Longest Leaf (mm)", y="2019 Rosette 1 Longest Leaf (mm)",  color="Precipitation", shape="Snowmelt")
+cen %>% drop_na(water_19, snow_19) %>% filter(status_19=="vegetative", status_20=="vegetative") %>% 
+  ggplot(aes(x=r1_longest_19, y=r1_longest_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water_pal) + theme_minimal()+  coord_fixed(xlim=c(0,80), ylim=c(0,80)) +
+    labs(x="2019 Rosette 1 Longest Leaf (mm)", y="2020 Rosette 1 Longest Leaf (mm)",  color="Precipitation", shape="Snowmelt")
+
+cen %>% drop_na(water_18, snow_18) %>% filter(status_18=="vegetative", status_19=="vegetative") %>% 
+  ggplot(aes(x=r1_leaves_18, y=r1_leaves_19, color=water_18, shape=snow_18)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water_pal) + theme_minimal()+coord_fixed(xlim=c(0,100), ylim=c(0,100)) +
+  labs(x="2018 Rosette 1 # Leaves", y="2019 Rosette 1 # Leaves",  color="Precipitation", shape="Snowmelt")
+cen %>% drop_na(water_19, snow_19) %>% filter(status_19=="vegetative", status_20=="vegetative") %>% 
+  ggplot(aes(x=r1_leaves_19, y=r1_leaves_20, color=water_19, shape=snow_19)) + geom_point() + geom_abline(intercept=0, slope=1) +
+  scale_color_manual(values=water_pal) + theme_minimal()+  coord_fixed(xlim=c(0,100), ylim=c(0,100)) +
+    labs(x="2019 Rosette 1 # Leaves", y="2020 Rosette 1 # Leaves",  color="Precipitation", shape="Snowmelt")
 ```
 
 ## Plant size vs. treatments
 ```{r plantsize}
+ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="2019 Rosette 1 Longest Leaf (mm)",  color="Snowmelt")
+ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x="Precipitation", y="2019 Rosette 1 # Leaves",  color="Snowmelt")
+
 ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="2019 Rosette 1 Longest Leaf (mm)",  color="Snowmelt")
 ggplot(drop_na(cen19, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x="Precipitation", y="2019 Rosette 1 # Leaves",  color="Snowmelt")
 
