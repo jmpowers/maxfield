@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-02-11" />
+<meta name="date" content="2021-02-16" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-02-11</h4>
+<h4 class="date">2021-02-16</h4>
 
 </div>
 
@@ -1667,8 +1667,8 @@ mt.mod &lt;- mt.mod.test &lt;- mod.emm &lt;- mod.emm.snow &lt;- mt.mod.plot &lt;
 for(tr in traits) {
   mt.mod[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ year * snow * water + (1|plot), data=mnps.subplot)
   mt.mod.test[[tr]] &lt;- anova(mt.mod[[tr]])
-  mod.emm[[tr]] &lt;- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year + snow * water))
-  mod.emm.snow[[tr]] &lt;- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ snow))
+  mod.emm[[tr]] &lt;- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year * snow * water))
+  #mod.emm.snow[[tr]] &lt;- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ snow))
   
   # mt.mod.plot[[tr]] &lt;- 
   #   ggplot(mod.emm[[tr]] %&gt;% mutate(year=factor(year, levels=2018:2020)), aes(x=water, color=snow, y = emmean)) + facet_wrap(vars(year), nrow=1) +
@@ -1923,24 +1923,24 @@ mod.emm.plots[[i]] &lt;- mod.emm %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% 
   mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, &quot;Normal&quot;)) %&gt;% 
   ggplot(aes(x=water, color=snow)) + 
   facet_grid(trait ~ year, scales=&quot;free_y&quot;, labeller = as_labeller(c(traitnames, set_names(2018:2020))), switch=&quot;y&quot;) + 
-  geom_violin(data=mnps.plantyr.long %&gt;% drop_na(value, water) %&gt;% filter(trait %in% traits.plot), aes(y=value), 
-            position=position_dodge(width=0.8), show.legend=F) + 
-  #geom_point(data=mnps.subplot.long %&gt;% filter(trait %in% traits.plot) , aes(y=value),
-  #           position=position_dodge(width=0.6), shape=4) +  
-  geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE,), position=position_dodge(width=0.8), size=2, show.legend=F) +
+  #geom_boxplot(data=mnps.plantyr.long %&gt;% drop_na(value, water) %&gt;% filter(trait %in% traits.plot), aes(y=value), 
+  #          position=position_dodge(width=0.8), show.legend=F, fatten=NULL, outlier.size=0.5) + 
+  geom_point(data=mnps.subplot.long %&gt;% filter(trait %in% traits.plot) , aes(y=value),
+             position=position_dodge(width=0.8), shape=3) +  
+  geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE,), position=position_dodge(width=0.8), size=1, show.legend=F) +
   geom_point(aes(y=emmean), position=position_dodge(width=0.8), shape=&quot;-&quot;, size=16) +  
   labs(x=&quot;Precipitation&quot;, y=&quot;&quot;, color=&quot;Snowmelt&quot;) + 
-  coord_cartesian(ylim=c(0,NA)) + scale_y_continuous(position=&quot;right&quot;, expand=expansion(mult=c(0,0.05)))+
-  scale_x_discrete(guide=guide_axis(angle=90)) + 
+  #coord_cartesian(ylim=c(0,NA)) + 
+  scale_y_continuous(position=&quot;right&quot;)+ scale_x_discrete(guide=guide_axis(angle=90)) + 
   scale_color_manual(values=snow_pal, guide=guide_legend(override.aes = list(shape=15, size=5))) + 
   theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
-        panel.border = element_rect(fill=NA, colour = &quot;black&quot;), panel.spacing=unit(12, &quot;pt&quot;),
+        panel.border = element_rect(fill=NA, colour = &quot;black&quot;), panel.spacing=unit(0, &quot;pt&quot;),plot.margin = margin(0,0,0,0, &quot;pt&quot;),
         legend.position = &quot;top&quot;)
   if(i !=2) mod.emm.plots[[i]] &lt;- mod.emm.plots[[i]] + guides(color=F)
 }
 
 grid.arrange(mod.emm.plots[[1]], mod.emm.plots[[2]], nrow=1)</code></pre>
-<p><img src="images/multi_splitplot-1.png" width="864" /></p>
+<p><img src="images/multi_splitplot-1.png" width="960" /></p>
 <div id="compensation-of-water-addition-for-early-snowmelt" class="section level4">
 <h4>Compensation of water addition for early snowmelt</h4>
 <pre class="r"><code>#compare early snowmelt + addition vs. normal snowmelt + control
@@ -2304,41 +2304,15 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 </div>
 <div id="floral-plasticity-absolute-snowmelt-date-and-estimated-summer-precipitation" class="section level3">
 <h3>Floral plasticity: absolute snowmelt date and estimated summer precipitation</h3>
-<pre class="r"><code>#dropped total summer precipitation (early_precip_mm and water:early_precip_mm) since it has n = 3 years
-options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-
-mt.mod.raw &lt;- mt.mod.plantyr &lt;- mt.mod.subplot &lt;- mt.mod.subplot.full &lt;- mt.mod.subplot.test &lt;- mt.mod.plot &lt;- coef.melt.precip &lt;-emm.melt&lt;- emm.precip &lt;- list()
-for(tr in traits) {
-  #mt.mod.raw[[tr]]     &lt;- lmer(mt[[tr]]         ~ sun_date * precip_est_mm + (1|plotid) + (1|plantid), data=mt)
-  #mt.mod.plantyr[[tr]] &lt;- lmer(mt.plantyr[[tr]] ~ sun_date * precip_est_mm + (1|plotid), data=mt.plantyr)
-  mt.mod.subplot.full[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ sun_date * precip_est_mm + (1|plot), data=mnps.subplot)
-  #drop interaction if not significant
-  if(mt.mod.subplot.full[[tr]] %&gt;% tidy %&gt;% filter(term==&quot;sun_date:precip_est_mm&quot;) %&gt;% pull(p.value) &gt; 0.05) {
-    mt.mod.subplot[[tr]] &lt;- lmer(mnps.subplot[[tr]] ~ sun_date + precip_est_mm + (1|plot), data=mnps.subplot)
-  } else {
-    mt.mod.subplot[[tr]] &lt;- mt.mod.subplot.full[[tr]]
-  }
-  mnps.subplot[[paste0(&quot;fit.&quot;,tr)]] &lt;- NA
-  mnps.subplot[[paste0(&quot;fit.&quot;,tr)]][!is.na(mnps.subplot[[tr]])]&lt;- predict(mt.mod.subplot[[tr]], re.form=NA)
-  mt.mod.subplot.test[[tr]] &lt;- anova(mt.mod.subplot[[tr]])
-  
-  #Z-score the data first to get standardized slopes
-  mt.mod.subplot[[tr]] &lt;- lmer(scale(mnps.subplot[[tr]]) ~ sun_date + precip_est_mm + (1|plot), data=mnps.subplot)
-  coef.melt.precip[[tr]] &lt;- summary(mt.mod.subplot[[tr]])$coefficients[c(&quot;sun_date&quot;, &quot;precip_est_mm&quot;),]
-  emm.melt[[tr]] &lt;- emtrends(mt.mod.subplot[[tr]],  ~ 1, var = &quot;sun_date&quot;)
-  emm.precip[[tr]] &lt;- emtrends(mt.mod.subplot[[tr]],  ~ 1, var = &quot;precip_est_mm&quot;)
-  
-  # mt.mod.plot[[tr]] &lt;-
-  #   ggplot(mnps.subplot, aes_string(x=&quot;sun_date&quot;, color=&quot;water&quot;, y = tr, shape=&quot;year&quot;)) + geom_point() +
-  #   geom_line(data=mnps.subplot %&gt;% drop_na(paste0(&quot;fit.&quot;,tr)) %&gt;% mutate(year.water = paste(year, water)), 
-  #             aes_string(y=paste0(&quot;fit.&quot;,tr), group=&quot;year.water&quot;), size=2)+
-  #    scale_color_manual(values=water_pal)+
-  #       labs(x=&quot;Snow melt date (day of year)&quot;, y=traitnames[[tr]], color=&quot;Precipitation&quot;, shape=&quot;Year&quot;)
-  # print(mt.mod.plot[[tr]])
-}
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+mt.mod.subplot &lt;- map(set_names(traits), ~ lmer(mnps.subplot[[.x]] ~ sun_date * precip_est_mm + (1|plot), data=mnps.subplot))
 mt.mod.subplot.coefs &lt;- map_dfr(mt.mod.subplot, tidy, .id=&quot;trait&quot;)
-mt.mod.subplot.tests &lt;- map_dfr(mt.mod.subplot.test, tidy, .id=&quot;trait&quot;)
-mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
+
+mt.mod.subplot.tests &lt;- map(mt.mod.subplot, ~ 
+                             if(tidy(.x) %&gt;% filter(term==&quot;sun_date:precip_est_mm&quot;) %&gt;% pull(p.value) &gt; 0.05) {
+                               anova(update(.x, ~ sun_date + precip_est_mm + (1|plot)))   #drop interaction if not significant
+                               } else { anova(.x)}) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+print_anova_table(mt.mod.subplot.tests, mt.mod.subplot)</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -2357,7 +2331,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">3.4 x 10<sup>-4</sup></td>
 <td align="left">NA</td>
 <td align="left">TRUE</td>
-<td align="right">0.2969340</td>
+<td align="right">0.3041270</td>
 </tr>
 <tr class="even">
 <td align="left">style_length</td>
@@ -2365,7 +2339,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">5.5 x 10<sup>-3</sup></td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.4125072</td>
+<td align="right">0.4090110</td>
 </tr>
 <tr class="odd">
 <td align="left">corolla_width</td>
@@ -2373,7 +2347,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">1.7 x 10<sup>-5</sup></td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.4575748</td>
+<td align="right">0.4587325</td>
 </tr>
 <tr class="even">
 <td align="left">sepal_width</td>
@@ -2381,7 +2355,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.014</td>
 <td align="left">0.028</td>
 <td align="left">FALSE</td>
-<td align="right">0.1044598</td>
+<td align="right">0.1833037</td>
 </tr>
 <tr class="odd">
 <td align="left">nectar_24_h_ul</td>
@@ -2389,7 +2363,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">1.2 x 10<sup>-3</sup></td>
 <td align="left">NA</td>
 <td align="left">TRUE</td>
-<td align="right">0.2255539</td>
+<td align="right">0.2249741</td>
 </tr>
 <tr class="even">
 <td align="left">nectar_conc</td>
@@ -2397,7 +2371,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">2.9 x 10<sup>-4</sup></td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.5021596</td>
+<td align="right">0.4999794</td>
 </tr>
 <tr class="odd">
 <td align="left">nectar_sugar_24_h_mg</td>
@@ -2405,7 +2379,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.069</td>
 <td align="left">NA</td>
 <td align="left">TRUE</td>
-<td align="right">0.0628546</td>
+<td align="right">0.0666148</td>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
@@ -2413,7 +2387,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.42</td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.6132476</td>
+<td align="right">0.6103878</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
@@ -2421,7 +2395,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.86</td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.6916131</td>
+<td align="right">0.6907347</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
@@ -2429,7 +2403,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.36</td>
 <td align="left">NA</td>
 <td align="left">TRUE</td>
-<td align="right">0.2948010</td>
+<td align="right">0.2918500</td>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
@@ -2437,7 +2411,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.62</td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.2177499</td>
+<td align="right">0.2174514</td>
 </tr>
 <tr class="even">
 <td align="left">fruits_nonaborted</td>
@@ -2445,7 +2419,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.38</td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.1242059</td>
+<td align="right">0.1252853</td>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
@@ -2453,7 +2427,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.52</td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.0067217</td>
+<td align="right">0.0140446</td>
 </tr>
 <tr class="even">
 <td align="left">prop_infested</td>
@@ -2461,7 +2435,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.24</td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.1087362</td>
+<td align="right">0.1082555</td>
 </tr>
 <tr class="odd">
 <td align="left">prop_aborted</td>
@@ -2469,7 +2443,7 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.23</td>
 <td align="left">NA</td>
 <td align="left">FALSE</td>
-<td align="right">0.1710723</td>
+<td align="right">0.1715160</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_flower</td>
@@ -2477,42 +2451,68 @@ mt.mod.subplot.tests %&gt;%  print_anova_table(mt.mod.subplot)</code></pre>
 <td align="left">0.55</td>
 <td align="left">NA</td>
 <td align="left">TRUE</td>
-<td align="right">0.3144866</td>
+<td align="right">0.3135576</td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>emm.melt.df &lt;- bind_rows(sun_date = emm.melt %&gt;% map(as.data.frame) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% rename(trend=sun_date.trend)
-          ,precip_est_mm = emm.precip %&gt;% map(as.data.frame) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% rename(trend=precip_est_mm.trend)
-          ,.id=&quot;predictor&quot;) %&gt;% mutate(predictor=fct_relevel(predictor,&quot;sun_date&quot;))
-
-# library(googlesheets4)
-# write_sheet(left_join(emm.melt.df %&gt;% mutate(traitname=traitnames[trait], .before=&quot;trait&quot;),
+<pre class="r"><code># library(googlesheets4)
+# write_sheet(left_join(emm.meltprecip.df %&gt;% mutate(traitname=traitnames[trait], .before=&quot;trait&quot;),
 #                        mnps.subplot %&gt;% group_by(water) %&gt;% select(traits) %&gt;% 
 #                          summarize(across(traits, ~ sum(!is.na(.x)))) %&gt;% 
 #                          pivot_longer(traits, names_to=&quot;trait&quot;, values_to=&quot;n&quot;))
 #              , ss=filter(datasheets, name==&quot;Maxfield Results&quot;), sheet=&quot;slopes_melt&quot;)
 
-ggplot(emm.melt.df, aes(x=fct_relevel(trait, rev(traits)), y=trend)) +  
-  facet_wrap(vars(predictor), nrow=1, scales=&quot;free_x&quot;, labeller=labeller(predictor=c(precip_est_mm=&quot;Estimated summer precip (mm)&quot;, sun_date=&quot;Snowmelt date&quot;))) + 
-  geom_hline(yintercept=0) + 
-  geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), position=position_dodge(width=0.3), size=0.4) + 
-  labs(y=&quot;Slope and SE of z-scored trait vs. predictor&quot;, x=&quot;Floral Trait&quot;, color=&quot;Water&quot;) + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=water_pal) +
-  theme(legend.position = &quot;top&quot;)</code></pre>
-<p><img src="images/morphology_meltdate-1.png" width="672" /></p>
+#get slopes with emtrends
+emm.meltprecip.df &lt;- map(set_names(c(&quot;sun_date&quot;, &quot;precip_est_mm&quot;)), ~ map(mt.mod.subplot, emtrends, ~ 1, var = .x) %&gt;% 
+      map(as.data.frame) %&gt;% set_names(traits) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% rename_with(.cols=ends_with(&quot;trend&quot;), ~ &quot;trend&quot;)) %&gt;% 
+  bind_rows(.id=&quot;predictor&quot;) %&gt;% mutate(predictor=fct_relevel(predictor,&quot;sun_date&quot;), 
+                                        sd.plantyr = map_dbl(trait, ~sd(mnps.plantyr[[.x]], na.rm=T)),
+                                        trend = trend / sd.plantyr,SE = SE / sd.plantyr) %&gt;% #Scale slope by SD of the plant means
+    filter(trait %in% traits[c(1:8, 13)]) # traits for floral plasticty paper
+
+emm.meltprecip.plot &lt;- ggplot(emm.meltprecip.df, aes(x=fct_relevel(trait, rev(traits)), y=trend)) +  
+  facet_wrap(vars(predictor), nrow=1, scales=&quot;free_x&quot;, 
+             labeller=labeller(predictor=c(precip_est_mm=&quot;Estimated summer precip (mm)&quot;, sun_date=&quot;Snowmelt date&quot;))) + 
+  geom_hline(yintercept=0) +  geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), size=0.4) + 
+  labs(y=&quot;Slope and SE of z-scored trait vs. predictor&quot;, x=&quot;Floral Trait&quot;) + 
+  scale_x_discrete(labels = traitnames) + coord_flip() +  theme_bw()
+
+#calculate how much summer precip is required to compensate for 1 day earlier snowmelt
+
+
+mt.nonsignif.traits &lt;- mt.mod.subplot.tests %&gt;% filter(p.value &gt; 0.05) %&gt;% pull(trait) %&gt;% unique  #if P&gt; 0.05 for effect of summer precip or snowmelt
+emm.meltprecip.compensate &lt;- emm.meltprecip.df %&gt;% pivot_wider(names_from=predictor, values_from=c(trend, SE), id_cols=trait) %&gt;% 
+  mutate(predictor = &quot;Compensation&quot;,
+         precip_mm_per_snow_day = trend_sun_date / trend_precip_est_mm, 
+         SE = abs(precip_mm_per_snow_day) * # propagate error in SEs using formula for quotients
+           sqrt((SE_precip_est_mm / trend_precip_est_mm)^2 + (SE_sun_date / trend_sun_date)^2),
+        keep = !trait %in% mt.nonsignif.traits &amp; trait!=&quot;sepal_width&quot;,   #sepal_width has interaction with sun_date,
+        precip_mm_per_snow_day = ifelse(keep, precip_mm_per_snow_day, NA), SE = ifelse(keep, SE, NA))
+
+emm.meltprecip.compensate.plot &lt;- ggplot(emm.meltprecip.compensate, aes(x=fct_relevel(trait, rev(traits)), y=precip_mm_per_snow_day)) +  
+  facet_wrap(vars(predictor)) +   geom_hline(yintercept=0) +   
+  geom_pointrange(aes(ymin=precip_mm_per_snow_day - SE, ymax = precip_mm_per_snow_day + SE), size=0.4) + 
+  labs(y=&quot;Summer precipitation (mm) / day earlier snowmelt&quot;, x=&quot;&quot;) + scale_x_discrete(labels = traitnames) + 
+  coord_flip() +   theme_bw() + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+                                       
+grid.arrange(emm.meltprecip.plot, emm.meltprecip.compensate.plot, nrow=1, widths=c(3,1))</code></pre>
+<p><img src="images/morphology_meltdate-1.png" width="864" /></p>
 <pre class="r"><code>traits.include &lt;- traits[c(1,2,4,3,8,13,5:7)]
 
-mt.mod.subplot.full[traits.include] %&gt;% 
+mt.mod.grid &lt;- mt.mod.subplot[traits.include] %&gt;% 
   map_dfr(~ emmeans(.x, ~ precip_est_mm * sun_date, at=list(sun_date=range(treatments$sun_date), precip_est_mm=seq(25,150, by=25))) %&gt;% as_tibble(), .id=&quot;trait&quot;) %&gt;% 
-  mutate(trait = fct_relevel(trait, traits.include)) %&gt;% 
-  ggplot(aes(x=sun_date, y=emmean, color=precip_est_mm, group=precip_est_mm)) + 
+  mutate(trait = fct_relevel(trait, traits.include))
+
+ggplot(mt.mod.grid, aes(x=sun_date, y=emmean, color=precip_est_mm, group=precip_est_mm)) + 
   facet_wrap(vars(trait), scales=&quot;free_y&quot;,labeller = as_labeller(traitnames))+
-  geom_point(data = mnps.plantyr.long, aes(y=value, shape=year)) +  geom_line() + 
-  scale_color_gradientn(colors=rev(c(water_pal[1],water_pal, water_pal[3])), 
-                        values=rev(c(1, treatments %&gt;% group_by(water) %&gt;% summarize(across(precip_est_mm, mean)) %&gt;%
-                                       pull(precip_est_mm) %&gt;% scales::rescale(from=c(25,150)),0)),
+  geom_point(data = mnps.plantyr.long, aes(y=value, shape=year), shape=1, alpha=0) + 
+  geom_point(data = mnps.subplot.long, aes(y=value, shape=year), size=2) + geom_line() + 
+  scale_color_gradientn(colors=rev(water_pal), 
+                        values=rev(c(1, (treatments %&gt;% group_by(water) %&gt;% summarize(across(precip_est_mm, mean)) %&gt;%
+                                       pull(precip_est_mm) %&gt;% scales::rescale(from=c(25,150)))[2],0)),
                         breaks=seq(25,150, by=25)) + 
   labs(x=&quot;Snowmelt date&quot;, y=&quot;&quot;, color=&quot;Summer\nprecipitation\n(mm)&quot;, shape=&quot;Year&quot;) + 
-  coord_cartesian(ylim=c(0,NA)) + scale_y_continuous(expand=expansion(mult=c(0,0.05)))+
+  #coord_cartesian(ylim=c(0,NA)) + scale_y_continuous(expand=expansion(mult=c(0,0.05)))+
   theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                           panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
 <p><img src="images/multi_meltdate-1.png" width="864" /></p>
@@ -2715,7 +2715,8 @@ emm.VWC.allyears[c(1:3,5)] %&gt;% map(as.data.frame) %&gt;% bind_rows(.id=&quot;
 #                         pivot_longer(traits, names_to=&quot;trait&quot;, values_to=&quot;n&quot;))
 #             , ss=filter(datasheets, name==&quot;Maxfield Results&quot;), sheet=&quot;slopes_VWC&quot;)
 
-ggplot(emm.VWC.df %&gt;% drop_na(), aes(x=trait, y=VWC.trend, color=year)) +  
+emm.VWC.df %&gt;% drop_na() %&gt;% filter(trait %in% traits[c(1:8, 13)]) %&gt;% 
+  ggplot(aes(x=fct_relevel(trait, rev(traits)), y=VWC.trend, color=year)) +  
   geom_hline(yintercept=0) + geom_pointrange(aes(ymin=VWC.trend - SE, ymax = VWC.trend + SE), position=position_dodge(width=0.3), size=0.4) + 
   labs(y=&quot;Slope of z-scored trait vs. mean annual soil moisture&quot;, x=&quot;Floral Trait&quot;, color=&quot;Year&quot;) +
   theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)</code></pre>
@@ -2735,25 +2736,6 @@ mt.sm.mod[traits.include] %&gt;%
   theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                           panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
 <p><img src="images/multi_sm-1.png" width="864" /></p>
-</div>
-<div id="traits-for-plasticity-paper" class="section level3">
-<h3>Traits for plasticity paper</h3>
-<pre class="r"><code>bind_rows(sun_date = emm.melt %&gt;% map(as.data.frame) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% rename(trend=sun_date.trend),
-          precip_est_mm = emm.precip %&gt;% map(as.data.frame) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% rename(trend=precip_est_mm.trend),      .id=&quot;predictor&quot;) %&gt;% mutate(predictor=fct_relevel(predictor,&quot;sun_date&quot;)) %&gt;%
-  filter(trait %in% traits[c(1:8, 13)]) %&gt;% 
-  ggplot(aes(x=fct_relevel(trait, rev(traits)), y=trend)) +  
-  facet_wrap(vars(predictor), nrow=1, scales=&quot;free_x&quot;, labeller=labeller(predictor=c(precip_est_mm=&quot;Summer precip (mm)&quot;, sun_date=&quot;Snowmelt date&quot;))) + 
-  geom_hline(yintercept=0) + 
-  geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), position=position_dodge(width=0.3), size=0.4) + 
-  labs(y=&quot;Slope of z-scored trait vs. predictor&quot;, x=&quot;Floral Trait&quot;, color=&quot;Water&quot;) + 
-  scale_x_discrete(labels = traitnames) + coord_flip() +
-  theme(legend.position = &quot;top&quot;)</code></pre>
-<p><img src="images/emmeans_filtered-1.png" width="768" /></p>
-<pre class="r"><code>ggplot(emm.VWC.df %&gt;% drop_na() %&gt;% filter(trait %in% traits[c(1:8, 13)]), aes(x=fct_relevel(trait, rev(traits)), y=VWC.trend, color=year)) +  
-  geom_hline(yintercept=0) + geom_pointrange(aes(ymin=VWC.trend - SE, ymax = VWC.trend + SE), position=position_dodge(width=0.3), size=0.4) + 
-  labs(y=&quot;Slope of z-scored trait vs. mean annual soil moisture&quot;, x=&quot;Floral Trait&quot;, color=&quot;Year&quot;) +
-  theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images/emmeans_filtered-2.png" width="768" /></p>
 </div>
 <div id="multivariate-response" class="section level3">
 <h3>Multivariate response</h3>
