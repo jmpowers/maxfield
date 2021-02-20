@@ -566,10 +566,19 @@ WUE_1819.plantyr <- WUE_1819 %>% group_by(year, water, water4, snow, plot, ploti
   summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
-#This sheet has incorrect data for 2018 and 2019, and missing plantids for 2020 - still useful for subplot means
+#This sheet has incorrect data for 2018 and 2019
 WUE_20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_181920") %>%
-  mutate(plot=as.character(plot), year=factor(year)) %>%  
-  filter(year==2020) %>% select(-c(plant,plantid)) %>% left_join(treatments)
+ mutate(plot=as.character(plot), year=factor(year), plant=as.character(plant)) %>%  
+ filter(year==2020) %>% left_join(treatments)
+
+#Add leaf area and VWC to WUE_20
+# area_VWC_20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="area_VWC_20", 
+#                           col_types="dTcccccddccddcdddddd")
+# WUE_20.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_181920") %>%
+#   mutate(plot=as.character(plot), year=factor(year)) %>%  
+#   filter(year==2020) %>% select(-c(plant,plantid,VWC, notes, VWC_merge, plantid_merge))
+# left_join(WUE_20.raw, area_VWC_20 %>% select(-c(Photo, Cond, Ci, `photo/area`, `cond/area`))) %>% 
+#   write_tsv("../WUE_20.tsv", na="")
 
 wue <- bind_rows(WUE_1819, WUE_20)
 wue.plantyr <- bind_rows(WUE_1819.plantyr, WUE_20)#Assume there are no duplicate measures of plants in WUE_20
