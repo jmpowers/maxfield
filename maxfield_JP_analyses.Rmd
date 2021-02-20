@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -322,6 +322,7 @@ ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>%
 
 #Total sample sizes
 mt %>% drop_na(corolla_length) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
+mt %>% drop_na(corolla_length, anther_min) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
 mt %>% drop_na(nectar_24_h_ul) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
 sds %>% drop_na(flowers_est) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
 ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
@@ -531,10 +532,19 @@ anova(WUE.mod) %>% kable(digits=3)
 
 ### Floral trait correlations
 ```{r correlations}
+mt %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width) %>% 
+  ggpairs()
 
-ggpairs(mt %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width))
+nt %>% select(nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg) %>% 
+  ggpairs()
 
 ggplot(nt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(x=traitnames[["nectar_conc"]], y=traitnames[["nectar_24_h_ul"]]) + geom_smooth(se=F)
+
+mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %>% 
+  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
+
+mnps.plantyr %>% select(all_of(seedtraits[c(1,7,2:6)])) %>% 
+  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
 ```
 
 ### Floral plasticity: water treatments and snowmelt treatments
@@ -859,24 +869,48 @@ ggplot(mt.morph.pca) + theme_classic() +
   labs(x=mt.pca.labs[1], y=mt.pca.labs[2])
 ggsave("images/mt_morph_pca_noSW.pdf", height=15, width=20, device=cairo_pdf)
 
-ggplot(mt, aes(x=corolla_width, y=corolla_length, color=VWC)) + scale_color_viridis(direction=-1, option="plasma") + geom_point() + theme_minimal()
-ggplot(mt, aes(y=style_length / corolla_length, x=VWC, color=VWC)) + scale_color_viridis(direction=-1, option="plasma") + geom_point() + theme_minimal() + geom_smooth()
+ggplot(mt, aes(x=corolla_length, y=corolla_width, color=VWC)) + scale_color_viridis(direction=-1, option="plasma") + geom_point() + theme_minimal() + geom_smooth()
 
-options(contrasts = c("contr.treatment", "contr.poly"))
-mt.cap <- capscale(scale(mt.morph[,-(6:7)]) ~ VWC + year, data=mt.morph)
-mt.cap
-anova(mt.cap, by="term") %>% tidy %>% kable
+ggplot(mt, aes(x=corolla_length, y=style_length, color=VWC)) + scale_color_viridis(direction=-1, option="plasma") + geom_point() + theme_minimal() + geom_abline(slope=1, intercept=0)
 
-autoplot(mt.cap) + guides(color=F, shape=F)
+ggplot(mt, aes(y=style_length / corolla_length, x=VWC, color=VWC)) + scale_color_viridis(direction=-1, option="plasma") + geom_point() + theme_minimal() + geom_abline(slope=0, intercept=1)+ geom_smooth()
+
+ggplot(mt, aes(x=corolla_length, ymax = anther_max, ymin=anther_min, color=VWC)) + scale_color_viridis(direction=-1, option="plasma") + geom_linerange() + theme_minimal()+ geom_abline(slope=1, intercept=0)
+
+ggplot(mt, aes(y=anther_min / corolla_length, x=VWC, color=VWC)) + scale_color_viridis(direction=-1, option="plasma") + geom_point() + theme_minimal() + geom_smooth()
 ```
 
+```{r multresp_VWC, fig.height=6, fig.width=7}
+mt.morph.plantyr <- mt.plantyr[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","VWC")] %>% drop_na() 
+options(contrasts = c("contr.treatment", "contr.poly"))
+mt.rda <- rda(scale(select(mt.morph.plantyr, !c(year, VWC))) ~ VWC * year, data=mt.morph.plantyr)
+mt.rda
+anova(mt.rda, by="term") %>% tidy %>% kable(digits=3)
+#autoplot(mt.rda)
+
+mt.rda.df <- fortify(update(mt.rda, ~ VWC + year))#drop interaction
+ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) + 
+  geom_point(data=mt.rda.df %>% filter(Score=="sites") %>% bind_cols(mt.morph.plantyr), aes(color=VWC))+
+  geom_segment(data=mt.rda.df %>% filter(Label=="VWC"), aes(x=0,y=0,xend=RDA1*3, yend=RDA2*3), 
+               arrow=arrow(length=unit(0.5, "lines")), size=1.5)+
+  geom_text(   data=mt.rda.df %>% filter(Label=="VWC"), aes(x=RDA1*3.5, y=RDA2*3.5, angle=atan(RDA2/RDA1)*180/pi))+
+  geom_segment(data=mt.rda.df %>% filter(Score=="species"), aes(x=0,y=0,xend=RDA1, yend=RDA2), 
+               arrow=arrow(length=unit(0.5, "lines")))+
+  geom_text(   data=mt.rda.df %>% filter(Score=="species"), aes(x=RDA1*1.7, y=RDA2*1.7, angle=atan(RDA2/RDA1)*180/pi,
+    label = c(traitnames, c("anther_max"="Max stamen length", "anther_min"="Min stamen length"))[as.character(Label)] %>% str_remove(fixed(" (mm)"))), size=3)+
+  geom_text(data=mt.rda.df %>% filter(Score=="centroids"), aes(label=str_remove(Label, "year")), fontface=2, size=6)+
+  scale_color_viridis(direction=-1, option="plasma") + coord_fixed() + 
+  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal()
+```
+
+
 ```{r multresp_discrete}
-mt.morph.wm <- mt[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","water","melt_offset")] %>% drop_na(1:6) #and nectar (19,20) too
-mt.cap.wm <- capscale(scale(mt.morph.wm[,-(6:8)]) ~ year * melt_offset * water, data=mt.morph.wm)
+mt.morph.wm <- mt[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","precip_est_mm", "sun_date")] %>% drop_na(1:6) #and nectar (19,20) too
+mt.cap.wm <- capscale(scale(mt.morph.wm[,-(6:8)]) ~ precip_est_mm * sun_date, data=mt.morph.wm)
 mt.cap.wm
 anova(mt.cap.wm, by="term") %>% tidy %>% kable
 #plot CAP without interactions
-autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ year + melt_offset + water, data=mt.morph.wm)) + guides(color=F, shape=F)
+autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ precip_est_mm + sun_date, data=mt.morph.wm)) + guides(color=F, shape=F)
 ```
 
 ### Floral traits within season

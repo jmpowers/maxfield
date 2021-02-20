@@ -525,8 +525,15 @@ licor <- map_chr(paste0(licor.path, licor.files), read_file) %>%
          plot = str_sub(plantid,1,1), subplot = str_sub(plantid,2,2), plotid = str_sub(plantid,1,2), plant = str_sub(plantid,3),
          date=as.Date(date), year=factor(year(date)), Obs=as.integer(Obs), .after="date")
 
+#output licor 2020 to add VWC and leaf area
+licor %>% filter(year=="2020") %>% 
+  select(date, sampleID, Obs, HHMMSS, Photo, Cond, Ci) %>% group_by(date, sampleID) %>% 
+  summarize(first_Obs = first(Obs), all_Obs = paste(Obs, collapse=","), n_Obs = n(), 
+            HHMMSS = paste(HHMMSS, collapse=","), across(where(is.numeric), mean)) %>% 
+  arrange(date, first_Obs) %>%  write_tsv("../licor_2020_sampleID.tsv")
+
 # group by plantid and tally for each year
-#note that this averages across dates if a plant was remeasured, including if loose-formatted SampleID is differenct
+#note that this averages across dates if a plant was remeasured, including if loose-formatted SampleID is different
 licor.plantid <- licor %>% group_by(untagged, plantid, plot, subplot, plotid, plant, year) %>% add_tally() %>% 
   summarize(across(where(is.numeric), mean, na.rm=T), .groups="keep") 
 
@@ -540,9 +547,18 @@ read_csv("data/megatally.csv") %>% mutate(plot=as.character(plot)) %>% #read in 
   full_join(licor.tally) %>% write_tsv("data/megatally_licor.tsv", na="") #add licor columns
 
 # read in the corrected WUE survival analysis
-WUE_1819 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_1819_cleanedDRC") %>%
+WUE_1819.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_1819_cleanedDRC") %>%
   mutate(plantid = paste0(plotid,plant), plot = str_sub(plotid,1,1), subplot=str_sub(plotid,2,2), 
-         year=factor(year)) %>% 
+         year=factor(year))  
+
+#add VWC to 2018 based on subplot mean taken closest in time
+WUE_1819.sm <- WUE_1819.raw %>% filter(year=="2018") %>%  
+  left_join(sm.subplot, by = c("year","plot","subplot","plotid"), suffix=c("",".sm")) %>%
+  mutate(date_diff = abs(date - date.sm)) %>%  
+  group_by(plotid, date) %>%  filter(date_diff == min(date_diff)) %>% ungroup
+
+WUE_1819 <- WUE_1819.raw %>% left_join(WUE_1819.sm %>% select(plantid, date, duplicate, date.sm, date_diff, VWC.sm)) %>%
+  mutate(VWC=ifelse(is.na(VWC),VWC.sm,VWC)) %>% 
   group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:19), fix_dataset) %>% 
   left_join(treatments)
 
