@@ -525,12 +525,12 @@ licor <- map_chr(paste0(licor.path, licor.files), read_file) %>%
          plot = str_sub(plantid,1,1), subplot = str_sub(plantid,2,2), plotid = str_sub(plantid,1,2), plant = str_sub(plantid,3),
          date=as.Date(date), year=factor(year(date)), Obs=as.integer(Obs), .after="date")
 
-#output licor 2020 to add VWC and leaf area
-licor %>% filter(year=="2020") %>% 
-  select(date, sampleID, Obs, HHMMSS, Photo, Cond, Ci) %>% group_by(date, sampleID) %>% 
+#output raw licor data to add VWC and leaf area
+licor %>% 
+  select(year, date, sampleID, Obs, HHMMSS, Photo, Cond, Ci) %>% group_by(year, date, sampleID) %>% 
   summarize(first_Obs = first(Obs), all_Obs = paste(Obs, collapse=","), n_Obs = n(), 
             HHMMSS = paste(HHMMSS, collapse=","), across(where(is.numeric), mean)) %>% 
-  arrange(date, first_Obs) %>%  write_tsv("../licor_2020_sampleID.tsv")
+  arrange(date, first_Obs) %>%  write_tsv("../licor_sampleID.tsv")
 
 # group by plantid and tally for each year
 #note that this averages across dates if a plant was remeasured, including if loose-formatted SampleID is different
@@ -546,8 +546,9 @@ licor.tally <- licor.plantid %>% select(group_cols(),n) %>%
 read_csv("data/megatally.csv") %>% mutate(plot=as.character(plot)) %>% #read in the original megatally
   full_join(licor.tally) %>% write_tsv("data/megatally_licor.tsv", na="") #add licor columns
 
-# read in the corrected WUE survival analysis
+# read in the corrected WUE survival analysis, with dates and VWC added back in
 WUE_1819.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_1819_cleanedDRC") %>%
+  filter(!is.na(photosynthesis)) %>% #some of the rows are duplicated with no licor data
   mutate(plantid = paste0(plotid,plant), plot = str_sub(plotid,1,1), subplot=str_sub(plotid,2,2), 
          year=factor(year))  
 
@@ -569,16 +570,12 @@ WUE_1819.plantyr <- WUE_1819 %>% group_by(year, water, water4, snow, plot, ploti
 #This sheet has incorrect data for 2018 and 2019
 WUE_20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_181920") %>%
  mutate(plot=as.character(plot), year=factor(year), plant=as.character(plant)) %>%  
- filter(year==2020) %>% left_join(treatments)
+ filter(year==2020, !is.na(photosynthesis)) %>% #the blank licor rows show the subplots that have missing data
+  left_join(treatments)
 
-#Add leaf area and VWC to WUE_20
-# area_VWC_20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="area_VWC_20", 
-#                           col_types="dTcccccddccddcdddddd")
-# WUE_20.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_181920") %>%
-#   mutate(plot=as.character(plot), year=factor(year)) %>%  
-#   filter(year==2020) %>% select(-c(plant,plantid,VWC, notes, VWC_merge, plantid_merge))
-# left_join(WUE_20.raw, area_VWC_20 %>% select(-c(Photo, Cond, Ci, `photo/area`, `cond/area`))) %>% 
-#   write_tsv("../WUE_20.tsv", na="")
+#All measurements leaf area and VWC available from scans - filled into licor_sampleID.tsv
+WUE_area_VWC <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="area_VWC", 
+                           col_types="dcccccddcdTcddcdddddd")
 
 wue <- bind_rows(WUE_1819, WUE_20)
 wue.plantyr <- bind_rows(WUE_1819.plantyr, WUE_20)#Assume there are no duplicate measures of plants in WUE_20
@@ -818,6 +815,12 @@ traitnames <- set_names(c("Corolla length (mm)", "Style length (mm)", "Corolla w
 
 seedtraits <- traits[10:16] 
 seedtraitnames <- traitnames[10:16]
+
+leaftraits <- c("sla","trichome_density","water_content")
+leaftraitnames <- set_names(c("Specific Leaf Area (cm\U00B2 g\U207B\U00B9)", "Trichome density (cm\U207B\U00B2)", "Water content"), leaftraits)
+
+phystraits <- c("photosynthesis", "conductance", "WUE")
+phystraitnames <- set_names(c("Photosynthetic rate (\U00B5mol CO\U2082 m\U207B\U00B2 s\U207B\U00B9)", "Stomatal conductance (mol H\U2082O m\U207B\U00B2 s\U207B\U00B9)", "Intrinsic water-use efficiency (\U00B5mol CO\U2082 mol\U207B\U00B9 H\U2082O)"), phystraits)
 
 # export ------------------------------------------------------------------
 

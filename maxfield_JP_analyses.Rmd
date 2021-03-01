@@ -468,6 +468,8 @@ ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(me
 
 
 ```{r leaftraits}
+ggplot(lt %>% mutate(date=as.factor(date_collected)), aes(x=water, color=snow, y = sla)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Specific Leaf Area (cm2/g)", color="Snowmelt") + facet_wrap(vars(year, round, date), nrow=1)
+
 ggplot(lt, aes(x=water, color=snow, y = sla)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x="Precipitation", y="Specific Leaf Area (cm2/g)", color="Snowmelt") + facet_wrap(vars(year, round), nrow=1) + scale_y_continuous(limits=c(0,300))
 
 sla.mod <- lmer(sla ~ yearround * snow * water + (1|plot), data=mutate(lt.subplotround, yearround=paste(year,round)))
