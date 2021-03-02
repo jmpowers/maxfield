@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -715,7 +715,7 @@ plot_diag(lt.mod.split.plant, "water_content")
 ### Physiology traits
 
 ```{r phys_split}
-#TODO check which round 2019-08-15 entry should go into
+# lump 2019-08-15 entry with previous day
 wue <- wue %>% mutate(round = as.character(date), round=recode(round, "2019-08-15"="2019-08-14"), round=factor(round))
 
 options(contrasts = c("contr.sum", "contr.poly"))
@@ -772,6 +772,22 @@ plot_diag(wue.mod.split.plant, "photosynthesis")
 plot_diag(wue.mod.split.plant, "conductance")
 plot_diag(wue.mod.split.plant, "WUE")
 ```
+
+## Selection: survival/flowering vs. treatments
+
+Graphs are for random effect of plot and then subplot
+```{r selection_surv}
+library(glmmTMB)
+options(contrasts = c("contr.sum", "contr.poly"))
+wue.mod.split.surv <- glmmTMB(survived ~ year * snow * water, data=wue, family=binomial)
+wue.mod.split.surv.re <- glmmTMB(survived ~ year * snow * water + (1|plot) + (1|plotid), data=wue, family=binomial)
+plot_model(wue.mod.split.surv.re, type="diag")
+
+wue.mod.split.flrd <- glmmTMB(flowered ~ year * snow * water, data=wue, family=binomial)
+wue.mod.split.flrd.re <- glmmTMB(flowered ~ year * snow * water + (1|plot) + (1|plotid), data=wue, family=binomial)
+plot_model(wue.mod.split.flrd.re, type="diag")
+```
+
 
 ## Plasticity: absolute snowmelt date and estimated summer precipitation
 

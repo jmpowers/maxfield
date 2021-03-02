@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-03-01" />
+<meta name="date" content="2021-03-02" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-03-01</h4>
+<h4 class="date">2021-03-02</h4>
 
 </div>
 
@@ -1728,7 +1728,7 @@ ggplot(aes(y=p.value, x=paste0(term,&quot; (&quot;,unit,&quot; means)&quot;))) +
 </div>
 <div id="physiology-traits-1" class="section level3">
 <h3>Physiology traits</h3>
-<pre class="r"><code>#TODO check which round 2019-08-15 entry should go into
+<pre class="r"><code># lump 2019-08-15 entry with previous day
 wue &lt;- wue %&gt;% mutate(round = as.character(date), round=recode(round, &quot;2019-08-15&quot;=&quot;2019-08-14&quot;), round=factor(round))
 
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
@@ -1848,6 +1848,28 @@ ggplot(aes(y=p.value, x=paste0(term,&quot; (&quot;,unit,&quot; means)&quot;))) +
 <pre class="r"><code>plot_diag(wue.mod.split.plant, &quot;WUE&quot;)</code></pre>
 <p><img src="images/split_model_diagnostics_phys-3.png" width="672" /></p>
 </div>
+</div>
+<div id="selection-survivalflowering-vs.-treatments" class="section level2">
+<h2>Selection: survival/flowering vs. treatments</h2>
+<p>Graphs are for random effect of plot and then subplot</p>
+<pre class="r"><code>library(glmmTMB)
+options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+wue.mod.split.surv &lt;- glmmTMB(survived ~ year * snow * water, data=wue, family=binomial)
+wue.mod.split.surv.re &lt;- glmmTMB(survived ~ year * snow * water + (1|plot) + (1|plotid), data=wue, family=binomial)
+plot_model(wue.mod.split.surv.re, type=&quot;diag&quot;)</code></pre>
+<pre><code>$plot</code></pre>
+<p><img src="images/selection_surv-1.png" width="672" /></p>
+<pre><code>
+$plotid</code></pre>
+<p><img src="images/selection_surv-2.png" width="672" /></p>
+<pre class="r"><code>wue.mod.split.flrd &lt;- glmmTMB(flowered ~ year * snow * water, data=wue, family=binomial)
+wue.mod.split.flrd.re &lt;- glmmTMB(flowered ~ year * snow * water + (1|plot) + (1|plotid), data=wue, family=binomial)
+plot_model(wue.mod.split.flrd.re, type=&quot;diag&quot;)</code></pre>
+<pre><code>$plot</code></pre>
+<p><img src="images/selection_surv-3.png" width="672" /></p>
+<pre><code>
+$plotid</code></pre>
+<p><img src="images/selection_surv-4.png" width="672" /></p>
 </div>
 <div id="plasticity-absolute-snowmelt-date-and-estimated-summer-precipitation" class="section level2">
 <h2>Plasticity: absolute snowmelt date and estimated summer precipitation</h2>
