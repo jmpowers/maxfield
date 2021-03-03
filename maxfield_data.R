@@ -480,6 +480,7 @@ lt <- map_dfr(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>%
          plantid=paste0(plotid,plant),
          year = factor(year(date_collected)),
          round = factor(ifelse(yday(date_collected) < 200,1,2)),
+         year.round = factor(paste(year, round, sep=".")),
          trichome_density = trichomes / leaf_area_cm2,
          sla = leaf_area_cm2 / dry_weight_g,
          sla_wet = leaf_area_cm2 / wet_weight_g,
@@ -488,8 +489,12 @@ lt <- map_dfr(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>%
   left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
 
-lt.subplotround <- lt %>% 
-  group_by(year, round, plot, subplot, plotid, water, water4, snow) %>% 
+lt.plantyr <- lt %>% 
+  group_by(year, round, year.round, plot, subplot, plotid, plant, plantid, water, water4, snow) %>% 
+  summarize_if(is.numeric, mean, na.rm=T)
+
+lt.subplotround <- lt.plantyr %>% 
+  group_by(year, round, year.round, plot, subplot, plotid, water, water4, snow) %>% 
   summarize_if(is.numeric, mean, na.rm=T)
 
 # licor -------------------------------------------------------------------
@@ -563,10 +568,6 @@ WUE_1819 <- WUE_1819.raw %>% left_join(WUE_1819.sm %>% select(plantid, date, dup
   group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:19), fix_dataset) %>% 
   left_join(treatments)
 
-WUE_1819.plantyr <- WUE_1819 %>% group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% 
-  summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
-  mutate_if(is.numeric, ~replace(., is.nan(.), NA))
-
 #This sheet has incorrect data for 2018 and 2019
 WUE_20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_181920") %>%
  mutate(plot=as.character(plot), year=factor(year), plant=as.character(plant)) %>%  
@@ -577,10 +578,14 @@ WUE_20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet
 WUE_area_VWC <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="area_VWC", 
                            col_types="dcccccddcdTcddcdddddd")
 
-wue <- bind_rows(WUE_1819, WUE_20)
-wue.plantyr <- bind_rows(WUE_1819.plantyr, WUE_20)#Assume there are no duplicate measures of plants in WUE_20
+pt <- bind_rows(WUE_1819, WUE_20) %>% # lump 2019-08-15 entry with previous day
+  mutate(round = as.character(date), round=recode(round, "2019-08-15"="2019-08-14"), round=factor(round)) 
 
-wue.subplot <- wue.plantyr %>% group_by(year, water, water4, snow, plot, plotid) %>% 
+pt.plantyr <- pt %>% group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% 
+  summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA))
+
+pt.subplot <- pt.plantyr %>% group_by(year, water, water4, snow, plot, plotid) %>% 
   summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
@@ -839,7 +844,7 @@ alldata <- list("treatments"=treatments,
                 "phenology_2020"=ph20,
                 "leaf_traits"=lt,
                 "licor"=licor,
-                "wue"=wue,
+                "phys_traits"=pt,
                 "floral_traits"=mt,
                 "floral_volatiles"=vt,
                 "seeds_2018"=sds18,

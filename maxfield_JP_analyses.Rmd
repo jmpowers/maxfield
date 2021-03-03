@@ -486,7 +486,6 @@ licor %>% left_join(treatments)%>% ggplot(aes(y=Photo/Cond, x=factor(date), colo
   scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()
 ```
 
-
 # Floral traits
 
 ## Floral trait correlations
@@ -512,91 +511,45 @@ mnps.plantyr %>% select(all_of(seedtraits[c(1,7,2:6)])) %>%
 
 This is a split-plot analysis, based on the original experimental design. The models use:
 
-* *mnps.subplot*, the 24 * 3 subplot means within each year
+* *mnps.plantyr*, the plant means within each year
 * *snow*, the snowmelt treatment (except for plot 2 in 2019)
 * *water*, the water treatments with mock rainouts and controls combined
 * *plot* as a random effect (subplots vary within this larger unit)
-* *subplot* as a random effect (plants vary within this larger unit)
+* *plotid* as a random effect (plants vary within this larger unit)
 
 The models are specified as:
 
-    lmer(trait ~ year * snow * water + (1|plot), data = mnps.subplot)
+    lmer(trait ~ year * snow * water + (1|plot) + (1|plotid) +, data = mnps.plantyr)
 
-### Floral traits
+### ANOVA tables
 
 ```{r morphology_split}
 options(contrasts = c("contr.sum", "contr.poly"))
-mt.mod.split.subplot <- map(set_names(traits), 
-                            ~ lmer(mnps.subplot[[.x]] ~ year * snow * water + (1|plot), data=mnps.subplot))
-mt.mod.split.plant <- map(set_names(traits), 
-                          ~ lmer(mnps.plantyr[[.x]]   ~ year * snow * water + (1|plot) + (1|plotid), data=mnps.plantyr))
+mt.mod.split <- map(set_names(traits), 
+                          ~ lmer(mnps.plantyr[[.x]] ~ year * snow * water + (1|plot) + (1|plotid), data=mnps.plantyr))
+lt.mod.split <- map(set_names(leaftraits), 
+                          ~ lmer(lt[[.x]] ~ year.round * snow * water + (1|plot) + (1|plotid), data=lt))
+pt.mod.split <- map(set_names(phystraits), 
+                          ~ lmer(wue[[.x]] ~ year * snow * water + (1|plot) + (1|plotid) + (1|round), data=wue))
 
-mt.mod.split.subplot.coefs <- map_dfr(mt.mod.split.subplot, tidy, .id="trait")
-mt.mod.split.plant.coefs   <- map_dfr(mt.mod.split.plant,   tidy, .id="trait")
+mt.mod.split.coefs <- map_dfr(mt.mod.split, tidy, .id="trait")
+lt.mod.split.coefs <- map_dfr(lt.mod.split, tidy, .id="trait")
+pt.mod.split.coefs <- map_dfr(pt.mod.split, tidy, .id="trait")
 
-mt.mod.split.subplot.tests <- map(mt.mod.split.subplot, anova) %>% map_dfr(tidy, .id="trait")
-mt.mod.split.plant.tests   <- map(mt.mod.split.plant,   anova) %>% map_dfr(tidy, .id="trait")
+mt.mod.split.tests <- map(mt.mod.split, anova) %>% map_dfr(tidy, .id="trait")
+lt.mod.split.tests <- map(lt.mod.split, anova) %>% map_dfr(tidy, .id="trait")
+pt.mod.split.tests <- map(pt.mod.split, anova) %>% map_dfr(tidy, .id="trait")
 
-print_anova_table(mt.mod.split.plant.tests, mt.mod.split.plant)
+mt.mod.split.emm <- map(mt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
+lt.mod.split.emm <- map(lt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year.round * snow * water)))
+pt.mod.split.emm <- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
 
-mt.emm.split.plant <- map(mt.mod.split.plant, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
+print_anova_table(mt.mod.split.tests, mt.mod.split)
+print_anova_table(lt.mod.split.tests, lt.mod.split)
+print_anova_table(pt.mod.split.tests, pt.mod.split)
 ```
 
-```{r compare_split_models, fig.width=8, fig.height=9}
-mt.mod.split.coefs <- bind_rows(subplot=mt.mod.split.subplot.coefs, plant=mt.mod.split.plant.coefs, .id="unit")
-
-mt.mod.split.coefs %>% filter(effect=="ran_pars") %>% mutate(trait = fct_relevel(trait, traits)) %>% 
-ggplot(aes(y=estimate, x=paste0(group," (",unit," means)"))) +
-  facet_wrap(vars(trait), scales="free_y") + 
-  labs(x="Random effect (data)", y="Standard deviation", color="Data", shape="SD < 1e-4") +
-  geom_point(aes(color=unit, shape=estimate < 1e-4), size=3) + 
-  geom_line(aes(group=group), color="black") + 
-  scale_x_discrete(guide=guide_axis(angle=90)) + scale_y_continuous(limits=c(0,NA)) +
-  theme_bw() + theme(legend.position = "top")
-
-mt.mod.split.coefs %>% filter(effect=="fixed", term!="(Intercept)") %>% mutate(trait = fct_relevel(trait, traits)) %>% 
-ggplot(aes(y=estimate, x=paste0(term," (",unit," means)"))) +
-  facet_wrap(vars(trait), scales="free_y") + 
-  labs(x="Fixed effect (data)", y="Estimate", color="Data") +
-  geom_point(aes(color=unit), size=2) + 
-  geom_line(aes(group=term), color="black") + 
-  scale_x_discrete(guide=guide_axis(angle=90)) + theme_bw() + theme(legend.position = "top")
-
-mt.mod.split.tests <- bind_rows(subplot=mt.mod.split.subplot.tests, plant=mt.mod.split.plant.tests, .id="unit")
-
-mt.mod.split.tests %>% mutate(trait = fct_relevel(trait, traits)) %>% 
-ggplot(aes(y=p.value, x=paste0(term," (",unit," means)"))) + 
-  facet_wrap(vars(trait), scales="free_y") + 
-  labs(x="Fixed effect (data)", y="P value", color="Data") +
-  geom_point(aes(color=unit), size=2) + 
-  geom_line(aes(group=term), color="black") + 
-  scale_y_log10() + geom_hline(yintercept=0.05)+
-  scale_x_discrete(guide=guide_axis(angle=90)) + theme_bw() + theme(legend.position = "top")
-```
-
-
-```{r split_model_diagnostics, fig.width=7, fig.height=10}
-library(sjPlot)
-library(grid)
-library(gridExtra)
-plot_diag <- function(models, trait) {
-  diag.plots <- sjPlot::plot_model(models[[trait]], type="diag")
-  traitname <- c(traitnames, leaftraitnames, phystraitnames)[[trait]]
-  if(is.null(diag.plots[[2]]$round)) {
-    panel <- textGrob(traitname, gp=gpar(fontsize=16)) 
-  } else {
-    panel <- diag.plots[[2]]$round + ggtitle("Random effect: rounds", subtitle=traitname)
-  }
-  grid.arrange(grobs=list(diag.plots[[4]], panel,
-                     diag.plots[[2]]$plotid + ggtitle("Random effect: subplots"), 
-                     diag.plots[[2]]$plot   + ggtitle("Random effect: plots"), 
-                     diag.plots[[1]], diag.plots[[3]]))
-}
-plot_diag(mt.mod.split.plant, "corolla_length")
-plot_diag(mt.mod.split.plant, "height_cm")
-plot_diag(mt.mod.split.plant, "flowers_est")
-```
-
+### Plots
 
 ```{r multi_splitplot, fig.width=10, fig.height=11}
 traits.include <- traits[c(1:4,5,6,8,13)]
@@ -635,7 +588,7 @@ mod.emm.plots[[i]] <- mt.emm.split.plant %>% bind_rows(.id="trait") %>% filter(t
 grid.arrange(mod.emm.plots[[1]], mod.emm.plots[[2]], nrow=1)
 ```
 
-#### Compensation of water addition for early snowmelt
+### Compensation of water addition for early snowmelt
 
 ```{r compensation}
 #compare early snowmelt + addition vs. normal snowmelt + control
@@ -651,141 +604,13 @@ map_dfr(mt.mod.glht, ~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=su
 detach("package:multcomp", unload = TRUE); detach("package:TH.data", unload = TRUE); detach("package:MASS", unload = TRUE)
 ```
 
-### Leaf traits
-
-```{r leaf_split}
-lt.subplotround <- lt.subplotround %>% mutate(year.round = paste(year, round, sep="."))
-lt <- lt %>% mutate(year.round = paste(year, round, sep="."))
-
-options(contrasts = c("contr.sum", "contr.poly"))
-lt.mod.split.subplot <- map(set_names(leaftraits), 
-                            ~ lmer(lt.subplotround[[.x]] ~ year.round * snow * water + (1|plot), data=lt.subplotround))
-lt.mod.split.plant <- map(set_names(leaftraits), 
-                          ~ lmer(lt[[.x]]   ~ year.round * snow * water + (1|plot) + (1|plotid), data=lt))
-
-lt.mod.split.subplot.coefs <- map_dfr(lt.mod.split.subplot, tidy, .id="trait")
-lt.mod.split.plant.coefs   <- map_dfr(lt.mod.split.plant,   tidy, .id="trait")
-
-lt.mod.split.subplot.tests <- map(lt.mod.split.subplot, anova) %>% map_dfr(tidy, .id="trait")
-lt.mod.split.plant.tests   <- map(lt.mod.split.plant,   anova) %>% map_dfr(tidy, .id="trait")
-
-print_anova_table(lt.mod.split.plant.tests, lt.mod.split.plant)
-
-lt.emm.split.plant <- map(lt.mod.split.plant, ~ summary(emmeans(ref_grid(.x), ~ year.round * snow * water)))
-```
-
-```{r compare_split_leaf_models, fig.width=8, fig.height=5}
-lt.mod.split.coefs <- bind_rows(subplot=lt.mod.split.subplot.coefs, plant=lt.mod.split.plant.coefs, .id="unit")
-
-lt.mod.split.coefs %>% filter(effect=="ran_pars") %>% mutate(trait = fct_relevel(trait, leaftraits)) %>% 
-ggplot(aes(y=estimate, x=paste0(group," (",unit," means)"))) +
-  facet_wrap(vars(trait), scales="free_y") + 
-  labs(x="Random effect (data)", y="Standard deviation", color="Data", shape="SD < 1e-4") +
-  geom_point(aes(color=unit, shape=estimate < 1e-4), size=3) + 
-  geom_line(aes(group=group), color="black") + 
-  scale_x_discrete(guide=guide_axis(angle=90)) + scale_y_continuous(limits=c(0,NA)) +
-  theme_bw() + theme(legend.position = "top")
-
-lt.mod.split.coefs %>% filter(effect=="fixed", term!="(Intercept)") %>% mutate(trait = fct_relevel(trait, leaftraits)) %>% 
-ggplot(aes(y=estimate, x=paste0(term," (",unit," means)"))) +
-  facet_wrap(vars(trait), scales="free_y") + 
-  labs(x="Fixed effect (data)", y="Estimate", color="Data") +
-  geom_point(aes(color=unit), size=2) + 
-  geom_line(aes(group=term), color="black") + 
-  scale_x_discrete(guide=guide_axis(angle=90)) + theme_bw() + theme(legend.position = "top")
-
-lt.mod.split.tests <- bind_rows(subplot=lt.mod.split.subplot.tests, plant=lt.mod.split.plant.tests, .id="unit")
-
-lt.mod.split.tests %>% mutate(trait = fct_relevel(trait, leaftraits)) %>% 
-ggplot(aes(y=p.value, x=paste0(term," (",unit," means)"))) + 
-  facet_wrap(vars(trait), scales="free_y") + 
-  labs(x="Fixed effect (data)", y="P value", color="Data") +
-  geom_point(aes(color=unit), size=2) + 
-  geom_line(aes(group=term), color="black") + 
-  scale_y_log10() + geom_hline(yintercept=0.05)+
-  scale_x_discrete(guide=guide_axis(angle=90)) + theme_bw() + theme(legend.position = "top")
-```
-
-```{r split_model_diagnostics_leaf, fig.width=7, fig.height=10}
-plot_diag(lt.mod.split.plant, "sla")
-plot_diag(lt.mod.split.plant, "trichome_density")
-plot_diag(lt.mod.split.plant, "water_content")
-```
-
-### Physiology traits
-
-```{r phys_split}
-# lump 2019-08-15 entry with previous day
-wue <- wue %>% mutate(round = as.character(date), round=recode(round, "2019-08-15"="2019-08-14"), round=factor(round))
-
-options(contrasts = c("contr.sum", "contr.poly"))
-wue.mod.split.subplot <- map(set_names(phystraits), 
-                            ~ lmer(wue.subplot[[.x]] ~ year * snow * water + (1|plot), data=wue.subplot))
-wue.mod.split.plant <- map(set_names(phystraits), 
-                          ~ lmer(wue[[.x]]   ~ year * snow * water + (1|plot) + (1|plotid) + (1|round), data=wue))
-
-wue.mod.split.subplot.coefs <- map_dfr(wue.mod.split.subplot, tidy, .id="trait")
-wue.mod.split.plant.coefs   <- map_dfr(wue.mod.split.plant,   tidy, .id="trait")
-
-wue.mod.split.subplot.tests <- map(wue.mod.split.subplot, anova) %>% map_dfr(tidy, .id="trait")
-wue.mod.split.plant.tests   <- map(wue.mod.split.plant,   anova) %>% map_dfr(tidy, .id="trait")
-
-print_anova_table(wue.mod.split.plant.tests, wue.mod.split.plant)
-
-wue.emm.split.plant <- map(wue.mod.split.plant, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
-```
-
-```{r compare_split_phys_models, fig.width=8, fig.height=5}
-wue.mod.split.coefs <- bind_rows(subplot=wue.mod.split.subplot.coefs, plant=wue.mod.split.plant.coefs, .id="unit")
-
-wue.mod.split.coefs %>% filter(effect=="ran_pars") %>% mutate(trait = fct_relevel(trait, phystraits)) %>% 
-ggplot(aes(y=estimate, x=paste0(group," (",unit," means)"))) +
-  facet_wrap(vars(trait), scales="free_y") + 
-  labs(x="Random effect (data)", y="Standard deviation", color="Data", shape="SD < 1e-4") +
-  geom_point(aes(color=unit, shape=estimate < 1e-4), size=3) + 
-  geom_line(aes(group=group), color="black") + 
-  scale_x_discrete(guide=guide_axis(angle=90)) + scale_y_continuous(limits=c(0,NA)) +
-  theme_bw() + theme(legend.position = "top")
-
-wue.mod.split.coefs %>% filter(effect=="fixed", term!="(Intercept)") %>% mutate(trait = fct_relevel(trait, phystraits)) %>% 
-ggplot(aes(y=estimate, x=paste0(term," (",unit," means)"))) +
-  facet_wrap(vars(trait), scales="free_y") + 
-  labs(x="Fixed effect (data)", y="Estimate", color="Data") +
-  geom_point(aes(color=unit), size=2) + 
-  geom_line(aes(group=term), color="black") + 
-  scale_x_discrete(guide=guide_axis(angle=90)) + theme_bw() + theme(legend.position = "top")
-
-wue.mod.split.tests <- bind_rows(subplot=wue.mod.split.subplot.tests, plant=wue.mod.split.plant.tests, .id="unit")
-
-wue.mod.split.tests %>% mutate(trait = fct_relevel(trait, phystraits)) %>% 
-ggplot(aes(y=p.value, x=paste0(term," (",unit," means)"))) + 
-  facet_wrap(vars(trait), scales="free_y") + 
-  labs(x="Fixed effect (data)", y="P value", color="Data") +
-  geom_point(aes(color=unit), size=2) + 
-  geom_line(aes(group=term), color="black") + 
-  scale_y_log10() + geom_hline(yintercept=0.05)+
-  scale_x_discrete(guide=guide_axis(angle=90)) + theme_bw() + theme(legend.position = "top")
-```
-
-```{r split_model_diagnostics_phys, fig.width=7, fig.height=10}
-plot_diag(wue.mod.split.plant, "photosynthesis")
-plot_diag(wue.mod.split.plant, "conductance")
-plot_diag(wue.mod.split.plant, "WUE")
-```
-
 ## Selection: survival/flowering vs. treatments
 
-Graphs are for random effect of plot and then subplot
 ```{r selection_surv}
 library(glmmTMB)
 options(contrasts = c("contr.sum", "contr.poly"))
-wue.mod.split.surv <- glmmTMB(survived ~ year * snow * water, data=wue, family=binomial)
-wue.mod.split.surv.re <- glmmTMB(survived ~ year * snow * water + (1|plot) + (1|plotid), data=wue, family=binomial)
-plot_model(wue.mod.split.surv.re, type="diag")
-
-wue.mod.split.flrd <- glmmTMB(flowered ~ year * snow * water, data=wue, family=binomial)
-wue.mod.split.flrd.re <- glmmTMB(flowered ~ year * snow * water + (1|plot) + (1|plotid), data=wue, family=binomial)
-plot_model(wue.mod.split.flrd.re, type="diag")
+wue.mod.split.surv <- glmmTMB(survived ~ year * snow * water + (1|plot), data=wue, family=binomial)
+wue.mod.split.flrd <- glmmTMB(flowered ~ year * snow * water + (1|plot), data=wue, family=binomial)
 ```
 
 
