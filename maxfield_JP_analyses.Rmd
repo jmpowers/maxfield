@@ -289,7 +289,23 @@ sm.emm.water$emmean[1] - sm.emm.water$emmean[2]
 sm.emm.water$emmean[3] - sm.emm.water$emmean[2]
 ```
 
-## Timing of measurements
+## Soil moisture at plant vs. subplot level
+```{r sm_phys_compare}
+ggplot(pt, aes(x=VWC.sm, y=VWC.plant, shape=year, group=year, color=as.integer(date_diff))) + geom_smooth(se=F) +geom_point() + geom_abline(intercept=0, slope=1) + 
+  labs(x="Subplot VWC at closest date", y="VWC measured at plant for physiology", color="Date difference", shape="Year") +
+  scale_color_viridis_c() + theme_minimal() + coord_fixed()
+
+ggplot(pt, aes(x=VWC, y=VWC.sm, shape=year, group=year, color=year)) + geom_smooth(se=F) +geom_point() + geom_abline(intercept=0, slope=1) + 
+  labs(x="Mean subplot VWC across year", y="Subplot VWC at closest date", color="Year", shape="Year") +
+  scale_color_manual(values=year_pal) + theme_minimal() + coord_fixed()
+
+ggplot(pt, aes(x=VWC, y=VWC.plant, shape=year, group=year, color=year)) + geom_smooth(se=F) +geom_point() + geom_abline(intercept=0, slope=1) + 
+  labs(x="Mean subplot VWC across year", y="VWC measured at plant for physiology", color="Year", shape="Year") +
+  scale_color_manual(values=year_pal) + theme_minimal() + coord_fixed()
+```
+
+
+# Timing of measurements
 
 ```{r timings}
 ggplot(timings %>% filter(variable!="sds") %>% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T)), aes(y=variable, color=year))+ 

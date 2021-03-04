@@ -555,35 +555,34 @@ licor.tally <- licor.plantid %>% select(group_cols(),n) %>%
 read_csv("data/megatally.csv") %>% mutate(plot=as.character(plot)) %>% #read in the original megatally
   full_join(licor.tally) %>% write_tsv("data/megatally_licor.tsv", na="") #add licor columns
 
+#All measurements leaf area and VWC available from scans - filled into licor_sampleID.tsv
+pt.leafarea <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="area_VWC", 
+                           col_types="dcccccddcdTcddcdddddd")
+
 # read in the corrected WUE survival analysis, with dates and VWC added back in
-WUE_1819.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_1819_cleanedDRC") %>%
+pt1819 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_1819_cleanedDRC") %>%
   filter(!is.na(photosynthesis)) %>% #some of the rows are duplicated with no licor data
-  mutate(plantid = paste0(plotid,plant), plot = str_sub(plotid,1,1), subplot=str_sub(plotid,2,2), 
+  mutate(plant=as.character(plant), plantid = paste0(plotid,plant), plot = str_sub(plotid,1,1), subplot=str_sub(plotid,2,2), 
          year=factor(year))  
 
-#add VWC to 2018 based on subplot mean taken closest in time
-WUE_1819.sm <- WUE_1819.raw %>% filter(year=="2018") %>%  
+#This sheet has incorrect data for 2018 and 2019 - just use 2020
+pt20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_181920") %>%
+  mutate(plot=as.character(plot), year=factor(year), plant=as.character(plant),  subplot=str_sub(plotid,2,2)) %>%  
+  filter(year==2020, !is.na(photosynthesis)) #the blank licor rows show the subplots that have missing data
+
+pt.raw <- bind_rows(pt1819, pt20) %>% # lump 2019-08-15 entry with previous day
+  mutate(round = as.character(date), round=recode(round, "2019-08-15"="2019-08-14"), round=factor(round))
+
+#add VWC based on subplot mean taken closest in time
+pt.sm <- pt.raw %>%   
   left_join(sm.subplot, by = c("year","plot","subplot","plotid"), suffix=c("",".sm")) %>%
   mutate(date_diff = abs(date - date.sm)) %>%  
   group_by(plotid, date) %>%  filter(date_diff == min(date_diff)) %>% ungroup
 
-WUE_1819 <- WUE_1819.raw %>% left_join(WUE_1819.sm %>% select(plantid, date, duplicate, date.sm, date_diff, VWC.sm)) %>%
-  mutate(VWC=ifelse(is.na(VWC),VWC.sm,VWC)) %>% 
-  group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:19), fix_dataset) %>% 
-  left_join(treatments)
-
-#This sheet has incorrect data for 2018 and 2019
-WUE_20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="WUE_181920") %>%
- mutate(plot=as.character(plot), year=factor(year), plant=as.character(plant)) %>%  
- filter(year==2020, !is.na(photosynthesis)) %>% #the blank licor rows show the subplots that have missing data
-  left_join(treatments)
-
-#All measurements leaf area and VWC available from scans - filled into licor_sampleID.tsv
-WUE_area_VWC <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"), sheet="area_VWC", 
-                           col_types="dcccccddcdTcddcdddddd")
-
-pt <- bind_rows(WUE_1819, WUE_20) %>% # lump 2019-08-15 entry with previous day
-  mutate(round = as.character(date), round=recode(round, "2019-08-15"="2019-08-14"), round=factor(round)) 
+pt <- pt.raw %>% left_join(pt.sm %>% select(plantid, date, duplicate, date.sm, date_diff, VWC.sm)) %>%
+  rename(VWC.plant = VWC) %>% 
+  group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:20), fix_dataset) %>% 
+  left_join(treatments) %>% left_join(sm.subplotyear)
 
 # TODO does not lump leaves from the same plant measured in multiple rounds
 pt.plantyr <- pt %>% group_by(year, round, water, water4, snow, plot, plotid, plant, plantid) %>% 
