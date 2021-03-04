@@ -582,7 +582,8 @@ pt.sm <- pt.raw %>%
 pt <- pt.raw %>% left_join(pt.sm %>% select(plantid, date, duplicate, date.sm, date_diff, VWC.sm)) %>%
   rename(VWC.plant = VWC) %>% 
   group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:20), fix_dataset) %>% 
-  left_join(treatments) %>% left_join(sm.subplotyear)
+  left_join(treatments) %>% left_join(sm.subplotyear) %>% 
+  rename(VWC.sm.year = VWC)
 
 # TODO does not lump leaves from the same plant measured in multiple rounds
 pt.plantyr <- pt %>% group_by(year, round, water, water4, snow, plot, plotid, plant, plantid) %>% 

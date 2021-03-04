@@ -783,12 +783,14 @@ The models are specified as:
 lt.subplot.r2 <- lt.subplotround %>% filter(round=="2")
 lt.plantyr.r2 <- lt.plantyr %>% filter(round=="2")
 
+pt.plantyr <- pt.plantyr %>% mutate(VWC = ifelse(is.na(VWC.plant), VWC.sm, VWC.plant)) #phys traits had the VWC measured next to the plant in 2019 and 2020 only - substitute VWC in subplot on closest date
+pt <- pt %>% mutate(VWC = ifelse(is.na(VWC.plant), VWC.sm, VWC.plant)) 
+
 options(contrasts = c("contr.sum", "contr.poly"))
 mt.mod.sm <- map(set_names(traits), 
                   ~ lmer(mnps.plantyr[[.x]]  ~ year * VWC + (1|plotid), data=mnps.plantyr))
 lt.mod.sm <- map(set_names(leaftraits), 
                   ~ lmer(lt.plantyr.r2[[.x]] ~ year * VWC + (1|plotid), data=lt.plantyr.r2))
-#phys traits have the VWCs collected next to the plant, or subplot mean on the nearest date for 2018
 pt.mod.sm <- map(set_names(phystraits), 
                   ~ lmer(pt.plantyr[[.x]]    ~ year * VWC + (1|plotid) + (1|round), data=pt.plantyr))
 
@@ -800,6 +802,16 @@ mt.mod.sm.tests <- map(mt.mod.sm, anova) %>% map_dfr(tidy, .id="trait")
 lt.mod.sm.tests <- map(lt.mod.sm, anova) %>% map_dfr(tidy, .id="trait")
 pt.mod.sm.tests <- map(pt.mod.sm, anova) %>% map_dfr(tidy, .id="trait")
 ```
+
+### ANOVA tables
+
+```{r anova_sm}
+print_anova_table(mt.mod.sm.tests, mt.mod.sm)
+print_anova_table(lt.mod.sm.tests, lt.mod.sm)
+print_anova_table(pt.mod.sm.tests, pt.mod.sm)
+```
+
+### Plots
 
 
 ```{r morphology_sm}
@@ -857,7 +869,7 @@ plot_sm <- function(mod, data, traits.plot) {
     drop_na(value, water) %>% filter(trait %in% traits.plot)
   
   emm.grid <- mod[traits.plot] %>% 
-    map_dfr(~ emmeans(.x, ~ year*VWC, at=list(VWC=range(sm.subplotyear$VWC))) %>% as_tibble(), .id="trait") %>% 
+    map_dfr(~ emmeans(.x, ~ year*VWC, at=list(VWC=range(data$VWC, na.rm=T))) %>% as_tibble(), .id="trait") %>% 
     mutate(trait = fct_relevel(trait, traits.plot))
   
   traitnames.multiline <- ifelse(nchar(traitnames) > 30, str_replace(traitnames, fixed("("),"\n("), traitnames)
@@ -867,7 +879,8 @@ plot_sm <- function(mod, data, traits.plot) {
   geom_point(data = data.long, aes(y=value, color=year)) +  
   geom_line(size=2) + 
   scale_color_manual(values=year_pal) + 
-  labs(x="Summer mean of soil moisture in subplot (%VWC)", y="", color="Year") + 
+  labs(x=ifelse("WUE" %in% traits.plot, "Soil moisture next to plant or in subplot on closest date (%VWC)", 
+                "Summer mean of soil moisture in subplot (%VWC)"), y="", color="Year") + 
   coord_cartesian(ylim=c(0,NA)) + scale_y_continuous(expand=expansion(mult=c(0,0.05)))+
   theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                           panel.border = element_rect(fill=NA, colour = "black"))
