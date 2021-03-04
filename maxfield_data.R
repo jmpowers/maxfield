@@ -401,7 +401,11 @@ census.status %>% write_tsv(file="data/census_status.tsv") %>%
 cen.status.long <- cen.status %>% select(!starts_with("transition|flowering|alive")) %>% 
   pivot_longer(starts_with("status"),names_to="census",values_to="status") %>% 
   mutate(census = paste0("20",str_remove(census, "status_"))) %>% 
-  mutate(across(.fns=factor)) 
+  mutate(across(.fns=factor)) %>% 
+  mutate(survived = as.integer(case_when(census == "2018" ~ alive_status_19,
+                              census == "2019" ~ alive_status_20))-1,
+         flowered = as.integer(case_when(census == "2018" ~ flowering_status_19,
+                              census == "2019" ~ flowering_status_20))-1) 
 
 cen.size.long <- cen %>% select(plantid|starts_with("n_rosettes")) %>% 
   pivot_longer(starts_with("n_rosettes"),names_to="census",values_to="n_rosettes") %>%
@@ -581,7 +585,8 @@ WUE_area_VWC <- read_sheet(filter(datasheets, name=="2020 Maxfield Physiology"),
 pt <- bind_rows(WUE_1819, WUE_20) %>% # lump 2019-08-15 entry with previous day
   mutate(round = as.character(date), round=recode(round, "2019-08-15"="2019-08-14"), round=factor(round)) 
 
-pt.plantyr <- pt %>% group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% 
+# TODO does not lump leaves from the same plant measured in multiple rounds
+pt.plantyr <- pt %>% group_by(year, round, water, water4, snow, plot, plotid, plant, plantid) %>% 
   summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
@@ -816,16 +821,20 @@ timings %>% mutate(range=paste(begin,end,sep=" - "), .keep="unused") %>%
 # traitnames --------------------------------------------------------------
 
 traits <- c("corolla_length", "style_length", "corolla_width", "sepal_width", "nectar_24_h_ul", "nectar_conc","nectar_sugar_24_h_mg","height_cm","open","seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower") #exclude anthers
-traitnames <- set_names(c("Corolla length (mm)", "Style length (mm)", "Corolla width (mm)", "Sepal width (mm)", "Nectar production (\U00B5L/day)", "Nectar conc. (% by mass)", "Nectar sucrose (mg/day)", "Inflorescence height (cm)", "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower"), traits)
-
 seedtraits <- traits[10:16] 
-seedtraitnames <- traitnames[10:16]
-
 leaftraits <- c("sla","trichome_density","water_content")
-leaftraitnames <- set_names(c("Specific Leaf Area (cm\U00B2 g\U207B\U00B9)", "Trichome density (cm\U207B\U00B2)", "Water content"), leaftraits)
-
 phystraits <- c("photosynthesis", "conductance", "WUE")
-phystraitnames <- set_names(c("Photosynthetic rate (\U00B5mol CO\U2082 m\U207B\U00B2 s\U207B\U00B9)", "Stomatal conductance (mol H\U2082O m\U207B\U00B2 s\U207B\U00B9)", "Intrinsic water-use efficiency (\U00B5mol CO\U2082 mol\U207B\U00B9 H\U2082O)"), phystraits)
+
+traitnames <- set_names(c(
+  "Corolla length (mm)", "Style length (mm)", "Corolla width (mm)", "Sepal width (mm)", 
+  "Nectar production (\U00B5L/day)", "Nectar conc. (% by mass)", "Nectar sucrose (mg/day)", 
+  "Inflorescence height (cm)", 
+  "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", 
+  "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower",
+  "Specific leaf area (cm\U00B2 g\U207B\U00B9)", "Trichome density (cm\U207B\U00B2)", "Water content", 
+  "Photosynthetic rate (\U00B5mol CO\U2082 m\U207B\U00B2 s\U207B\U00B9)", 
+  "Stomatal conductance (mol H\U2082O m\U207B\U00B2 s\U207B\U00B9)", 
+  "Intrinsic water-use efficiency (\U00B5mol CO\U2082 mol\U207B\U00B9 H\U2082O)"), c(traits, leaftraits, phystraits))
 
 # export ------------------------------------------------------------------
 

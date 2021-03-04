@@ -380,14 +380,15 @@ ggplot(aes(x=water, fill=status_20)) + facet_wrap(status_19 ~ snow, labeller=lab
 #Model effect of treatments on survival and flowering of vegetative plants - both years combined
 cen.status.veg1819 <- bind_rows(
   `2018`=cen.status %>% filter(status_18=="vegetative") %>% drop_na(alive_status_19, flowering_status_19) %>% mutate(year="2018") %>%
-    left_join(treatments) %>% select(alive_status = alive_status_19, flowering_status = flowering_status_19, water, snow, plot),
+    left_join(treatments) %>% select(alive_status = alive_status_19, flowering_status = flowering_status_19, water, snow, plot, plotid),
   `2019`=cen.status %>% filter(status_19=="vegetative") %>% drop_na(alive_status_20, flowering_status_20) %>% mutate(year="2019") %>%
-    left_join(treatments) %>% select(alive_status = alive_status_20, flowering_status = flowering_status_20, water, snow, plot), .id="year")
+    left_join(treatments) %>% select(alive_status = alive_status_20, flowering_status = flowering_status_20, water, snow, plot, plotid), .id="year")
+# could now also use cen.status.long %>% filter(status=="vegetative", census %in% c("2018","2019"))
 
 library(glmmTMB)
 options(contrasts = c("contr.sum", "contr.poly"))
 
-(survival1819.mod <- glmmTMB(alive_status ~ year * water * snow + (1|plot), data=cen.status.veg1819, family=binomial))
+(survival1819.mod <- glmmTMB(alive_status ~ year * water * snow + (1|plot) + (1|plotid), data=cen.status.veg1819, family=binomial))
 car::Anova(survival1819.mod, type=3) %>% kable(digits=3)
 emmeans(survival1819.mod, ~ year * water * snow) %>% as_tibble %>% 
   mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %>% 
@@ -396,7 +397,7 @@ emmeans(survival1819.mod, ~ year * water * snow) %>% as_tibble %>%
   labs(x="Precipitation", y="Survival to next year", color="Snowmelt")+
   scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()
 
-(flowering1819.mod <- glmmTMB(flowering_status ~ year * water * snow + (1|plot), data=cen.status.veg1819, family=binomial))
+(flowering1819.mod <- glmmTMB(flowering_status ~ year * water * snow + (1|plot) + (1|plotid), data=cen.status.veg1819, family=binomial))
 car::Anova(flowering1819.mod, type=3) %>% kable(digits=3)
 emmeans(flowering1819.mod, ~ year * water * snow) %>% as_tibble %>% 
   mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %>% 
@@ -521,16 +522,16 @@ The models are specified as:
 
     lmer(trait ~ year * snow * water + (1|plot) + (1|plotid) +, data = mnps.plantyr)
 
-### ANOVA tables
+```{r splitplot}
+lt.plantyr.r2 <- lt.plantyr %>% filter(round==2)
 
-```{r morphology_split}
 options(contrasts = c("contr.sum", "contr.poly"))
 mt.mod.split <- map(set_names(traits), 
-                          ~ lmer(mnps.plantyr[[.x]] ~ year * snow * water + (1|plot) + (1|plotid), data=mnps.plantyr))
+                    ~ lmer(mnps.plantyr[[.x]]  ~ year * snow * water + (1|plot) + (1|plotid), data=mnps.plantyr))
 lt.mod.split <- map(set_names(leaftraits), 
-                          ~ lmer(lt[[.x]] ~ year.round * snow * water + (1|plot) + (1|plotid), data=lt))
+                    ~ lmer(lt.plantyr.r2[[.x]] ~ year * snow * water + (1|plot) + (1|plotid), data=lt.plantyr.r2))
 pt.mod.split <- map(set_names(phystraits), 
-                          ~ lmer(wue[[.x]] ~ year * snow * water + (1|plot) + (1|plotid) + (1|round), data=wue))
+                    ~ lmer(pt.plantyr[[.x]]    ~ year * snow * water + (1|plot) + (1|plotid) + (1|round), data=pt.plantyr))
 
 mt.mod.split.coefs <- map_dfr(mt.mod.split, tidy, .id="trait")
 lt.mod.split.coefs <- map_dfr(lt.mod.split, tidy, .id="trait")
@@ -541,9 +542,13 @@ lt.mod.split.tests <- map(lt.mod.split, anova) %>% map_dfr(tidy, .id="trait")
 pt.mod.split.tests <- map(pt.mod.split, anova) %>% map_dfr(tidy, .id="trait")
 
 mt.mod.split.emm <- map(mt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
-lt.mod.split.emm <- map(lt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year.round * snow * water)))
+lt.mod.split.emm <- map(lt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
 pt.mod.split.emm <- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
+```
 
+### ANOVA tables
+
+```{r anova_splitplot}
 print_anova_table(mt.mod.split.tests, mt.mod.split)
 print_anova_table(lt.mod.split.tests, lt.mod.split)
 print_anova_table(pt.mod.split.tests, pt.mod.split)
@@ -552,40 +557,52 @@ print_anova_table(pt.mod.split.tests, pt.mod.split)
 ### Plots
 
 ```{r multi_splitplot, fig.width=10, fig.height=11}
-traits.include <- traits[c(1:4,5,6,8,13)]
-
-mnps.subplot.long <- mnps.subplot %>% select(all_of(traits.include), water, snow, year, VWC, sun_date, precip_est_mm) %>% 
-  pivot_longer(all_of(traits.include), names_to="trait") %>% 
-  mutate(trait = fct_relevel(trait, traits.include), snow=fct_relevel(snow, "Normal"))
-
-mnps.plantyr.long <- mnps.plantyr %>% select(all_of(traits.include), water, snow, year, VWC, sun_date, precip_est_mm) %>% 
-  pivot_longer(all_of(traits.include), names_to="trait") %>% 
-  mutate(trait = fct_relevel(trait, traits.include), snow=fct_relevel(snow, "Normal"))
-
-mod.emm.plots <- list()
-for(i in 1:2) {
-traits.plot <- list(traits.include[1:4], traits.include[5:8])[[i]]
-mod.emm.plots[[i]] <- mt.emm.split.plant %>% bind_rows(.id="trait") %>% filter(trait %in% traits.plot) %>% 
-  mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal")) %>% 
-  ggplot(aes(x=water, color=snow)) + 
-  facet_grid(trait ~ year, scales="free_y", labeller = as_labeller(c(traitnames, set_names(2018:2020))), switch="y") + 
-  #geom_boxplot(data=mnps.plantyr.long %>% drop_na(value, water) %>% filter(trait %in% traits.plot), aes(y=value), 
-  #          position=position_dodge(width=0.8), show.legend=F, fatten=NULL, outlier.size=0.5) + 
-  geom_point(data=mnps.subplot.long %>% filter(trait %in% traits.plot) , aes(y=value),
-             position=position_dodge(width=0.8), shape=3) +  
-  geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE,), position=position_dodge(width=0.8), size=1, show.legend=F) +
-  geom_point(aes(y=emmean), position=position_dodge(width=0.8), shape="-", size=16) +  
-  labs(x="Precipitation", y="", color="Snowmelt") + 
-  #coord_cartesian(ylim=c(0,NA)) + 
-  scale_y_continuous(position="right")+ scale_x_discrete(guide=guide_axis(angle=90)) + 
-  scale_color_manual(values=snow_pal, guide=guide_legend(override.aes = list(shape=15, size=5))) + 
-  theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
-        panel.border = element_rect(fill=NA, colour = "black"), panel.spacing=unit(0, "pt"),plot.margin = margin(0,0,0,0, "pt"),
-        legend.position = "top")
-  if(i !=2) mod.emm.plots[[i]] <- mod.emm.plots[[i]] + guides(color=F)
+plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = TRUE) {
+  
+  data.long <- data %>% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm) %>% 
+    pivot_longer(all_of(traits.plot), names_to="trait") %>% 
+    mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal")) %>% 
+    drop_na(value, water) %>% filter(trait %in% traits.plot)
+  
+  traitnames.multiline <- ifelse(nchar(traitnames) > 30, str_replace(traitnames, fixed("("),"\n("), traitnames)
+  split_plot <- emm %>% bind_rows(.id="trait") %>% filter(trait %in% traits.plot) %>% 
+    mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal")) %>% 
+    ggplot(aes(x=water, color=snow)) + 
+    facet_grid(trait ~ year, scales="free_y", switch="y",
+               labeller = as_labeller(c(traitnames.multiline, set_names(2018:2020)))) + 
+    labs(x="Precipitation", y="", color="Snowmelt") + 
+    scale_y_continuous(position="right")+ scale_x_discrete(guide=guide_axis(angle=90)) + 
+    scale_color_manual(values=snow_pal, guide=guide_legend(override.aes = list(shape=15, size=ifelse(plot.emm,5,1)))) + 
+    theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
+                            panel.border = element_rect(fill=NA, colour = "black"), 
+                            panel.spacing=unit(0, "pt"), plot.margin = margin(0,0,0,0, "pt"), legend.position = "top") +
+    switch(geom,
+           boxplot = geom_boxplot(data=data.long, aes(y=value), position=position_dodge(width=0.8), show.legend=!plot.emm,
+                                  fatten=ifelse(plot.emm, NULL, 1), outlier.size=0.5),
+           violin =   geom_violin(data=data.long, aes(y=value), position=position_dodge(width=0.8), show.legend=F),
+           point =     geom_point(data=data.long, aes(y=value), position=position_dodge(width=0.8), shape=3))
+  
+  if(plot.emm) { return(split_plot + 
+           geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE,), position=position_dodge(width=0.8), size=1, show.legend=F) +
+           geom_point(aes(y=emmean), position=position_dodge(width=0.8), shape="-", size=16))
+  } else return(split_plot + coord_cartesian(ylim=c(0,NA)))
 }
 
-grid.arrange(mod.emm.plots[[1]], mod.emm.plots[[2]], nrow=1)
+grid.arrange( #Morphological traits - boxplot of raw data
+  plot_split_plot(mt.mod.split.emm, mnps, traits[1:4], geom="boxplot", plot.emm=F), 
+  plot_split_plot(mt.mod.split.emm, mnps, traits[c(5,6,8,13)], geom="boxplot", plot.emm=F)+ guides(color=F), nrow=1)
+
+grid.arrange( #Morphological traits - plot of EMMs and subplot means
+  plot_split_plot(mt.mod.split.emm, mnps.subplot, traits[1:4]), 
+  plot_split_plot(mt.mod.split.emm, mnps.subplot, traits[c(5,6,8,13)])+ guides(color=F), nrow=1)
+
+grid.arrange( #Vegetative and physiological traits - plot of raw data
+  plot_split_plot(lt.mod.split.emm, lt, leaftraits, geom="boxplot", plot.emm=F), #both rounds!
+  plot_split_plot(pt.mod.split.emm, pt, phystraits, geom="boxplot", plot.emm=F) + guides(color=F), nrow=1)
+
+grid.arrange( #Vegetative and physiological traits - plot of EMMs and subplot means
+  plot_split_plot(lt.mod.split.emm, lt.subplotround %>% filter(round==2), leaftraits), #second round only
+  plot_split_plot(pt.mod.split.emm, pt.subplot, phystraits)+ guides(color=F), nrow=1)
 ```
 
 ### Compensation of water addition for early snowmelt
@@ -593,11 +610,11 @@ grid.arrange(mod.emm.plots[[1]], mod.emm.plots[[2]], nrow=1)
 ```{r compensation}
 #compare early snowmelt + addition vs. normal snowmelt + control
 emm.mod <- mt.mod.glht <- list()
-mnps.subplot$snowwater <- paste0(mnps.subplot$snow, mnps.subplot$water)
+mnps.plantyr$snowwater <- paste0(mnps.plantyr$snow, mnps.subplot$water)
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
 for(tr in traits) {
     #emm.mod[[tr]] <- emmeans(mt.mod[[tr]], ~ water * snow, var=tr)
-    mt.mod.glht[[tr]] <- lmer(mnps.subplot[[tr]] ~ snowwater + year+ (1|plot), data=mnps.subplot) %>% # drop year??
+    mt.mod.glht[[tr]] <- lmer(mnps.plantyr[[tr]] ~ snowwater * year+ (1|plot) + (1|plotid), data=mnps.plantyr) %>%
       glht(linfct = mcp(snowwater = c("EarlyAddition - NormalControl = 0")))
 }
 map_dfr(mt.mod.glht, ~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=summary(.x)$test$pvalues), .id="trait") %>% kable(digits=3)
@@ -609,8 +626,10 @@ detach("package:multcomp", unload = TRUE); detach("package:TH.data", unload = TR
 ```{r selection_surv}
 library(glmmTMB)
 options(contrasts = c("contr.sum", "contr.poly"))
-wue.mod.split.surv <- glmmTMB(survived ~ year * snow * water + (1|plot), data=wue, family=binomial)
-wue.mod.split.flrd <- glmmTMB(flowered ~ year * snow * water + (1|plot), data=wue, family=binomial)
+
+pt.mod.split.surv <- glmmTMB(survived ~ year * snow * water + (1|plot), data=pt, family=binomial)
+pt.mod.split.flrd <- glmmTMB(flowered ~ year * snow * water + (1|plot), data=pt, family=binomial)
+mt.mod.split.emm <- map(mt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
 ```
 
 
@@ -991,13 +1010,13 @@ for(tr in seedtraits) {
   print(ggplot(sds %>% drop_na(plot), aes_string(tr, x="water", color="snow")) + geom_boxplot() + 
     scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1) + 
     scale_y_continuous(trans=ifelse(tr %in% c("seeds_est", "fruits_nonaborted"),"sqrt","identity"))+
-    labs(x="Precipitation", y=seedtraitnames[[tr]], color="Precipitation") +
+    labs(x="Precipitation", y=traitnames[[tr]], color="Precipitation") +
         guides(x=guide_axis(angle = 90)))
   
   print(ggplot(sds, aes_string(tr, x="VWC", color="year")) + geom_point() + geom_smooth(se=F) + 
    scale_color_manual(values=year_pal) +
     scale_y_continuous(trans=ifelse(tr %in% c("seeds_est", "fruits_nonaborted"),"sqrt","identity"))+
-    labs(x="Summer mean of soil moisture in subplot (VWC)", y=seedtraitnames[[tr]], color="Year"))
+    labs(x="Summer mean of soil moisture in subplot (VWC)", y=traitnames[[tr]], color="Year"))
 }
 ```
 
