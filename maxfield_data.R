@@ -490,8 +490,8 @@ lt <- map_dfr(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>%
          sla_wet = leaf_area_cm2 / wet_weight_g,
          water_content = (wet_weight_g-dry_weight_g)/wet_weight_g) %>% 
   group_by(year) %>% group_split() %>% map2_dfr(paste0("leaf",18:20), fix_dataset) %>% 
-  left_join(treatments) %>% 
-  mutate_if(is.character, as.factor)
+  left_join(treatments) %>% left_join(sm.subplotyear) %>% 
+  mutate_if(is.character, as.factor) 
 
 lt.plantyr <- lt %>% 
   group_by(year, round, year.round, plot, subplot, plotid, plant, plantid, water, water4, snow) %>% 
