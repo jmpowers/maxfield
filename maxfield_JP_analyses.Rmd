@@ -481,6 +481,15 @@ ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geo
 ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g)) + geom_point() + geom_abline(slope=1, intercept = 0) + geom_abline(slope=1-median(lt$water_content), intercept = 0)
 ggplot(lt, aes(x=leaf_area_cm2, y=dry_weight_g)) + geom_point() + geom_smooth(method="lm")
 ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(method="lm")
+
+ggplot(lt, aes(x=paste(date_collected, plot), y=trichomes,        color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date_collected, plot), y=trichome_density, color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date_collected, plot), y=water_content,    color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date_collected, plot), y=sla_wet,          color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date_collected, plot), y=sla,              color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date_collected, plot), y=leaf_area_cm2,    color=round)) + geom_boxplot() + coord_flip()
+
+lt %>% select(wet_weight_g, dry_weight_g, leaf_area_cm2) %>% drop_na() %>%  rda(scale=T) %>% autoplot(geom="text") + theme_void() + guides(color=F) + scale_x_continuous(expand=expansion(mult=c(0.1, 0.05)))
 ```
 
 # Physiology traits
@@ -894,8 +903,8 @@ plot_sm <- function(mod, data, traits.plot) {
 plot_sm(mt.mod.sm, mnps, traits[c(1:4,5,6,8,13)]) #Morphological traits - raw data
 plot_sm(mt.mod.sm, mnps.plantyr, traits[c(1:4,5,6,8,13)]) #Morphological traits - plant means
 
-#grid.arrange(plot_sm(lt.mod.sm, lt, leaftraits), 
-#             plot_sm(pt.mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
+grid.arrange(plot_sm(lt.mod.sm, lt, leaftraits), 
+             plot_sm(pt.mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
 grid.arrange(plot_sm(lt.mod.sm, lt.plantyr.r2, leaftraits),
              plot_sm(pt.mod.sm, pt.plantyr, phystraits)+ guides(color=F, shape=F), ncol=1) #plant means
 ```

@@ -1141,6 +1141,20 @@ Conditional model:
 <p><img src="images/checkleaftraits-2.png" width="672" /></p>
 <pre class="r"><code>ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(method=&quot;lm&quot;)</code></pre>
 <p><img src="images/checkleaftraits-3.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=paste(date_collected, plot), y=trichomes,        color=round)) + geom_boxplot() + coord_flip()</code></pre>
+<p><img src="images/checkleaftraits-4.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=paste(date_collected, plot), y=trichome_density, color=round)) + geom_boxplot() + coord_flip()</code></pre>
+<p><img src="images/checkleaftraits-5.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=paste(date_collected, plot), y=water_content,    color=round)) + geom_boxplot() + coord_flip()</code></pre>
+<p><img src="images/checkleaftraits-6.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=paste(date_collected, plot), y=sla_wet,          color=round)) + geom_boxplot() + coord_flip()</code></pre>
+<p><img src="images/checkleaftraits-7.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=paste(date_collected, plot), y=sla,              color=round)) + geom_boxplot() + coord_flip()</code></pre>
+<p><img src="images/checkleaftraits-8.png" width="672" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=paste(date_collected, plot), y=leaf_area_cm2,    color=round)) + geom_boxplot() + coord_flip()</code></pre>
+<p><img src="images/checkleaftraits-9.png" width="672" /></p>
+<pre class="r"><code>lt %&gt;% select(wet_weight_g, dry_weight_g, leaf_area_cm2) %&gt;% drop_na() %&gt;%  rda(scale=T) %&gt;% autoplot(geom=&quot;text&quot;) + theme_void() + guides(color=F) + scale_x_continuous(expand=expansion(mult=c(0.1, 0.05)))</code></pre>
+<p><img src="images/checkleaftraits-10.png" width="672" /></p>
 </div>
 <div id="physiology-traits" class="section level1">
 <h1>Physiology traits</h1>
@@ -1538,39 +1552,39 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 <tbody>
 <tr class="odd">
 <td align="left">photosynthesis</td>
-<td align="left">0.066</td>
-<td align="left">0.88</td>
-<td align="left">0.14</td>
-<td align="left">0.65</td>
-<td align="left">0.38</td>
-<td align="left">0.75</td>
-<td align="left">0.96</td>
+<td align="left">0.057</td>
+<td align="left">0.61</td>
+<td align="left">0.31</td>
+<td align="left">0.45</td>
+<td align="left">0.40</td>
+<td align="left">0.99</td>
+<td align="left">0.91</td>
 <td align="left">TRUE</td>
-<td align="right">0.1061118</td>
+<td align="right">0.1085120</td>
 </tr>
 <tr class="even">
 <td align="left">conductance</td>
-<td align="left">6.5 x 10<sup>-4</sup></td>
-<td align="left">0.37</td>
-<td align="left">1.6 x 10<sup>-3</sup></td>
-<td align="left">0.49</td>
-<td align="left">1.3 x 10<sup>-3</sup></td>
-<td align="left">0.61</td>
-<td align="left">0.64</td>
+<td align="left">7.5 x 10<sup>-4</sup></td>
+<td align="left">0.46</td>
+<td align="left">2.3 x 10<sup>-3</sup></td>
+<td align="left">0.47</td>
+<td align="left">2 x 10<sup>-3</sup></td>
+<td align="left">0.68</td>
+<td align="left">0.66</td>
 <td align="left">TRUE</td>
-<td align="right">0.3509957</td>
+<td align="right">0.3442664</td>
 </tr>
 <tr class="odd">
 <td align="left">WUE</td>
-<td align="left">1.2 x 10<sup>-5</sup></td>
-<td align="left">0.16</td>
-<td align="left">2.4 x 10<sup>-4</sup></td>
-<td align="left">0.42</td>
-<td align="left">5.1 x 10<sup>-3</sup></td>
-<td align="left">0.49</td>
-<td align="left">0.88</td>
+<td align="left">2.3 x 10<sup>-5</sup></td>
+<td align="left">0.20</td>
+<td align="left">1.5 x 10<sup>-4</sup></td>
+<td align="left">0.46</td>
+<td align="left">2.3 x 10<sup>-3</sup></td>
+<td align="left">0.29</td>
+<td align="left">0.86</td>
 <td align="left">TRUE</td>
-<td align="right">0.4542653</td>
+<td align="right">0.4400857</td>
 </tr>
 </tbody>
 </table>
@@ -1724,24 +1738,24 @@ map_dfr(list(mt.mod.split.coefs, lt.mod.split.coefs, pt.mod.split.coefs), re_tab
 </tr>
 <tr class="even">
 <td align="left">photosynthesis</td>
-<td align="right">1.030</td>
+<td align="right">0.647</td>
 <td align="right">0.000</td>
-<td align="right">11.656</td>
-<td align="right">3.900</td>
+<td align="right">11.750</td>
+<td align="right">3.920</td>
 </tr>
 <tr class="odd">
 <td align="left">conductance</td>
-<td align="right">0.027</td>
+<td align="right">0.026</td>
 <td align="right">0.000</td>
-<td align="right">0.164</td>
-<td align="right">0.069</td>
+<td align="right">0.168</td>
+<td align="right">0.070</td>
 </tr>
 <tr class="even">
 <td align="left">WUE</td>
-<td align="right">8.347</td>
-<td align="right">0.001</td>
-<td align="right">40.891</td>
-<td align="right">17.101</td>
+<td align="right">8.354</td>
+<td align="right">0.000</td>
+<td align="right">41.084</td>
+<td align="right">17.322</td>
 </tr>
 </tbody>
 </table>
@@ -2121,27 +2135,27 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 <tbody>
 <tr class="odd">
 <td align="left">photosynthesis</td>
-<td align="left">1.9 x 10<sup>-3</sup></td>
-<td align="left">0.057</td>
-<td align="left">0.11</td>
+<td align="left">2.3 x 10<sup>-3</sup></td>
+<td align="left">0.071</td>
+<td align="left">0.12</td>
 <td align="left">TRUE</td>
-<td align="right">0.0833862</td>
+<td align="right">0.0819421</td>
 </tr>
 <tr class="even">
 <td align="left">conductance</td>
-<td align="left">2.8 x 10<sup>-5</sup></td>
-<td align="left">1 x 10<sup>-2</sup></td>
-<td align="left">0.039</td>
+<td align="left">3.3 x 10<sup>-5</sup></td>
+<td align="left">9.7 x 10<sup>-3</sup></td>
+<td align="left">0.038</td>
 <td align="left">TRUE</td>
-<td align="right">0.2338331</td>
+<td align="right">0.2358140</td>
 </tr>
 <tr class="odd">
 <td align="left">WUE</td>
-<td align="left">4.2 x 10<sup>-4</sup></td>
-<td align="left">9.8 x 10<sup>-3</sup></td>
-<td align="left">0.056</td>
+<td align="left">4.7 x 10<sup>-4</sup></td>
+<td align="left">9.3 x 10<sup>-3</sup></td>
+<td align="left">0.053</td>
 <td align="left">TRUE</td>
-<td align="right">0.2113754</td>
+<td align="right">0.2140141</td>
 </tr>
 </tbody>
 </table>
@@ -2292,24 +2306,24 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 </tr>
 <tr class="even">
 <td align="left">photosynthesis</td>
-<td align="right">0.668</td>
 <td align="right">0.000</td>
-<td align="right">11.551</td>
-<td align="right">3.785</td>
+<td align="right">0.000</td>
+<td align="right">11.638</td>
+<td align="right">3.852</td>
 </tr>
 <tr class="odd">
 <td align="left">conductance</td>
-<td align="right">0.029</td>
+<td align="right">0.030</td>
 <td align="right">0.000</td>
-<td align="right">0.167</td>
+<td align="right">0.171</td>
 <td align="right">0.091</td>
 </tr>
 <tr class="even">
 <td align="left">WUE</td>
-<td align="right">8.024</td>
+<td align="right">7.521</td>
 <td align="right">0.000</td>
-<td align="right">41.467</td>
-<td align="right">33.655</td>
+<td align="right">42.024</td>
+<td align="right">32.671</td>
 </tr>
 </tbody>
 </table>
@@ -3022,11 +3036,12 @@ plot_sm(mt.mod.sm, mnps, traits[c(1:4,5,6,8,13)]) #Morphological traits - raw da
 <p><img src="images/multi_sm-1.png" width="864" /></p>
 <pre class="r"><code>plot_sm(mt.mod.sm, mnps.plantyr, traits[c(1:4,5,6,8,13)]) #Morphological traits - plant means</code></pre>
 <p><img src="images/multi_sm-2.png" width="864" /></p>
-<pre class="r"><code>#grid.arrange(plot_sm(lt.mod.sm, lt, leaftraits), 
-#             plot_sm(pt.mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
-grid.arrange(plot_sm(lt.mod.sm, lt.plantyr.r2, leaftraits),
-             plot_sm(pt.mod.sm, pt.plantyr, phystraits)+ guides(color=F, shape=F), ncol=1) #plant means</code></pre>
+<pre class="r"><code>grid.arrange(plot_sm(lt.mod.sm, lt, leaftraits), 
+             plot_sm(pt.mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data</code></pre>
 <p><img src="images/multi_sm-3.png" width="864" /></p>
+<pre class="r"><code>grid.arrange(plot_sm(lt.mod.sm, lt.plantyr.r2, leaftraits),
+             plot_sm(pt.mod.sm, pt.plantyr, phystraits)+ guides(color=F, shape=F), ncol=1) #plant means</code></pre>
+<p><img src="images/multi_sm-4.png" width="864" /></p>
 </div>
 </div>
 <div id="selection-survivalflowering" class="section level2">
@@ -3687,7 +3702,7 @@ Eigenvalues for unconstrained axes:
 <td align="right">2</td>
 <td align="right">0.017</td>
 <td align="right">0.995</td>
-<td align="right">0.391</td>
+<td align="right">0.394</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>
