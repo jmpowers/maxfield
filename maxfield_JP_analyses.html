@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-03-04" />
+<meta name="date" content="2021-03-05" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -279,7 +279,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-03-04</h4>
+<h4 class="date">2021-03-05</h4>
 
 </div>
 
@@ -1153,7 +1153,14 @@ Conditional model:
 <p><img src="images/checkleaftraits-8.png" width="672" /></p>
 <pre class="r"><code>ggplot(lt, aes(x=paste(date_collected, plot), y=leaf_area_cm2,    color=round)) + geom_boxplot() + coord_flip()</code></pre>
 <p><img src="images/checkleaftraits-9.png" width="672" /></p>
-<pre class="r"><code>lt %&gt;% select(wet_weight_g, dry_weight_g, leaf_area_cm2) %&gt;% drop_na() %&gt;%  rda(scale=T) %&gt;% autoplot(geom=&quot;text&quot;) + theme_void() + guides(color=F) + scale_x_continuous(expand=expansion(mult=c(0.1, 0.05)))</code></pre>
+<pre class="r"><code>library(ggfortify) 
+lt %&gt;%  mutate(id = paste0(str_sub(year(date_collected),3,4), month(date_collected), day(date_collected), &quot;-&quot;,plantid),
+               id = ifelse(id==&quot;20728-3C162&quot; &amp; trichomes==120, &quot;20728-3C162B&quot;, id)) %&gt;%  #two leaves collected
+  select(id, wet_weight_g, dry_weight_g, leaf_area_cm2) %&gt;% column_to_rownames(&quot;id&quot;) %&gt;% 
+  prcomp(scale=T) %&gt;% 
+  autoplot(data = lt %&gt;% mutate(date_collected=factor(date_collected)), colour = &quot;date_collected&quot;, 
+           loadings = TRUE, loadings.colour=&quot;black&quot;, loadings.label = TRUE, loadings.label.colour=&quot;black&quot;,
+           shape=F, frame=T) + theme_minimal()</code></pre>
 <p><img src="images/checkleaftraits-10.png" width="672" /></p>
 </div>
 <div id="physiology-traits" class="section level1">
@@ -1163,15 +1170,68 @@ licor_date_pal &lt;- sample(rainbow(nlevels(factor(licor$date))))
 licor %&gt;% pivot_longer(Photo:StableF) %&gt;% mutate(index=row_number()) %&gt;% filter(!name %in% c(&quot;Area&quot;,&quot;BLC_1&quot;,&quot;BLCond&quot;,&quot;StmRat&quot;)) %&gt;% 
   ggplot(aes(x=index, y= value, color=factor(date), shape=year)) + facet_wrap(vars(name), scales=&quot;free_y&quot;, ncol=4) + geom_point() + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark() + labs(x=&quot;Measurement&quot;, y=&quot;&quot;, shape=&quot;Year&quot;)</code></pre>
 <p><img src="images/licor_all-1.png" width="1152" /></p>
-<pre class="r"><code>licor %&gt;% ggplot(aes(x=Cond, y= Photo, color=factor(date), linetype=year, shape=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_linetype_manual(values=c(3,1,4)) + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark()</code></pre>
+<pre class="r"><code>licor %&gt;% ggplot(aes(x=Cond, y= Photo, color=Ci&gt;0, shape=year)) + geom_point()</code></pre>
 <p><img src="images/licor-1.png" width="672" /></p>
-<pre class="r"><code>licor %&gt;% ggplot(aes(y=Photo/Cond, x=factor(date), color=year)) + geom_boxplot(size=1.5) + 
-  scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=year_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()</code></pre>
+<pre class="r"><code>licor %&gt;% filter(Ci&gt;0) %&gt;%  ggplot(aes(x=Cond, y= Photo, color=factor(date), linetype=year, shape=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_linetype_manual(values=c(3,1,4)) + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark()</code></pre>
 <p><img src="images/licor-2.png" width="672" /></p>
-<pre class="r"><code>licor %&gt;% left_join(treatments)%&gt;% ggplot(aes(y=Photo/Cond, x=factor(date), color=water)) + 
-  geom_boxplot(position=position_dodge2(preserve=&quot;single&quot;)) + 
-  scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()</code></pre>
+<pre class="r"><code>licor %&gt;% filter(Ci&gt;0) %&gt;% ggplot(aes(y=Photo/Cond, x=factor(date), color=year)) + geom_boxplot(size=1.5) + 
+ scale_color_manual(values=year_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()</code></pre>
 <p><img src="images/licor-3.png" width="672" /></p>
+<pre class="r"><code>licor %&gt;% filter(Ci&gt;0) %&gt;% left_join(treatments)%&gt;% ggplot(aes(y=Photo/Cond, x=factor(date), color=water)) + 
+  geom_boxplot(position=position_dodge2(preserve=&quot;single&quot;)) + 
+ scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()</code></pre>
+<p><img src="images/licor-4.png" width="672" /></p>
+<pre class="r"><code>pt %&gt;% ggplot(aes(x=conductance, y= photosynthesis, color=factor(date), linetype=year, shape=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_linetype_manual(values=c(3,1,4)) + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark()</code></pre>
+<p><img src="images/licor-5.png" width="672" /></p>
+<pre class="r"><code>pt %&gt;% select(date, plantid, photosynthesis, conductance, WUE, notes) %&gt;% 
+  filter(is.na(conductance)) %&gt;% mutate(conductance = photosynthesis/WUE) %&gt;% kable</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">date</th>
+<th align="left">plantid</th>
+<th align="right">photosynthesis</th>
+<th align="right">conductance</th>
+<th align="right">WUE</th>
+<th align="left">notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2019-08-09</td>
+<td align="left">1C75</td>
+<td align="right">81.2902</td>
+<td align="right">1.127246</td>
+<td align="right">72.114</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">2019-08-09</td>
+<td align="left">2C271</td>
+<td align="right">27.2569</td>
+<td align="right">1.249571</td>
+<td align="right">21.813</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">2019-08-09</td>
+<td align="left">3C129</td>
+<td align="right">92.9856</td>
+<td align="right">1.763763</td>
+<td align="right">52.720</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">2019-08-13</td>
+<td align="left">4D49</td>
+<td align="right">65.2322</td>
+<td align="right">1.154573</td>
+<td align="right">56.499</td>
+<td align="left">NA</td>
+</tr>
+</tbody>
+</table>
+<p>These conductance entries were blank, filled from WUE. There is another entry with conductance = 1.23 that was not blanked.</p>
 </div>
 <div id="floral-traits" class="section level1">
 <h1>Floral traits</h1>
@@ -1802,7 +1862,7 @@ grid.arrange( #Morphological traits - boxplot of raw data
   plot_split_plot(mt.mod.split.emm, mnps.subplot, traits[c(5,6,8,13)])+ guides(color=F), nrow=1)</code></pre>
 <p><img src="images/multi_splitplot-2.png" width="960" /></p>
 <pre class="r"><code>grid.arrange( #Vegetative and physiological traits - plot of raw data
-  plot_split_plot(lt.mod.split.emm, lt, leaftraits, geom=&quot;boxplot&quot;, plot.emm=F), #both rounds!
+  plot_split_plot(lt.mod.split.emm, lt %&gt;% filter(round==2), leaftraits, geom=&quot;boxplot&quot;, plot.emm=F), #second round only
   plot_split_plot(pt.mod.split.emm, pt, phystraits, geom=&quot;boxplot&quot;, plot.emm=F) + guides(color=F), nrow=1)</code></pre>
 <p><img src="images/multi_splitplot-3.png" width="960" /></p>
 <pre class="r"><code>grid.arrange( #Vegetative and physiological traits - plot of EMMs and subplot means
@@ -3044,17 +3104,17 @@ plot_sm(mt.mod.sm, mnps, traits[c(1:4,5,6,8,13)]) #Morphological traits - raw da
 <p><img src="images/multi_sm-4.png" width="864" /></p>
 </div>
 </div>
-<div id="selection-survivalflowering" class="section level2">
-<h2>Selection: survival/flowering</h2>
+<div id="selection-water-survivalflowering" class="section level2">
+<h2>Selection: water, survival/flowering</h2>
 <div id="survival" class="section level3">
 <h3>Survival</h3>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 
 lt.mod.surv &lt;- map(set_names(leaftraits), 
-                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * water * snow + (1|plot) + (1|plotid), 
+                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * water + (1|plot), 
                             data=lt.plantyr.r2, family=binomial))
 pt.mod.surv &lt;- map(set_names(phystraits), 
-                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * water * snow + (1|plot) + (1|plotid), 
+                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * water * snow + (1|plot), 
                             data=pt.plantyr, family=binomial))
 
 lt.mod.surv.coefs &lt;- map_dfr(lt.mod.surv, tidy, .id=&quot;trait&quot;)
@@ -3335,10 +3395,10 @@ print_Anova_table(lt.mod.surv.tests, lt.mod.surv)</code></pre>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 
 lt.mod.flrd &lt;- map(set_names(leaftraits), 
-                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * water * snow + (1|plot) + (1|plotid), 
+                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * water + (1|plot) , 
                             data=lt.plantyr.r2, family=binomial))
 pt.mod.flrd &lt;- map(set_names(phystraits), 
-                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * water * snow + (1|plot) + (1|plotid), 
+                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * water + (1|plot), 
                             data=pt.plantyr, family=binomial))
 
 lt.mod.flrd.coefs &lt;- map_dfr(lt.mod.flrd, tidy, .id=&quot;trait&quot;)
@@ -3603,6 +3663,357 @@ pt.mod.flrd.tests &lt;- map(pt.mod.flrd, car::Anova, type=3) %&gt;% map_dfr(tidy
 <td align="left">WUE</td>
 <td align="right">0.360</td>
 <td align="right">0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="selection-snow-survivalflowering" class="section level2">
+<h2>Selection: snow, survival/flowering</h2>
+<div id="survival-1" class="section level3">
+<h3>Survival</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+
+lt.mod.surv &lt;- map(set_names(leaftraits), 
+                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * snow + (1|plot), 
+                            data=lt.plantyr.r2, family=binomial))
+pt.mod.surv &lt;- map(set_names(phystraits), 
+                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * snow * snow + (1|plot), 
+                            data=pt.plantyr, family=binomial))
+
+lt.mod.surv.coefs &lt;- map_dfr(lt.mod.surv, tidy, .id=&quot;trait&quot;)
+pt.mod.surv.coefs &lt;- map_dfr(pt.mod.surv, tidy, .id=&quot;trait&quot;)
+
+lt.mod.surv.tests &lt;- map(lt.mod.surv, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+pt.mod.surv.tests &lt;- map(pt.mod.surv, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
+<pre class="r"><code>print_Anova_table(lt.mod.surv.tests, lt.mod.surv)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="left">sla</th>
+<th align="left">trichome_density</th>
+<th align="left">water_content</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="left">0.12</td>
+<td align="left">0.014</td>
+<td align="left">0.10</td>
+</tr>
+<tr class="even">
+<td align="left">lt.plantyr.r2[[.x]]</td>
+<td align="left">0.54</td>
+<td align="left">0.46</td>
+<td align="left">0.26</td>
+</tr>
+<tr class="odd">
+<td align="left">year</td>
+<td align="left">0.60</td>
+<td align="left">0.48</td>
+<td align="left">0.92</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="left">0.25</td>
+<td align="left">0.48</td>
+<td align="left">0.15</td>
+</tr>
+<tr class="odd">
+<td align="left">lt.plantyr.r2[[.x]]:year</td>
+<td align="left">0.69</td>
+<td align="left">0.78</td>
+<td align="left">0.86</td>
+</tr>
+<tr class="even">
+<td align="left">lt.plantyr.r2[[.x]]:snow</td>
+<td align="left">0.25</td>
+<td align="left">0.32</td>
+<td align="left">0.16</td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow</td>
+<td align="left">0.21</td>
+<td align="left">0.50</td>
+<td align="left">0.38</td>
+</tr>
+<tr class="even">
+<td align="left">lt.plantyr.r2[[.x]]:year:snow</td>
+<td align="left">0.23</td>
+<td align="left">0.59</td>
+<td align="left">0.37</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>print_Anova_table(pt.mod.surv.tests, pt.mod.surv)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="left">photosynthesis</th>
+<th align="left">conductance</th>
+<th align="left">WUE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="left">1.8 x 10<sup>-6</sup></td>
+<td align="left">7.1 x 10<sup>-5</sup></td>
+<td align="left">2.7 x 10<sup>-4</sup></td>
+</tr>
+<tr class="even">
+<td align="left">pt.plantyr[[.x]]</td>
+<td align="left">0.72</td>
+<td align="left">0.36</td>
+<td align="left">0.60</td>
+</tr>
+<tr class="odd">
+<td align="left">year</td>
+<td align="left">0.21</td>
+<td align="left">0.94</td>
+<td align="left">0.16</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="left">0.21</td>
+<td align="left">0.90</td>
+<td align="left">0.082</td>
+</tr>
+<tr class="odd">
+<td align="left">pt.plantyr[[.x]]:year</td>
+<td align="left">0.28</td>
+<td align="left">0.86</td>
+<td align="left">0.13</td>
+</tr>
+<tr class="even">
+<td align="left">pt.plantyr[[.x]]:snow</td>
+<td align="left">0.40</td>
+<td align="left">0.66</td>
+<td align="left">0.18</td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow</td>
+<td align="left">0.82</td>
+<td align="left">0.92</td>
+<td align="left">0.49</td>
+</tr>
+<tr class="even">
+<td align="left">pt.plantyr[[.x]]:year:snow</td>
+<td align="left">0.72</td>
+<td align="left">0.58</td>
+<td align="left">0.52</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>map_dfr(list(lt.mod.surv.coefs, pt.mod.surv.coefs), re_table) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="right">plot</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">0.167</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="flowering-1" class="section level3">
+<h3>Flowering</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+
+lt.mod.flrd &lt;- map(set_names(leaftraits), 
+                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * snow + (1|plot) , 
+                            data=lt.plantyr.r2, family=binomial))
+pt.mod.flrd &lt;- map(set_names(phystraits), 
+                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * snow + (1|plot), 
+                            data=pt.plantyr, family=binomial))
+
+lt.mod.flrd.coefs &lt;- map_dfr(lt.mod.flrd, tidy, .id=&quot;trait&quot;)
+pt.mod.flrd.coefs &lt;- map_dfr(pt.mod.flrd, tidy, .id=&quot;trait&quot;)
+
+lt.mod.flrd.tests &lt;- map(lt.mod.flrd, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+pt.mod.flrd.tests &lt;- map(pt.mod.flrd, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
+<pre class="r"><code>print_Anova_table(lt.mod.flrd.tests, lt.mod.flrd)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="left">sla</th>
+<th align="left">trichome_density</th>
+<th align="left">water_content</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="left">0.80</td>
+<td align="left">0.011</td>
+<td align="left">0.23</td>
+</tr>
+<tr class="even">
+<td align="left">lt.plantyr.r2[[.x]]</td>
+<td align="left">0.46</td>
+<td align="left">0.32</td>
+<td align="left">0.13</td>
+</tr>
+<tr class="odd">
+<td align="left">year</td>
+<td align="left">0.89</td>
+<td align="left">0.26</td>
+<td align="left">0.38</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="left">0.10</td>
+<td align="left">0.69</td>
+<td align="left">0.84</td>
+</tr>
+<tr class="odd">
+<td align="left">lt.plantyr.r2[[.x]]:year</td>
+<td align="left">0.62</td>
+<td align="left">0.98</td>
+<td align="left">0.29</td>
+</tr>
+<tr class="even">
+<td align="left">lt.plantyr.r2[[.x]]:snow</td>
+<td align="left">0.11</td>
+<td align="left">0.99</td>
+<td align="left">0.90</td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow</td>
+<td align="left">0.26</td>
+<td align="left">0.57</td>
+<td align="left">0.83</td>
+</tr>
+<tr class="even">
+<td align="left">lt.plantyr.r2[[.x]]:year:snow</td>
+<td align="left">0.19</td>
+<td align="left">0.48</td>
+<td align="left">0.84</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>print_Anova_table(pt.mod.flrd.tests, pt.mod.flrd)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="left">photosynthesis</th>
+<th align="left">conductance</th>
+<th align="left">WUE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="left">0.26</td>
+<td align="left">0.013</td>
+<td align="left">0.57</td>
+</tr>
+<tr class="even">
+<td align="left">pt.plantyr[[.x]]</td>
+<td align="left">0.62</td>
+<td align="left">0.46</td>
+<td align="left">0.16</td>
+</tr>
+<tr class="odd">
+<td align="left">year</td>
+<td align="left">0.063</td>
+<td align="left">0.21</td>
+<td align="left">3.7 x 10<sup>-3</sup></td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="left">0.66</td>
+<td align="left">0.52</td>
+<td align="left">0.13</td>
+</tr>
+<tr class="odd">
+<td align="left">pt.plantyr[[.x]]:year</td>
+<td align="left">0.99</td>
+<td align="left">0.62</td>
+<td align="left">6 x 10<sup>-2</sup></td>
+</tr>
+<tr class="even">
+<td align="left">pt.plantyr[[.x]]:snow</td>
+<td align="left">0.78</td>
+<td align="left">0.43</td>
+<td align="left">0.12</td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow</td>
+<td align="left">0.80</td>
+<td align="left">0.20</td>
+<td align="left">0.74</td>
+</tr>
+<tr class="even">
+<td align="left">pt.plantyr[[.x]]:year:snow</td>
+<td align="left">0.83</td>
+<td align="left">0.23</td>
+<td align="left">0.72</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>map_dfr(list(lt.mod.flrd.coefs, pt.mod.flrd.coefs), re_table) %&gt;% kable(digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="right">plot</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0.311</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">0.269</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">0.277</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">0.245</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">0.242</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">0.329</td>
 </tr>
 </tbody>
 </table>

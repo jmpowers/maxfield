@@ -489,7 +489,14 @@ ggplot(lt, aes(x=paste(date_collected, plot), y=sla_wet,          color=round)) 
 ggplot(lt, aes(x=paste(date_collected, plot), y=sla,              color=round)) + geom_boxplot() + coord_flip()
 ggplot(lt, aes(x=paste(date_collected, plot), y=leaf_area_cm2,    color=round)) + geom_boxplot() + coord_flip()
 
-lt %>% select(wet_weight_g, dry_weight_g, leaf_area_cm2) %>% drop_na() %>%  rda(scale=T) %>% autoplot(geom="text") + theme_void() + guides(color=F) + scale_x_continuous(expand=expansion(mult=c(0.1, 0.05)))
+library(ggfortify) 
+lt %>%  mutate(id = paste0(str_sub(year(date_collected),3,4), month(date_collected), day(date_collected), "-",plantid),
+               id = ifelse(id=="20728-3C162" & trichomes==120, "20728-3C162B", id)) %>%  #two leaves collected
+  select(id, wet_weight_g, dry_weight_g, leaf_area_cm2) %>% column_to_rownames("id") %>% 
+  prcomp(scale=T) %>% 
+  autoplot(data = lt %>% mutate(date_collected=factor(date_collected)), colour = "date_collected", 
+           loadings = TRUE, loadings.colour="black", loadings.label = TRUE, loadings.label.colour="black",
+           shape=F, frame=T) + theme_minimal()
 ```
 
 # Physiology traits
@@ -502,15 +509,23 @@ licor %>% pivot_longer(Photo:StableF) %>% mutate(index=row_number()) %>% filter(
 ```
 
 ```{r licor}
-licor %>% ggplot(aes(x=Cond, y= Photo, color=factor(date), linetype=year, shape=year)) + geom_point() + geom_smooth(method="lm", se=F) + scale_linetype_manual(values=c(3,1,4)) + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark()
+licor %>% ggplot(aes(x=Cond, y= Photo, color=Ci>0, shape=year)) + geom_point()
 
-licor %>% ggplot(aes(y=Photo/Cond, x=factor(date), color=year)) + geom_boxplot(size=1.5) + 
-  scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=year_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()
+licor %>% filter(Ci>0) %>%  ggplot(aes(x=Cond, y= Photo, color=factor(date), linetype=year, shape=year)) + geom_point() + geom_smooth(method="lm", se=F) + scale_linetype_manual(values=c(3,1,4)) + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark()
 
-licor %>% left_join(treatments)%>% ggplot(aes(y=Photo/Cond, x=factor(date), color=water)) + 
+licor %>% filter(Ci>0) %>% ggplot(aes(y=Photo/Cond, x=factor(date), color=year)) + geom_boxplot(size=1.5) + 
+ scale_color_manual(values=year_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()
+
+licor %>% filter(Ci>0) %>% left_join(treatments)%>% ggplot(aes(y=Photo/Cond, x=factor(date), color=water)) + 
   geom_boxplot(position=position_dodge2(preserve="single")) + 
-  scale_y_continuous(limits=c(0,350)) + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()
+ scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle = 90)) + theme_minimal()
+
+pt %>% ggplot(aes(x=conductance, y= photosynthesis, color=factor(date), linetype=year, shape=year)) + geom_point() + geom_smooth(method="lm", se=F) + scale_linetype_manual(values=c(3,1,4)) + scale_color_manual(values=licor_date_pal, guide=F) + theme_dark()
+
+pt %>% select(date, plantid, photosynthesis, conductance, WUE, notes) %>% 
+  filter(is.na(conductance)) %>% mutate(conductance = photosynthesis/WUE) %>% kable
 ```
+These conductance entries were blank, filled from WUE. There is another entry with conductance = 1.23 that was not blanked.
 
 # Floral traits
 
@@ -631,7 +646,7 @@ grid.arrange( #Morphological traits - plot of EMMs and subplot means
   plot_split_plot(mt.mod.split.emm, mnps.subplot, traits[c(5,6,8,13)])+ guides(color=F), nrow=1)
 
 grid.arrange( #Vegetative and physiological traits - plot of raw data
-  plot_split_plot(lt.mod.split.emm, lt, leaftraits, geom="boxplot", plot.emm=F), #both rounds!
+  plot_split_plot(lt.mod.split.emm, lt %>% filter(round==2), leaftraits, geom="boxplot", plot.emm=F), #second round only
   plot_split_plot(pt.mod.split.emm, pt, phystraits, geom="boxplot", plot.emm=F) + guides(color=F), nrow=1)
 
 grid.arrange( #Vegetative and physiological traits - plot of EMMs and subplot means
@@ -909,7 +924,7 @@ grid.arrange(plot_sm(lt.mod.sm, lt.plantyr.r2, leaftraits),
              plot_sm(pt.mod.sm, pt.plantyr, phystraits)+ guides(color=F, shape=F), ncol=1) #plant means
 ```
 
-## Selection: survival/flowering
+## Selection: water, survival/flowering
 
 ### Survival
 
@@ -917,10 +932,10 @@ grid.arrange(plot_sm(lt.mod.sm, lt.plantyr.r2, leaftraits),
 options(contrasts = c("contr.sum", "contr.poly"))
 
 lt.mod.surv <- map(set_names(leaftraits), 
-                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * water * snow + (1|plot) + (1|plotid), 
+                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * water + (1|plot), 
                             data=lt.plantyr.r2, family=binomial))
 pt.mod.surv <- map(set_names(phystraits), 
-                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * water * snow + (1|plot) + (1|plotid), 
+                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * water * snow + (1|plot), 
                             data=pt.plantyr, family=binomial))
 
 lt.mod.surv.coefs <- map_dfr(lt.mod.surv, tidy, .id="trait")
@@ -949,10 +964,10 @@ map_dfr(list(lt.mod.surv.coefs, pt.mod.surv.coefs), re_table) %>% kable(digits=3
 options(contrasts = c("contr.sum", "contr.poly"))
 
 lt.mod.flrd <- map(set_names(leaftraits), 
-                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * water * snow + (1|plot) + (1|plotid), 
+                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * water + (1|plot) , 
                             data=lt.plantyr.r2, family=binomial))
 pt.mod.flrd <- map(set_names(phystraits), 
-                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * water * snow + (1|plot) + (1|plotid), 
+                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * water + (1|plot), 
                             data=pt.plantyr, family=binomial))
 
 lt.mod.flrd.coefs <- map_dfr(lt.mod.flrd, tidy, .id="trait")
@@ -968,7 +983,57 @@ print_Anova_table(pt.mod.flrd.tests, pt.mod.flrd)
 map_dfr(list(lt.mod.flrd.coefs, pt.mod.flrd.coefs), re_table) %>% kable(digits=3)
 ```
 
+## Selection: snow, survival/flowering
 
+### Survival
+
+```{r selection_surv_snow}
+options(contrasts = c("contr.sum", "contr.poly"))
+
+lt.mod.surv <- map(set_names(leaftraits), 
+                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * snow + (1|plot), 
+                            data=lt.plantyr.r2, family=binomial))
+pt.mod.surv <- map(set_names(phystraits), 
+                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * snow * snow + (1|plot), 
+                            data=pt.plantyr, family=binomial))
+
+lt.mod.surv.coefs <- map_dfr(lt.mod.surv, tidy, .id="trait")
+pt.mod.surv.coefs <- map_dfr(pt.mod.surv, tidy, .id="trait")
+
+lt.mod.surv.tests <- map(lt.mod.surv, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
+pt.mod.surv.tests <- map(pt.mod.surv, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
+```
+
+```{r anova_surv_snow}
+print_Anova_table(lt.mod.surv.tests, lt.mod.surv)
+print_Anova_table(pt.mod.surv.tests, pt.mod.surv)
+map_dfr(list(lt.mod.surv.coefs, pt.mod.surv.coefs), re_table) %>% kable(digits=3)
+```
+
+### Flowering
+
+```{r selection_flrd_snow}
+options(contrasts = c("contr.sum", "contr.poly"))
+
+lt.mod.flrd <- map(set_names(leaftraits), 
+                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * snow + (1|plot) , 
+                            data=lt.plantyr.r2, family=binomial))
+pt.mod.flrd <- map(set_names(phystraits), 
+                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * snow + (1|plot), 
+                            data=pt.plantyr, family=binomial))
+
+lt.mod.flrd.coefs <- map_dfr(lt.mod.flrd, tidy, .id="trait")
+pt.mod.flrd.coefs <- map_dfr(pt.mod.flrd, tidy, .id="trait")
+
+lt.mod.flrd.tests <- map(lt.mod.flrd, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
+pt.mod.flrd.tests <- map(pt.mod.flrd, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
+```
+
+```{r anova_flrd_snow}
+print_Anova_table(lt.mod.flrd.tests, lt.mod.flrd)
+print_Anova_table(pt.mod.flrd.tests, pt.mod.flrd)
+map_dfr(list(lt.mod.flrd.coefs, pt.mod.flrd.coefs), re_table) %>% kable(digits=3)
+```
 ## Multivariate response
 ```{r multresp}
 mt.morph <- mt[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","VWC")] %>% drop_na(1:5) #drop sepal_width

@@ -576,7 +576,7 @@ pt.raw <- bind_rows(pt1819, pt20) %>% # lump 2019-08-15 entry with previous day
 #add VWC based on subplot mean taken closest in time
 pt.sm <- pt.raw %>%   
   left_join(sm.subplot, by = c("year","plot","subplot","plotid"), suffix=c("",".sm")) %>%
-  mutate(date_diff = abs(date - date.sm)) %>%  
+  mutate(date_diff = abs(date - date.sm) + (date - date.sm)/100) %>%  #later date breaks ties
   group_by(plotid, date) %>%  filter(date_diff == min(date_diff)) %>% ungroup
 
 pt <- pt.raw %>% left_join(pt.sm %>% select(plantid, date, duplicate, date.sm, date_diff, VWC.sm)) %>%
