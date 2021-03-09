@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-03-08" />
+<meta name="date" content="2021-03-09" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-03-08</h4>
+<h4 class="date">2021-03-09</h4>
 
 </div>
 
@@ -1208,31 +1208,35 @@ Conditional model:
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g)) + geom_point() + geom_abline(slope=1, intercept = 0) + geom_abline(slope=1-median(lt$water_content), intercept = 0)</code></pre>
-<p><img src="images/checkleaftraits-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(lt, aes(x=leaf_area_cm2, y=dry_weight_g)) + geom_point() + geom_smooth(method=&quot;lm&quot;)</code></pre>
-<p><img src="images/checkleaftraits-2.png" width="672" /></p>
-<pre class="r"><code>ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(method=&quot;lm&quot;)</code></pre>
-<p><img src="images/checkleaftraits-3.png" width="672" /></p>
 <pre class="r"><code>lt %&gt;% group_by(date) %&gt;% mutate(index=row_number(), date=factor(date)) %&gt;% 
-ggplot(aes(x=index, y=water_content, color=factor(plot), group=factor(plot))) + 
+ggplot(aes(x=index, y=water_content, color=factor(date), group=factor(plot))) + 
   facet_wrap(vars(paste(year, round, sep=&quot; round &quot;), date)) +
   geom_hline(yintercept=0.6) + geom_hline(yintercept=0.85) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;, color=&quot;black&quot;, se=F) + 
-  labs(x=&quot;Measurement order&quot;, y=&quot;Water content&quot;, color=&quot;Plot&quot;) + theme_bw()</code></pre>
-<p><img src="images/checkleaftraits-4.png" width="672" /></p>
-<pre class="r"><code>ggplot(lt, aes(x=paste(date, plot), y=trichomes,        color=round)) + geom_boxplot() + coord_flip()</code></pre>
-<p><img src="images/checkleaftraits-5.png" width="672" /></p>
-<pre class="r"><code>ggplot(lt, aes(x=paste(date, plot), y=trichome_density, color=round)) + geom_boxplot() + coord_flip()</code></pre>
-<p><img src="images/checkleaftraits-6.png" width="672" /></p>
-<pre class="r"><code>ggplot(lt, aes(x=paste(date, plot), y=water_content,    color=round)) + geom_boxplot() + coord_flip()</code></pre>
-<p><img src="images/checkleaftraits-7.png" width="672" /></p>
-<pre class="r"><code>ggplot(lt, aes(x=paste(date, plot), y=sla_wet,          color=round)) + geom_boxplot() + coord_flip()</code></pre>
-<p><img src="images/checkleaftraits-8.png" width="672" /></p>
-<pre class="r"><code>ggplot(lt, aes(x=paste(date, plot), y=sla,              color=round)) + geom_boxplot() + coord_flip()</code></pre>
-<p><img src="images/checkleaftraits-9.png" width="672" /></p>
-<pre class="r"><code>ggplot(lt, aes(x=paste(date, plot), y=leaf_area_cm2,    color=round)) + geom_boxplot() + coord_flip()</code></pre>
-<p><img src="images/checkleaftraits-10.png" width="672" /></p>
+  scale_color_brewer(palette=&quot;Set1&quot;, direction=-1, guide=F) +
+  labs(x=&quot;Measurement order&quot;, y=&quot;Water content&quot;, color=&quot;Plot&quot;)</code></pre>
+<p><img src="images/checkleaftraits-1.png" width="576" /></p>
+<pre class="r"><code>lt %&gt;% pivot_longer(c(trichomes, trichome_density, water_content, sla_wet, sla, leaf_area_cm2), names_to=&quot;trait&quot;) %&gt;% 
+  ggplot(aes(x=factor(date), y=value, color=factor(date))) + facet_wrap(vars(trait), scales=&quot;free_y&quot;) + geom_boxplot() +
+  scale_x_discrete(guide=guide_axis(angle=90)) + labs(x=&quot;Date&quot;, y=&quot;&quot;, color=&quot;Date&quot;) + 
+  scale_color_brewer(palette=&quot;Set1&quot;, direction = -1, guide=F) + theme(legend.position = &quot;top&quot;)</code></pre>
+<p><img src="images/checkleaftraits-2.png" width="576" /></p>
+<pre class="r"><code>ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g, color=factor(date))) + geom_point() + geom_abline(slope=1, intercept = 0) +
+  geom_abline(slope=1-median(lt$water_content, na.rm=T), intercept = 0) + geom_smooth(se=F) + 
+  coord_cartesian(xlim=c(0,NA), ylim=c(0, NA)) + labs(x=&quot;Wet weight (g)&quot;, y = &quot;Dry weight (g)&quot;, color=&quot;Date&quot;) +
+    scale_color_brewer(palette=&quot;Set1&quot;, direction=-1) + theme(legend.position=&quot;top&quot;)</code></pre>
+<p><img src="images/checkleaftraits-3.png" width="576" /></p>
+<pre class="r"><code>lt %&gt;% pivot_longer(c(wet_weight_g, dry_weight_g, trichomes), names_to=&quot;trait&quot;) %&gt;% 
+  ggplot(aes(x=leaf_area_cm2, y=value, color=factor(date))) + facet_wrap(vars(trait), scales=&quot;free_y&quot;, ncol=1) + 
+  geom_point(size=0.7) + geom_smooth(se=F) + labs(x=&quot;Leaf area (cm2)&quot;, y=&quot;&quot;, color=&quot;Date&quot;) + 
+  scale_color_brewer(palette=&quot;Set1&quot;, direction=-1)</code></pre>
+<p><img src="images/checkleaftraits-4.png" width="576" /></p>
+<pre class="r"><code>lt %&gt;% pivot_longer(c(trichome_density, sla_wet, sla, water_content), names_to=&quot;trait&quot;) %&gt;% 
+  ggplot(aes(x=leaf_area_cm2, y=value, color=factor(date))) + facet_wrap(vars(trait), scales=&quot;free_y&quot;) + 
+  geom_point(size=0.7) + geom_smooth(se=F) +   labs(x=&quot;Leaf area (cm2)&quot;, y=&quot;&quot;, color=&quot;Date&quot;) + 
+  scale_color_brewer(palette=&quot;Set1&quot;, direction=-1) +
+  theme(legend.position = &quot;top&quot;)</code></pre>
+<p><img src="images/checkleaftraits-5.png" width="576" /></p>
 <pre class="r"><code>library(ggfortify) 
 lt %&gt;%  mutate(id = paste0(str_sub(year(date),3,4), month(date), day(date), &quot;-&quot;,plantid),
                id = ifelse(id==&quot;20728-3C162&quot; &amp; trichomes==120, &quot;20728-3C162B&quot;, id)) %&gt;%  #two leaves collected
@@ -1241,8 +1245,9 @@ lt %&gt;%  mutate(id = paste0(str_sub(year(date),3,4), month(date), day(date), &
   autoplot(data = lt %&gt;% mutate(date=factor(date)) %&gt;% drop_na(wet_weight_g, dry_weight_g, leaf_area_cm2),
            colour = &quot;date&quot;, 
            loadings = TRUE, loadings.colour=&quot;black&quot;, loadings.label = TRUE, loadings.label.colour=&quot;black&quot;,
-           shape=F, frame=T) + theme_minimal()</code></pre>
-<p><img src="images/checkleaftraits-11.png" width="672" /></p>
+           shape=F, frame=T) + theme(legend.position = &quot;top&quot;) +
+  scale_color_brewer(&quot;Date&quot;, palette=&quot;Set1&quot;, direction=-1) + scale_fill_brewer(&quot;Date&quot;,palette=&quot;Set1&quot;, direction=-1)</code></pre>
+<p><img src="images/checkleaftraits-6.png" width="576" /></p>
 </div>
 <div id="physiology-traits" class="section level1">
 <h1>Physiology traits</h1>

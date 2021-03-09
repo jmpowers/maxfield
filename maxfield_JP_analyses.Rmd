@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -477,26 +477,37 @@ ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geo
 
 # Leaf traits
 
-```{r checkleaftraits}
+```{r checkleaftraits, fig.height=8, fig.width=6}
 with(lt, table(date, plot)) %>% kable
 
-ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g)) + geom_point() + geom_abline(slope=1, intercept = 0) + geom_abline(slope=1-median(lt$water_content), intercept = 0)
-ggplot(lt, aes(x=leaf_area_cm2, y=dry_weight_g)) + geom_point() + geom_smooth(method="lm")
-ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(method="lm")
-
 lt %>% group_by(date) %>% mutate(index=row_number(), date=factor(date)) %>% 
-ggplot(aes(x=index, y=water_content, color=factor(plot), group=factor(plot))) + 
+ggplot(aes(x=index, y=water_content, color=factor(date), group=factor(plot))) + 
   facet_wrap(vars(paste(year, round, sep=" round "), date)) +
   geom_hline(yintercept=0.6) + geom_hline(yintercept=0.85) + 
   geom_point() + geom_smooth(method="lm", color="black", se=F) + 
-  labs(x="Measurement order", y="Water content", color="Plot") + theme_bw()
+  scale_color_brewer(palette="Set1", direction=-1, guide=F) +
+  labs(x="Measurement order", y="Water content", color="Plot")
 
-ggplot(lt, aes(x=paste(date, plot), y=trichomes,        color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date, plot), y=trichome_density, color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date, plot), y=water_content,    color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date, plot), y=sla_wet,          color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date, plot), y=sla,              color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date, plot), y=leaf_area_cm2,    color=round)) + geom_boxplot() + coord_flip()
+lt %>% pivot_longer(c(trichomes, trichome_density, water_content, sla_wet, sla, leaf_area_cm2), names_to="trait") %>% 
+  ggplot(aes(x=factor(date), y=value, color=factor(date))) + facet_wrap(vars(trait), scales="free_y") + geom_boxplot() +
+  scale_x_discrete(guide=guide_axis(angle=90)) + labs(x="Date", y="", color="Date") + 
+  scale_color_brewer(palette="Set1", direction = -1, guide=F) + theme(legend.position = "top")
+
+ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g, color=factor(date))) + geom_point() + geom_abline(slope=1, intercept = 0) +
+  geom_abline(slope=1-median(lt$water_content, na.rm=T), intercept = 0) + geom_smooth(se=F) + 
+  coord_cartesian(xlim=c(0,NA), ylim=c(0, NA)) + labs(x="Wet weight (g)", y = "Dry weight (g)", color="Date") +
+    scale_color_brewer(palette="Set1", direction=-1) + theme(legend.position="top")
+
+lt %>% pivot_longer(c(wet_weight_g, dry_weight_g, trichomes), names_to="trait") %>% 
+  ggplot(aes(x=leaf_area_cm2, y=value, color=factor(date))) + facet_wrap(vars(trait), scales="free_y", ncol=1) + 
+  geom_point(size=0.7) + geom_smooth(se=F) + labs(x="Leaf area (cm2)", y="", color="Date") + 
+  scale_color_brewer(palette="Set1", direction=-1)
+
+lt %>% pivot_longer(c(trichome_density, sla_wet, sla, water_content), names_to="trait") %>% 
+  ggplot(aes(x=leaf_area_cm2, y=value, color=factor(date))) + facet_wrap(vars(trait), scales="free_y") + 
+  geom_point(size=0.7) + geom_smooth(se=F) +   labs(x="Leaf area (cm2)", y="", color="Date") + 
+  scale_color_brewer(palette="Set1", direction=-1) +
+  theme(legend.position = "top")
 
 library(ggfortify) 
 lt %>%  mutate(id = paste0(str_sub(year(date),3,4), month(date), day(date), "-",plantid),
@@ -506,7 +517,8 @@ lt %>%  mutate(id = paste0(str_sub(year(date),3,4), month(date), day(date), "-",
   autoplot(data = lt %>% mutate(date=factor(date)) %>% drop_na(wet_weight_g, dry_weight_g, leaf_area_cm2),
            colour = "date", 
            loadings = TRUE, loadings.colour="black", loadings.label = TRUE, loadings.label.colour="black",
-           shape=F, frame=T) + theme_minimal()
+           shape=F, frame=T) + theme(legend.position = "top") +
+  scale_color_brewer("Date", palette="Set1", direction=-1) + scale_fill_brewer("Date",palette="Set1", direction=-1)
 ```
 
 # Physiology traits
