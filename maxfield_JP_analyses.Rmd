@@ -295,11 +295,11 @@ ggplot(pt, aes(x=VWC.sm, y=VWC.plant, shape=year, group=year, color=as.integer(d
   labs(x="Subplot VWC at closest date", y="VWC measured at plant for physiology", color="Date difference", shape="Year") +
   scale_color_viridis_c() + theme_minimal() + coord_fixed()
 
-ggplot(pt, aes(x=VWC, y=VWC.sm, shape=year, group=year, color=year)) + geom_smooth(se=F) +geom_point() + geom_abline(intercept=0, slope=1) + 
+ggplot(pt, aes(x=VWC.sm.year, y=VWC.sm, shape=year, group=year, color=year)) + geom_smooth(se=F) +geom_point() + geom_abline(intercept=0, slope=1) + 
   labs(x="Mean subplot VWC across year", y="Subplot VWC at closest date", color="Year", shape="Year") +
   scale_color_manual(values=year_pal) + theme_minimal() + coord_fixed()
 
-ggplot(pt, aes(x=VWC, y=VWC.plant, shape=year, group=year, color=year)) + geom_smooth(se=F) +geom_point() + geom_abline(intercept=0, slope=1) + 
+ggplot(pt, aes(x=VWC.sm.year, y=VWC.plant, shape=year, group=year, color=year)) + geom_smooth(se=F) +geom_point() + geom_abline(intercept=0, slope=1) + 
   labs(x="Mean subplot VWC across year", y="VWC measured at plant for physiology", color="Year", shape="Year") +
   scale_color_manual(values=year_pal) + theme_minimal() + coord_fixed()
 ```
@@ -478,23 +478,33 @@ ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geo
 # Leaf traits
 
 ```{r checkleaftraits}
+with(lt, table(date, plot)) %>% kable
+
 ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g)) + geom_point() + geom_abline(slope=1, intercept = 0) + geom_abline(slope=1-median(lt$water_content), intercept = 0)
 ggplot(lt, aes(x=leaf_area_cm2, y=dry_weight_g)) + geom_point() + geom_smooth(method="lm")
 ggplot(lt, aes(x=leaf_area_cm2, y=wet_weight_g)) + geom_point() + geom_smooth(method="lm")
 
-ggplot(lt, aes(x=paste(date_collected, plot), y=trichomes,        color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date_collected, plot), y=trichome_density, color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date_collected, plot), y=water_content,    color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date_collected, plot), y=sla_wet,          color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date_collected, plot), y=sla,              color=round)) + geom_boxplot() + coord_flip()
-ggplot(lt, aes(x=paste(date_collected, plot), y=leaf_area_cm2,    color=round)) + geom_boxplot() + coord_flip()
+lt %>% group_by(date) %>% mutate(index=row_number(), date=factor(date)) %>% 
+ggplot(aes(x=index, y=water_content, color=factor(plot), group=factor(plot))) + 
+  facet_wrap(vars(paste(year, round, sep=" round "), date)) +
+  geom_hline(yintercept=0.6) + geom_hline(yintercept=0.85) + 
+  geom_point() + geom_smooth(method="lm", color="black", se=F) + 
+  labs(x="Measurement order", y="Water content", color="Plot") + theme_bw()
+
+ggplot(lt, aes(x=paste(date, plot), y=trichomes,        color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date, plot), y=trichome_density, color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date, plot), y=water_content,    color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date, plot), y=sla_wet,          color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date, plot), y=sla,              color=round)) + geom_boxplot() + coord_flip()
+ggplot(lt, aes(x=paste(date, plot), y=leaf_area_cm2,    color=round)) + geom_boxplot() + coord_flip()
 
 library(ggfortify) 
-lt %>%  mutate(id = paste0(str_sub(year(date_collected),3,4), month(date_collected), day(date_collected), "-",plantid),
+lt %>%  mutate(id = paste0(str_sub(year(date),3,4), month(date), day(date), "-",plantid),
                id = ifelse(id=="20728-3C162" & trichomes==120, "20728-3C162B", id)) %>%  #two leaves collected
-  select(id, wet_weight_g, dry_weight_g, leaf_area_cm2) %>% column_to_rownames("id") %>% 
+  select(id, wet_weight_g, dry_weight_g, leaf_area_cm2) %>% column_to_rownames("id") %>% drop_na() %>% 
   prcomp(scale=T) %>% 
-  autoplot(data = lt %>% mutate(date_collected=factor(date_collected)), colour = "date_collected", 
+  autoplot(data = lt %>% mutate(date=factor(date)) %>% drop_na(wet_weight_g, dry_weight_g, leaf_area_cm2),
+           colour = "date", 
            loadings = TRUE, loadings.colour="black", loadings.label = TRUE, loadings.label.colour="black",
            shape=F, frame=T) + theme_minimal()
 ```
