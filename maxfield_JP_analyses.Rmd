@@ -23,7 +23,7 @@ Analyze selection on and plastic responses of floral and vegetative traits of *I
 
 # Treatments
 
-```{r setup, message=FALSE, cache=FALSE}
+```{r setup, message=FALSE}
 library(tidyverse)
 library(lubridate)
 #library(googlesheets4)
@@ -56,9 +56,9 @@ print_anova_table <- function(df, mod) { #for lmer models and lmerTest::anova
     pivot_wider(names_from=term, values_from=p.value) %>% 
     mutate(singular = map_lgl(mod, isSingular),
            R2m = map_dbl(mod, ~ MuMIn::r.squaredGLMM(.x)[[1,"R2m"]])) %>% 
-    kable
+    kable %>% print
 }
-print_Anova_table <- function(df, mod) { #for glmmTMB models and car::Anova
+print_Anova_table <- function(df) { #for glmmTMB models and car::Anova
   df %>% select(c("trait", "term", "p.value")) %>% 
     mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
              str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
@@ -621,14 +621,14 @@ pt.mod.split.emm <- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * s
 
 ### ANOVA tables
 
-```{r anova_splitplot, cache=FALSE}
+```{r anova_splitplot}
 print_anova_table(mt.mod.split.tests, mt.mod.split)
 print_anova_table(lt.mod.split.tests, lt.mod.split)
 print_anova_table(pt.mod.split.tests, pt.mod.split)
 
 ```
 
-```{r re_splitplot, cache=FALSE}
+```{r re_splitplot}
 re_table <- function(coefs) {
   coefs %>% filter(effect=="ran_pars") %>% select(trait, group, estimate) %>% pivot_wider(names_from=group, values_from=estimate)
   }
@@ -637,7 +637,7 @@ map_dfr(list(mt.mod.split.coefs, lt.mod.split.coefs, pt.mod.split.coefs), re_tab
 
 ### Plots
 
-```{r multi_splitplot, cache=FALSE, fig.width=10, fig.height=11}
+```{r multi_splitplot, fig.width=10, fig.height=11}
 plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = TRUE) {
   
   data.long <- data %>% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm) %>% 
@@ -688,7 +688,7 @@ grid.arrange( #Vegetative and physiological traits - plot of EMMs and subplot me
 
 ### Compensation of water addition for early snowmelt
 
-```{r compensation, cache=FALSE}
+```{r compensation}
 #compare early snowmelt + addition vs. normal snowmelt + control
 emm.mod <- mt.mod.glht <- list()
 mnps.plantyr$snowwater <- paste0(mnps.plantyr$snow, mnps.subplot$water)
@@ -727,7 +727,7 @@ pt.mod.abs.tests <- map(pt.mod.abs, anova, ddf="Ken") %>% map_dfr(tidy, .id="tra
 
 ### ANOVA tables
 
-```{r anova_meltdate, cache=FALSE}
+```{r anova_meltdate}
 print_anova_table(mt.mod.abs.tests, mt.mod.abs)
 print_anova_table(lt.mod.abs.tests, lt.mod.abs)
 print_anova_table(pt.mod.abs.tests, pt.mod.abs)
@@ -861,7 +861,7 @@ pt.mod.sm.tests <- map(pt.mod.sm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait
 
 ### ANOVA tables
 
-```{r anova_sm, cache=FALSE}
+```{r anova_sm}
 print_anova_table(mt.mod.sm.tests, mt.mod.sm)
 print_anova_table(lt.mod.sm.tests, lt.mod.sm)
 print_anova_table(pt.mod.sm.tests, pt.mod.sm)
@@ -961,15 +961,16 @@ grid.arrange(plot_sm(lt.mod.sm, lt.plantyr.r2, leaftraits),
 ```{r selection}
 step_selection_mod <- function(trait, response, treatment, set, family="binomial", level=0.05) {
   re <- ifelse(treatment =="snow", "snow:plot", "plot")
-  t.plantyr <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]]
+  t.plantyr <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% 
+    rename("trait"=trait)
   options(contrasts = c("contr.sum", "contr.poly"))
-  mod <- glmmTMB(formula(paste(response, "~", trait, "* year * ", treatment," + (1|",re,")")), 
+  mod <- glmmTMB(formula(paste(response, "~ trait * year * ", treatment," + (1|",re,")")), 
                             data=t.plantyr, family=family)
   
-  droporder <- c(paste0(trait, ":year:", treatment),
-                 paste0(trait,":", treatment),
+  droporder <- c(paste0("trait:year:", treatment),
+                 paste0("trait:", treatment),
                  paste0("year:", treatment),
-                 paste0(trait,":year"))
+                 paste0("trait:year"))
   for(term_test in droporder) {
     pval <- car::Anova(mod) %>% tidy %>% filter(term==term_test) %>% pull(p.value)
     if(pval < level) return(mod)
@@ -986,18 +987,54 @@ mod.selection <-
   mutate(model = pmap(., step_selection_mod),
          coefs = map(model, tidy),
          tests = map(model, ~ tidy(car::Anova(.x, type=3))))
-
-
 ```
 
-```{r anova_selection, cache=FALSE}
-print_Anova_table(mod.selection %>% filter(response=="survived",treatment=="water") %>% unnest(tests), mod.selection$model)
-print_Anova_table(mod.selection %>% filter(response=="survived",treatment=="snow") %>% unnest(tests), mod.selection$model)
-print_Anova_table(mod.selection %>% filter(response=="flowered",treatment=="water") %>% unnest(tests), mod.selection$model)
-print_Anova_table(mod.selection %>% filter(response=="flowered",treatment=="snow") %>% unnest(tests), mod.selection$model)
+```{r anova_selection, results='asis'}
+mod.selection %>% group_by(response, treatment) %>% 
+  group_walk(function(.x,.y) {cat(paste("Effect of trait on whether a plant",.y$response,"under different",.y$treatment,"conditions")); 
+    print_Anova_table(.x %>% unnest(tests)) %>% print})
 
-mod.selection %>% unnest(coefs) %>% filter(effect=="ran_pars") %>% select(trait, group, estimate, response, treatment) %>% pivot_wider(names_from=group, values_from=estimate) %>% kable(digits=3)
+mod.selection %>% unnest(coefs) %>% filter(effect=="ran_pars") %>% 
+  select(trait, group, estimate, response, treatment) %>% 
+  pivot_wider(names_from=group, values_from=estimate) %>% kable(digits=3)
 ```
+
+```{r plot_selection}
+# plot_selection <- function(trait, response, treatment, set) {
+# list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% 
+# ggplot(aes_string(y=response, x=trait, color=treatment, linetype="year")) + 
+#   geom_point() + geom_smooth(se=F, method="glm", method.args = list(family=binomial)) +
+#   scale_color_manual(values=c(water_pal, snow_pal))
+# }
+# mod.selection <- mod.selection %>% 
+#   mutate(plot = pmap((.) %>% select(trait, response, treatment, set), plot_selection))
+# do.call(grid.arrange, mod.selection %>% filter(response=="flowered", treatment=="water") %>% pull(plot))
+
+
+plot_selection_facets <- function(response, treatment, set) {
+  traits <- list(lt=leaftraits, pt=phystraits)[[set]]
+  p <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% 
+    pivot_longer(all_of(traits),names_to="trait") %>% 
+    filter(year!="2020") %>% mutate(year=fct_drop(year)) %>% 
+    ggplot(aes_string(y=response, x="value", color=treatment, linetype="year")) + 
+    facet_wrap(vars(trait), scales="free_x")+
+    geom_point() + geom_smooth(se=F, method="glm", method.args = list(family=binomial)) +
+    scale_color_manual(values=c(water_pal, snow_pal)) + theme(legend.position="top") +
+    labs(linetype="Year",x="",color=c(water="Precipitation",snow="Snowmelt")[treatment]) +
+    theme_minimal() + theme(text=element_text(color="black"), axis.text = element_text(color="black"),
+                            panel.border = element_rect(fill=NA, colour = "black"), 
+                            panel.spacing=unit(0, "pt"), plot.margin = margin(0,0,0,0, "pt"), 
+                            legend.position = "top")
+  if(set =="pt") return(p + guides(linetype=F, color=F))
+  else return(p)
+}
+
+mod.selection.plots <- mod.selection %>% group_by(response, treatment, set) %>% summarize(.groups="drop") %>%  
+  mutate(plots = pmap(., plot_selection_facets))
+
+mod.selection.plots %>% group_by(response, treatment) %>% group_walk( ~ do.call(grid.arrange, .x$plots))
+```
+
 
 ## Multivariate response
 ```{r multresp}
