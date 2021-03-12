@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-03-10" />
+<meta name="date" content="2021-03-11" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-03-10</h4>
+<h4 class="date">2021-03-11</h4>
 
 </div>
 
@@ -296,13 +296,20 @@ knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, f
 
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;)) #needed for Type III SS
 
-print_anova_table &lt;- function(df, mod) {
+print_anova_table &lt;- function(df, mod) { #for lmer models and lmerTest::anova
   df %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
     mutate(p.value=p.value %&gt;% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %&gt;% 
              str_replace(&quot;e-0(\\d)&quot;,&quot; x 10^-\\1^&quot;) %&gt;% str_replace(&quot;e-(\\d+)&quot;,&quot; x 10^-\\1^&quot;)) %&gt;%
     pivot_wider(names_from=term, values_from=p.value) %&gt;% 
     mutate(singular = map_lgl(mod, isSingular),
            R2m = map_dbl(mod, ~ MuMIn::r.squaredGLMM(.x)[[1,&quot;R2m&quot;]])) %&gt;% 
+    kable
+}
+print_Anova_table &lt;- function(df, mod) { #for glmmTMB models and car::Anova
+  df %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
+    mutate(p.value=p.value %&gt;% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %&gt;% 
+             str_replace(&quot;e-0(\\d)&quot;,&quot; x 10^-\\1^&quot;) %&gt;% str_replace(&quot;e-(\\d+)&quot;,&quot; x 10^-\\1^&quot;)) %&gt;%
+    pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
     kable
 }
 
@@ -562,7 +569,7 @@ F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
 </tbody>
 </table>
 <pre class="r"><code># VWC split-plot analysis
-sm.mod &lt;- lmer(VWC ~ year * snow * water + (1|plot), data=sm.subplotyear)
+sm.mod &lt;- lmer(VWC ~ year * snow * water + (1|snow:plot), data=sm.subplotyear)
 anova(sm.mod) %&gt;% kable(digits=3)</code></pre>
 <table>
 <thead>
@@ -579,47 +586,47 @@ anova(sm.mod) %&gt;% kable(digits=3)</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">year</td>
-<td align="right">21.070</td>
-<td align="right">10.535</td>
+<td align="right">21.083</td>
+<td align="right">10.541</td>
 <td align="right">2</td>
-<td align="right">51.178</td>
-<td align="right">50.111</td>
+<td align="right">50.501</td>
+<td align="right">49.852</td>
 <td align="right">0.000</td>
 </tr>
 <tr class="even">
 <td align="left">snow</td>
-<td align="right">2.153</td>
-<td align="right">2.153</td>
+<td align="right">1.179</td>
+<td align="right">1.179</td>
 <td align="right">1</td>
-<td align="right">15.960</td>
-<td align="right">10.241</td>
-<td align="right">0.006</td>
+<td align="right">5.040</td>
+<td align="right">5.574</td>
+<td align="right">0.064</td>
 </tr>
 <tr class="odd">
 <td align="left">water</td>
 <td align="right">53.088</td>
 <td align="right">26.544</td>
 <td align="right">2</td>
-<td align="right">49.541</td>
-<td align="right">126.259</td>
+<td align="right">49.051</td>
+<td align="right">125.534</td>
 <td align="right">0.000</td>
 </tr>
 <tr class="even">
 <td align="left">year:snow</td>
-<td align="right">2.240</td>
-<td align="right">1.120</td>
+<td align="right">2.358</td>
+<td align="right">1.179</td>
 <td align="right">2</td>
-<td align="right">50.597</td>
-<td align="right">5.328</td>
-<td align="right">0.008</td>
+<td align="right">50.501</td>
+<td align="right">5.576</td>
+<td align="right">0.006</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
 <td align="right">4.477</td>
 <td align="right">1.119</td>
 <td align="right">4</td>
-<td align="right">49.541</td>
-<td align="right">5.324</td>
+<td align="right">49.051</td>
+<td align="right">5.294</td>
 <td align="right">0.001</td>
 </tr>
 <tr class="even">
@@ -627,18 +634,18 @@ anova(sm.mod) %&gt;% kable(digits=3)</code></pre>
 <td align="right">0.608</td>
 <td align="right">0.304</td>
 <td align="right">2</td>
-<td align="right">49.541</td>
-<td align="right">1.446</td>
-<td align="right">0.245</td>
+<td align="right">49.051</td>
+<td align="right">1.438</td>
+<td align="right">0.247</td>
 </tr>
 <tr class="odd">
 <td align="left">year:snow:water</td>
 <td align="right">0.349</td>
 <td align="right">0.087</td>
 <td align="right">4</td>
-<td align="right">49.541</td>
-<td align="right">0.415</td>
-<td align="right">0.797</td>
+<td align="right">49.051</td>
+<td align="right">0.413</td>
+<td align="right">0.799</td>
 </tr>
 </tbody>
 </table>
@@ -657,24 +664,24 @@ anova(sm.mod) %&gt;% kable(digits=3)</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">Early</td>
-<td align="right">4.433</td>
-<td align="right">0.191</td>
-<td align="right">7.004</td>
-<td align="right">3.980</td>
-<td align="right">4.885</td>
+<td align="right">4.503</td>
+<td align="right">0.198</td>
+<td align="right">4.931</td>
+<td align="right">3.991</td>
+<td align="right">5.015</td>
 </tr>
 <tr class="even">
 <td align="left">Normal</td>
-<td align="right">5.124</td>
-<td align="right">0.174</td>
-<td align="right">6.157</td>
-<td align="right">4.701</td>
-<td align="right">5.547</td>
+<td align="right">5.127</td>
+<td align="right">0.176</td>
+<td align="right">5.181</td>
+<td align="right">4.679</td>
+<td align="right">5.575</td>
 </tr>
 </tbody>
 </table>
 <pre class="r"><code>sm.emm.snow$emmean[1] - sm.emm.snow$emmean[2]</code></pre>
-<pre><code>[1] -0.6912101</code></pre>
+<pre><code>[1] -0.6240188</code></pre>
 <pre class="r"><code>(sm.emm.water &lt;- as.data.frame(emmeans(sm.mod, ~ water))) %&gt;% kable(digits=3)</code></pre>
 <table>
 <thead>
@@ -690,27 +697,27 @@ anova(sm.mod) %&gt;% kable(digits=3)</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">Addition</td>
-<td align="right">6.146</td>
-<td align="right">0.166</td>
-<td align="right">9.344</td>
-<td align="right">5.772</td>
-<td align="right">6.519</td>
+<td align="right">6.182</td>
+<td align="right">0.163</td>
+<td align="right">11.125</td>
+<td align="right">5.825</td>
+<td align="right">6.539</td>
 </tr>
 <tr class="even">
 <td align="left">Control</td>
-<td align="right">4.352</td>
-<td align="right">0.147</td>
-<td align="right">5.765</td>
-<td align="right">3.990</td>
-<td align="right">4.715</td>
+<td align="right">4.389</td>
+<td align="right">0.143</td>
+<td align="right">6.711</td>
+<td align="right">4.049</td>
+<td align="right">4.729</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
-<td align="right">3.837</td>
-<td align="right">0.166</td>
-<td align="right">9.344</td>
-<td align="right">3.463</td>
-<td align="right">4.211</td>
+<td align="right">3.874</td>
+<td align="right">0.163</td>
+<td align="right">11.125</td>
+<td align="right">3.517</td>
+<td align="right">4.231</td>
 </tr>
 </tbody>
 </table>
@@ -865,30 +872,30 @@ cen.status.veg1819 &lt;- bind_rows(
 library(glmmTMB)
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 
-(survival1819.mod &lt;- glmmTMB(alive_status ~ year * water * snow + (1|plot) + (1|plotid), data=cen.status.veg1819, family=binomial))</code></pre>
+(survival1819.mod &lt;- glmmTMB(alive_status ~ year * water * snow + (1|snow:plot) + (1|snow:plotid), data=cen.status.veg1819, family=binomial))</code></pre>
 <pre><code>Formula:          
-alive_status ~ year * water * snow + (1 | plot) + (1 | plotid)
+alive_status ~ year * water * snow + (1 | snow:plot) + (1 | snow:plotid)
 Data: cen.status.veg1819
       AIC       BIC    logLik  df.resid 
-1503.2338 1577.1539 -737.6169      1437 
+1505.3830 1579.3032 -738.6915      1437 
 Random-effects (co)variances:
 
 Conditional model:
- Groups Name        Std.Dev.
- plot   (Intercept) 0.000104
- plotid (Intercept) 0.449634
+ Groups      Name        Std.Dev. 
+ snow:plot   (Intercept) 6.857e-05
+ snow:plotid (Intercept) 4.848e-01
 
-Number of obs: 1451 / Conditional model: plot, 6; plotid, 24
+Number of obs: 1451 / Conditional model: snow:plot, 7; snow:plotid, 28
 
 Fixed Effects:
 
 Conditional model:
        (Intercept)               year1              water1              water2  
-           1.33602             0.16788             0.09361            -0.08762  
+           1.35622             0.17707             0.14713            -0.12265  
              snow1        year1:water1        year1:water2         year1:snow1  
-          -0.09982            -0.11307            -0.06744             0.07776  
+          -0.08025            -0.12348            -0.07376             0.08297  
       water1:snow1        water2:snow1  year1:water1:snow1  year1:water2:snow1  
-          -0.14185            -0.04116            -0.38403            -0.02837  </code></pre>
+          -0.14665            -0.05828            -0.37679            -0.03698  </code></pre>
 <pre class="r"><code>car::Anova(survival1819.mod, type=3) %&gt;% kable(digits=3)</code></pre>
 <table>
 <thead>
@@ -902,49 +909,49 @@ Conditional model:
 <tbody>
 <tr class="odd">
 <td align="left">(Intercept)</td>
-<td align="right">111.102</td>
+<td align="right">109.392</td>
 <td align="right">1</td>
 <td align="right">0.000</td>
 </tr>
 <tr class="even">
 <td align="left">year</td>
-<td align="right">4.453</td>
+<td align="right">4.678</td>
 <td align="right">1</td>
-<td align="right">0.035</td>
+<td align="right">0.031</td>
 </tr>
 <tr class="odd">
 <td align="left">water</td>
-<td align="right">0.401</td>
+<td align="right">0.839</td>
 <td align="right">2</td>
-<td align="right">0.818</td>
+<td align="right">0.657</td>
 </tr>
 <tr class="even">
 <td align="left">snow</td>
-<td align="right">0.735</td>
+<td align="right">0.390</td>
 <td align="right">1</td>
-<td align="right">0.391</td>
+<td align="right">0.532</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
-<td align="right">2.144</td>
+<td align="right">2.377</td>
 <td align="right">2</td>
-<td align="right">0.342</td>
+<td align="right">0.305</td>
 </tr>
 <tr class="even">
 <td align="left">year:snow</td>
-<td align="right">0.903</td>
+<td align="right">1.032</td>
 <td align="right">1</td>
-<td align="right">0.342</td>
+<td align="right">0.310</td>
 </tr>
 <tr class="odd">
 <td align="left">water:snow</td>
-<td align="right">1.130</td>
+<td align="right">1.141</td>
 <td align="right">2</td>
-<td align="right">0.568</td>
+<td align="right">0.565</td>
 </tr>
 <tr class="even">
 <td align="left">year:water:snow</td>
-<td align="right">12.396</td>
+<td align="right">12.176</td>
 <td align="right">2</td>
 <td align="right">0.002</td>
 </tr>
@@ -957,30 +964,31 @@ Conditional model:
   labs(x=&quot;Precipitation&quot;, y=&quot;Survival to next year&quot;, color=&quot;Snowmelt&quot;)+
   scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()</code></pre>
 <p><img src="images/transitions-3.png" width="672" /></p>
-<pre class="r"><code>(flowering1819.mod &lt;- glmmTMB(flowering_status ~ year * water * snow + (1|plot) + (1|plotid), data=cen.status.veg1819, family=binomial))</code></pre>
+<pre class="r"><code>(flowering1819.mod &lt;- glmmTMB(flowering_status ~ year * water * snow + (1|snow:plot) + (1|snow:plotid), data=cen.status.veg1819, family=binomial))</code></pre>
 <pre><code>Formula:          
-flowering_status ~ year * water * snow + (1 | plot) + (1 | plotid)
+flowering_status ~ year * water * snow + (1 | snow:plot) + (1 |  
+    snow:plotid)
 Data: cen.status.veg1819
       AIC       BIC    logLik  df.resid 
-1621.7316 1695.6517 -796.8658      1437 
+1621.1206 1695.0407 -796.5603      1437 
 Random-effects (co)variances:
 
 Conditional model:
- Groups Name        Std.Dev.
- plot   (Intercept) 0.4025  
- plotid (Intercept) 0.2648  
+ Groups      Name        Std.Dev.
+ snow:plot   (Intercept) 0.3481  
+ snow:plotid (Intercept) 0.2739  
 
-Number of obs: 1451 / Conditional model: plot, 6; plotid, 24
+Number of obs: 1451 / Conditional model: snow:plot, 7; snow:plotid, 28
 
 Fixed Effects:
 
 Conditional model:
        (Intercept)               year1              water1              water2  
-          -0.84801            -0.48704             0.26103            -0.31340  
+          -0.81961            -0.47774             0.26124            -0.31656  
              snow1        year1:water1        year1:water2         year1:snow1  
-          -0.11389            -0.10706             0.03138             0.09482  
+           0.01340            -0.12208             0.04408             0.09788  
       water1:snow1        water2:snow1  year1:water1:snow1  year1:water2:snow1  
-          -0.05685             0.07980            -0.22288             0.09777  </code></pre>
+          -0.08579             0.10402            -0.22026             0.09415  </code></pre>
 <pre class="r"><code>car::Anova(flowering1819.mod, type=3) %&gt;% kable(digits=3)</code></pre>
 <table>
 <thead>
@@ -994,51 +1002,51 @@ Conditional model:
 <tbody>
 <tr class="odd">
 <td align="left">(Intercept)</td>
-<td align="right">20.183</td>
+<td align="right">25.582</td>
 <td align="right">1</td>
 <td align="right">0.000</td>
 </tr>
 <tr class="even">
 <td align="left">year</td>
-<td align="right">43.912</td>
+<td align="right">41.196</td>
 <td align="right">1</td>
 <td align="right">0.000</td>
 </tr>
 <tr class="odd">
 <td align="left">water</td>
-<td align="right">8.129</td>
+<td align="right">8.314</td>
 <td align="right">2</td>
-<td align="right">0.017</td>
+<td align="right">0.016</td>
 </tr>
 <tr class="even">
 <td align="left">snow</td>
-<td align="right">0.620</td>
+<td align="right">0.007</td>
 <td align="right">1</td>
-<td align="right">0.431</td>
+<td align="right">0.934</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
-<td align="right">1.094</td>
+<td align="right">1.361</td>
 <td align="right">2</td>
-<td align="right">0.579</td>
+<td align="right">0.506</td>
 </tr>
 <tr class="even">
 <td align="left">year:snow</td>
-<td align="right">1.614</td>
+<td align="right">1.751</td>
 <td align="right">1</td>
-<td align="right">0.204</td>
+<td align="right">0.186</td>
 </tr>
 <tr class="odd">
 <td align="left">water:snow</td>
-<td align="right">0.467</td>
+<td align="right">0.882</td>
 <td align="right">2</td>
-<td align="right">0.792</td>
+<td align="right">0.643</td>
 </tr>
 <tr class="even">
 <td align="left">year:water:snow</td>
-<td align="right">4.599</td>
+<td align="right">4.551</td>
 <td align="right">2</td>
-<td align="right">0.100</td>
+<td align="right">0.103</td>
 </tr>
 </tbody>
 </table>
@@ -1352,25 +1360,28 @@ licor %&gt;% pivot_longer(Photo:StableF) %&gt;% mutate(index=row_number()) %&gt;
 <li><em>plotid</em> as a random effect (plants vary within this larger unit)</li>
 </ul>
 <p>The models are specified as:</p>
-<pre><code>lmer(trait ~ year * snow * water + (1|plot) + (1|plotid) +, data = mnps.plantyr)</code></pre>
+<pre><code>lmer(trait ~ year * snow * water + (1|snow:plot) + (1|snow:plotid) +, data = mnps.plantyr)</code></pre>
 <pre class="r"><code>lt.subplot.r2 &lt;- lt.subplotround %&gt;% filter(round==&quot;2&quot;)
 lt.plantyr.r2 &lt;- lt.plantyr %&gt;% filter(round==&quot;2&quot;)
 
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 mt.mod.split &lt;- map(set_names(traits), 
-                    ~ lmer(mnps.plantyr[[.x]]  ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data=mnps.plantyr))
+                    ~ lmer(mnps.plantyr[[.x]]  ~ year * snow * water + (1|snow:plot) + (1|snow:plotid),
+                           data=mnps.plantyr))
 lt.mod.split &lt;- map(set_names(leaftraits), 
-                    ~ lmer(lt.plantyr.r2[[.x]] ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data=lt.plantyr.r2))
+                    ~ lmer(lt.plantyr.r2[[.x]] ~ year * snow * water + (1|snow:plot) + (1|snow:plotid),
+                           data=lt.plantyr.r2))
 pt.mod.split &lt;- map(set_names(phystraits), 
-                    ~ lmer(pt.plantyr[[.x]]    ~ year * snow * water + (1|snow:plot) + (1|snow:plotid) + (1|round), data=pt.plantyr))
+                    ~ lmer(pt.plantyr[[.x]]    ~ year * snow * water + (1|snow:plot) + (1|snow:plotid) +
+                             (1|round), data=pt.plantyr))
 
 mt.mod.split.coefs &lt;- map_dfr(mt.mod.split, tidy, .id=&quot;trait&quot;)
 lt.mod.split.coefs &lt;- map_dfr(lt.mod.split, tidy, .id=&quot;trait&quot;)
 pt.mod.split.coefs &lt;- map_dfr(pt.mod.split, tidy, .id=&quot;trait&quot;)
 
-mt.mod.split.tests &lt;- map(mt.mod.split, anova) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-lt.mod.split.tests &lt;- map(lt.mod.split, anova) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-pt.mod.split.tests &lt;- map(pt.mod.split, anova) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+mt.mod.split.tests &lt;- map(mt.mod.split, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+lt.mod.split.tests &lt;- map(lt.mod.split, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+pt.mod.split.tests &lt;- map(pt.mod.split, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 
 mt.mod.split.emm &lt;- map(mt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
 lt.mod.split.emm &lt;- map(lt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
@@ -1381,14 +1392,14 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 <table>
 <colgroup>
 <col width="16%" />
-<col width="11%" />
-<col width="4%" />
-<col width="10%" />
-<col width="10%" />
 <col width="10%" />
 <col width="8%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+<col width="8%" />
 <col width="12%" />
-<col width="7%" />
+<col width="6%" />
 <col width="7%" />
 </colgroup>
 <thead>
@@ -1408,58 +1419,58 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 <tbody>
 <tr class="odd">
 <td align="left">corolla_length</td>
-<td align="left">4.4 x 10<sup>-19</sup></td>
+<td align="left">1 x 10<sup>-18</sup></td>
 <td align="left">0.89</td>
-<td align="left">4.3 x 10<sup>-5</sup></td>
+<td align="left">2.5 x 10<sup>-3</sup></td>
 <td align="left">0.99</td>
-<td align="left">0.13</td>
-<td align="left">0.72</td>
+<td align="left">0.15</td>
+<td align="left">0.73</td>
 <td align="left">0.89</td>
 <td align="left">TRUE</td>
 <td align="right">0.2280032</td>
 </tr>
 <tr class="even">
 <td align="left">style_length</td>
-<td align="left">1.2 x 10<sup>-14</sup></td>
+<td align="left">5 x 10<sup>-14</sup></td>
 <td align="left">0.76</td>
-<td align="left">3.9 x 10<sup>-3</sup></td>
+<td align="left">2 x 10<sup>-2</sup></td>
 <td align="left">0.98</td>
-<td align="left">9 x 10<sup>-2</sup></td>
+<td align="left">0.10</td>
 <td align="left">0.93</td>
-<td align="left">0.26</td>
+<td align="left">0.28</td>
 <td align="left">TRUE</td>
 <td align="right">0.1847491</td>
 </tr>
 <tr class="odd">
 <td align="left">corolla_width</td>
-<td align="left">9.2 x 10<sup>-27</sup></td>
-<td align="left">0.69</td>
-<td align="left">1 x 10<sup>-5</sup></td>
-<td align="left">0.48</td>
-<td align="left">0.60</td>
-<td align="left">0.39</td>
-<td align="left">0.052</td>
+<td align="left">7 x 10<sup>-23</sup></td>
+<td align="left">0.72</td>
+<td align="left">1.5 x 10<sup>-3</sup></td>
+<td align="left">0.53</td>
+<td align="left">0.63</td>
+<td align="left">0.43</td>
+<td align="left">0.061</td>
 <td align="left">TRUE</td>
 <td align="right">0.3031532</td>
 </tr>
 <tr class="even">
 <td align="left">sepal_width</td>
-<td align="left">0.48</td>
+<td align="left">0.50</td>
 <td align="left">0.93</td>
-<td align="left">1.1 x 10<sup>-3</sup></td>
-<td align="left">0.16</td>
-<td align="left">2.1 x 10<sup>-3</sup></td>
-<td align="left">0.27</td>
-<td align="left">0.016</td>
+<td align="left">9 x 10<sup>-3</sup></td>
+<td align="left">0.18</td>
+<td align="left">3.1 x 10<sup>-3</sup></td>
+<td align="left">0.31</td>
+<td align="left">0.022</td>
 <td align="left">TRUE</td>
 <td align="right">0.1139739</td>
 </tr>
 <tr class="odd">
 <td align="left">nectar_24_h_ul</td>
-<td align="left">3.5 x 10<sup>-8</sup></td>
-<td align="left">0.16</td>
-<td align="left">0.032</td>
-<td align="left">5.8 x 10<sup>-3</sup></td>
+<td align="left">6.7 x 10<sup>-8</sup></td>
+<td align="left">0.21</td>
+<td align="left">0.035</td>
+<td align="left">8.6 x 10<sup>-3</sup></td>
 <td align="left">0.70</td>
 <td align="left">0.63</td>
 <td align="left">0.46</td>
@@ -1468,11 +1479,11 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 </tr>
 <tr class="even">
 <td align="left">nectar_conc</td>
-<td align="left">7.3 x 10<sup>-24</sup></td>
+<td align="left">5.1 x 10<sup>-23</sup></td>
 <td align="left">0.52</td>
-<td align="left">8.1 x 10<sup>-3</sup></td>
-<td align="left">0.75</td>
-<td align="left">0.65</td>
+<td align="left">7.7 x 10<sup>-3</sup></td>
+<td align="left">0.76</td>
+<td align="left">0.66</td>
 <td align="left">0.49</td>
 <td align="left">0.17</td>
 <td align="left">FALSE</td>
@@ -1480,73 +1491,73 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 </tr>
 <tr class="odd">
 <td align="left">nectar_sugar_24_h_mg</td>
-<td align="left">1.1 x 10<sup>-6</sup></td>
-<td align="left">0.28</td>
-<td align="left">0.37</td>
-<td align="left">0.017</td>
-<td align="left">0.39</td>
-<td align="left">0.47</td>
+<td align="left">3.7 x 10<sup>-6</sup></td>
+<td align="left">0.35</td>
+<td align="left">0.40</td>
+<td align="left">0.028</td>
+<td align="left">0.40</td>
+<td align="left">0.50</td>
 <td align="left">0.13</td>
 <td align="left">TRUE</td>
 <td align="right">0.1247425</td>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="left">6.5 x 10<sup>-23</sup></td>
-<td align="left">0.081</td>
+<td align="left">4.5 x 10<sup>-22</sup></td>
+<td align="left">8 x 10<sup>-2</sup></td>
 <td align="left">0.99</td>
-<td align="left">0.22</td>
-<td align="left">0.44</td>
+<td align="left">0.24</td>
+<td align="left">0.45</td>
 <td align="left">0.48</td>
-<td align="left">0.078</td>
+<td align="left">0.083</td>
 <td align="left">FALSE</td>
 <td align="right">0.2339607</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="left">2.4 x 10<sup>-37</sup></td>
+<td align="left">6.6 x 10<sup>-36</sup></td>
 <td align="left">0.83</td>
 <td align="left">0.69</td>
-<td align="left">0.16</td>
-<td align="left">0.64</td>
-<td align="left">0.36</td>
-<td align="left">9 x 10<sup>-2</sup></td>
+<td align="left">0.18</td>
+<td align="left">0.65</td>
+<td align="left">0.37</td>
+<td align="left">0.10</td>
 <td align="left">FALSE</td>
 <td align="right">0.2548345</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
-<td align="left">1 x 10<sup>-7</sup></td>
-<td align="left">0.38</td>
-<td align="left">0.82</td>
-<td align="left">0.51</td>
-<td align="left">0.069</td>
-<td align="left">0.066</td>
-<td align="left">0.21</td>
+<td align="left">4.2 x 10<sup>-7</sup></td>
+<td align="left">0.44</td>
+<td align="left">0.83</td>
+<td align="left">0.53</td>
+<td align="left">0.079</td>
+<td align="left">0.11</td>
+<td align="left">0.22</td>
 <td align="left">TRUE</td>
 <td align="right">0.0988047</td>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="left">4.7 x 10<sup>-5</sup></td>
-<td align="left">0.72</td>
+<td align="left">9.6 x 10<sup>-5</sup></td>
+<td align="left">0.73</td>
 <td align="left">0.62</td>
-<td align="left">4.8 x 10<sup>-4</sup></td>
-<td align="left">0.14</td>
+<td align="left">8.2 x 10<sup>-4</sup></td>
+<td align="left">0.15</td>
 <td align="left">0.40</td>
-<td align="left">0.40</td>
+<td align="left">0.42</td>
 <td align="left">TRUE</td>
 <td align="right">0.1193237</td>
 </tr>
 <tr class="even">
 <td align="left">fruits_nonaborted</td>
-<td align="left">8.4 x 10<sup>-3</sup></td>
-<td align="left">0.84</td>
+<td align="left">1 x 10<sup>-2</sup></td>
+<td align="left">0.85</td>
 <td align="left">0.37</td>
-<td align="left">5.3 x 10<sup>-3</sup></td>
+<td align="left">6.5 x 10<sup>-3</sup></td>
 <td align="left">0.32</td>
 <td align="left">0.71</td>
-<td align="left">0.40</td>
+<td align="left">0.41</td>
 <td align="left">TRUE</td>
 <td align="right">0.0689661</td>
 </tr>
@@ -1554,47 +1565,47 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 <td align="left">flowers_est</td>
 <td align="left">0.71</td>
 <td align="left">0.80</td>
-<td align="left">0.36</td>
-<td align="left">8.2 x 10<sup>-3</sup></td>
-<td align="left">0.25</td>
-<td align="left">0.62</td>
+<td align="left">0.37</td>
+<td align="left">1 x 10<sup>-2</sup></td>
+<td align="left">0.26</td>
+<td align="left">0.63</td>
 <td align="left">0.72</td>
 <td align="left">TRUE</td>
 <td align="right">0.0401515</td>
 </tr>
 <tr class="even">
 <td align="left">prop_infested</td>
-<td align="left">7.3 x 10<sup>-6</sup></td>
+<td align="left">1.1 x 10<sup>-5</sup></td>
 <td align="left">0.22</td>
-<td align="left">0.34</td>
-<td align="left">0.044</td>
+<td align="left">0.38</td>
+<td align="left">0.051</td>
 <td align="left">0.86</td>
-<td align="left">0.13</td>
-<td align="left">0.62</td>
+<td align="left">0.18</td>
+<td align="left">0.63</td>
 <td align="left">TRUE</td>
 <td align="right">0.0630082</td>
 </tr>
 <tr class="odd">
 <td align="left">prop_aborted</td>
-<td align="left">7.9 x 10<sup>-6</sup></td>
+<td align="left">1.1 x 10<sup>-5</sup></td>
 <td align="left">0.50</td>
-<td align="left">0.68</td>
-<td align="left">0.21</td>
-<td align="left">0.56</td>
-<td align="left">0.092</td>
-<td align="left">0.40</td>
+<td align="left">0.70</td>
+<td align="left">0.22</td>
+<td align="left">0.57</td>
+<td align="left">0.14</td>
+<td align="left">0.41</td>
 <td align="left">TRUE</td>
 <td align="right">0.0678036</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_flower</td>
-<td align="left">2 x 10<sup>-7</sup></td>
-<td align="left">0.14</td>
-<td align="left">0.60</td>
-<td align="left">0.093</td>
-<td align="left">0.15</td>
-<td align="left">0.026</td>
-<td align="left">0.79</td>
+<td align="left">7.6 x 10<sup>-7</sup></td>
+<td align="left">0.22</td>
+<td align="left">0.63</td>
+<td align="left">0.11</td>
+<td align="left">0.17</td>
+<td align="left">0.059</td>
+<td align="left">0.80</td>
 <td align="left">TRUE</td>
 <td align="right">0.1112349</td>
 </tr>
@@ -1612,7 +1623,7 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 <col width="9%" />
 <col width="14%" />
 <col width="8%" />
-<col width="8%" />
+<col width="9%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1631,10 +1642,10 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 <tbody>
 <tr class="odd">
 <td align="left">sla</td>
-<td align="left">1.4 x 10<sup>-27</sup></td>
-<td align="left">0.63</td>
+<td align="left">1.6 x 10<sup>-27</sup></td>
+<td align="left">0.62</td>
 <td align="left">0.70</td>
-<td align="left">5 x 10<sup>-2</sup></td>
+<td align="left">0.052</td>
 <td align="left">0.80</td>
 <td align="left">0.62</td>
 <td align="left">0.52</td>
@@ -1643,23 +1654,23 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 </tr>
 <tr class="even">
 <td align="left">trichome_density</td>
-<td align="left">6.2 x 10<sup>-12</sup></td>
-<td align="left">0.48</td>
+<td align="left">6.4 x 10<sup>-12</sup></td>
+<td align="left">0.49</td>
 <td align="left">0.54</td>
-<td align="left">0.55</td>
+<td align="left">0.56</td>
 <td align="left">0.12</td>
 <td align="left">0.93</td>
-<td align="left">0.54</td>
+<td align="left">0.55</td>
 <td align="left">FALSE</td>
 <td align="right">0.2108077</td>
 </tr>
 <tr class="odd">
 <td align="left">water_content</td>
 <td align="left">1.2 x 10<sup>-3</sup></td>
-<td align="left">0.24</td>
-<td align="left">0.33</td>
-<td align="left">0.026</td>
-<td align="left">4.1 x 10<sup>-3</sup></td>
+<td align="left">0.23</td>
+<td align="left">0.31</td>
+<td align="left">0.027</td>
+<td align="left">4.3 x 10<sup>-3</sup></td>
 <td align="left">0.82</td>
 <td align="left">0.64</td>
 <td align="left">FALSE</td>
@@ -1698,11 +1709,11 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 <tbody>
 <tr class="odd">
 <td align="left">photosynthesis</td>
-<td align="left">0.058</td>
-<td align="left">0.61</td>
-<td align="left">0.28</td>
-<td align="left">0.45</td>
-<td align="left">0.40</td>
+<td align="left">0.062</td>
+<td align="left">0.63</td>
+<td align="left">0.31</td>
+<td align="left">0.46</td>
+<td align="left">0.41</td>
 <td align="left">0.99</td>
 <td align="left">0.91</td>
 <td align="left">TRUE</td>
@@ -1710,11 +1721,11 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 </tr>
 <tr class="even">
 <td align="left">conductance</td>
-<td align="left">7.4 x 10<sup>-4</sup></td>
-<td align="left">0.44</td>
-<td align="left">1.3 x 10<sup>-3</sup></td>
-<td align="left">0.46</td>
-<td align="left">2.2 x 10<sup>-3</sup></td>
+<td align="left">9.4 x 10<sup>-4</sup></td>
+<td align="left">0.47</td>
+<td align="left">2.3 x 10<sup>-3</sup></td>
+<td align="left">0.48</td>
+<td align="left">2.4 x 10<sup>-3</sup></td>
 <td align="left">0.66</td>
 <td align="left">0.69</td>
 <td align="left">TRUE</td>
@@ -1722,12 +1733,12 @@ pt.mod.split.emm &lt;- map(pt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year 
 </tr>
 <tr class="odd">
 <td align="left">WUE</td>
-<td align="left">2.2 x 10<sup>-5</sup></td>
-<td align="left">0.17</td>
-<td align="left">8.7 x 10<sup>-5</sup></td>
-<td align="left">0.46</td>
-<td align="left">2.5 x 10<sup>-3</sup></td>
-<td align="left">0.32</td>
+<td align="left">2.8 x 10<sup>-5</sup></td>
+<td align="left">0.21</td>
+<td align="left">1.6 x 10<sup>-4</sup></td>
+<td align="left">0.47</td>
+<td align="left">2.6 x 10<sup>-3</sup></td>
+<td align="left">0.33</td>
 <td align="left">0.85</td>
 <td align="left">TRUE</td>
 <td align="right">0.4422435</td>
@@ -1964,7 +1975,7 @@ mnps.plantyr$snowwater &lt;- paste0(mnps.plantyr$snow, mnps.subplot$water)
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
 for(tr in traits) {
     #emm.mod[[tr]] &lt;- emmeans(mt.mod[[tr]], ~ water * snow, var=tr)
-    mt.mod.glht[[tr]] &lt;- lmer(mnps.plantyr[[tr]] ~ snowwater * year+ (1|plot) + (1|plotid), data=mnps.plantyr) %&gt;%
+    mt.mod.glht[[tr]] &lt;- lmer(mnps.plantyr[[tr]] ~ snowwater * year+ (1|snow:plot) + (1|snow:plotid), data=mnps.plantyr) %&gt;%
       glht(linfct = mcp(snowwater = c(&quot;EarlyAddition - NormalControl = 0&quot;)))
 }
 map_dfr(mt.mod.glht, ~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=summary(.x)$test$pvalues), .id=&quot;trait&quot;) %&gt;% kable(digits=3)</code></pre>
@@ -1979,33 +1990,33 @@ map_dfr(mt.mod.glht, ~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=su
 <tbody>
 <tr class="odd">
 <td align="left">corolla_length</td>
-<td align="right">0.022</td>
-<td align="right">0.965</td>
+<td align="right">-0.034</td>
+<td align="right">0.952</td>
 </tr>
 <tr class="even">
 <td align="left">style_length</td>
-<td align="right">-0.267</td>
-<td align="right">0.562</td>
+<td align="right">-0.217</td>
+<td align="right">0.648</td>
 </tr>
 <tr class="odd">
 <td align="left">corolla_width</td>
-<td align="right">-0.082</td>
-<td align="right">0.216</td>
+<td align="right">-0.083</td>
+<td align="right">0.221</td>
 </tr>
 <tr class="even">
 <td align="left">sepal_width</td>
-<td align="right">-0.057</td>
-<td align="right">0.269</td>
+<td align="right">-0.058</td>
+<td align="right">0.289</td>
 </tr>
 <tr class="odd">
 <td align="left">nectar_24_h_ul</td>
-<td align="right">-0.388</td>
-<td align="right">0.042</td>
+<td align="right">-0.373</td>
+<td align="right">0.057</td>
 </tr>
 <tr class="even">
 <td align="left">nectar_conc</td>
-<td align="right">0.464</td>
-<td align="right">0.689</td>
+<td align="right">0.650</td>
+<td align="right">0.654</td>
 </tr>
 <tr class="odd">
 <td align="left">nectar_sugar_24_h_mg</td>
@@ -2014,43 +2025,43 @@ map_dfr(mt.mod.glht, ~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=su
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="right">-1.821</td>
-<td align="right">0.195</td>
+<td align="right">-1.552</td>
+<td align="right">0.290</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.659</td>
-<td align="right">0.155</td>
+<td align="right">0.737</td>
+<td align="right">0.135</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
-<td align="right">1.173</td>
-<td align="right">0.027</td>
+<td align="right">1.168</td>
+<td align="right">0.028</td>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">48.302</td>
-<td align="right">0.004</td>
+<td align="right">48.053</td>
+<td align="right">0.003</td>
 </tr>
 <tr class="even">
 <td align="left">fruits_nonaborted</td>
-<td align="right">5.265</td>
-<td align="right">0.211</td>
+<td align="right">5.008</td>
+<td align="right">0.266</td>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">9.148</td>
-<td align="right">0.080</td>
+<td align="right">8.548</td>
+<td align="right">0.122</td>
 </tr>
 <tr class="even">
 <td align="left">prop_infested</td>
-<td align="right">0.027</td>
-<td align="right">0.413</td>
+<td align="right">0.028</td>
+<td align="right">0.390</td>
 </tr>
 <tr class="odd">
 <td align="left">prop_aborted</td>
-<td align="right">0.004</td>
-<td align="right">0.945</td>
+<td align="right">-0.004</td>
+<td align="right">0.939</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_flower</td>
@@ -2079,9 +2090,9 @@ mt.mod.abs.coefs &lt;- map_dfr(mt.mod.abs, tidy, .id=&quot;trait&quot;)
 lt.mod.abs.coefs &lt;- map_dfr(lt.mod.abs, tidy, .id=&quot;trait&quot;)
 pt.mod.abs.coefs &lt;- map_dfr(pt.mod.abs, tidy, .id=&quot;trait&quot;)
 
-mt.mod.abs.tests &lt;- map(mt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-lt.mod.abs.tests &lt;- map(lt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
+mt.mod.abs.tests &lt;- map(mt.mod.abs, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+lt.mod.abs.tests &lt;- map(lt.mod.abs, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+pt.mod.abs.tests &lt;- map(pt.mod.abs, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
 <div id="anova-tables-1" class="section level3">
 <h3>ANOVA tables</h3>
 <pre class="r"><code>print_anova_table(mt.mod.abs.tests, mt.mod.abs)</code></pre>
@@ -2099,39 +2110,39 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 <tbody>
 <tr class="odd">
 <td align="left">corolla_length</td>
-<td align="left">2.4 x 10<sup>-7</sup></td>
-<td align="left">1 x 10<sup>-3</sup></td>
+<td align="left">2.8 x 10<sup>-7</sup></td>
+<td align="left">1.1 x 10<sup>-3</sup></td>
 <td align="left">0.022</td>
 <td align="left">FALSE</td>
 <td align="right">0.1712245</td>
 </tr>
 <tr class="even">
 <td align="left">style_length</td>
-<td align="left">3.6 x 10<sup>-8</sup></td>
-<td align="left">0.085</td>
-<td align="left">0.23</td>
+<td align="left">4.5 x 10<sup>-8</sup></td>
+<td align="left">0.087</td>
+<td align="left">0.24</td>
 <td align="left">FALSE</td>
 <td align="right">0.1607592</td>
 </tr>
 <tr class="odd">
 <td align="left">corolla_width</td>
-<td align="left">5.6 x 10<sup>-8</sup></td>
-<td align="left">0.022</td>
-<td align="left">0.16</td>
+<td align="left">7.6 x 10<sup>-8</sup></td>
+<td align="left">0.024</td>
+<td align="left">0.17</td>
 <td align="left">FALSE</td>
 <td align="right">0.2036019</td>
 </tr>
 <tr class="even">
 <td align="left">sepal_width</td>
-<td align="left">0.037</td>
-<td align="left">6.8 x 10<sup>-4</sup></td>
-<td align="left">2.2 x 10<sup>-3</sup></td>
+<td align="left">0.039</td>
+<td align="left">7.7 x 10<sup>-4</sup></td>
+<td align="left">2.4 x 10<sup>-3</sup></td>
 <td align="left">FALSE</td>
 <td align="right">0.0675314</td>
 </tr>
 <tr class="odd">
 <td align="left">nectar_24_h_ul</td>
-<td align="left">4.4 x 10<sup>-3</sup></td>
+<td align="left">4.6 x 10<sup>-3</sup></td>
 <td align="left">0.37</td>
 <td align="left">0.93</td>
 <td align="left">FALSE</td>
@@ -2139,23 +2150,23 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 </tr>
 <tr class="even">
 <td align="left">nectar_conc</td>
-<td align="left">9.9 x 10<sup>-13</sup></td>
-<td align="left">0.067</td>
+<td align="left">1.2 x 10<sup>-12</sup></td>
+<td align="left">0.069</td>
 <td align="left">0.25</td>
 <td align="left">FALSE</td>
 <td align="right">0.2885247</td>
 </tr>
 <tr class="odd">
 <td align="left">nectar_sugar_24_h_mg</td>
+<td align="left">0.53</td>
 <td align="left">0.52</td>
-<td align="left">0.51</td>
 <td align="left">0.79</td>
 <td align="left">TRUE</td>
 <td align="right">0.0347675</td>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="left">9.1 x 10<sup>-14</sup></td>
+<td align="left">1.4 x 10<sup>-13</sup></td>
 <td align="left">0.56</td>
 <td align="left">0.49</td>
 <td align="left">TRUE</td>
@@ -2163,23 +2174,23 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="left">2 x 10<sup>-25</sup></td>
+<td align="left">4.5 x 10<sup>-25</sup></td>
 <td align="left">0.11</td>
-<td align="left">0.098</td>
+<td align="left">0.10</td>
 <td align="left">FALSE</td>
 <td align="right">0.3120189</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
-<td align="left">6.7 x 10<sup>-3</sup></td>
-<td align="left">0.90</td>
+<td align="left">7.2 x 10<sup>-3</sup></td>
+<td align="left">0.91</td>
 <td align="left">0.92</td>
 <td align="left">TRUE</td>
 <td align="right">0.0571771</td>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="left">8.7 x 10<sup>-4</sup></td>
+<td align="left">9.3 x 10<sup>-4</sup></td>
 <td align="left">0.75</td>
 <td align="left">0.73</td>
 <td align="left">TRUE</td>
@@ -2189,7 +2200,7 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 <td align="left">fruits_nonaborted</td>
 <td align="left">0.017</td>
 <td align="left">0.64</td>
-<td align="left">0.78</td>
+<td align="left">0.79</td>
 <td align="left">TRUE</td>
 <td align="right">0.0299600</td>
 </tr>
@@ -2203,7 +2214,7 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 </tr>
 <tr class="even">
 <td align="left">prop_infested</td>
-<td align="left">0.075</td>
+<td align="left">0.077</td>
 <td align="left">0.76</td>
 <td align="left">0.86</td>
 <td align="left">TRUE</td>
@@ -2211,17 +2222,17 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 </tr>
 <tr class="odd">
 <td align="left">prop_aborted</td>
-<td align="left">2.4 x 10<sup>-3</sup></td>
-<td align="left">0.45</td>
-<td align="left">0.56</td>
+<td align="left">2.6 x 10<sup>-3</sup></td>
+<td align="left">0.46</td>
+<td align="left">0.57</td>
 <td align="left">FALSE</td>
 <td align="right">0.0400711</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_flower</td>
-<td align="left">3.4 x 10<sup>-4</sup></td>
-<td align="left">0.71</td>
-<td align="left">0.71</td>
+<td align="left">3.9 x 10<sup>-4</sup></td>
+<td align="left">0.72</td>
+<td align="left">0.72</td>
 <td align="left">TRUE</td>
 <td align="right">0.0765589</td>
 </tr>
@@ -2242,7 +2253,7 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 <tbody>
 <tr class="odd">
 <td align="left">sla</td>
-<td align="left">2.1 x 10<sup>-5</sup></td>
+<td align="left">2.2 x 10<sup>-5</sup></td>
 <td align="left">0.055</td>
 <td align="left">0.11</td>
 <td align="left">FALSE</td>
@@ -2258,9 +2269,9 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 </tr>
 <tr class="odd">
 <td align="left">water_content</td>
-<td align="left">3.4 x 10<sup>-3</sup></td>
-<td align="left">1.4 x 10<sup>-3</sup></td>
-<td align="left">3.4 x 10<sup>-3</sup></td>
+<td align="left">3.5 x 10<sup>-3</sup></td>
+<td align="left">1.5 x 10<sup>-3</sup></td>
+<td align="left">3.5 x 10<sup>-3</sup></td>
 <td align="left">TRUE</td>
 <td align="right">0.0478869</td>
 </tr>
@@ -2281,24 +2292,24 @@ pt.mod.abs.tests &lt;- map(pt.mod.abs, anova) %&gt;% map_dfr(tidy, .id=&quot;tra
 <tbody>
 <tr class="odd">
 <td align="left">photosynthesis</td>
-<td align="left">2.3 x 10<sup>-3</sup></td>
-<td align="left">0.071</td>
+<td align="left">2.9 x 10<sup>-3</sup></td>
+<td align="left">0.072</td>
 <td align="left">0.12</td>
 <td align="left">TRUE</td>
 <td align="right">0.0819421</td>
 </tr>
 <tr class="even">
 <td align="left">conductance</td>
-<td align="left">3.3 x 10<sup>-5</sup></td>
-<td align="left">9.7 x 10<sup>-3</sup></td>
+<td align="left">5.9 x 10<sup>-5</sup></td>
+<td align="left">9.9 x 10<sup>-3</sup></td>
 <td align="left">0.038</td>
 <td align="left">TRUE</td>
 <td align="right">0.2358140</td>
 </tr>
 <tr class="odd">
 <td align="left">WUE</td>
-<td align="left">4.7 x 10<sup>-4</sup></td>
-<td align="left">9.3 x 10<sup>-3</sup></td>
+<td align="left">9.4 x 10<sup>-4</sup></td>
+<td align="left">9.4 x 10<sup>-3</sup></td>
 <td align="left">0.053</td>
 <td align="left">TRUE</td>
 <td align="right">0.2140141</td>
@@ -2588,9 +2599,9 @@ mt.mod.sm.coefs &lt;- map_dfr(mt.mod.sm, tidy, .id=&quot;trait&quot;)
 lt.mod.sm.coefs &lt;- map_dfr(lt.mod.sm, tidy, .id=&quot;trait&quot;)
 pt.mod.sm.coefs &lt;- map_dfr(pt.mod.sm, tidy, .id=&quot;trait&quot;)
 
-mt.mod.sm.tests &lt;- map(mt.mod.sm, anova) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-lt.mod.sm.tests &lt;- map(lt.mod.sm, anova) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-pt.mod.sm.tests &lt;- map(pt.mod.sm, anova) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
+mt.mod.sm.tests &lt;- map(mt.mod.sm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+lt.mod.sm.tests &lt;- map(lt.mod.sm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+pt.mod.sm.tests &lt;- map(pt.mod.sm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
 <div id="anova-tables-2" class="section level3">
 <h3>ANOVA tables</h3>
 <pre class="r"><code>print_anova_table(mt.mod.sm.tests, mt.mod.sm)</code></pre>
@@ -2608,119 +2619,119 @@ pt.mod.sm.tests &lt;- map(pt.mod.sm, anova) %&gt;% map_dfr(tidy, .id=&quot;trait
 <tbody>
 <tr class="odd">
 <td align="left">corolla_length</td>
-<td align="left">5.9 x 10<sup>-3</sup></td>
-<td align="left">0.011</td>
-<td align="left">0.44</td>
+<td align="left">6.6 x 10<sup>-3</sup></td>
+<td align="left">0.013</td>
+<td align="left">0.45</td>
 <td align="left">FALSE</td>
 <td align="right">0.2068999</td>
 </tr>
 <tr class="even">
 <td align="left">style_length</td>
-<td align="left">0.18</td>
-<td align="left">1.8 x 10<sup>-3</sup></td>
+<td align="left">0.19</td>
+<td align="left">2.1 x 10<sup>-3</sup></td>
 <td align="left">0.81</td>
 <td align="left">FALSE</td>
 <td align="right">0.1767118</td>
 </tr>
 <tr class="odd">
 <td align="left">corolla_width</td>
-<td align="left">3.2 x 10<sup>-3</sup></td>
-<td align="left">9.2 x 10<sup>-6</sup></td>
-<td align="left">0.044</td>
+<td align="left">4.3 x 10<sup>-3</sup></td>
+<td align="left">1.9 x 10<sup>-4</sup></td>
+<td align="left">0.046</td>
 <td align="left">TRUE</td>
 <td align="right">0.2872278</td>
 </tr>
 <tr class="even">
 <td align="left">sepal_width</td>
-<td align="left">6.8 x 10<sup>-3</sup></td>
-<td align="left">9.2 x 10<sup>-3</sup></td>
-<td align="left">2.9 x 10<sup>-3</sup></td>
+<td align="left">7.7 x 10<sup>-3</sup></td>
+<td align="left">1 x 10<sup>-2</sup></td>
+<td align="left">3.4 x 10<sup>-3</sup></td>
 <td align="left">FALSE</td>
 <td align="right">0.0749237</td>
 </tr>
 <tr class="odd">
 <td align="left">nectar_24_h_ul</td>
 <td align="left">0.26</td>
-<td align="left">7.4 x 10<sup>-5</sup></td>
-<td align="left">0.10</td>
+<td align="left">5.5 x 10<sup>-5</sup></td>
+<td align="left">0.11</td>
 <td align="left">FALSE</td>
 <td align="right">0.1591228</td>
 </tr>
 <tr class="even">
 <td align="left">nectar_conc</td>
-<td align="left">1.6 x 10<sup>-4</sup></td>
-<td align="left">1 x 10<sup>-2</sup></td>
-<td align="left">0.31</td>
+<td align="left">2 x 10<sup>-4</sup></td>
+<td align="left">0.011</td>
+<td align="left">0.32</td>
 <td align="left">FALSE</td>
 <td align="right">0.2835345</td>
 </tr>
 <tr class="odd">
 <td align="left">nectar_sugar_24_h_mg</td>
-<td align="left">3.1 x 10<sup>-3</sup></td>
-<td align="left">1.7 x 10<sup>-3</sup></td>
-<td align="left">0.025</td>
+<td align="left">3.8 x 10<sup>-3</sup></td>
+<td align="left">5.9 x 10<sup>-3</sup></td>
+<td align="left">0.028</td>
 <td align="left">TRUE</td>
 <td align="right">0.1004421</td>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
 <td align="left">0.51</td>
-<td align="left">0.075</td>
-<td align="left">0.17</td>
+<td align="left">0.081</td>
+<td align="left">0.18</td>
 <td align="left">FALSE</td>
 <td align="right">0.2177241</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="left">6 x 10<sup>-4</sup></td>
-<td align="left">0.65</td>
+<td align="left">7.1 x 10<sup>-4</sup></td>
+<td align="left">0.66</td>
 <td align="left">0.93</td>
 <td align="left">FALSE</td>
 <td align="right">0.2474151</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
-<td align="left">0.71</td>
+<td align="left">0.72</td>
 <td align="left">0.98</td>
-<td align="left">0.79</td>
+<td align="left">0.80</td>
 <td align="left">TRUE</td>
 <td align="right">0.0619134</td>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
 <td align="left">0.82</td>
-<td align="left">0.24</td>
-<td align="left">0.24</td>
+<td align="left">0.25</td>
+<td align="left">0.25</td>
 <td align="left">FALSE</td>
 <td align="right">0.0776607</td>
 </tr>
 <tr class="even">
 <td align="left">fruits_nonaborted</td>
-<td align="left">0.80</td>
-<td align="left">0.14</td>
-<td align="left">0.29</td>
+<td align="left">0.81</td>
+<td align="left">0.15</td>
+<td align="left">0.30</td>
 <td align="left">FALSE</td>
 <td align="right">0.0368612</td>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="left">0.72</td>
-<td align="left">0.074</td>
+<td align="left">0.73</td>
+<td align="left">8 x 10<sup>-2</sup></td>
 <td align="left">0.75</td>
 <td align="left">FALSE</td>
 <td align="right">0.0105290</td>
 </tr>
 <tr class="even">
 <td align="left">prop_infested</td>
-<td align="left">0.34</td>
-<td align="left">0.95</td>
+<td align="left">0.35</td>
+<td align="left">0.96</td>
 <td align="left">0.93</td>
 <td align="left">TRUE</td>
 <td align="right">0.0380341</td>
 </tr>
 <tr class="odd">
 <td align="left">prop_aborted</td>
-<td align="left">0.39</td>
+<td align="left">0.40</td>
 <td align="left">0.69</td>
 <td align="left">0.81</td>
 <td align="left">FALSE</td>
@@ -2729,8 +2740,8 @@ pt.mod.sm.tests &lt;- map(pt.mod.sm, anova) %&gt;% map_dfr(tidy, .id=&quot;trait
 <tr class="even">
 <td align="left">seeds_per_flower</td>
 <td align="left">0.82</td>
-<td align="left">0.63</td>
-<td align="left">0.68</td>
+<td align="left">0.64</td>
+<td align="left">0.69</td>
 <td align="left">TRUE</td>
 <td align="right">0.0755739</td>
 </tr>
@@ -2751,25 +2762,25 @@ pt.mod.sm.tests &lt;- map(pt.mod.sm, anova) %&gt;% map_dfr(tidy, .id=&quot;trait
 <tbody>
 <tr class="odd">
 <td align="left">sla</td>
-<td align="left">8.5 x 10<sup>-7</sup></td>
-<td align="left">0.14</td>
-<td align="left">2 x 10<sup>-3</sup></td>
+<td align="left">1.1 x 10<sup>-6</sup></td>
+<td align="left">0.15</td>
+<td align="left">2.2 x 10<sup>-3</sup></td>
 <td align="left">FALSE</td>
 <td align="right">0.3758635</td>
 </tr>
 <tr class="even">
 <td align="left">trichome_density</td>
-<td align="left">1.2 x 10<sup>-4</sup></td>
+<td align="left">1.3 x 10<sup>-4</sup></td>
 <td align="left">0.89</td>
-<td align="left">0.031</td>
+<td align="left">0.032</td>
 <td align="left">FALSE</td>
 <td align="right">0.1972221</td>
 </tr>
 <tr class="odd">
 <td align="left">water_content</td>
-<td align="left">3.3 x 10<sup>-9</sup></td>
-<td align="left">0.55</td>
-<td align="left">7.5 x 10<sup>-9</sup></td>
+<td align="left">4.9 x 10<sup>-9</sup></td>
+<td align="left">0.56</td>
+<td align="left">1.1 x 10<sup>-8</sup></td>
 <td align="left">FALSE</td>
 <td align="right">0.1355240</td>
 </tr>
@@ -2790,25 +2801,25 @@ pt.mod.sm.tests &lt;- map(pt.mod.sm, anova) %&gt;% map_dfr(tidy, .id=&quot;trait
 <tbody>
 <tr class="odd">
 <td align="left">photosynthesis</td>
-<td align="left">0.035</td>
-<td align="left">1.5 x 10<sup>-3</sup></td>
-<td align="left">0.23</td>
+<td align="left">4 x 10<sup>-2</sup></td>
+<td align="left">2.8 x 10<sup>-3</sup></td>
+<td align="left">0.26</td>
 <td align="left">TRUE</td>
 <td align="right">0.1229479</td>
 </tr>
 <tr class="even">
 <td align="left">conductance</td>
-<td align="left">2.4 x 10<sup>-5</sup></td>
-<td align="left">3.9 x 10<sup>-8</sup></td>
-<td align="left">5.5 x 10<sup>-4</sup></td>
+<td align="left">3.7 x 10<sup>-5</sup></td>
+<td align="left">1.4 x 10<sup>-7</sup></td>
+<td align="left">8.8 x 10<sup>-4</sup></td>
 <td align="left">FALSE</td>
 <td align="right">0.3747031</td>
 </tr>
 <tr class="odd">
 <td align="left">WUE</td>
-<td align="left">1.9 x 10<sup>-8</sup></td>
-<td align="left">2.7 x 10<sup>-7</sup></td>
-<td align="left">2.2 x 10<sup>-3</sup></td>
+<td align="left">3.2 x 10<sup>-8</sup></td>
+<td align="left">7.6 x 10<sup>-7</sup></td>
+<td align="left">3 x 10<sup>-3</sup></td>
 <td align="left">FALSE</td>
 <td align="right">0.4345709</td>
 </tr>
@@ -3190,32 +3201,36 @@ plot_sm(mt.mod.sm, mnps, traits[c(1:4,5,6,8,13)]) #Morphological traits - raw da
 <p><img src="images/multi_sm-4.png" width="864" /></p>
 </div>
 </div>
-<div id="selection-water-survivalflowering" class="section level2">
-<h2>Selection: water, survival/flowering</h2>
-<div id="survival" class="section level3">
-<h3>Survival</h3>
-<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-
-lt.mod.surv &lt;- map(set_names(leaftraits), 
-                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * water + (1|plot), 
-                            data=lt.plantyr.r2, family=binomial))
-pt.mod.surv &lt;- map(set_names(phystraits), 
-                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * water * snow + (1|plot), 
-                            data=pt.plantyr, family=binomial))
-
-lt.mod.surv.coefs &lt;- map_dfr(lt.mod.surv, tidy, .id=&quot;trait&quot;)
-pt.mod.surv.coefs &lt;- map_dfr(pt.mod.surv, tidy, .id=&quot;trait&quot;)
-
-lt.mod.surv.tests &lt;- map(lt.mod.surv, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-pt.mod.surv.tests &lt;- map(pt.mod.surv, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
-<pre class="r"><code>print_Anova_table &lt;- function(df, mod) {
-  df %&gt;% select(c(&quot;trait&quot;, &quot;term&quot;, &quot;p.value&quot;)) %&gt;% 
-    mutate(p.value=p.value %&gt;% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %&gt;% 
-             str_replace(&quot;e-0(\\d)&quot;,&quot; x 10^-\\1^&quot;) %&gt;% str_replace(&quot;e-(\\d+)&quot;,&quot; x 10^-\\1^&quot;)) %&gt;%
-    pivot_wider(names_from=trait, values_from=p.value) %&gt;% 
-    kable
+<div id="mortalityflowering-selection-vs.-treatments" class="section level2">
+<h2>Mortality/flowering selection vs. treatments</h2>
+<pre class="r"><code>step_selection_mod &lt;- function(trait, response, treatment, set, family=&quot;binomial&quot;, level=0.05) {
+  re &lt;- ifelse(treatment ==&quot;snow&quot;, &quot;snow:plot&quot;, &quot;plot&quot;)
+  t.plantyr &lt;- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]]
+  options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+  mod &lt;- glmmTMB(formula(paste(response, &quot;~&quot;, trait, &quot;* year * &quot;, treatment,&quot; + (1|&quot;,re,&quot;)&quot;)), 
+                            data=t.plantyr, family=family)
+  
+  droporder &lt;- c(paste0(trait, &quot;:year:&quot;, treatment),
+                 paste0(trait,&quot;:&quot;, treatment),
+                 paste0(&quot;year:&quot;, treatment),
+                 paste0(trait,&quot;:year&quot;))
+  for(term_test in droporder) {
+    pval &lt;- car::Anova(mod) %&gt;% tidy %&gt;% filter(term==term_test) %&gt;% pull(p.value)
+    if(pval &lt; level) return(mod)
+    else mod &lt;- update(mod, formula(paste0(&quot;. ~ . -&quot;, term_test)))
+  }
+  return(mod)
 }
-print_Anova_table(lt.mod.surv.tests, lt.mod.surv)</code></pre>
+
+mod.selection &lt;- 
+  tibble(response = c(&quot;survived&quot;,&quot;flowered&quot;), treatment=c(&quot;water&quot;,&quot;snow&quot;), set = c(&quot;lt&quot;, &quot;pt&quot;)) %&gt;%
+  tidyr::expand(response, treatment, set) %&gt;% 
+  full_join(tibble(trait=c(leaftraits, phystraits), 
+                   set = c(rep(&quot;lt&quot;, length(leaftraits)), rep(&quot;pt&quot;, length(phystraits))))) %&gt;% 
+  mutate(model = pmap(., step_selection_mod),
+         coefs = map(model, tidy),
+         tests = map(model, ~ tidy(car::Anova(.x, type=3))))</code></pre>
+<pre class="r"><code>print_Anova_table(mod.selection %&gt;% filter(response==&quot;survived&quot;,treatment==&quot;water&quot;) %&gt;% unnest(tests), mod.selection$model)</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -3223,64 +3238,6 @@ print_Anova_table(lt.mod.surv.tests, lt.mod.surv)</code></pre>
 <th align="left">sla</th>
 <th align="left">trichome_density</th>
 <th align="left">water_content</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">(Intercept)</td>
-<td align="left">0.35</td>
-<td align="left">0.052</td>
-<td align="left">0.25</td>
-</tr>
-<tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]</td>
-<td align="left">0.95</td>
-<td align="left">0.28</td>
-<td align="left">0.45</td>
-</tr>
-<tr class="odd">
-<td align="left">year</td>
-<td align="left">0.96</td>
-<td align="left">0.32</td>
-<td align="left">0.88</td>
-</tr>
-<tr class="even">
-<td align="left">water</td>
-<td align="left">0.44</td>
-<td align="left">0.47</td>
-<td align="left">0.23</td>
-</tr>
-<tr class="odd">
-<td align="left">lt.plantyr.r2[[.x]]:year</td>
-<td align="left">0.87</td>
-<td align="left">0.48</td>
-<td align="left">0.95</td>
-</tr>
-<tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]:water</td>
-<td align="left">0.34</td>
-<td align="left">0.24</td>
-<td align="left">0.23</td>
-</tr>
-<tr class="odd">
-<td align="left">year:water</td>
-<td align="left">0.20</td>
-<td align="left">0.40</td>
-<td align="left">0.38</td>
-</tr>
-<tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]:year:water</td>
-<td align="left">0.20</td>
-<td align="left">0.29</td>
-<td align="left">0.36</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>print_Anova_table(pt.mod.surv.tests, pt.mod.surv)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">term</th>
 <th align="left">photosynthesis</th>
 <th align="left">conductance</th>
 <th align="left">WUE</th>
@@ -3289,506 +3246,142 @@ print_Anova_table(lt.mod.surv.tests, lt.mod.surv)</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">(Intercept)</td>
-<td align="left">1.6 x 10<sup>-4</sup></td>
-<td align="left">1.2 x 10<sup>-3</sup></td>
-<td align="left">0.80</td>
+<td align="left">0.026</td>
+<td align="left">3.3 x 10<sup>-3</sup></td>
+<td align="left">6 x 10<sup>-2</sup></td>
+<td align="left">2.1 x 10<sup>-8</sup></td>
+<td align="left">1.2 x 10<sup>-4</sup></td>
+<td align="left">7.9 x 10<sup>-3</sup></td>
 </tr>
 <tr class="even">
-<td align="left">pt.plantyr[[.x]]</td>
-<td align="left">0.45</td>
-<td align="left">0.72</td>
-<td align="left">0.40</td>
-</tr>
-<tr class="odd">
-<td align="left">year</td>
-<td align="left">0.92</td>
-<td align="left">0.15</td>
-<td align="left">0.16</td>
-</tr>
-<tr class="even">
-<td align="left">water</td>
-<td align="left">0.47</td>
-<td align="left">0.16</td>
-<td align="left">0.79</td>
-</tr>
-<tr class="odd">
-<td align="left">snow</td>
-<td align="left">0.38</td>
-<td align="left">0.61</td>
-<td align="left">0.42</td>
-</tr>
-<tr class="even">
-<td align="left">pt.plantyr[[.x]]:year</td>
-<td align="left">0.68</td>
-<td align="left">0.12</td>
-<td align="left">0.27</td>
-</tr>
-<tr class="odd">
-<td align="left">pt.plantyr[[.x]]:water</td>
-<td align="left">0.58</td>
-<td align="left">0.12</td>
-<td align="left">0.75</td>
-</tr>
-<tr class="even">
-<td align="left">year:water</td>
-<td align="left">0.18</td>
-<td align="left">0.17</td>
-<td align="left">0.086</td>
-</tr>
-<tr class="odd">
-<td align="left">pt.plantyr[[.x]]:snow</td>
-<td align="left">0.55</td>
-<td align="left">0.99</td>
-<td align="left">0.38</td>
-</tr>
-<tr class="even">
-<td align="left">year:snow</td>
-<td align="left">0.74</td>
-<td align="left">0.57</td>
-<td align="left">0.50</td>
-</tr>
-<tr class="odd">
-<td align="left">water:snow</td>
-<td align="left">0.96</td>
-<td align="left">0.69</td>
-<td align="left">0.46</td>
-</tr>
-<tr class="even">
-<td align="left">pt.plantyr[[.x]]:year:water</td>
-<td align="left">0.11</td>
-<td align="left">0.10</td>
-<td align="left">0.055</td>
-</tr>
-<tr class="odd">
-<td align="left">pt.plantyr[[.x]]:year:snow</td>
-<td align="left">0.80</td>
-<td align="left">0.74</td>
-<td align="left">0.44</td>
-</tr>
-<tr class="even">
-<td align="left">pt.plantyr[[.x]]:water:snow</td>
-<td align="left">0.79</td>
-<td align="left">0.83</td>
-<td align="left">0.59</td>
-</tr>
-<tr class="odd">
-<td align="left">year:water:snow</td>
-<td align="left">0.67</td>
-<td align="left">0.40</td>
-<td align="left">0.71</td>
-</tr>
-<tr class="even">
-<td align="left">pt.plantyr[[.x]]:year:water:snow</td>
-<td align="left">0.52</td>
-<td align="left">0.51</td>
-<td align="left">0.64</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>map_dfr(list(lt.mod.surv.coefs, pt.mod.surv.coefs), re_table) %&gt;% kable(digits=3)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">trait</th>
-<th align="right">plot</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
 <td align="left">sla</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="right">0.138</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="flowering" class="section level3">
-<h3>Flowering</h3>
-<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-
-lt.mod.flrd &lt;- map(set_names(leaftraits), 
-                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * water + (1|plot) , 
-                            data=lt.plantyr.r2, family=binomial))
-pt.mod.flrd &lt;- map(set_names(phystraits), 
-                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * water + (1|plot), 
-                            data=pt.plantyr, family=binomial))
-
-lt.mod.flrd.coefs &lt;- map_dfr(lt.mod.flrd, tidy, .id=&quot;trait&quot;)
-pt.mod.flrd.coefs &lt;- map_dfr(pt.mod.flrd, tidy, .id=&quot;trait&quot;)
-
-lt.mod.flrd.tests &lt;- map(lt.mod.flrd, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-pt.mod.flrd.tests &lt;- map(pt.mod.flrd, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
-<pre class="r"><code>print_Anova_table(lt.mod.flrd.tests, lt.mod.flrd)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">term</th>
-<th align="left">sla</th>
-<th align="left">trichome_density</th>
-<th align="left">water_content</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">(Intercept)</td>
-<td align="left">0.99</td>
-<td align="left">0.015</td>
-<td align="left">0.74</td>
-</tr>
-<tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]</td>
-<td align="left">0.63</td>
-<td align="left">0.19</td>
-<td align="left">0.55</td>
-</tr>
-<tr class="odd">
-<td align="left">year</td>
-<td align="left">0.76</td>
-<td align="left">0.72</td>
-<td align="left">0.27</td>
-</tr>
-<tr class="even">
-<td align="left">water</td>
-<td align="left">0.82</td>
-<td align="left">1.00</td>
-<td align="left">0.93</td>
-</tr>
-<tr class="odd">
-<td align="left">lt.plantyr.r2[[.x]]:year</td>
-<td align="left">0.56</td>
-<td align="left">0.47</td>
-<td align="left">0.20</td>
-</tr>
-<tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]:water</td>
-<td align="left">0.59</td>
-<td align="left">0.30</td>
-<td align="left">0.89</td>
-</tr>
-<tr class="odd">
-<td align="left">year:water</td>
-<td align="left">0.29</td>
-<td align="left">0.16</td>
 <td align="left">0.77</td>
-</tr>
-<tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]:year:water</td>
-<td align="left">0.33</td>
-<td align="left">0.061</td>
-<td align="left">0.78</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>print_Anova_table(pt.mod.flrd.tests, pt.mod.flrd)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">term</th>
-<th align="left">photosynthesis</th>
-<th align="left">conductance</th>
-<th align="left">WUE</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">(Intercept)</td>
-<td align="left">0.82</td>
-<td align="left">0.073</td>
-<td align="left">0.82</td>
-</tr>
-<tr class="even">
-<td align="left">pt.plantyr[[.x]]</td>
-<td align="left">0.22</td>
-<td align="left">0.68</td>
-<td align="left">0.15</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">0.22</td>
-<td align="left">0.98</td>
-<td align="left">1.9 x 10<sup>-3</sup></td>
+<td align="left">0.34</td>
+<td align="left">0.29</td>
+<td align="left">0.26</td>
+<td align="left">0.41</td>
+<td align="left">0.88</td>
+<td align="left">0.025</td>
 </tr>
 <tr class="even">
 <td align="left">water</td>
-<td align="left">0.083</td>
-<td align="left">0.12</td>
-<td align="left">0.30</td>
+<td align="left">0.77</td>
+<td align="left">0.77</td>
+<td align="left">0.71</td>
+<td align="left">0.93</td>
+<td align="left">5 x 10<sup>-2</sup></td>
+<td align="left">0.48</td>
 </tr>
 <tr class="odd">
-<td align="left">pt.plantyr[[.x]]:year</td>
-<td align="left">0.49</td>
-<td align="left">0.092</td>
-<td align="left">0.029</td>
+<td align="left">trichome_density</td>
+<td align="left">NA</td>
+<td align="left">0.70</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 </tr>
 <tr class="even">
-<td align="left">pt.plantyr[[.x]]:water</td>
-<td align="left">0.23</td>
-<td align="left">0.11</td>
-<td align="left">0.52</td>
+<td align="left">water_content</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.26</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">photosynthesis</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.19</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">conductance</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.72</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance:year</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.77</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">conductance:water</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.019</td>
+<td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
-<td align="left">0.33</td>
-<td align="left">0.28</td>
-<td align="left">0.80</td>
-</tr>
-<tr class="even">
-<td align="left">pt.plantyr[[.x]]:year:water</td>
-<td align="left">0.40</td>
-<td align="left">0.14</td>
-<td align="left">0.56</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>map_dfr(list(lt.mod.flrd.coefs, pt.mod.flrd.coefs), re_table) %&gt;% kable(digits=3)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">trait</th>
-<th align="right">plot</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="right">0.280</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">0.346</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">0.254</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">0.165</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">0.185</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="right">0.258</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div id="selection-snow-survivalflowering" class="section level2">
-<h2>Selection: snow, survival/flowering</h2>
-<div id="survival-1" class="section level3">
-<h3>Survival</h3>
-<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-
-lt.mod.surv &lt;- map(set_names(leaftraits), 
-                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * snow + (1|plot), 
-                            data=lt.plantyr.r2, family=binomial))
-pt.mod.surv &lt;- map(set_names(phystraits), 
-                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * snow * snow + (1|plot), 
-                            data=pt.plantyr, family=binomial))
-
-lt.mod.surv.coefs &lt;- map_dfr(lt.mod.surv, tidy, .id=&quot;trait&quot;)
-pt.mod.surv.coefs &lt;- map_dfr(pt.mod.surv, tidy, .id=&quot;trait&quot;)
-
-lt.mod.surv.tests &lt;- map(lt.mod.surv, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-pt.mod.surv.tests &lt;- map(pt.mod.surv, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
-<pre class="r"><code>print_Anova_table(lt.mod.surv.tests, lt.mod.surv)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">term</th>
-<th align="left">sla</th>
-<th align="left">trichome_density</th>
-<th align="left">water_content</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">(Intercept)</td>
-<td align="left">0.16</td>
-<td align="left">0.014</td>
-<td align="left">0.13</td>
-</tr>
-<tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]</td>
-<td align="left">0.60</td>
-<td align="left">0.46</td>
-<td align="left">0.31</td>
-</tr>
-<tr class="odd">
-<td align="left">year</td>
-<td align="left">0.52</td>
-<td align="left">0.48</td>
-<td align="left">0.98</td>
-</tr>
-<tr class="even">
-<td align="left">snow</td>
-<td align="left">0.25</td>
-<td align="left">0.48</td>
-<td align="left">0.16</td>
-</tr>
-<tr class="odd">
-<td align="left">lt.plantyr.r2[[.x]]:year</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 <td align="left">0.63</td>
-<td align="left">0.78</td>
-<td align="left">0.95</td>
-</tr>
-<tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]:snow</td>
-<td align="left">0.24</td>
-<td align="left">0.32</td>
-<td align="left">0.16</td>
-</tr>
-<tr class="odd">
-<td align="left">year:snow</td>
-<td align="left">0.21</td>
-<td align="left">0.50</td>
-<td align="left">0.38</td>
-</tr>
-<tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]:year:snow</td>
-<td align="left">0.23</td>
-<td align="left">0.59</td>
-<td align="left">0.38</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>print_Anova_table(pt.mod.surv.tests, pt.mod.surv)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">term</th>
-<th align="left">photosynthesis</th>
-<th align="left">conductance</th>
-<th align="left">WUE</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">(Intercept)</td>
-<td align="left">1.8 x 10<sup>-6</sup></td>
-<td align="left">7.1 x 10<sup>-5</sup></td>
-<td align="left">2.7 x 10<sup>-4</sup></td>
-</tr>
-<tr class="even">
-<td align="left">pt.plantyr[[.x]]</td>
-<td align="left">0.72</td>
-<td align="left">0.36</td>
-<td align="left">0.60</td>
-</tr>
-<tr class="odd">
-<td align="left">year</td>
-<td align="left">0.21</td>
-<td align="left">0.94</td>
-<td align="left">0.16</td>
-</tr>
-<tr class="even">
-<td align="left">snow</td>
-<td align="left">0.21</td>
-<td align="left">0.90</td>
 <td align="left">0.082</td>
 </tr>
-<tr class="odd">
-<td align="left">pt.plantyr[[.x]]:year</td>
-<td align="left">0.28</td>
-<td align="left">0.86</td>
-<td align="left">0.13</td>
-</tr>
-<tr class="even">
-<td align="left">pt.plantyr[[.x]]:snow</td>
-<td align="left">0.40</td>
-<td align="left">0.66</td>
-<td align="left">0.18</td>
-</tr>
-<tr class="odd">
-<td align="left">year:snow</td>
-<td align="left">0.82</td>
-<td align="left">0.92</td>
-<td align="left">0.49</td>
-</tr>
-<tr class="even">
-<td align="left">pt.plantyr[[.x]]:year:snow</td>
-<td align="left">0.72</td>
-<td align="left">0.58</td>
-<td align="left">0.52</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>map_dfr(list(lt.mod.surv.coefs, pt.mod.surv.coefs), re_table) %&gt;% kable(digits=3)</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">trait</th>
-<th align="right">plot</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">0.000</td>
-</tr>
 <tr class="even">
 <td align="left">WUE</td>
-<td align="right">0.167</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.80</td>
+</tr>
+<tr class="odd">
+<td align="left">WUE:year</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">4 x 10<sup>-2</sup></td>
+</tr>
+<tr class="even">
+<td align="left">WUE:water</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.30</td>
+</tr>
+<tr class="odd">
+<td align="left">WUE:year:water</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.044</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div id="flowering-1" class="section level3">
-<h3>Flowering</h3>
-<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-
-lt.mod.flrd &lt;- map(set_names(leaftraits), 
-                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * snow + (1|plot) , 
-                            data=lt.plantyr.r2, family=binomial))
-pt.mod.flrd &lt;- map(set_names(phystraits), 
-                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * snow + (1|plot), 
-                            data=pt.plantyr, family=binomial))
-
-lt.mod.flrd.coefs &lt;- map_dfr(lt.mod.flrd, tidy, .id=&quot;trait&quot;)
-pt.mod.flrd.coefs &lt;- map_dfr(pt.mod.flrd, tidy, .id=&quot;trait&quot;)
-
-lt.mod.flrd.tests &lt;- map(lt.mod.flrd, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-pt.mod.flrd.tests &lt;- map(pt.mod.flrd, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)</code></pre>
-<pre class="r"><code>print_Anova_table(lt.mod.flrd.tests, lt.mod.flrd)</code></pre>
+<pre class="r"><code>print_Anova_table(mod.selection %&gt;% filter(response==&quot;survived&quot;,treatment==&quot;snow&quot;) %&gt;% unnest(tests), mod.selection$model)</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -3796,64 +3389,103 @@ pt.mod.flrd.tests &lt;- map(pt.mod.flrd, car::Anova, type=3) %&gt;% map_dfr(tidy
 <th align="left">sla</th>
 <th align="left">trichome_density</th>
 <th align="left">water_content</th>
+<th align="left">photosynthesis</th>
+<th align="left">conductance</th>
+<th align="left">WUE</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td align="left">(Intercept)</td>
-<td align="left">0.96</td>
-<td align="left">0.011</td>
-<td align="left">0.51</td>
+<td align="left">0.029</td>
+<td align="left">3.3 x 10<sup>-3</sup></td>
+<td align="left">0.062</td>
+<td align="left">1.6 x 10<sup>-8</sup></td>
+<td align="left">4.7 x 10<sup>-5</sup></td>
+<td align="left">2.2 x 10<sup>-4</sup></td>
 </tr>
 <tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]</td>
-<td align="left">0.56</td>
-<td align="left">0.32</td>
-<td align="left">0.33</td>
+<td align="left">sla</td>
+<td align="left">0.76</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">year</td>
+<td align="left">0.37</td>
+<td align="left">0.31</td>
+<td align="left">0.29</td>
+<td align="left">0.50</td>
+<td align="left">0.99</td>
 <td align="left">0.75</td>
-<td align="left">0.26</td>
-<td align="left">0.19</td>
 </tr>
 <tr class="even">
 <td align="left">snow</td>
-<td align="left">0.11</td>
-<td align="left">0.69</td>
 <td align="left">0.85</td>
+<td align="left">0.80</td>
+<td align="left">0.67</td>
+<td align="left">0.43</td>
+<td align="left">0.34</td>
+<td align="left">0.43</td>
 </tr>
 <tr class="odd">
-<td align="left">lt.plantyr.r2[[.x]]:year</td>
-<td align="left">0.54</td>
-<td align="left">0.98</td>
-<td align="left">0.14</td>
+<td align="left">trichome_density</td>
+<td align="left">NA</td>
+<td align="left">0.74</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 </tr>
 <tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]:snow</td>
-<td align="left">0.12</td>
-<td align="left">0.99</td>
-<td align="left">0.88</td>
+<td align="left">water_content</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.26</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 </tr>
 <tr class="odd">
-<td align="left">year:snow</td>
-<td align="left">0.25</td>
-<td align="left">0.57</td>
-<td align="left">0.83</td>
+<td align="left">photosynthesis</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.18</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 </tr>
 <tr class="even">
-<td align="left">lt.plantyr.r2[[.x]]:year:snow</td>
-<td align="left">0.19</td>
-<td align="left">0.48</td>
-<td align="left">0.82</td>
+<td align="left">conductance</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.32</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">WUE</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.90</td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>print_Anova_table(pt.mod.flrd.tests, pt.mod.flrd)</code></pre>
+<pre class="r"><code>print_Anova_table(mod.selection %&gt;% filter(response==&quot;flowered&quot;,treatment==&quot;water&quot;) %&gt;% unnest(tests), mod.selection$model)</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left">term</th>
+<th align="left">sla</th>
+<th align="left">trichome_density</th>
+<th align="left">water_content</th>
 <th align="left">photosynthesis</th>
 <th align="left">conductance</th>
 <th align="left">WUE</th>
@@ -3863,89 +3495,383 @@ pt.mod.flrd.tests &lt;- map(pt.mod.flrd, car::Anova, type=3) %&gt;% map_dfr(tidy
 <tr class="odd">
 <td align="left">(Intercept)</td>
 <td align="left">0.26</td>
-<td align="left">0.013</td>
-<td align="left">0.57</td>
+<td align="left">0.014</td>
+<td align="left">0.44</td>
+<td align="left">0.40</td>
+<td align="left">0.021</td>
+<td align="left">0.86</td>
 </tr>
 <tr class="even">
-<td align="left">pt.plantyr[[.x]]</td>
-<td align="left">0.62</td>
-<td align="left">0.46</td>
-<td align="left">0.16</td>
+<td align="left">sla</td>
+<td align="left">0.82</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">year</td>
-<td align="left">0.063</td>
-<td align="left">0.21</td>
-<td align="left">3.7 x 10<sup>-3</sup></td>
+<td align="left">0.17</td>
+<td align="left">0.026</td>
+<td align="left">0.075</td>
+<td align="left">3 x 10<sup>-4</sup></td>
+<td align="left">7.1 x 10<sup>-3</sup></td>
+<td align="left">7.8 x 10<sup>-4</sup></td>
 </tr>
 <tr class="even">
-<td align="left">snow</td>
-<td align="left">0.66</td>
-<td align="left">0.52</td>
-<td align="left">0.13</td>
+<td align="left">water</td>
+<td align="left">0.076</td>
+<td align="left">0.085</td>
+<td align="left">0.077</td>
+<td align="left">0.26</td>
+<td align="left">0.30</td>
+<td align="left">0.15</td>
 </tr>
 <tr class="odd">
-<td align="left">pt.plantyr[[.x]]:year</td>
-<td align="left">0.99</td>
-<td align="left">0.62</td>
-<td align="left">6 x 10<sup>-2</sup></td>
+<td align="left">trichome_density</td>
+<td align="left">NA</td>
+<td align="left">0.23</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 </tr>
 <tr class="even">
-<td align="left">pt.plantyr[[.x]]:snow</td>
-<td align="left">0.78</td>
-<td align="left">0.43</td>
+<td align="left">water_content</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.71</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">photosynthesis</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.49</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">conductance</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.23</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">WUE</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
 <td align="left">0.12</td>
 </tr>
-<tr class="odd">
-<td align="left">year:snow</td>
-<td align="left">0.80</td>
-<td align="left">0.20</td>
-<td align="left">0.74</td>
-</tr>
 <tr class="even">
-<td align="left">pt.plantyr[[.x]]:year:snow</td>
-<td align="left">0.83</td>
-<td align="left">0.23</td>
-<td align="left">0.72</td>
+<td align="left">WUE:year</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">2 x 10<sup>-2</sup></td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>map_dfr(list(lt.mod.flrd.coefs, pt.mod.flrd.coefs), re_table) %&gt;% kable(digits=3)</code></pre>
+<pre class="r"><code>print_Anova_table(mod.selection %&gt;% filter(response==&quot;flowered&quot;,treatment==&quot;snow&quot;) %&gt;% unnest(tests), mod.selection$model)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="left">sla</th>
+<th align="left">trichome_density</th>
+<th align="left">water_content</th>
+<th align="left">photosynthesis</th>
+<th align="left">conductance</th>
+<th align="left">WUE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="left">0.17</td>
+<td align="left">7.1 x 10<sup>-3</sup></td>
+<td align="left">0.37</td>
+<td align="left">0.22</td>
+<td align="left">6.9 x 10<sup>-3</sup></td>
+<td align="left">0.66</td>
+</tr>
+<tr class="even">
+<td align="left">sla</td>
+<td align="left">0.74</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">year</td>
+<td align="left">0.17</td>
+<td align="left">0.026</td>
+<td align="left">0.072</td>
+<td align="left">8.1 x 10<sup>-4</sup></td>
+<td align="left">0.013</td>
+<td align="left">2.2 x 10<sup>-3</sup></td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="left">0.69</td>
+<td align="left">0.57</td>
+<td align="left">0.75</td>
+<td align="left">0.73</td>
+<td align="left">0.67</td>
+<td align="left">0.82</td>
+</tr>
+<tr class="odd">
+<td align="left">trichome_density</td>
+<td align="left">NA</td>
+<td align="left">0.25</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">water_content</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.67</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">photosynthesis</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.52</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">conductance</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.23</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">WUE</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.12</td>
+</tr>
+<tr class="even">
+<td align="left">WUE:year</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">0.039</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>mod.selection %&gt;% unnest(coefs) %&gt;% filter(effect==&quot;ran_pars&quot;) %&gt;% select(trait, group, estimate, response, treatment) %&gt;% pivot_wider(names_from=group, values_from=estimate) %&gt;% kable(digits=3)</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left">trait</th>
+<th align="left">response</th>
+<th align="left">treatment</th>
+<th align="right">snow:plot</th>
 <th align="right">plot</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td align="left">sla</td>
-<td align="right">0.269</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">0.202</td>
+<td align="right">NA</td>
 </tr>
 <tr class="even">
 <td align="left">trichome_density</td>
-<td align="right">0.269</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">0.288</td>
+<td align="right">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">water_content</td>
-<td align="right">0.239</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">0.205</td>
+<td align="right">NA</td>
 </tr>
 <tr class="even">
 <td align="left">photosynthesis</td>
-<td align="right">0.245</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">0.233</td>
+<td align="right">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">conductance</td>
-<td align="right">0.242</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">0.223</td>
+<td align="right">NA</td>
 </tr>
 <tr class="even">
 <td align="left">WUE</td>
-<td align="right">0.329</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">0.278</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.246</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.351</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.241</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.241</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.236</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.287</td>
+</tr>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="left">survived</td>
+<td align="left">snow</td>
+<td align="right">0.000</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="left">survived</td>
+<td align="left">snow</td>
+<td align="right">0.000</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="left">survived</td>
+<td align="left">snow</td>
+<td align="right">0.000</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="left">survived</td>
+<td align="left">snow</td>
+<td align="right">0.000</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="left">survived</td>
+<td align="left">snow</td>
+<td align="right">0.000</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="left">survived</td>
+<td align="left">snow</td>
+<td align="right">0.000</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="left">survived</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="left">survived</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="left">survived</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="left">survived</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="left">survived</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="left">survived</td>
+<td align="left">water</td>
+<td align="right">NA</td>
+<td align="right">0.000</td>
 </tr>
 </tbody>
 </table>
-</div>
 </div>
 <div id="multivariate-response" class="section level2">
 <h2>Multivariate response</h2>

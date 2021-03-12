@@ -49,13 +49,20 @@ knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = 
 
 options(contrasts = c("contr.sum", "contr.poly")) #needed for Type III SS
 
-print_anova_table <- function(df, mod) {
+print_anova_table <- function(df, mod) { #for lmer models and lmerTest::anova
   df %>% select(c("trait", "term", "p.value")) %>% 
     mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
              str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
     pivot_wider(names_from=term, values_from=p.value) %>% 
     mutate(singular = map_lgl(mod, isSingular),
            R2m = map_dbl(mod, ~ MuMIn::r.squaredGLMM(.x)[[1,"R2m"]])) %>% 
+    kable
+}
+print_Anova_table <- function(df, mod) { #for glmmTMB models and car::Anova
+  df %>% select(c("trait", "term", "p.value")) %>% 
+    mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
+             str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
+    pivot_wider(names_from=trait, values_from=p.value) %>% 
     kable
 }
 
@@ -280,7 +287,7 @@ left_join(filter(sm.subplot20d, mo20d!="221 - 240"), meltdates) %>%
 sm.subplot %>% mutate(day=yday(date)) %>% group_by(year) %>% summarize(start=min(day), end=max(day)) %>% kable(caption = "Soil moisture collection dates")
 
 # VWC split-plot analysis
-sm.mod <- lmer(VWC ~ year * snow * water + (1|plot), data=sm.subplotyear)
+sm.mod <- lmer(VWC ~ year * snow * water + (1|snow:plot), data=sm.subplotyear)
 anova(sm.mod) %>% kable(digits=3)
 (sm.emm.snow <- as.data.frame(emmeans(sm.mod, ~ snow))) %>% kable(digits=3)
 sm.emm.snow$emmean[1] - sm.emm.snow$emmean[2]
@@ -404,7 +411,7 @@ cen.status.veg1819 <- bind_rows(
 library(glmmTMB)
 options(contrasts = c("contr.sum", "contr.poly"))
 
-(survival1819.mod <- glmmTMB(alive_status ~ year * water * snow + (1|plot) + (1|plotid), data=cen.status.veg1819, family=binomial))
+(survival1819.mod <- glmmTMB(alive_status ~ year * water * snow + (1|snow:plot) + (1|snow:plotid), data=cen.status.veg1819, family=binomial))
 car::Anova(survival1819.mod, type=3) %>% kable(digits=3)
 emmeans(survival1819.mod, ~ year * water * snow) %>% as_tibble %>% 
   mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %>% 
@@ -413,7 +420,7 @@ emmeans(survival1819.mod, ~ year * water * snow) %>% as_tibble %>%
   labs(x="Precipitation", y="Survival to next year", color="Snowmelt")+
   scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()
 
-(flowering1819.mod <- glmmTMB(flowering_status ~ year * water * snow + (1|plot) + (1|plotid), data=cen.status.veg1819, family=binomial))
+(flowering1819.mod <- glmmTMB(flowering_status ~ year * water * snow + (1|snow:plot) + (1|snow:plotid), data=cen.status.veg1819, family=binomial))
 car::Anova(flowering1819.mod, type=3) %>% kable(digits=3)
 emmeans(flowering1819.mod, ~ year * water * snow) %>% as_tibble %>% 
   mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %>% 
@@ -582,7 +589,7 @@ This is a split-plot analysis, based on the original experimental design. The mo
 
 The models are specified as:
 
-    lmer(trait ~ year * snow * water + (1|plot) + (1|plotid) +, data = mnps.plantyr)
+    lmer(trait ~ year * snow * water + (1|snow:plot) + (1|snow:plotid) +, data = mnps.plantyr)
 
 ```{r splitplot}
 lt.subplot.r2 <- lt.subplotround %>% filter(round=="2")
@@ -590,19 +597,22 @@ lt.plantyr.r2 <- lt.plantyr %>% filter(round=="2")
 
 options(contrasts = c("contr.sum", "contr.poly"))
 mt.mod.split <- map(set_names(traits), 
-                    ~ lmer(mnps.plantyr[[.x]]  ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data=mnps.plantyr))
+                    ~ lmer(mnps.plantyr[[.x]]  ~ year * snow * water + (1|snow:plot) + (1|snow:plotid),
+                           data=mnps.plantyr))
 lt.mod.split <- map(set_names(leaftraits), 
-                    ~ lmer(lt.plantyr.r2[[.x]] ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data=lt.plantyr.r2))
+                    ~ lmer(lt.plantyr.r2[[.x]] ~ year * snow * water + (1|snow:plot) + (1|snow:plotid),
+                           data=lt.plantyr.r2))
 pt.mod.split <- map(set_names(phystraits), 
-                    ~ lmer(pt.plantyr[[.x]]    ~ year * snow * water + (1|snow:plot) + (1|snow:plotid) + (1|round), data=pt.plantyr))
+                    ~ lmer(pt.plantyr[[.x]]    ~ year * snow * water + (1|snow:plot) + (1|snow:plotid) +
+                             (1|round), data=pt.plantyr))
 
 mt.mod.split.coefs <- map_dfr(mt.mod.split, tidy, .id="trait")
 lt.mod.split.coefs <- map_dfr(lt.mod.split, tidy, .id="trait")
 pt.mod.split.coefs <- map_dfr(pt.mod.split, tidy, .id="trait")
 
-mt.mod.split.tests <- map(mt.mod.split, anova) %>% map_dfr(tidy, .id="trait")
-lt.mod.split.tests <- map(lt.mod.split, anova) %>% map_dfr(tidy, .id="trait")
-pt.mod.split.tests <- map(pt.mod.split, anova) %>% map_dfr(tidy, .id="trait")
+mt.mod.split.tests <- map(mt.mod.split, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+lt.mod.split.tests <- map(lt.mod.split, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+pt.mod.split.tests <- map(pt.mod.split, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 
 mt.mod.split.emm <- map(mt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
 lt.mod.split.emm <- map(lt.mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
@@ -685,7 +695,7 @@ mnps.plantyr$snowwater <- paste0(mnps.plantyr$snow, mnps.subplot$water)
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
 for(tr in traits) {
     #emm.mod[[tr]] <- emmeans(mt.mod[[tr]], ~ water * snow, var=tr)
-    mt.mod.glht[[tr]] <- lmer(mnps.plantyr[[tr]] ~ snowwater * year+ (1|plot) + (1|plotid), data=mnps.plantyr) %>%
+    mt.mod.glht[[tr]] <- lmer(mnps.plantyr[[tr]] ~ snowwater * year+ (1|snow:plot) + (1|snow:plotid), data=mnps.plantyr) %>%
       glht(linfct = mcp(snowwater = c("EarlyAddition - NormalControl = 0")))
 }
 map_dfr(mt.mod.glht, ~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=summary(.x)$test$pvalues), .id="trait") %>% kable(digits=3)
@@ -710,14 +720,14 @@ mt.mod.abs.coefs <- map_dfr(mt.mod.abs, tidy, .id="trait")
 lt.mod.abs.coefs <- map_dfr(lt.mod.abs, tidy, .id="trait")
 pt.mod.abs.coefs <- map_dfr(pt.mod.abs, tidy, .id="trait")
 
-mt.mod.abs.tests <- map(mt.mod.abs, anova) %>% map_dfr(tidy, .id="trait")
-lt.mod.abs.tests <- map(lt.mod.abs, anova) %>% map_dfr(tidy, .id="trait")
-pt.mod.abs.tests <- map(pt.mod.abs, anova) %>% map_dfr(tidy, .id="trait")
+mt.mod.abs.tests <- map(mt.mod.abs, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+lt.mod.abs.tests <- map(lt.mod.abs, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+pt.mod.abs.tests <- map(pt.mod.abs, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 ```
 
 ### ANOVA tables
 
-```{r anova_meltdate}
+```{r anova_meltdate, cache=FALSE}
 print_anova_table(mt.mod.abs.tests, mt.mod.abs)
 print_anova_table(lt.mod.abs.tests, lt.mod.abs)
 print_anova_table(pt.mod.abs.tests, pt.mod.abs)
@@ -844,14 +854,14 @@ mt.mod.sm.coefs <- map_dfr(mt.mod.sm, tidy, .id="trait")
 lt.mod.sm.coefs <- map_dfr(lt.mod.sm, tidy, .id="trait")
 pt.mod.sm.coefs <- map_dfr(pt.mod.sm, tidy, .id="trait")
 
-mt.mod.sm.tests <- map(mt.mod.sm, anova) %>% map_dfr(tidy, .id="trait")
-lt.mod.sm.tests <- map(lt.mod.sm, anova) %>% map_dfr(tidy, .id="trait")
-pt.mod.sm.tests <- map(pt.mod.sm, anova) %>% map_dfr(tidy, .id="trait")
+mt.mod.sm.tests <- map(mt.mod.sm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+lt.mod.sm.tests <- map(lt.mod.sm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+pt.mod.sm.tests <- map(pt.mod.sm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 ```
 
 ### ANOVA tables
 
-```{r anova_sm}
+```{r anova_sm, cache=FALSE}
 print_anova_table(mt.mod.sm.tests, mt.mod.sm)
 print_anova_table(lt.mod.sm.tests, lt.mod.sm)
 print_anova_table(pt.mod.sm.tests, pt.mod.sm)
@@ -946,116 +956,49 @@ grid.arrange(plot_sm(lt.mod.sm, lt.plantyr.r2, leaftraits),
              plot_sm(pt.mod.sm, pt.plantyr, phystraits)+ guides(color=F, shape=F), ncol=1) #plant means
 ```
 
-## Selection: water, survival/flowering
+## Mortality/flowering selection vs. treatments
 
-### Survival
-
-```{r selection_surv}
-options(contrasts = c("contr.sum", "contr.poly"))
-
-lt.mod.surv <- map(set_names(leaftraits), 
-                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * water + (1|plot), 
-                            data=lt.plantyr.r2, family=binomial))
-pt.mod.surv <- map(set_names(phystraits), 
-                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * water * snow + (1|plot), 
-                            data=pt.plantyr, family=binomial))
-
-lt.mod.surv.coefs <- map_dfr(lt.mod.surv, tidy, .id="trait")
-pt.mod.surv.coefs <- map_dfr(pt.mod.surv, tidy, .id="trait")
-
-lt.mod.surv.tests <- map(lt.mod.surv, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
-pt.mod.surv.tests <- map(pt.mod.surv, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
-```
-
-```{r anova_surv}
-print_Anova_table <- function(df, mod) {
-  df %>% select(c("trait", "term", "p.value")) %>% 
-    mutate(p.value=p.value %>% map_chr(~ format(.x,scientific=-2, digits=2 , nsmall=2)) %>% 
-             str_replace("e-0(\\d)"," x 10^-\\1^") %>% str_replace("e-(\\d+)"," x 10^-\\1^")) %>%
-    pivot_wider(names_from=trait, values_from=p.value) %>% 
-    kable
+```{r selection}
+step_selection_mod <- function(trait, response, treatment, set, family="binomial", level=0.05) {
+  re <- ifelse(treatment =="snow", "snow:plot", "plot")
+  t.plantyr <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]]
+  options(contrasts = c("contr.sum", "contr.poly"))
+  mod <- glmmTMB(formula(paste(response, "~", trait, "* year * ", treatment," + (1|",re,")")), 
+                            data=t.plantyr, family=family)
+  
+  droporder <- c(paste0(trait, ":year:", treatment),
+                 paste0(trait,":", treatment),
+                 paste0("year:", treatment),
+                 paste0(trait,":year"))
+  for(term_test in droporder) {
+    pval <- car::Anova(mod) %>% tidy %>% filter(term==term_test) %>% pull(p.value)
+    if(pval < level) return(mod)
+    else mod <- update(mod, formula(paste0(". ~ . -", term_test)))
+  }
+  return(mod)
 }
-print_Anova_table(lt.mod.surv.tests, lt.mod.surv)
-print_Anova_table(pt.mod.surv.tests, pt.mod.surv)
-map_dfr(list(lt.mod.surv.coefs, pt.mod.surv.coefs), re_table) %>% kable(digits=3)
+
+mod.selection <- 
+  tibble(response = c("survived","flowered"), treatment=c("water","snow"), set = c("lt", "pt")) %>%
+  tidyr::expand(response, treatment, set) %>% 
+  full_join(tibble(trait=c(leaftraits, phystraits), 
+                   set = c(rep("lt", length(leaftraits)), rep("pt", length(phystraits))))) %>% 
+  mutate(model = pmap(., step_selection_mod),
+         coefs = map(model, tidy),
+         tests = map(model, ~ tidy(car::Anova(.x, type=3))))
+
+
 ```
 
-### Flowering
+```{r anova_selection, cache=FALSE}
+print_Anova_table(mod.selection %>% filter(response=="survived",treatment=="water") %>% unnest(tests), mod.selection$model)
+print_Anova_table(mod.selection %>% filter(response=="survived",treatment=="snow") %>% unnest(tests), mod.selection$model)
+print_Anova_table(mod.selection %>% filter(response=="flowered",treatment=="water") %>% unnest(tests), mod.selection$model)
+print_Anova_table(mod.selection %>% filter(response=="flowered",treatment=="snow") %>% unnest(tests), mod.selection$model)
 
-```{r selection_flrd}
-options(contrasts = c("contr.sum", "contr.poly"))
-
-lt.mod.flrd <- map(set_names(leaftraits), 
-                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * water + (1|plot) , 
-                            data=lt.plantyr.r2, family=binomial))
-pt.mod.flrd <- map(set_names(phystraits), 
-                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * water + (1|plot), 
-                            data=pt.plantyr, family=binomial))
-
-lt.mod.flrd.coefs <- map_dfr(lt.mod.flrd, tidy, .id="trait")
-pt.mod.flrd.coefs <- map_dfr(pt.mod.flrd, tidy, .id="trait")
-
-lt.mod.flrd.tests <- map(lt.mod.flrd, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
-pt.mod.flrd.tests <- map(pt.mod.flrd, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
+mod.selection %>% unnest(coefs) %>% filter(effect=="ran_pars") %>% select(trait, group, estimate, response, treatment) %>% pivot_wider(names_from=group, values_from=estimate) %>% kable(digits=3)
 ```
 
-```{r anova_flrd}
-print_Anova_table(lt.mod.flrd.tests, lt.mod.flrd)
-print_Anova_table(pt.mod.flrd.tests, pt.mod.flrd)
-map_dfr(list(lt.mod.flrd.coefs, pt.mod.flrd.coefs), re_table) %>% kable(digits=3)
-```
-
-## Selection: snow, survival/flowering
-
-### Survival
-
-```{r selection_surv_snow}
-options(contrasts = c("contr.sum", "contr.poly"))
-
-lt.mod.surv <- map(set_names(leaftraits), 
-                   ~ glmmTMB(survived ~ lt.plantyr.r2[[.x]] * year * snow + (1|plot), 
-                            data=lt.plantyr.r2, family=binomial))
-pt.mod.surv <- map(set_names(phystraits), 
-                   ~ glmmTMB(survived ~ pt.plantyr[[.x]] * year * snow * snow + (1|plot), 
-                            data=pt.plantyr, family=binomial))
-
-lt.mod.surv.coefs <- map_dfr(lt.mod.surv, tidy, .id="trait")
-pt.mod.surv.coefs <- map_dfr(pt.mod.surv, tidy, .id="trait")
-
-lt.mod.surv.tests <- map(lt.mod.surv, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
-pt.mod.surv.tests <- map(pt.mod.surv, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
-```
-
-```{r anova_surv_snow}
-print_Anova_table(lt.mod.surv.tests, lt.mod.surv)
-print_Anova_table(pt.mod.surv.tests, pt.mod.surv)
-map_dfr(list(lt.mod.surv.coefs, pt.mod.surv.coefs), re_table) %>% kable(digits=3)
-```
-
-### Flowering
-
-```{r selection_flrd_snow}
-options(contrasts = c("contr.sum", "contr.poly"))
-
-lt.mod.flrd <- map(set_names(leaftraits), 
-                   ~ glmmTMB(flowered ~ lt.plantyr.r2[[.x]] * year * snow + (1|plot) , 
-                            data=lt.plantyr.r2, family=binomial))
-pt.mod.flrd <- map(set_names(phystraits), 
-                   ~ glmmTMB(flowered ~ pt.plantyr[[.x]] * year * snow + (1|plot), 
-                            data=pt.plantyr, family=binomial))
-
-lt.mod.flrd.coefs <- map_dfr(lt.mod.flrd, tidy, .id="trait")
-pt.mod.flrd.coefs <- map_dfr(pt.mod.flrd, tidy, .id="trait")
-
-lt.mod.flrd.tests <- map(lt.mod.flrd, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
-pt.mod.flrd.tests <- map(pt.mod.flrd, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
-```
-
-```{r anova_flrd_snow}
-print_Anova_table(lt.mod.flrd.tests, lt.mod.flrd)
-print_Anova_table(pt.mod.flrd.tests, pt.mod.flrd)
-map_dfr(list(lt.mod.flrd.coefs, pt.mod.flrd.coefs), re_table) %>% kable(digits=3)
-```
 ## Multivariate response
 ```{r multresp}
 mt.morph <- mt[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","VWC")] %>% drop_na(1:5) #drop sepal_width
