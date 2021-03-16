@@ -825,6 +825,7 @@ traits <- c("corolla_length", "style_length", "corolla_width", "sepal_width", "n
 seedtraits <- traits[10:16] 
 leaftraits <- c("sla","trichome_density","water_content")
 phystraits <- c("photosynthesis", "conductance", "WUE")
+alltraits <- c(traits, leaftraits, phystraits)
 
 traitnames <- set_names(c(
   "Corolla length (mm)", "Style length (mm)", "Corolla width (mm)", "Sepal width (mm)", 
@@ -835,7 +836,7 @@ traitnames <- set_names(c(
   "Specific leaf area (cm\U00B2 g\U207B\U00B9)", "Trichome density (cm\U207B\U00B2)", "Water content", 
   "Photosynthetic rate (\U00B5mol CO\U2082 m\U207B\U00B2 s\U207B\U00B9)", 
   "Stomatal conductance (mol H\U2082O m\U207B\U00B2 s\U207B\U00B9)", 
-  "Intrinsic water-use efficiency (\U00B5mol CO\U2082 mol\U207B\U00B9 H\U2082O)"), c(traits, leaftraits, phystraits))
+  "Intrinsic water-use efficiency (\U00B5mol CO\U2082 mol\U207B\U00B9 H\U2082O)"), alltraits)
 
 # export ------------------------------------------------------------------
 

@@ -723,6 +723,13 @@ pt.mod.abs.coefs <- map_dfr(pt.mod.abs, tidy, .id="trait")
 mt.mod.abs.tests <- map(mt.mod.abs, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 lt.mod.abs.tests <- map(lt.mod.abs, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 pt.mod.abs.tests <- map(pt.mod.abs, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+
+alltraits.sd <- c(map_dbl(traits,     ~sd(mnps.plantyr[[.x]], na.rm=T)),
+                  map_dbl(leaftraits, ~sd(lt.plantyr[[.x]], na.rm=T)),
+                  map_dbl(phystraits, ~sd(pt.plantyr[[.x]], na.rm=T))) %>% set_names(alltraits)
+alltraits.mean <- c(map_dbl(traits,   ~mean(mnps.plantyr[[.x]], na.rm=T)),
+                  map_dbl(leaftraits, ~mean(lt.plantyr[[.x]], na.rm=T)),
+                  map_dbl(phystraits, ~mean(pt.plantyr[[.x]], na.rm=T))) %>% set_names(alltraits)
 ```
 
 ### ANOVA tables
@@ -743,23 +750,27 @@ map_dfr(list(mt.mod.abs.coefs, lt.mod.abs.coefs, pt.mod.abs.coefs), re_table) %>
 plot_abs <- function(mod, data, traits.plot) {
   data.long <- data %>% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm) %>% 
     pivot_longer(all_of(traits.plot), names_to="trait") %>% 
-    mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal")) %>% 
+    mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal"),
+                      value = (value - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)]) %>% 
     drop_na(value, water) %>% filter(trait %in% traits.plot)
   
   emm.grid <- mod[traits.plot] %>% 
-    map_dfr(~ emmeans(.x, ~ precip_est_mm * sun_date, at=list(sun_date=range(treatments$sun_date), precip_est_mm=seq(25,150, by=25))) %>% as_tibble(), .id="trait") %>% 
-    mutate(trait = fct_relevel(trait, traits.plot))
+    map_dfr(~ emmeans(.x, ~ precip_est_mm * sun_date, 
+                      at=list(sun_date=range(treatments$sun_date), precip_est_mm=seq(25,150, by=25))) 
+            %>% as_tibble(), .id="trait") %>% 
+    mutate(trait = fct_relevel(trait, traits.plot),
+           emmean = (emmean - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)])
   
   traitnames.multiline <- ifelse(nchar(traitnames) > 30, str_replace(traitnames, fixed("("),"\n("), traitnames)
   
   abs_plot <- ggplot(emm.grid, aes(x=sun_date, y=emmean, color=precip_est_mm, group=precip_est_mm)) + 
-    facet_wrap(vars(trait), scales="free_y",labeller = as_labeller(traitnames.multiline))+
+    facet_wrap(vars(trait), scales="fixed",labeller = as_labeller(traitnames.multiline))+
     geom_point(data = data.long, aes(y=value, shape=year), size=2) + geom_line() + 
     scale_color_gradientn(colors=rev(water_pal), 
                           values=rev(c(1, (treatments %>% group_by(water) %>% summarize(across(precip_est_mm, mean)) %>%
                                              pull(precip_est_mm) %>% scales::rescale(from=c(25,150)))[2],0)),
                           breaks=seq(25,150, by=25)) + 
-    labs(x="Snowmelt date", y="", color="Summer\nprecipitation\n(mm)", shape="Year") + 
+    labs(x="Snowmelt date", y="Standardized trait", color="Summer\nprecipitation\n(mm)", shape="Year") + 
     #coord_cartesian(ylim=c(0,NA)) + scale_y_continuous(expand=expansion(mult=c(0,0.05)))+
     theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                             panel.border = element_rect(fill=NA, colour = "black"))
@@ -767,12 +778,15 @@ plot_abs <- function(mod, data, traits.plot) {
 }
 
 plot_abs(mt.mod.abs, mnps, traits[c(1:4,5,6,8,13)]) #Morphological traits - raw data
-plot_abs(mt.mod.abs, mnps.subplot, traits[c(1:4,5,6,8,13)]) #Morphological traits - subplot means
+plot_abs(mt.mod.abs, mnps.subplot, traits[c(1:4,5,6,8,13)]) + #Morphological traits - subplot means
+  scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
 
 grid.arrange(plot_abs(lt.mod.abs, lt, leaftraits), 
              plot_abs(pt.mod.abs, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
-grid.arrange(plot_abs(lt.mod.abs, lt.subplot.r2, leaftraits),
-             plot_abs(pt.mod.abs, pt.subplot, phystraits)+ guides(color=F, shape=F), ncol=1) #subplot means
+grid.arrange(plot_abs(lt.mod.abs, lt.subplot.r2, leaftraits)+ 
+               scale_y_continuous(limits=c(-2.6, 1.8), breaks=c(-2:1)),
+             plot_abs(pt.mod.abs, pt.subplot, phystraits)+ guides(color=F, shape=F) +  
+               scale_y_continuous(limits=c(-2.6, 1.8), breaks=c(-2:1)), ncol=1) #subplot means
 
 ```
 
@@ -787,38 +801,70 @@ grid.arrange(plot_abs(lt.mod.abs, lt.subplot.r2, leaftraits),
 #                          pivot_longer(traits, names_to="trait", values_to="n"))
 #              , ss=filter(datasheets, name=="Maxfield Results"), sheet="slopes_melt")
 
-#get slopes with emtrends
-mt.mod.abs.emm <- map(set_names(c("sun_date", "precip_est_mm")), ~ map(mt.mod.abs, emtrends, ~ 1, var = .x) %>% 
-      map(as.data.frame) %>% set_names(traits) %>% bind_rows(.id="trait") %>% rename_with(.cols=ends_with("trend"), ~ "trend")) %>% 
-  bind_rows(.id="predictor") %>% mutate(predictor=fct_relevel(predictor,"sun_date"), 
-                                        sd.plantyr = map_dbl(trait, ~sd(mnps.plantyr[[.x]], na.rm=T)),
-                                        trend = trend / sd.plantyr,SE = SE / sd.plantyr) %>% #Scale slope by SD of the plant means
-    filter(trait %in% traits[c(1:8, 13)]) # traits for floral plasticty paper
 
-mt.mod.abs.emm.plot <- ggplot(mt.mod.abs.emm, aes(x=fct_relevel(trait, rev(traits)), y=trend)) +  
+predictor.ranges <- list(sun_date=c(115,160) , precip_est_mm=c(25, 150)) #a bit narrower than the experiment
+#get slopes with emtrends at range of other predictor, and scale slopes by SD of the plant means
+mod.abs.emm <- map(set_names(c("sun_date", "precip_est_mm")), 
+                   ~ c(mt.mod.abs, lt.mod.abs, pt.mod.abs) %>% 
+                     map(emtrends, var = .x, 
+                         at = predictor.ranges) %>% #[ifelse(.x=="sun_date","precip_est_mm","sun_date")]
+                     map(as_tibble) %>% set_names(alltraits) %>% bind_rows(.id="trait") %>% 
+                     rename_with(.cols=ends_with("trend"), ~ "trend")) %>% 
+  bind_rows(.id="predictor") %>% 
+  mutate(predictor=fct_relevel(predictor,"sun_date"), 
+         sd.plantyr = alltraits.sd[trait],
+         trend = trend / sd.plantyr, SE = SE / sd.plantyr) #%>% 
+  #filter(trait %in% traits[c(1:8, 13)]) # traits for floral plasticity paper
+  
+(mod.abs.emm.plot.sun_date <- 
+  mod.abs.emm %>% filter(predictor=="sun_date", sun_date == predictor.ranges$sun_date[1]) %>% 
+  ggplot(aes(x=fct_relevel(trait, rev(alltraits)), y=trend, color=factor(precip_est_mm))) +  
   facet_wrap(vars(predictor), nrow=1, scales="free_x", 
-             labeller=labeller(predictor=c(precip_est_mm="Estimated summer precip (mm)", sun_date="Snowmelt date"))) + 
-  geom_hline(yintercept=0) +  geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), size=0.4) + 
-  labs(y="Slope and SE of z-scored trait vs. predictor", x="Floral Trait") + 
-  scale_x_discrete(labels = traitnames) + coord_flip() +  theme_bw()
+             labeller=labeller(predictor=c(sun_date="Snowmelt date"))) + 
+  geom_hline(yintercept=0) +  
+  geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), size=0.4, position=position_dodge2(0.2)) + 
+  labs(y="Slope of standardized trait vs. predictor", x="Trait", color="Estimated summer precip (mm)") + 
+  scale_color_manual(values= unname(water_pal[c(3,1)])) +
+  scale_x_discrete(labels = traitnames) + coord_flip() +  theme_bw() + theme(legend.position = "top"))
+
+(mod.abs.emm.plot.precip_est_mm <- 
+  mod.abs.emm %>% filter(predictor=="precip_est_mm", precip_est_mm == predictor.ranges$precip_est_mm[1]) %>% 
+  ggplot(aes(x=fct_relevel(trait, rev(alltraits)), y=trend, color=factor(sun_date))) +  
+  facet_wrap(vars(predictor), nrow=1, scales="free_x", 
+             labeller=labeller(predictor=c(precip_est_mm="Estimated summer precip (mm)"))) + 
+  geom_hline(yintercept=0) +  
+  geom_pointrange(aes(ymin=trend - SE, ymax = trend + SE), size=0.4, position=position_dodge2(0.2)) + 
+  labs(y="Slope of standardized trait vs. predictor", x="", color="Snowmelt date") + 
+  scale_color_manual(values= unname(snow_pal)) +
+  scale_x_discrete(labels = traitnames) + coord_flip() +  theme_bw() + 
+    theme(legend.position = "top",axis.text.y = element_blank(), axis.ticks.y = element_blank()))
+
 
 #calculate how much summer precip is required to compensate for 1 day earlier snowmelt
-mt.nonsignif.traits <- mt.mod.abs.tests %>% filter(p.value > 0.05) %>% pull(trait) %>% unique  #if P> 0.05 for effect of summer precip or snowmelt
-mt.mod.abs.emm.compensate <- mt.mod.abs.emm %>% pivot_wider(names_from=predictor, values_from=c(trend, SE), id_cols=trait) %>% 
+#mt.exclude.compensate <- mt.mod.abs.tests %>% filter(term %in% c("precip_est_mm", "sun_date"), p.value > 0.05) %>% pull(trait) %>% unique  #if P> 0.05 for effect of summer precip or snowmelt
+exclude.compensate<- c("height_cm", #snowmelt/precip slope too big and P > 0.05 for both
+                          "sepal_width",#sepal_width has interaction with sun_date,
+                        "seeds_per_flower", "seeds_per_fruit", "seeds_est", "open")
+mod.abs.emm.compensate <- mod.abs.emm %>% 
+  pivot_wider(names_from=predictor, values_from=c(trend, SE), id_cols=c(trait, sun_date, precip_est_mm)) %>% 
   mutate(predictor = "Compensation",
          precip_mm_per_snow_day = trend_sun_date / trend_precip_est_mm, 
          SE = abs(precip_mm_per_snow_day) * # propagate error in SEs using formula for quotients
            sqrt((SE_precip_est_mm / trend_precip_est_mm)^2 + (SE_sun_date / trend_sun_date)^2),
-        keep = !trait %in% mt.nonsignif.traits & trait!="sepal_width",   #sepal_width has interaction with sun_date,
-        precip_mm_per_snow_day = ifelse(keep, precip_mm_per_snow_day, NA), SE = ifelse(keep, SE, NA))
+         exclude = trait %in% exclude.compensate,
+         precip_mm_per_snow_day = ifelse(exclude, NA, precip_mm_per_snow_day), SE = ifelse(exclude, NA, SE))
 
-mt.mod.abs.emm.compensate.plot <- ggplot(mt.mod.abs.emm.compensate, aes(x=fct_relevel(trait, rev(traits)), y=precip_mm_per_snow_day)) +  
+(mod.abs.emm.compensate.plot <- mod.abs.emm.compensate %>% 
+    ggplot(aes(x=fct_relevel(trait, rev(alltraits)), y=precip_mm_per_snow_day, 
+               color=paste0(sun_date, ", ", precip_est_mm))) +  
   facet_wrap(vars(predictor)) +   geom_hline(yintercept=0) +   
-  geom_pointrange(aes(ymin=precip_mm_per_snow_day - SE, ymax = precip_mm_per_snow_day + SE), size=0.4) + 
-  labs(y="Summer precipitation (mm) / day earlier snowmelt", x="") + scale_x_discrete(labels = traitnames) + 
-  coord_flip() +   theme_bw() + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+  geom_pointrange(aes(ymin=precip_mm_per_snow_day - SE, ymax = precip_mm_per_snow_day + SE), size=0.4,
+                  position=position_dodge2(0.4)) + 
+  labs(y="Summer precipitation (mm) / day earlier snowmelt", x="", color="Snowmelt, Precip") +
+    scale_x_discrete(labels = traitnames) +   coord_flip(ylim = c(-5,17)) +   
+  theme_bw() + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position="top"))
                                        
-grid.arrange(mt.mod.abs.emm.plot, mt.mod.abs.emm.compensate.plot, nrow=1, widths=c(3,1))
+grid.arrange(mod.abs.emm.plot.sun_date, mod.abs.emm.plot.precip_est_mm, mod.abs.emm.compensate.plot, nrow=1, widths=c(1,0.5,0.8))
 ```
 
 ## Plasticity: soil moisture
@@ -917,7 +963,7 @@ emm.VWC.allyears[c(1:3,5)] %>% map(as.data.frame) %>% bind_rows(.id="trait")
 emm.VWC.df %>% drop_na() %>% filter(trait %in% traits[c(1:8, 13)]) %>% 
   ggplot(aes(x=fct_relevel(trait, rev(traits)), y=VWC.trend, color=year)) +  
   geom_hline(yintercept=0) + geom_pointrange(aes(ymin=VWC.trend - SE, ymax = VWC.trend + SE), position=position_dodge(width=0.3), size=0.4) + 
-  labs(y="Slope of z-scored trait vs. mean annual soil moisture", x="Floral Trait", color="Year") +
+  labs(y="Slope of standardized trait vs. mean annual soil moisture", x="Floral Trait", color="Year") +
   theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)
 ```
 
