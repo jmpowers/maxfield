@@ -75,7 +75,7 @@ meltdates <- meltdates %>% left_join(meltdates %>% group_by(year,snow) %>% summa
 treatments <- treatments %>% select(-snow) %>% left_join(meltdates)
 
 # Color palettes for water and snow treatments
-water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,7,1)], levels(treatments$water4))
+water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,8,1)], levels(treatments$water4))
 water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$water))
 snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
 year_pal <- setNames(brewer.pal(8, name="Set2")[c(2,3,6)], levels(treatments$year))
@@ -822,12 +822,21 @@ timings %>% mutate(range=paste(begin,end,sep=" - "), .keep="unused") %>%
 # traitnames --------------------------------------------------------------
 
 traits <- c("corolla_length", "style_length", "corolla_width", "sepal_width", "nectar_24_h_ul", "nectar_conc","nectar_sugar_24_h_mg","height_cm","open","seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower") #exclude anthers
+floraltraits <- traits[c(1:6,8,13)]
 seedtraits <- traits[10:16] 
 leaftraits <- c("sla","trichome_density","water_content")
 phystraits <- c("photosynthesis", "conductance", "WUE")
 alltraits <- c(traits, leaftraits, phystraits)
 
 traitnames <- set_names(c(
+  "Corolla length", "Style length", "Corolla width", "Sepal width", 
+  "Nectar production", "Nectar concentration", "Nectar sucrose", "Inflorescence height", 
+  "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", 
+  "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower",
+  "Specific leaf area", "Trichome density", "Water content", 
+  "Photosynthetic rate", "Stomatal conductance", "Intrinsic water-use efficiency"), alltraits)
+
+traitnames.units <- set_names(c(
   "Corolla length (mm)", "Style length (mm)", "Corolla width (mm)", "Sepal width (mm)", 
   "Nectar production (\U00B5L/day)", "Nectar conc. (% by mass)", "Nectar sucrose (mg/day)", 
   "Inflorescence height (cm)", 
