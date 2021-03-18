@@ -838,6 +838,13 @@ traitnames <- set_names(c(
   "Stomatal conductance (mol H\U2082O m\U207B\U00B2 s\U207B\U00B9)", 
   "Intrinsic water-use efficiency (\U00B5mol CO\U2082 mol\U207B\U00B9 H\U2082O)"), alltraits)
 
+alltraits.sd <- c(map_dbl(traits,     ~sd(mnps.plantyr[[.x]], na.rm=T)),
+                  map_dbl(leaftraits, ~sd(lt.plantyr[[.x]], na.rm=T)),
+                  map_dbl(phystraits, ~sd(pt.plantyr[[.x]], na.rm=T))) %>% set_names(alltraits)
+alltraits.mean <- c(map_dbl(traits,   ~mean(mnps.plantyr[[.x]], na.rm=T)),
+                    map_dbl(leaftraits, ~mean(lt.plantyr[[.x]], na.rm=T)),
+                    map_dbl(phystraits, ~mean(pt.plantyr[[.x]], na.rm=T))) %>% set_names(alltraits)
+
 # export ------------------------------------------------------------------
 
 remove(hourly_GTH161, tenmin_CORBIL)
