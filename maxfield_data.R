@@ -200,14 +200,19 @@ sm <- bind_rows(read_sheet(sm_sheets, sheet="2020"),
                   read_sheet(sm_sheets, sheet="2018 - long"),
                   read_sheet(sm_sheets, sheet="2018 - wide") %>% 
                     pivot_longer(UR:M, names_to="location", values_to="VWC"))) %>% 
-  mutate(plot = as.character(plot), plotid = paste0(plot, subplot), year=factor(year(date))) %>% 
+  mutate(plot = as.character(plot), plotid = paste0(plot, subplot), year=factor(year(date)), day=yday(date),
+         location = recode(location, DL = "down-left", LL="down-left", DR = "down-right", LR = "down-right",
+                           M = "center-middle", MM = "center-middle", UL="up-left",UR="up-right")) %>% 
+  separate(location, into= c("location_y", "location_x"), remove=F) %>% 
+  mutate(numeric_y = recode(location_y, up=1, center=0, down=-1), 
+         numeric_x = recode(location_x, right=1, middle=0, left=-1)) %>% 
   left_join(treatments) %>%
   mutate_if(is.character, as.factor) %>% 
   filter(!(format(date) %in% c("2018-06-06", "2018-06-07")))
 
 # Means within each subplot across days, months, and years
-sm.subplot <- sm %>% group_by(year, date, plot, subplot, plotid, water, water4, snow) %>% 
-  summarize(VWC = mean(VWC, na.rm=T), .groups="drop") %>% mutate(day=yday(date))
+sm.subplot <- sm %>% group_by(year, date, day, plot, subplot, plotid, water, water4, snow) %>% 
+  summarize(VWC = mean(VWC, na.rm=T), .groups="drop")
 
 breaks_20 <- seq(160, 240, by=20)
 sm.subplot20d <- sm.subplot %>% 
