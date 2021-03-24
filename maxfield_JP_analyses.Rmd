@@ -291,9 +291,9 @@ sm.subplot %>% mutate(day=yday(date)) %>% group_by(year) %>% summarize(start=min
 # VWC split-plot analysis on subplot means (for the whole measurement period)
 sm.mod <- lmer(VWC ~ year * snow * water + (1|snow:plot)+ (1|snow:plotid), data=sm.subplotyear)
 anova(sm.mod) %>% kable(digits=3)
-(sm.emm.snow <- as.data.frame(emmeans(sm.mod, ~ snow))) %>% kable(digits=3)
+(sm.emm.snow <- summary(emmeans(sm.mod, ~ snow))) %>% kable(digits=3)
 sm.emm.snow$emmean[1] - sm.emm.snow$emmean[2]
-(sm.emm.water <- as.data.frame(emmeans(sm.mod, ~ water))) %>% kable(digits=3)
+(sm.emm.water <- summary(emmeans(sm.mod, ~ water))) %>% kable(digits=3)
 sm.emm.water$emmean[1] - sm.emm.water$emmean[2]
 sm.emm.water$emmean[3] - sm.emm.water$emmean[2]
 
@@ -722,7 +722,7 @@ mod.split <- c(map(set_names(traits),
 
 mod.split.coefs <- map_dfr(mod.split, tidy, .id="trait")
 mod.split.tests <- map(mod.split, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
-mod.split.emm <- map(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)))
+mod.split.emm <- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)), .id = "trait")
 anova_table(mod.split.tests, mod.split) %>% kable()
 re_table(mod.split.coefs) %>% kable(digits=3)
 ```
@@ -740,7 +740,7 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
   
   traitnames.multiline <- ifelse(nchar(traitnames.units) > 30, str_replace(traitnames.units, fixed("("),"\n("), traitnames.units)
   
-  split_plot <- emm %>% bind_rows(.id="trait") %>% filter(trait %in% traits.plot) %>% 
+  split_plot <- emm %>% filter(trait %in% traits.plot) %>% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal")) %>%  
            #emmean = (emmean - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)],
            #SE = SE/alltraits.sd[as.character(trait)]) %>% 
@@ -803,7 +803,7 @@ map_dfr(mt.mod.glht, ~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=su
 detach("package:multcomp", unload = TRUE); detach("package:TH.data", unload = TRUE); detach("package:MASS", unload = TRUE)
 ```
 
-### Water treatments vs. controls
+### Compare treatment levels
 ```{r water_glht}
 #This ignores any interactions with water (water:snow and water:year)
 mod.split.tests.water <- map(mod.split, multcomp::glht, 
@@ -811,6 +811,8 @@ mod.split.tests.water <- map(mod.split, multcomp::glht,
   map_dfr(tidy, .id="trait")
 
 mod.split.tests.water %>% select(trait, contrast, adj.p.value) %>% pivot_wider(names_from=contrast, values_from=adj.p.value) %>% kable(digits=3)
+
+map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ snow)), .id = "trait")
 ```
 
 ## Plasticity: absolute snowmelt date and estimated summer precipitation
@@ -885,15 +887,25 @@ grid.arrange(plot_abs(mod.abs, lt.subplot.r2, leaftraits)+
 ### Slope plots and compensation
 
 ```{r compensation_meltdate}
+# for corolla width there are effects of both predictors but no interaction
+mod.abs.emm.corolla_width <- bind_rows(
+  sun_date = emtrends(mod.abs$corolla_width, var="sun_date", ~1) %>% as_tibble %>% 
+    transmute(trend = sun_date.trend / alltraits.sd["corolla_width"], SE = SE / alltraits.sd["corolla_width"]),
+  precip_est_mm = emtrends(mod.abs$corolla_width, var="precip_est_mm", ~1) %>% as_tibble %>% 
+    transmute(trend = precip_est_mm.trend / alltraits.sd["corolla_width"], SE = SE / alltraits.sd["corolla_width"]), 
+  .id="predictor")
+mod.abs.emm.corolla_width$trend[1] / mod.abs.emm.corolla_width$trend[2] #compensation point in mm precip / day
+mean(groundcover$precip_est_mm, na.rm=T) # mean summer precip 1990 - 2020 (mm)
+
+
 predictor.ranges <- list(sun_date=c(115,160) , precip_est_mm=c(25, 150)) #a bit narrower than the experiment
 #get slopes with emtrends at range of other predictor, and scale slopes by SD of the plant means
-mod.abs.emm <- map(set_names(c("sun_date", "precip_est_mm")), 
+mod.abs.emm <- map_dfr(set_names(c("sun_date", "precip_est_mm")), 
                    ~ mod.abs %>% 
                      map(emtrends, var = .x, 
                          at = predictor.ranges) %>% #[ifelse(.x=="sun_date","precip_est_mm","sun_date")]
                      map(as_tibble) %>% set_names(alltraits) %>% bind_rows(.id="trait") %>% 
-                     rename_with(.cols=ends_with("trend"), ~ "trend")) %>% 
-  bind_rows(.id="predictor") %>% 
+                     rename_with(.cols=ends_with("trend"), ~ "trend"), .id="predictor") %>% 
   mutate(predictor=fct_relevel(predictor,"sun_date"), 
          sd.plantyr = alltraits.sd[trait],
          trend = trend / sd.plantyr, SE = SE / sd.plantyr)
