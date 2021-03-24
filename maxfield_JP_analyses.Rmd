@@ -985,6 +985,24 @@ lt.mod.abs.rm.tests <- map(lt.mod.abs.rm, anova, ddf="Ken") %>% map_dfr(tidy, .i
 anova_table(lt.mod.abs.rm.tests, lt.mod.abs.rm) %>% kable()
 ```
 
+## Lagged effects of snowmelt
+
+```{r meltdate_lag}
+mnps.plantyr <- mnps.plantyr %>% left_join(meltdates %>% select(year, plot, sun_date_lag=sun_date) %>% 
+  bind_rows(groundcover %>% select(year, sun_date_lag=first_0_cm_day) %>% filter(year == 2017) %>%
+              mutate(year=as.factor(year)) %>% left_join(tibble(year="2017", plot=as.character(1:6))))%>% 
+  mutate(year = as.character(as.integer(as.character(year)) + 1)))
+
+mod.abs.lag <- c(map(set_names(traits), 
+                 ~ lmer(mnps.plantyr[[.x]]  ~ sun_date_lag * precip_est_mm + (1|plot) + (1|plotid), data=mnps.plantyr)))
+mod.abs.lag.tests <- map(mod.abs.lag, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+anova_table(mod.abs.lag.tests, mod.abs.lag) %>% kable()
+
+ggplot(mnps.plantyr %>% distinct(year, sun_date, sun_date_lag), aes(x=sun_date, y=sun_date_lag, color=year)) + geom_point()
+
+ggplot(mnps.plantyr, aes(x=sun_date_lag, y=flowers_est, color=year)) + geom_point() + geom_smooth(method="lm") + scale_color_manual(values=year_pal) + theme_minimal() + labs(x="Melt date the previous year", y=traitnames["flowers_est"], color="Year")
+```
+
 
 ## Plasticity: soil moisture
 

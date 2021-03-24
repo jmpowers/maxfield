@@ -600,6 +600,9 @@ pt.subplot <- pt.plantyr %>% group_by(year, water, water4, snow, plot, plotid) %
   summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
+pt.subplot %>% select(year, water4, snow, plotid, photosynthesis, conductance) %>% 
+  write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="phys_subplot")
+
 # floraltraits ------------------------------------------------------------------
 
 mt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet="Morphology") %>% 
