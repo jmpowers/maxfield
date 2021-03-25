@@ -366,30 +366,41 @@ ggplot(aes(y=variable, color=year))+
 
 plot_timings(filter(timings, !variable %in% c("sds","lt","pt")))
 plot_timings(filter(timings, !variable %in% c("sds","mt","nt","ph")))
+
+timings.long <- timings %>% select(-plots) %>% 
+  pivot_longer(c(begin,end), names_to="time", values_to="day") 
+
+
+timings.long %>% 
+  left_join(timings.long %>% filter(variable=="meltdates", time=="end") %>% select(year, sun_date=day)) %>% 
+  mutate(days_since_sun_date = day - sun_date) %>% 
+  pivot_wider(id_cols = c(variable, year), names_from=time, names_prefix = "snowmelt_",
+              values_from=days_since_sun_date, values_fn = list) %>% kable
 ```
 
 ## Sample sizes
 
 ```{r sample_sizes}
-cat("Morphology measurements per plant:", mt %>% drop_na(corolla_length) %>% group_by(year, plantid) %>% tally() %>% ungroup() %>% summarize(n=mean(n)) %>% pull(n) %>% round(2))
-cat("Nectar measurements per plant:", mt %>% drop_na(nectar_24_h_ul) %>% group_by(year, plantid) %>% tally() %>% ungroup() %>% summarize(n=mean(n)) %>% pull(n) %>% round(2))
-cat("Inflo height measurements per plant:")
-ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>% summarize(n=mean(n)) %>% kable
-ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>% 
-  ggplot(aes(x=n, fill=year)) + geom_histogram() + labs(title = "Phenology entries per plant", x="Entries",y="Count")+
-  facet_wrap(vars(year), ncol=1) + scale_fill_manual(values=year_pal)
-
-
-#Total sample sizes of plants per year - not unique plants
-mt %>% drop_na(corolla_length) %>% group_by(plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
-mt %>% drop_na(corolla_length, anther_min) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
-mt %>% drop_na(nectar_24_h_ul) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
-sds %>% drop_na(flowers_est) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
-ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
-pt %>% drop_na(photosynthesis, conductance) %>% group_by(year, plantid) %>% tally() %>% ungroup %>% tally() %>% pull(n)
+count_measurements <- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
+bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits),
+          plant_year_round =   count_measurements(bind_rows(mnps.plantyr, lt.plantyr, pt.plantyr), alltraits), 
+          plant_year = count_measurements(bind_rows(mnps, lt, pt) %>% group_by(year, plantid) %>% 
+                                            summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits) %>% 
+            ungroup %>% summarize(across(all_of(alltraits), sum)),
+          plant =       count_measurements(bind_rows(mnps, lt, pt) %>% group_by(plantid) %>% 
+                                             summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits),
+          .id="sample_size") %>% column_to_rownames("sample_size") %>% 
+  t %>% as.data.frame %>% rownames_to_column("trait") %>% as_tibble %>% 
+  mutate(n_per_plant_year_round = n_measurements / plant_year_round,
+         n_per_plant_year = n_measurements / plant_year,
+         n_per_plant = n_measurements/ plant) %>% kable(digits=2)
 
 #How many plants flowered twice?
 with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))
+
+ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>% 
+  ggplot(aes(x=n, fill=year)) + geom_histogram() + labs(title = "Phenology entries per plant", x="Entries",y="Count")+
+  facet_wrap(vars(year), ncol=1) + scale_fill_manual(values=year_pal)
 ```
 
 

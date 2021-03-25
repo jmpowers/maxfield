@@ -941,59 +941,465 @@ plot_timings(filter(timings, !variable %in% c(&quot;sds&quot;,&quot;lt&quot;,&qu
 <p><img src="images/timings-1.png" width="672" /></p>
 <pre class="r"><code>plot_timings(filter(timings, !variable %in% c(&quot;sds&quot;,&quot;mt&quot;,&quot;nt&quot;,&quot;ph&quot;)))</code></pre>
 <p><img src="images/timings-2.png" width="672" /></p>
-<div id="sample-sizes" class="section level2">
-<h2>Sample sizes</h2>
-<pre class="r"><code>cat(&quot;Morphology measurements per plant:&quot;, mt %&gt;% drop_na(corolla_length) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup() %&gt;% summarize(n=mean(n)) %&gt;% pull(n) %&gt;% round(2))</code></pre>
-<pre><code>Morphology measurements per plant: 2.42</code></pre>
-<pre class="r"><code>cat(&quot;Nectar measurements per plant:&quot;, mt %&gt;% drop_na(nectar_24_h_ul) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup() %&gt;% summarize(n=mean(n)) %&gt;% pull(n) %&gt;% round(2))</code></pre>
-<pre><code>Nectar measurements per plant: 1.72</code></pre>
-<pre class="r"><code>cat(&quot;Inflo height measurements per plant:&quot;)</code></pre>
-<pre><code>Inflo height measurements per plant:</code></pre>
-<pre class="r"><code>ph %&gt;% drop_na(height_cm) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% summarize(n=mean(n)) %&gt;% kable</code></pre>
+<pre class="r"><code>timings.long &lt;- timings %&gt;% select(-plots) %&gt;% 
+  pivot_longer(c(begin,end), names_to=&quot;time&quot;, values_to=&quot;day&quot;) 
+
+
+timings.long %&gt;% 
+  left_join(timings.long %&gt;% filter(variable==&quot;meltdates&quot;, time==&quot;end&quot;) %&gt;% select(year, sun_date=day)) %&gt;% 
+  mutate(days_since_sun_date = day - sun_date) %&gt;% 
+  pivot_wider(id_cols = c(variable, year), names_from=time, names_prefix = &quot;snowmelt_&quot;,
+              values_from=days_since_sun_date, values_fn = list) %&gt;% kable</code></pre>
 <table>
 <thead>
 <tr class="header">
+<th align="left">variable</th>
 <th align="left">year</th>
-<th align="right">n</th>
+<th align="left">snowmelt_begin</th>
+<th align="left">snowmelt_end</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">snowcloth</td>
 <td align="left">2018</td>
-<td align="right">3.191388</td>
+<td align="left">-32</td>
+<td align="left">-5</td>
 </tr>
 <tr class="even">
+<td align="left">snowcloth</td>
 <td align="left">2019</td>
-<td align="right">1.662100</td>
+<td align="left">-40, -20</td>
+<td align="left">-7, 0</td>
 </tr>
 <tr class="odd">
+<td align="left">snowcloth</td>
 <td align="left">2020</td>
-<td align="right">3.390244</td>
+<td align="left">-27</td>
+<td align="left">-5</td>
+</tr>
+<tr class="even">
+<td align="left">meltdates</td>
+<td align="left">2018</td>
+<td align="left">-5</td>
+<td align="left">0</td>
+</tr>
+<tr class="odd">
+<td align="left">meltdates</td>
+<td align="left">2019</td>
+<td align="left">-7</td>
+<td align="left">0</td>
+</tr>
+<tr class="even">
+<td align="left">meltdates</td>
+<td align="left">2020</td>
+<td align="left">-6</td>
+<td align="left">0</td>
+</tr>
+<tr class="odd">
+<td align="left">waterdates</td>
+<td align="left">2018</td>
+<td align="left">38</td>
+<td align="left">103</td>
+</tr>
+<tr class="even">
+<td align="left">waterdates</td>
+<td align="left">2019</td>
+<td align="left">17</td>
+<td align="left">69</td>
+</tr>
+<tr class="odd">
+<td align="left">waterdates</td>
+<td align="left">2020</td>
+<td align="left">38</td>
+<td align="left">101</td>
+</tr>
+<tr class="even">
+<td align="left">sm</td>
+<td align="left">2018</td>
+<td align="left">45</td>
+<td align="left">108</td>
+</tr>
+<tr class="odd">
+<td align="left">sm</td>
+<td align="left">2019</td>
+<td align="left">18</td>
+<td align="left">52</td>
+</tr>
+<tr class="even">
+<td align="left">sm</td>
+<td align="left">2020</td>
+<td align="left">43</td>
+<td align="left">98</td>
+</tr>
+<tr class="odd">
+<td align="left">mt</td>
+<td align="left">2018</td>
+<td align="left">65</td>
+<td align="left">93</td>
+</tr>
+<tr class="even">
+<td align="left">mt</td>
+<td align="left">2019</td>
+<td align="left">38</td>
+<td align="left">61</td>
+</tr>
+<tr class="odd">
+<td align="left">mt</td>
+<td align="left">2020</td>
+<td align="left">52</td>
+<td align="left">84</td>
+</tr>
+<tr class="even">
+<td align="left">nt</td>
+<td align="left">2018</td>
+<td align="left">61</td>
+<td align="left">92</td>
+</tr>
+<tr class="odd">
+<td align="left">nt</td>
+<td align="left">2019</td>
+<td align="left">42</td>
+<td align="left">61</td>
+</tr>
+<tr class="even">
+<td align="left">nt</td>
+<td align="left">2020</td>
+<td align="left">71</td>
+<td align="left">92</td>
+</tr>
+<tr class="odd">
+<td align="left">pt</td>
+<td align="left">2018</td>
+<td align="left">65</td>
+<td align="left">89</td>
+</tr>
+<tr class="even">
+<td align="left">pt</td>
+<td align="left">2019</td>
+<td align="left">62</td>
+<td align="left">69</td>
+</tr>
+<tr class="odd">
+<td align="left">pt</td>
+<td align="left">2020</td>
+<td align="left">78</td>
+<td align="left">87</td>
+</tr>
+<tr class="even">
+<td align="left">lt</td>
+<td align="left">2018</td>
+<td align="left">46</td>
+<td align="left">110</td>
+</tr>
+<tr class="odd">
+<td align="left">lt</td>
+<td align="left">2019</td>
+<td align="left">21</td>
+<td align="left">62</td>
+</tr>
+<tr class="even">
+<td align="left">lt</td>
+<td align="left">2020</td>
+<td align="left">45</td>
+<td align="left">84</td>
+</tr>
+<tr class="odd">
+<td align="left">ph</td>
+<td align="left">2018</td>
+<td align="left">47</td>
+<td align="left">78</td>
+</tr>
+<tr class="even">
+<td align="left">ph</td>
+<td align="left">2019</td>
+<td align="left">33</td>
+<td align="left">60</td>
+</tr>
+<tr class="odd">
+<td align="left">ph</td>
+<td align="left">2020</td>
+<td align="left">45</td>
+<td align="left">94</td>
+</tr>
+<tr class="even">
+<td align="left">sds</td>
+<td align="left">2020</td>
+<td align="left">80</td>
+<td align="left">120</td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>ph %&gt;% drop_na(height_cm) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% 
-  ggplot(aes(x=n, fill=year)) + geom_histogram() + labs(title = &quot;Phenology entries per plant&quot;, x=&quot;Entries&quot;,y=&quot;Count&quot;)+
-  facet_wrap(vars(year), ncol=1) + scale_fill_manual(values=year_pal)</code></pre>
-<p><img src="images/sample_sizes-1.png" width="672" /></p>
-<pre class="r"><code>#Total sample sizes of plants per year - not unique plants
-mt %&gt;% drop_na(corolla_length) %&gt;% group_by(plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 484</code></pre>
-<pre class="r"><code>mt %&gt;% drop_na(corolla_length, anther_min) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 494</code></pre>
-<pre class="r"><code>mt %&gt;% drop_na(nectar_24_h_ul) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 432</code></pre>
-<pre class="r"><code>sds %&gt;% drop_na(flowers_est) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 610</code></pre>
-<pre class="r"><code>ph %&gt;% drop_na(height_cm) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 674</code></pre>
-<pre class="r"><code>pt %&gt;% drop_na(photosynthesis, conductance) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% ungroup %&gt;% tally() %&gt;% pull(n)</code></pre>
-<pre><code>[1] 315</code></pre>
+<div id="sample-sizes" class="section level2">
+<h2>Sample sizes</h2>
+<pre class="r"><code>count_measurements &lt;- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
+bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits),
+          plant_year_round =   count_measurements(bind_rows(mnps.plantyr, lt.plantyr, pt.plantyr), alltraits), 
+          plant_year = count_measurements(bind_rows(mnps, lt, pt) %&gt;% group_by(year, plantid) %&gt;% 
+                                            summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits) %&gt;% 
+            ungroup %&gt;% summarize(across(all_of(alltraits), sum)),
+          plant =       count_measurements(bind_rows(mnps, lt, pt) %&gt;% group_by(plantid) %&gt;% 
+                                             summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits),
+          .id=&quot;sample_size&quot;) %&gt;% column_to_rownames(&quot;sample_size&quot;) %&gt;% 
+  t %&gt;% as.data.frame %&gt;% rownames_to_column(&quot;trait&quot;) %&gt;% as_tibble %&gt;% 
+  mutate(n_per_plant_year_round = n_measurements / plant_year_round,
+         n_per_plant_year = n_measurements / plant_year,
+         n_per_plant = n_measurements/ plant) %&gt;% kable(digits=2)</code></pre>
+<table style="width:100%;">
+<colgroup>
+<col width="17%" />
+<col width="12%" />
+<col width="13%" />
+<col width="9%" />
+<col width="4%" />
+<col width="18%" />
+<col width="13%" />
+<col width="9%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="right">n_measurements</th>
+<th align="right">plant_year_round</th>
+<th align="right">plant_year</th>
+<th align="right">plant</th>
+<th align="right">n_per_plant_year_round</th>
+<th align="right">n_per_plant_year</th>
+<th align="right">n_per_plant</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">corolla_length</td>
+<td align="right">1194</td>
+<td align="right">494</td>
+<td align="right">494</td>
+<td align="right">484</td>
+<td align="right">2.42</td>
+<td align="right">2.42</td>
+<td align="right">2.47</td>
+</tr>
+<tr class="even">
+<td align="left">style_length</td>
+<td align="right">1185</td>
+<td align="right">491</td>
+<td align="right">491</td>
+<td align="right">481</td>
+<td align="right">2.41</td>
+<td align="right">2.41</td>
+<td align="right">2.46</td>
+</tr>
+<tr class="odd">
+<td align="left">corolla_width</td>
+<td align="right">963</td>
+<td align="right">455</td>
+<td align="right">455</td>
+<td align="right">448</td>
+<td align="right">2.12</td>
+<td align="right">2.12</td>
+<td align="right">2.15</td>
+</tr>
+<tr class="even">
+<td align="left">sepal_width</td>
+<td align="right">749</td>
+<td align="right">340</td>
+<td align="right">340</td>
+<td align="right">334</td>
+<td align="right">2.20</td>
+<td align="right">2.20</td>
+<td align="right">2.24</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_24_h_ul</td>
+<td align="right">744</td>
+<td align="right">432</td>
+<td align="right">432</td>
+<td align="right">419</td>
+<td align="right">1.72</td>
+<td align="right">1.72</td>
+<td align="right">1.78</td>
+</tr>
+<tr class="even">
+<td align="left">nectar_conc</td>
+<td align="right">656</td>
+<td align="right">401</td>
+<td align="right">401</td>
+<td align="right">390</td>
+<td align="right">1.64</td>
+<td align="right">1.64</td>
+<td align="right">1.68</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_sugar_24_h_mg</td>
+<td align="right">656</td>
+<td align="right">401</td>
+<td align="right">401</td>
+<td align="right">390</td>
+<td align="right">1.64</td>
+<td align="right">1.64</td>
+<td align="right">1.68</td>
+</tr>
+<tr class="even">
+<td align="left">height_cm</td>
+<td align="right">1865</td>
+<td align="right">674</td>
+<td align="right">674</td>
+<td align="right">653</td>
+<td align="right">2.77</td>
+<td align="right">2.77</td>
+<td align="right">2.86</td>
+</tr>
+<tr class="odd">
+<td align="left">open</td>
+<td align="right">10143</td>
+<td align="right">818</td>
+<td align="right">746</td>
+<td align="right">723</td>
+<td align="right">12.40</td>
+<td align="right">13.60</td>
+<td align="right">14.03</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_fruit</td>
+<td align="right">528</td>
+<td align="right">505</td>
+<td align="right">505</td>
+<td align="right">491</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_est</td>
+<td align="right">528</td>
+<td align="right">505</td>
+<td align="right">505</td>
+<td align="right">491</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+</tr>
+<tr class="even">
+<td align="left">fruits_nonaborted</td>
+<td align="right">641</td>
+<td align="right">610</td>
+<td align="right">610</td>
+<td align="right">591</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+</tr>
+<tr class="odd">
+<td align="left">flowers_est</td>
+<td align="right">641</td>
+<td align="right">610</td>
+<td align="right">610</td>
+<td align="right">591</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+</tr>
+<tr class="even">
+<td align="left">prop_infested</td>
+<td align="right">611</td>
+<td align="right">581</td>
+<td align="right">581</td>
+<td align="right">563</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.09</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_aborted</td>
+<td align="right">636</td>
+<td align="right">606</td>
+<td align="right">606</td>
+<td align="right">587</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_flower</td>
+<td align="right">528</td>
+<td align="right">505</td>
+<td align="right">505</td>
+<td align="right">491</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+</tr>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">599</td>
+<td align="right">590</td>
+<td align="right">330</td>
+<td align="right">268</td>
+<td align="right">1.02</td>
+<td align="right">1.82</td>
+<td align="right">2.24</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">497</td>
+<td align="right">488</td>
+<td align="right">325</td>
+<td align="right">263</td>
+<td align="right">1.02</td>
+<td align="right">1.53</td>
+<td align="right">1.89</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">599</td>
+<td align="right">590</td>
+<td align="right">330</td>
+<td align="right">268</td>
+<td align="right">1.02</td>
+<td align="right">1.82</td>
+<td align="right">2.24</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">327</td>
+<td align="right">327</td>
+<td align="right">319</td>
+<td align="right">275</td>
+<td align="right">1.00</td>
+<td align="right">1.03</td>
+<td align="right">1.19</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">323</td>
+<td align="right">323</td>
+<td align="right">315</td>
+<td align="right">271</td>
+<td align="right">1.00</td>
+<td align="right">1.03</td>
+<td align="right">1.19</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">327</td>
+<td align="right">327</td>
+<td align="right">319</td>
+<td align="right">275</td>
+<td align="right">1.00</td>
+<td align="right">1.03</td>
+<td align="right">1.19</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>#How many plants flowered twice?
 with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))</code></pre>
 <pre><code>
   0   1   2 
 499 548  22 </code></pre>
+<pre class="r"><code>ph %&gt;% drop_na(height_cm) %&gt;% group_by(year, plantid) %&gt;% tally() %&gt;% 
+  ggplot(aes(x=n, fill=year)) + geom_histogram() + labs(title = &quot;Phenology entries per plant&quot;, x=&quot;Entries&quot;,y=&quot;Count&quot;)+
+  facet_wrap(vars(year), ncol=1) + scale_fill_manual(values=year_pal)</code></pre>
+<p><img src="images/sample_sizes-1.png" width="672" /></p>
 </div>
 </div>
 <div id="census" class="section level1">
