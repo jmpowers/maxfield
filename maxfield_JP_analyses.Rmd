@@ -205,6 +205,45 @@ monthly_all %>% filter(mo %in% 5:9) %>% ggplot(aes(x=yr, color=factor(mo), group
                aes(x=1989, xend=2006, y=mean_precip, yend=mean_precip, color=factor(mo)), inherit.aes=F, size=1) 
 ```
 
+```{r precip_trend}
+daily_all %>% filter(year(date)>1989, year(date)<2021) %>%
+  mutate(julian = yday(date), decade = factor(floor(year(date)/10)*10), decade = recode(decade, "2020"="2010")) %>%
+  group_by(julian, decade) %>% 
+  summarize(EPA_NOAA_filled = mean(EPA_NOAA_filled, na.rm=T), ground_covered=mean(as.integer(ground_covered), na.rm=T)-1) %>% 
+  ggplot(aes(y=EPA_NOAA_filled, x=julian, color=decade)) + 
+  geom_smooth(span=0.15, se=F)+  geom_point(shape=1, alpha=0.5) +   geom_line(aes(y=ground_covered*2), size=0.75) + 
+  labs(x="Day of year", y="Mean NOAA_billy precipiation (mm)", color="Decade", title="Snowmelt and monsoon timing by decade") +
+    scale_color_brewer(palette = "Set1", direction = -1) + theme_minimal()
+
+daily_all %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr", EPA_NOAA_filled > 0) %>%   
+  mutate(decade = factor(floor(year(date)/10)*10), decade = recode(decade, "2020"="2010")) %>% group_by(decade) %>% 
+  ggplot(aes(x=EPA_NOAA_filled, color=decade)) + geom_density() +
+    labs(x="NOAA_billy precipiation (mm) > 0", y="Density", color="Decade", title="Intensity spectrum of summer rainstorms") +
+      scale_color_brewer(palette = "Set1", direction = -1) + 
+  scale_x_continuous(breaks=scales::breaks_extended(10)) + theme_minimal()
+
+daily_all %>% filter(year(date)>1989, year(date)<2021, EPA_NOAA_filled > 2) %>% 
+  mutate(drought_days = c(0,diff(date)), year=year(date)) %>% filter(ground_covered=="smmr") %>% 
+  select(year, date, drought_days) %>% group_by(year) %>% summarize(max_drought_days = max(drought_days)) %>% 
+  ggplot(aes(x= year, y=max_drought_days)) + geom_point() + geom_smooth(method="lm") +
+  labs(x="Year", y="Consecutive drought days with < 2 mm daily precipitation")
+
+daily_all %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr", 
+                     EPA_NOAA_filled > 2) %>% count(year=year(date)) %>% 
+    ggplot(aes(x= year, y=n)) + geom_point() + geom_smooth(method="lm") +
+  labs(x="Year", y="Days with > 2 mm daily precipitation")
+
+daily_all %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr") %>% 
+  group_by(year=year(date)) %>% summarize(max_precip = max(EPA_NOAA_filled, na.rm=T)) %>% 
+    ggplot(aes(x= year, y=max_precip)) + geom_point() + geom_smooth(method="lm") +
+  labs(x="Year", y="Maximum daily precipitation (mm)")
+
+ggplot(groundcover, aes(x=year, y=precip_est_mm)) + geom_point() + geom_smooth(method="lm") +
+    labs(x="Year", y="Total precip from snowmelt to day 214 (mm)")
+lm(precip_est_mm ~ year, data = groundcover) %>% summary #total since snow melted
+```
+
+
 ## Snowmelt timing
 
 ```{r groundcover}
@@ -345,7 +384,7 @@ plot_timings <- function(data) {
                      waterdates="Summer precipitation treatments applied",
                      sm="Soil moisture recorded",         ph="Inflorescence height recorded", 
                      mt="Floral morphology recorded",     nt="Nectar traits recorded", 
-                     pt= "Physiology traits recorded",    lt="Leaf traits recorded", 
+                     pt= "Physiology traits recorded",    lt="Vegetative traits recorded", 
                      sds="Flower collection period")
   
   data %>% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T),
@@ -767,8 +806,8 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
     switch(facets, 
            year = facet_grid(trait ~ year, scales="free_y", switch="y", 
                              labeller = as_labeller(c(traitnames.multiline, set_names(2018:2020)))),
-           year.round = facet_grid(trait ~ year.round, scales="fixed", switch="y", 
-                                   labeller = as_labeller(c(traitnames.multiline)))) + 
+           year.round = facet_grid(trait ~ year.round, scales="free_y", switch="y", 
+                                   labeller = as_labeller(c(traitnames.multiline, set_names(levels(lt$year.round)))))) + 
     switch(geom,
            boxplot = geom_boxplot(data=data.long, aes(y=value), position=position_dodge(width=0.8), show.legend=!plot.emm,
                                   fatten=ifelse(plot.emm, NULL, 1), outlier.size=0.5),
@@ -826,6 +865,42 @@ mod.split.tests.water %>% select(trait, contrast, adj.p.value) %>% pivot_wider(n
 map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ snow)), .id = "trait")
 ```
 
+### Split plot repeated measures 
+
+```{r split_repeated}
+lt %>% group_by(plantid, year.round) %>% tally() %>% ungroup %>% 
+  pivot_wider(names_from=year.round, values_from=n, values_fill=0) %>% 
+  rowwise() %>% mutate(tot = sum(c_across(!plantid))) %>% 
+ggplot(aes(tot)) + geom_histogram(binwidth=1, color="black", fill="white") + 
+  labs(x="Total samples", y="Number of plants", title="Leaf trait sampling") + theme_minimal()
+
+with(lt, table(plantid, year.round)) %>% heatmap(scale="none", Colv = NA, col=c("white",status_pal["vegetative"],"yellow"))
+
+lt.mod.split.rm <- map(set_names(leaftraits), 
+                  ~ lmer(lt[[.x]] ~  year * round * water * snow + (1|snow:plot) + (1|snow:plotid) + (1|plantid), data=lt))
+lt.mod.split.rm.coefs <- map_dfr(lt.mod.split.rm, tidy, .id="trait")
+lt.mod.split.rm.tests <- map(lt.mod.split.rm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+anova_table(lt.mod.split.rm.tests, lt.mod.split.rm) %>% kable()
+lt.mod.split.rm.emm <- map_dfr(lt.mod.split.rm, ~ summary(emmeans(.x, ~  year * round * water * snow)), .id="trait") %>% 
+  mutate(year.round=paste(year,round,sep="."))
+plot_split_plot(lt.mod.split.rm.emm, lt.subplotround, leaftraits, facets="year.round") 
+
+pt %>% group_by(plantid, year) %>% tally() %>% ungroup %>% 
+  pivot_wider(names_from=year, values_from=n, values_fill=0) %>% 
+  rowwise() %>% mutate(tot = sum(c_across(!plantid))) %>% 
+ggplot(aes(tot)) + geom_histogram(binwidth=1, color="black", fill="white") + 
+  labs(x="Total samples", y="Number of plants", title="Physiology sampling") + theme_minimal()
+
+with(pt, table(plantid, year)) %>% heatmap(scale="none", Colv = NA, col=c("white",status_pal["vegetative"],"yellow"))
+
+pt.mod.split.rm <- map(set_names(phystraits), 
+                  ~ lmer(pt[[.x]] ~  year * snow * water + (1|snow:plot) + (1|snow:plotid) + (1|plantid) + (1|round), data=pt))
+pt.mod.split.rm.coefs <- map_dfr(pt.mod.split.rm, tidy, .id="trait")
+pt.mod.split.rm.tests <- map(pt.mod.split.rm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+anova_table(pt.mod.split.rm.tests, pt.mod.split.rm) %>% kable()
+```
+
+
 ## Plasticity: absolute snowmelt date and estimated summer precipitation
 
 ### ANOVA tables
@@ -852,33 +927,40 @@ re_table(mod.abs.coefs) %>% kable(digits=3)
 ### Plots
 
 ```{r multi_meltdate, fig.width=9, fig.height=11}
-plot_abs <- function(mod, data, traits.plot) {
+plot_abs <- function(mod, data, traits.plot, facets = "trait") {
   data.long <- data %>% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm) %>% 
     pivot_longer(all_of(traits.plot), names_to="trait") %>% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal"),
                       value = (value - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)]) %>% 
     drop_na(value, water) %>% filter(trait %in% traits.plot)
   
-  emm.grid <- mod[traits.plot] %>% 
-    map_dfr(~ emmeans(.x, ~ precip_est_mm * sun_date, 
-                      at=list(sun_date=range(treatments$sun_date), precip_est_mm=seq(25,150, by=25))) 
-            %>% as_tibble(), .id="trait") %>% 
+  grid_emmeans <- function(mods, use.rounds = F) {
+    grid.points <- list(sun_date=range(treatments$sun_date), precip_est_mm=seq(25,150, by=25))
+    if(use.rounds)  map_dfr(mods, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date * round, at=grid.points)), .id="trait")
+    else            map_dfr(mods, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date,         at=grid.points)), .id="trait")
+  }
+  emm.grid <- mod[traits.plot] %>% grid_emmeans(use.rounds= facets=="trait.round") %>% 
     mutate(trait = fct_relevel(trait, traits.plot),
            emmean = (emmean - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)])
   
   traitnames.multiline <- ifelse(nchar(traitnames) > 30, str_replace(traitnames, fixed("("),"\n("), traitnames)
   
   abs_plot <- ggplot(emm.grid, aes(x=sun_date, y=emmean, color=precip_est_mm, group=precip_est_mm)) + 
-    facet_wrap(vars(trait), scales="fixed",labeller = as_labeller(traitnames.multiline))+
     geom_point(data = data.long, aes(y=value, shape=year), size=2) + geom_line() + 
     scale_color_gradientn(colors=rev(water_pal), 
                           values=rev(c(1, (treatments %>% group_by(water) %>% summarize(across(precip_est_mm, mean)) %>%
                                              pull(precip_est_mm) %>% scales::rescale(from=c(25,150)))[2],0)),
                           breaks=seq(25,150, by=25)) + 
     labs(x="Snowmelt date", y="Standardized trait", color="Summer\nprecipitation\n(mm)", shape="Year") + 
-    #coord_cartesian(ylim=c(0,NA)) + scale_y_continuous(expand=expansion(mult=c(0,0.05)))+
+    scale_y_continuous(position="right")+
     theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
-                            panel.border = element_rect(fill=NA, colour = "black"))
+                            panel.border = element_rect(fill=NA, colour = "black")) +
+    switch(facets, 
+           trait =     facet_wrap(vars(trait), scales="fixed",labeller = as_labeller(traitnames.multiline)),
+           trait.round = facet_grid(trait ~ round, scales="free_y", switch="y", 
+                                   labeller = as_labeller(c(traitnames.multiline, 
+                                                            set_names(paste("Round",1:2), 1:2)))))
+    
   return(abs_plot)
 }
 
@@ -972,31 +1054,26 @@ mod.abs.emm.compensate.plot <- mod.abs.emm.compensate %>%
 grid.arrange(mod.abs.emm.plot.sun_date, mod.abs.emm.plot.precip_est_mm, mod.abs.emm.compensate.plot, nrow=1, widths=c(1,0.5,0.8))
 ```
 
-### Leaf traits repeated measures 
 
-```{r lt_repeated}
-lt %>% group_by(plantid, year.round) %>% tally() %>% ungroup %>% 
-  pivot_wider(names_from=year.round, values_from=n, values_fill=0) %>% 
-  rowwise() %>% mutate(tot = sum(c_across(!plantid))) %>% 
-ggplot(aes(tot)) + geom_histogram(binwidth=1, color="black", fill="white") + 
-  labs(x="Total samples", y="Number of plants", title="Leat trait sampling") + theme_minimal()
+### Absolute snowmelt repeated measures 
 
-with(lt, table(plantid, year.round)) %>% heatmap(scale="none", Colv = NA, col=c("white",status_pal["vegetative"],"yellow"))
-
-lt.mod.split.rm <- map(set_names(leaftraits), 
-                  ~ lmer(lt[[.x]] ~  year.round * snow * water + (1|snow:plot) + (1|snow:plotid) + (1|plantid), data=lt))
-lt.mod.split.rm.coefs <- map_dfr(lt.mod.split.rm, tidy, .id="trait")
-lt.mod.split.rm.tests <- map(lt.mod.split.rm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
-anova_table(lt.mod.split.rm.tests, lt.mod.split.rm) %>% kable()
-
+```{r abs_repeated}
 lt.mod.abs.rm <- map(set_names(leaftraits), 
                   ~ lmer(lt[[.x]] ~ sun_date * precip_est_mm * round + (1|plot) + (1|plotid) + (1|plantid), data=lt))
 lt.mod.abs.rm.coefs <- map_dfr(lt.mod.abs.rm, tidy, .id="trait")
 lt.mod.abs.rm.tests <- map(lt.mod.abs.rm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 anova_table(lt.mod.abs.rm.tests, lt.mod.abs.rm) %>% kable()
+plot_abs(lt.mod.abs.rm, lt.subplotround, leaftraits, facets="trait.round")
+
+pt.mod.abs.rm <- map(set_names(phystraits), 
+                  ~ lmer(pt[[.x]] ~ sun_date * precip_est_mm + (1|plot) + (1|plotid) + (1|plantid) + (1|round), data=pt))
+pt.mod.abs.rm.coefs <- map_dfr(pt.mod.abs.rm, tidy, .id="trait")
+pt.mod.abs.rm.tests <- map(pt.mod.abs.rm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+anova_table(pt.mod.abs.rm.tests, pt.mod.abs.rm) %>% kable()
+plot_abs(pt.mod.abs.rm, pt.subplot, phystraits)
 ```
 
-## Lagged effects of snowmelt
+### Lagged effects of snowmelt
 
 ```{r meltdate_lag}
 mnps.plantyr <- mnps.plantyr %>% left_join(meltdates %>% select(year, plot, sun_date_lag=sun_date) %>% 
@@ -1192,6 +1269,21 @@ mod.selection.plots <- mod.selection %>% group_by(response, treatment, set) %>% 
 
 mod.selection.plots %>% group_by(response, treatment) %>% group_walk( ~ do.call(grid.arrange, .x$plots))
 ```
+
+## Selection vs. soil moisture
+
+```{r selection_sm, eval=FALSE}
+#TODO not working
+mod.selection.VWC <- 
+  tibble(response = c("survived","flowered"), treatment=c("VWC"), set = c("lt", "pt")) %>%
+  tidyr::expand(response, treatment, set) %>% 
+  full_join(tibble(trait=c(leaftraits, phystraits), 
+                   set = c(rep("lt", length(leaftraits)), rep("pt", length(phystraits))))) %>% 
+  mutate(model = pmap(., step_selection_mod),
+         coefs = map(model, tidy),
+         tests = map(model, ~ tidy(car::Anova(.x, type=3))))
+```
+
 
 ```{r summaryfigures, fig.width=7, fig.height=3, eval=F}
 pt.plantyr %>% 

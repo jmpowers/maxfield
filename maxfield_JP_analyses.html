@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-03-24" />
+<meta name="date" content="2021-03-25" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-03-24</h4>
+<h4 class="date">2021-03-25</h4>
 
 </div>
 
@@ -444,6 +444,59 @@ ggpairs(monthly_all %&gt;% mutate(season=factor(c(&quot;wntr&quot;,&quot;smmr&qu
                  group_by(mo) %&gt;% summarize(mean_precip=mean(EPA_NOAA_filled)), 
                aes(x=1989, xend=2006, y=mean_precip, yend=mean_precip, color=factor(mo)), inherit.aes=F, size=1) </code></pre>
 <p><img src="images/weather_monthly-5.png" width="672" /></p>
+<pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021) %&gt;%
+  mutate(julian = yday(date), decade = factor(floor(year(date)/10)*10), decade = recode(decade, &quot;2020&quot;=&quot;2010&quot;)) %&gt;%
+  group_by(julian, decade) %&gt;% 
+  summarize(EPA_NOAA_filled = mean(EPA_NOAA_filled, na.rm=T), ground_covered=mean(as.integer(ground_covered), na.rm=T)-1) %&gt;% 
+  ggplot(aes(y=EPA_NOAA_filled, x=julian, color=decade)) + 
+  geom_smooth(span=0.15, se=F)+  geom_point(shape=1, alpha=0.5) +   geom_line(aes(y=ground_covered*2), size=0.75) + 
+  labs(x=&quot;Day of year&quot;, y=&quot;Mean NOAA_billy precipiation (mm)&quot;, color=&quot;Decade&quot;, title=&quot;Snowmelt and monsoon timing by decade&quot;) +
+    scale_color_brewer(palette = &quot;Set1&quot;, direction = -1) + theme_minimal()</code></pre>
+<p><img src="images/precip_trend-1.png" width="672" /></p>
+<pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, ground_covered==&quot;smmr&quot;, EPA_NOAA_filled &gt; 0) %&gt;%   
+  mutate(decade = factor(floor(year(date)/10)*10), decade = recode(decade, &quot;2020&quot;=&quot;2010&quot;)) %&gt;% group_by(decade) %&gt;% 
+  ggplot(aes(x=EPA_NOAA_filled, color=decade)) + geom_density() +
+    labs(x=&quot;NOAA_billy precipiation (mm) &gt; 0&quot;, y=&quot;Density&quot;, color=&quot;Decade&quot;, title=&quot;Intensity spectrum of summer rainstorms&quot;) +
+      scale_color_brewer(palette = &quot;Set1&quot;, direction = -1) + 
+  scale_x_continuous(breaks=scales::breaks_extended(10)) + theme_minimal()</code></pre>
+<p><img src="images/precip_trend-2.png" width="672" /></p>
+<pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, EPA_NOAA_filled &gt; 2) %&gt;% 
+  mutate(drought_days = c(0,diff(date)), year=year(date)) %&gt;% filter(ground_covered==&quot;smmr&quot;) %&gt;% 
+  select(year, date, drought_days) %&gt;% group_by(year) %&gt;% summarize(max_drought_days = max(drought_days)) %&gt;% 
+  ggplot(aes(x= year, y=max_drought_days)) + geom_point() + geom_smooth(method=&quot;lm&quot;) +
+  labs(x=&quot;Year&quot;, y=&quot;Consecutive drought days with &lt; 2 mm daily precipitation&quot;)</code></pre>
+<p><img src="images/precip_trend-3.png" width="672" /></p>
+<pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, ground_covered==&quot;smmr&quot;, 
+                     EPA_NOAA_filled &gt; 2) %&gt;% count(year=year(date)) %&gt;% 
+    ggplot(aes(x= year, y=n)) + geom_point() + geom_smooth(method=&quot;lm&quot;) +
+  labs(x=&quot;Year&quot;, y=&quot;Days with &gt; 2 mm daily precipitation&quot;)</code></pre>
+<p><img src="images/precip_trend-4.png" width="672" /></p>
+<pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, ground_covered==&quot;smmr&quot;) %&gt;% 
+  group_by(year=year(date)) %&gt;% summarize(max_precip = max(EPA_NOAA_filled, na.rm=T)) %&gt;% 
+    ggplot(aes(x= year, y=max_precip)) + geom_point() + geom_smooth(method=&quot;lm&quot;) +
+  labs(x=&quot;Year&quot;, y=&quot;Maximum daily precipitation (mm)&quot;)</code></pre>
+<p><img src="images/precip_trend-5.png" width="672" /></p>
+<pre class="r"><code>ggplot(groundcover, aes(x=year, y=precip_est_mm)) + geom_point() + geom_smooth(method=&quot;lm&quot;) +
+    labs(x=&quot;Year&quot;, y=&quot;Total precip from snowmelt to day 214 (mm)&quot;)</code></pre>
+<p><img src="images/precip_trend-6.png" width="672" /></p>
+<pre class="r"><code>lm(precip_est_mm ~ year, data = groundcover) %&gt;% summary #total since snow melted</code></pre>
+<pre><code>
+Call:
+lm(formula = precip_est_mm ~ year, data = groundcover)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-57.166 -28.330  -3.535  20.781 105.005 
+
+Coefficients:
+             Estimate Std. Error t value Pr(&gt;|t|)
+(Intercept) 2398.0636  1582.8866   1.515    0.141
+year          -1.1556     0.7895  -1.464    0.154
+
+Residual standard error: 39.31 on 29 degrees of freedom
+  (14 observations deleted due to missingness)
+Multiple R-squared:  0.0688,    Adjusted R-squared:  0.03669 
+F-statistic: 2.143 on 1 and 29 DF,  p-value: 0.154</code></pre>
 </div>
 <div id="snowmelt-timing" class="section level2">
 <h2>Snowmelt timing</h2>
@@ -918,7 +971,7 @@ anova(sm.mod.abs) %&gt;% kable(digits=3)</code></pre>
                      waterdates=&quot;Summer precipitation treatments applied&quot;,
                      sm=&quot;Soil moisture recorded&quot;,         ph=&quot;Inflorescence height recorded&quot;, 
                      mt=&quot;Floral morphology recorded&quot;,     nt=&quot;Nectar traits recorded&quot;, 
-                     pt= &quot;Physiology traits recorded&quot;,    lt=&quot;Leaf traits recorded&quot;, 
+                     pt= &quot;Physiology traits recorded&quot;,    lt=&quot;Vegetative traits recorded&quot;, 
                      sds=&quot;Flower collection period&quot;)
   
   data %&gt;% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T),
@@ -2555,8 +2608,8 @@ anova_table(mod.split.tests, mod.split) %&gt;% kable()</code></pre>
     switch(facets, 
            year = facet_grid(trait ~ year, scales=&quot;free_y&quot;, switch=&quot;y&quot;, 
                              labeller = as_labeller(c(traitnames.multiline, set_names(2018:2020)))),
-           year.round = facet_grid(trait ~ year.round, scales=&quot;fixed&quot;, switch=&quot;y&quot;, 
-                                   labeller = as_labeller(c(traitnames.multiline)))) + 
+           year.round = facet_grid(trait ~ year.round, scales=&quot;free_y&quot;, switch=&quot;y&quot;, 
+                                   labeller = as_labeller(c(traitnames.multiline, set_names(levels(lt$year.round)))))) + 
     switch(geom,
            boxplot = geom_boxplot(data=data.long, aes(y=value), position=position_dodge(width=0.8), show.legend=!plot.emm,
                                   fatten=ifelse(plot.emm, NULL, 1), outlier.size=0.5),
@@ -2872,6 +2925,211 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 Results are averaged over the levels of: year, water 
 Degrees-of-freedom method: kenward-roger 
 Confidence level used: 0.95 </code></pre>
+</div>
+<div id="split-plot-repeated-measures" class="section level3">
+<h3>Split plot repeated measures</h3>
+<pre class="r"><code>lt %&gt;% group_by(plantid, year.round) %&gt;% tally() %&gt;% ungroup %&gt;% 
+  pivot_wider(names_from=year.round, values_from=n, values_fill=0) %&gt;% 
+  rowwise() %&gt;% mutate(tot = sum(c_across(!plantid))) %&gt;% 
+ggplot(aes(tot)) + geom_histogram(binwidth=1, color=&quot;black&quot;, fill=&quot;white&quot;) + 
+  labs(x=&quot;Total samples&quot;, y=&quot;Number of plants&quot;, title=&quot;Leaf trait sampling&quot;) + theme_minimal()</code></pre>
+<p><img src="images/split_repeated-1.png" width="672" /></p>
+<pre class="r"><code>with(lt, table(plantid, year.round)) %&gt;% heatmap(scale=&quot;none&quot;, Colv = NA, col=c(&quot;white&quot;,status_pal[&quot;vegetative&quot;],&quot;yellow&quot;))</code></pre>
+<p><img src="images/split_repeated-2.png" width="672" /></p>
+<pre class="r"><code>lt.mod.split.rm &lt;- map(set_names(leaftraits), 
+                  ~ lmer(lt[[.x]] ~  year * round * water * snow + (1|snow:plot) + (1|snow:plotid) + (1|plantid), data=lt))
+lt.mod.split.rm.coefs &lt;- map_dfr(lt.mod.split.rm, tidy, .id=&quot;trait&quot;)
+lt.mod.split.rm.tests &lt;- map(lt.mod.split.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+anova_table(lt.mod.split.rm.tests, lt.mod.split.rm) %&gt;% kable()</code></pre>
+<table style="width:100%;">
+<colgroup>
+<col width="7%" />
+<col width="5%" />
+<col width="5%" />
+<col width="2%" />
+<col width="2%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="4%" />
+<col width="5%" />
+<col width="4%" />
+<col width="7%" />
+<col width="6%" />
+<col width="6%" />
+<col width="7%" />
+<col width="9%" />
+<col width="3%" />
+<col width="4%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="left">year</th>
+<th align="left">round</th>
+<th align="left">water</th>
+<th align="left">snow</th>
+<th align="left">year:round</th>
+<th align="left">year:water</th>
+<th align="left">round:water</th>
+<th align="left">year:snow</th>
+<th align="left">round:snow</th>
+<th align="left">water:snow</th>
+<th align="left">year:round:water</th>
+<th align="left">year:round:snow</th>
+<th align="left">year:water:snow</th>
+<th align="left">round:water:snow</th>
+<th align="left">year:round:water:snow</th>
+<th align="left">singular</th>
+<th align="right">R2m</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="left">5.5 x 10<sup>-21</sup></td>
+<td align="left">1.4 x 10<sup>-16</sup></td>
+<td align="left">0.46</td>
+<td align="left">0.99</td>
+<td align="left">6.6 x 10<sup>-12</sup></td>
+<td align="left">0.099</td>
+<td align="left">0.037</td>
+<td align="left">0.022</td>
+<td align="left">0.93</td>
+<td align="left">0.48</td>
+<td align="left">0.54</td>
+<td align="left">0.085</td>
+<td align="left">0.69</td>
+<td align="left">0.94</td>
+<td align="left">0.88</td>
+<td align="left">TRUE</td>
+<td align="right">0.3677917</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="left">1.2 x 10<sup>-16</sup></td>
+<td align="left">4.4 x 10<sup>-5</sup></td>
+<td align="left">0.96</td>
+<td align="left">0.31</td>
+<td align="left">9.4 x 10<sup>-11</sup></td>
+<td align="left">0.21</td>
+<td align="left">0.49</td>
+<td align="left">0.90</td>
+<td align="left">0.51</td>
+<td align="left">0.91</td>
+<td align="left">0.48</td>
+<td align="left">0.71</td>
+<td align="left">0.52</td>
+<td align="left">0.81</td>
+<td align="left">0.67</td>
+<td align="left">FALSE</td>
+<td align="right">0.2620668</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="left">1.1 x 10<sup>-32</sup></td>
+<td align="left">5.3 x 10<sup>-14</sup></td>
+<td align="left">0.058</td>
+<td align="left">0.51</td>
+<td align="left">7.7 x 10<sup>-24</sup></td>
+<td align="left">2.5 x 10<sup>-5</sup></td>
+<td align="left">0.017</td>
+<td align="left">2 x 10<sup>-5</sup></td>
+<td align="left">3.6 x 10<sup>-5</sup></td>
+<td align="left">0.57</td>
+<td align="left">7.7 x 10<sup>-4</sup></td>
+<td align="left">0.22</td>
+<td align="left">0.30</td>
+<td align="left">0.093</td>
+<td align="left">0.52</td>
+<td align="left">FALSE</td>
+<td align="right">0.5034190</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>lt.mod.split.rm.emm &lt;- map_dfr(lt.mod.split.rm, ~ summary(emmeans(.x, ~  year * round * water * snow)), .id=&quot;trait&quot;) %&gt;% 
+  mutate(year.round=paste(year,round,sep=&quot;.&quot;))
+plot_split_plot(lt.mod.split.rm.emm, lt.subplotround, leaftraits, facets=&quot;year.round&quot;) </code></pre>
+<p><img src="images/split_repeated-3.png" width="672" /></p>
+<pre class="r"><code>pt %&gt;% group_by(plantid, year) %&gt;% tally() %&gt;% ungroup %&gt;% 
+  pivot_wider(names_from=year, values_from=n, values_fill=0) %&gt;% 
+  rowwise() %&gt;% mutate(tot = sum(c_across(!plantid))) %&gt;% 
+ggplot(aes(tot)) + geom_histogram(binwidth=1, color=&quot;black&quot;, fill=&quot;white&quot;) + 
+  labs(x=&quot;Total samples&quot;, y=&quot;Number of plants&quot;, title=&quot;Physiology sampling&quot;) + theme_minimal()</code></pre>
+<p><img src="images/split_repeated-4.png" width="672" /></p>
+<pre class="r"><code>with(pt, table(plantid, year)) %&gt;% heatmap(scale=&quot;none&quot;, Colv = NA, col=c(&quot;white&quot;,status_pal[&quot;vegetative&quot;],&quot;yellow&quot;))</code></pre>
+<p><img src="images/split_repeated-5.png" width="672" /></p>
+<pre class="r"><code>pt.mod.split.rm &lt;- map(set_names(phystraits), 
+                  ~ lmer(pt[[.x]] ~  year * snow * water + (1|snow:plot) + (1|snow:plotid) + (1|plantid) + (1|round), data=pt))
+pt.mod.split.rm.coefs &lt;- map_dfr(pt.mod.split.rm, tidy, .id=&quot;trait&quot;)
+pt.mod.split.rm.tests &lt;- map(pt.mod.split.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+anova_table(pt.mod.split.rm.tests, pt.mod.split.rm) %&gt;% kable()</code></pre>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="11%" />
+<col width="4%" />
+<col width="11%" />
+<col width="8%" />
+<col width="11%" />
+<col width="9%" />
+<col width="13%" />
+<col width="7%" />
+<col width="8%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="left">year</th>
+<th align="left">snow</th>
+<th align="left">water</th>
+<th align="left">year:snow</th>
+<th align="left">year:water</th>
+<th align="left">snow:water</th>
+<th align="left">year:snow:water</th>
+<th align="left">singular</th>
+<th align="right">R2m</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">photosynthesis</td>
+<td align="left">0.063</td>
+<td align="left">0.62</td>
+<td align="left">0.31</td>
+<td align="left">0.46</td>
+<td align="left">0.41</td>
+<td align="left">0.99</td>
+<td align="left">0.91</td>
+<td align="left">TRUE</td>
+<td align="right">0.1082039</td>
+</tr>
+<tr class="even">
+<td align="left">conductance</td>
+<td align="left">1.1 x 10<sup>-3</sup></td>
+<td align="left">0.49</td>
+<td align="left">2.6 x 10<sup>-3</sup></td>
+<td align="left">0.51</td>
+<td align="left">2.2 x 10<sup>-3</sup></td>
+<td align="left">0.65</td>
+<td align="left">0.60</td>
+<td align="left">TRUE</td>
+<td align="right">0.3406199</td>
+</tr>
+<tr class="odd">
+<td align="left">WUE</td>
+<td align="left">3.6 x 10<sup>-5</sup></td>
+<td align="left">0.21</td>
+<td align="left">1.5 x 10<sup>-4</sup></td>
+<td align="left">0.43</td>
+<td align="left">2.1 x 10<sup>-3</sup></td>
+<td align="left">0.24</td>
+<td align="left">0.79</td>
+<td align="left">TRUE</td>
+<td align="right">0.4396514</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div id="plasticity-absolute-snowmelt-date-and-estimated-summer-precipitation" class="section level2">
@@ -3254,33 +3512,40 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </div>
 <div id="plots-1" class="section level3">
 <h3>Plots</h3>
-<pre class="r"><code>plot_abs &lt;- function(mod, data, traits.plot) {
+<pre class="r"><code>plot_abs &lt;- function(mod, data, traits.plot, facets = &quot;trait&quot;) {
   data.long &lt;- data %&gt;% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm) %&gt;% 
     pivot_longer(all_of(traits.plot), names_to=&quot;trait&quot;) %&gt;% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, &quot;Normal&quot;),
                       value = (value - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)]) %&gt;% 
     drop_na(value, water) %&gt;% filter(trait %in% traits.plot)
   
-  emm.grid &lt;- mod[traits.plot] %&gt;% 
-    map_dfr(~ emmeans(.x, ~ precip_est_mm * sun_date, 
-                      at=list(sun_date=range(treatments$sun_date), precip_est_mm=seq(25,150, by=25))) 
-            %&gt;% as_tibble(), .id=&quot;trait&quot;) %&gt;% 
+  grid_emmeans &lt;- function(mods, use.rounds = F) {
+    grid.points &lt;- list(sun_date=range(treatments$sun_date), precip_est_mm=seq(25,150, by=25))
+    if(use.rounds)  map_dfr(mods, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date * round, at=grid.points)), .id=&quot;trait&quot;)
+    else            map_dfr(mods, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date,         at=grid.points)), .id=&quot;trait&quot;)
+  }
+  emm.grid &lt;- mod[traits.plot] %&gt;% grid_emmeans(use.rounds= facets==&quot;trait.round&quot;) %&gt;% 
     mutate(trait = fct_relevel(trait, traits.plot),
            emmean = (emmean - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)])
   
   traitnames.multiline &lt;- ifelse(nchar(traitnames) &gt; 30, str_replace(traitnames, fixed(&quot;(&quot;),&quot;\n(&quot;), traitnames)
   
   abs_plot &lt;- ggplot(emm.grid, aes(x=sun_date, y=emmean, color=precip_est_mm, group=precip_est_mm)) + 
-    facet_wrap(vars(trait), scales=&quot;fixed&quot;,labeller = as_labeller(traitnames.multiline))+
     geom_point(data = data.long, aes(y=value, shape=year), size=2) + geom_line() + 
     scale_color_gradientn(colors=rev(water_pal), 
                           values=rev(c(1, (treatments %&gt;% group_by(water) %&gt;% summarize(across(precip_est_mm, mean)) %&gt;%
                                              pull(precip_est_mm) %&gt;% scales::rescale(from=c(25,150)))[2],0)),
                           breaks=seq(25,150, by=25)) + 
     labs(x=&quot;Snowmelt date&quot;, y=&quot;Standardized trait&quot;, color=&quot;Summer\nprecipitation\n(mm)&quot;, shape=&quot;Year&quot;) + 
-    #coord_cartesian(ylim=c(0,NA)) + scale_y_continuous(expand=expansion(mult=c(0,0.05)))+
+    scale_y_continuous(position=&quot;right&quot;)+
     theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
-                            panel.border = element_rect(fill=NA, colour = &quot;black&quot;))
+                            panel.border = element_rect(fill=NA, colour = &quot;black&quot;)) +
+    switch(facets, 
+           trait =     facet_wrap(vars(trait), scales=&quot;fixed&quot;,labeller = as_labeller(traitnames.multiline)),
+           trait.round = facet_grid(trait ~ round, scales=&quot;free_y&quot;, switch=&quot;y&quot;, 
+                                   labeller = as_labeller(c(traitnames.multiline, 
+                                                            set_names(paste(&quot;Round&quot;,1:2), 1:2)))))
+    
   return(abs_plot)
 }
 
@@ -3373,87 +3638,8 @@ mod.abs.emm.compensate.plot &lt;- mod.abs.emm.compensate %&gt;%
 grid.arrange(mod.abs.emm.plot.sun_date, mod.abs.emm.plot.precip_est_mm, mod.abs.emm.compensate.plot, nrow=1, widths=c(1,0.5,0.8))</code></pre>
 <p><img src="images/compensation_meltdate-1.png" width="672" /></p>
 </div>
-<div id="leaf-traits-repeated-measures" class="section level3">
-<h3>Leaf traits repeated measures</h3>
-<pre class="r"><code>lt %&gt;% group_by(plantid, year.round) %&gt;% tally() %&gt;% ungroup %&gt;% 
-  pivot_wider(names_from=year.round, values_from=n, values_fill=0) %&gt;% 
-  rowwise() %&gt;% mutate(tot = sum(c_across(!plantid))) %&gt;% 
-ggplot(aes(tot)) + geom_histogram(binwidth=1, color=&quot;black&quot;, fill=&quot;white&quot;) + 
-  labs(x=&quot;Total samples&quot;, y=&quot;Number of plants&quot;, title=&quot;Leat trait sampling&quot;) + theme_minimal()</code></pre>
-<p><img src="images/lt_repeated-1.png" width="672" /></p>
-<pre class="r"><code>with(lt, table(plantid, year.round)) %&gt;% heatmap(scale=&quot;none&quot;, Colv = NA, col=c(&quot;white&quot;,status_pal[&quot;vegetative&quot;],&quot;yellow&quot;))</code></pre>
-<p><img src="images/lt_repeated-2.png" width="672" /></p>
-<pre class="r"><code>lt.mod.split.rm &lt;- map(set_names(leaftraits), 
-                  ~ lmer(lt[[.x]] ~  year.round * snow * water + (1|snow:plot) + (1|snow:plotid) + (1|plantid), data=lt))
-lt.mod.split.rm.coefs &lt;- map_dfr(lt.mod.split.rm, tidy, .id=&quot;trait&quot;)
-lt.mod.split.rm.tests &lt;- map(lt.mod.split.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-anova_table(lt.mod.split.rm.tests, lt.mod.split.rm) %&gt;% kable()</code></pre>
-<table style="width:100%;">
-<colgroup>
-<col width="13%" />
-<col width="11%" />
-<col width="3%" />
-<col width="4%" />
-<col width="12%" />
-<col width="13%" />
-<col width="8%" />
-<col width="17%" />
-<col width="7%" />
-<col width="7%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">trait</th>
-<th align="left">year.round</th>
-<th align="left">snow</th>
-<th align="left">water</th>
-<th align="left">year.round:snow</th>
-<th align="left">year.round:water</th>
-<th align="left">snow:water</th>
-<th align="left">year.round:snow:water</th>
-<th align="left">singular</th>
-<th align="right">R2m</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="left">1.9 x 10<sup>-42</sup></td>
-<td align="left">0.99</td>
-<td align="left">0.46</td>
-<td align="left">0.034</td>
-<td align="left">0.068</td>
-<td align="left">0.48</td>
-<td align="left">0.96</td>
-<td align="left">TRUE</td>
-<td align="right">0.3677918</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="left">7.9 x 10<sup>-25</sup></td>
-<td align="left">0.30</td>
-<td align="left">0.94</td>
-<td align="left">0.86</td>
-<td align="left">0.073</td>
-<td align="left">0.88</td>
-<td align="left">0.64</td>
-<td align="left">FALSE</td>
-<td align="right">0.2620668</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="left">1.1 x 10<sup>-62</sup></td>
-<td align="left">0.51</td>
-<td align="left">0.058</td>
-<td align="left">7.3 x 10<sup>-7</sup></td>
-<td align="left">3.3 x 10<sup>-7</sup></td>
-<td align="left">0.57</td>
-<td align="left">0.28</td>
-<td align="left">FALSE</td>
-<td align="right">0.5034187</td>
-</tr>
-</tbody>
-</table>
+<div id="absolute-snowmelt-repeated-measures" class="section level3">
+<h3>Absolute snowmelt repeated measures</h3>
 <pre class="r"><code>lt.mod.abs.rm &lt;- map(set_names(leaftraits), 
                   ~ lmer(lt[[.x]] ~ sun_date * precip_est_mm * round + (1|plot) + (1|plotid) + (1|plantid), data=lt))
 lt.mod.abs.rm.coefs &lt;- map_dfr(lt.mod.abs.rm, tidy, .id=&quot;trait&quot;)
@@ -3525,10 +3711,56 @@ anova_table(lt.mod.abs.rm.tests, lt.mod.abs.rm) %&gt;% kable()</code></pre>
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>plot_abs(lt.mod.abs.rm, lt.subplotround, leaftraits, facets=&quot;trait.round&quot;)</code></pre>
+<p><img src="images/abs_repeated-1.png" width="672" /></p>
+<pre class="r"><code>pt.mod.abs.rm &lt;- map(set_names(phystraits), 
+                  ~ lmer(pt[[.x]] ~ sun_date * precip_est_mm + (1|plot) + (1|plotid) + (1|plantid) + (1|round), data=pt))
+pt.mod.abs.rm.coefs &lt;- map_dfr(pt.mod.abs.rm, tidy, .id=&quot;trait&quot;)
+pt.mod.abs.rm.tests &lt;- map(pt.mod.abs.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+anova_table(pt.mod.abs.rm.tests, pt.mod.abs.rm) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="left">sun_date</th>
+<th align="left">precip_est_mm</th>
+<th align="left">sun_date:precip_est_mm</th>
+<th align="left">singular</th>
+<th align="right">R2m</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">photosynthesis</td>
+<td align="left">3 x 10<sup>-3</sup></td>
+<td align="left">0.074</td>
+<td align="left">0.12</td>
+<td align="left">TRUE</td>
+<td align="right">0.0819416</td>
+</tr>
+<tr class="even">
+<td align="left">conductance</td>
+<td align="left">5.9 x 10<sup>-5</sup></td>
+<td align="left">9.6 x 10<sup>-3</sup></td>
+<td align="left">0.038</td>
+<td align="left">TRUE</td>
+<td align="right">0.2337966</td>
+</tr>
+<tr class="odd">
+<td align="left">WUE</td>
+<td align="left">1 x 10<sup>-3</sup></td>
+<td align="left">9.3 x 10<sup>-3</sup></td>
+<td align="left">0.053</td>
+<td align="left">TRUE</td>
+<td align="right">0.2121807</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>plot_abs(pt.mod.abs.rm, pt.subplot, phystraits)</code></pre>
+<p><img src="images/abs_repeated-2.png" width="672" /></p>
 </div>
-</div>
-<div id="lagged-effects-of-snowmelt" class="section level2">
-<h2>Lagged effects of snowmelt</h2>
+<div id="lagged-effects-of-snowmelt" class="section level3">
+<h3>Lagged effects of snowmelt</h3>
 <pre class="r"><code>mnps.plantyr &lt;- mnps.plantyr %&gt;% left_join(meltdates %&gt;% select(year, plot, sun_date_lag=sun_date) %&gt;% 
   bind_rows(groundcover %&gt;% select(year, sun_date_lag=first_0_cm_day) %&gt;% filter(year == 2017) %&gt;%
               mutate(year=as.factor(year)) %&gt;% left_join(tibble(year=&quot;2017&quot;, plot=as.character(1:6))))%&gt;% 
@@ -3684,6 +3916,7 @@ anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
 <p><img src="images/meltdate_lag-1.png" width="672" /></p>
 <pre class="r"><code>ggplot(mnps.plantyr, aes(x=sun_date_lag, y=flowers_est, color=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;) + scale_color_manual(values=year_pal) + theme_minimal() + labs(x=&quot;Melt date the previous year&quot;, y=traitnames[&quot;flowers_est&quot;], color=&quot;Year&quot;)</code></pre>
 <p><img src="images/meltdate_lag-2.png" width="672" /></p>
+</div>
 </div>
 <div id="plasticity-soil-moisture" class="section level2">
 <h2>Plasticity: soil moisture</h2>
@@ -4648,6 +4881,18 @@ mod.selection.plots &lt;- mod.selection %&gt;% group_by(response, treatment, set
 
 mod.selection.plots %&gt;% group_by(response, treatment) %&gt;% group_walk( ~ do.call(grid.arrange, .x$plots))</code></pre>
 <p><img src="images/plot_selection-1.png" width="672" /><img src="images/plot_selection-2.png" width="672" /><img src="images/plot_selection-3.png" width="672" /><img src="images/plot_selection-4.png" width="672" /></p>
+</div>
+<div id="selection-vs.-soil-moisture" class="section level2">
+<h2>Selection vs. soil moisture</h2>
+<pre class="r"><code>#TODO not working
+mod.selection.VWC &lt;- 
+  tibble(response = c(&quot;survived&quot;,&quot;flowered&quot;), treatment=c(&quot;VWC&quot;), set = c(&quot;lt&quot;, &quot;pt&quot;)) %&gt;%
+  tidyr::expand(response, treatment, set) %&gt;% 
+  full_join(tibble(trait=c(leaftraits, phystraits), 
+                   set = c(rep(&quot;lt&quot;, length(leaftraits)), rep(&quot;pt&quot;, length(phystraits))))) %&gt;% 
+  mutate(model = pmap(., step_selection_mod),
+         coefs = map(model, tidy),
+         tests = map(model, ~ tidy(car::Anova(.x, type=3))))</code></pre>
 <pre class="r"><code>pt.plantyr %&gt;% 
     pivot_longer(all_of(c(&quot;conductance&quot;,&quot;WUE&quot;)),names_to=&quot;trait&quot;) %&gt;% 
     filter(year!=&quot;2020&quot;) %&gt;% mutate(year=fct_drop(year)) %&gt;% 
