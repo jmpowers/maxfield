@@ -47,6 +47,8 @@ library(ggnewscale)
 library(knitr)
 knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = "images/")
 
+load("data/maxfield_data.rda")
+
 options(contrasts = c("contr.sum", "contr.poly")) #needed for Type III SS
 
 anova_table <- function(df, mod) { #for lmer models and lmerTest::anova
@@ -66,8 +68,6 @@ Anova_table <- function(df) { #for glmmTMB models and car::Anova
 re_table <- function(coefs) {
   coefs %>% filter(effect=="ran_pars") %>% select(trait, group, estimate) %>% pivot_wider(names_from=group, values_from=estimate)
   }
-
-load("data/maxfield_data.rda")
 ```
 
 ```{r map}
@@ -496,7 +496,7 @@ cen.status.veg1819 <- bind_rows(
   `2018`=cen.status %>% filter(status_18=="vegetative") %>% drop_na(alive_status_19, flowering_status_19) %>% mutate(year="2018") %>%
     left_join(treatments) %>% select(alive_status = alive_status_19, flowering_status = flowering_status_19, water, snow, plot, plotid),
   `2019`=cen.status %>% filter(status_19=="vegetative") %>% drop_na(alive_status_20, flowering_status_20) %>% mutate(year="2019") %>%
-    left_join(treatments) %>% select(alive_status = alive_status_20, flowering_status = flowering_status_20, water, snow, plot, plotid), .id="year")
+    left_join(treatments) %>% select(alive_status = alive_status_20, flowering_status = flowering_status_20, water, snow, plot, plotid), .id="year") %>% left_join(sm.subplotyear)
 # could now also use cen.status.long %>% filter(status=="vegetative", census %in% c("2018","2019"))
 
 library(glmmTMB)
@@ -520,6 +520,26 @@ emmeans(flowering1819.mod, ~ year * water * snow) %>% as_tibble %>%
   labs(x="Precipitation", y="Flowering the next year", color="Snowmelt")+
   scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()
 ```
+
+```{r transitions_sm}
+library(glmmTMB)
+options(contrasts = c("contr.sum", "contr.poly"))
+
+(survival1819.mod.sm <- glmmTMB(alive_status ~ year * VWC + (1|plot) + (1|plotid), data=cen.status.veg1819, family=binomial))
+car::Anova(survival1819.mod.sm, type=3) %>% kable(digits=3)
+ggplot(cen.status.veg1819, aes(x=VWC, y=alive_status, color=year))+
+  geom_point() + geom_smooth(method="glm", method.args = list(family=binomial))+
+  labs(x="Soil moisture (VWC)", y="Survival to next year", color="Year")+
+  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=year_pal) + theme_minimal()
+
+(flowering1819.mod.sm <- glmmTMB(flowering_status ~ year * VWC + (1|plot) + (1|plotid), data=cen.status.veg1819, family=binomial))
+car::Anova(flowering1819.mod.sm, type=3) %>% kable(digits=3)
+ggplot(cen.status.veg1819, aes(x=VWC, y=flowering_status, color=year))+
+  geom_point() + geom_smooth(method="glm", method.args = list(family=binomial))+
+  labs(x="Soil moisture (VWC)", y="Flowering the next year", color="Year")+
+  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=year_pal) + theme_minimal()
+```
+
 
 ## Survival and flowering vs. vegetative plant size
 ```{r surv_size}
@@ -595,6 +615,12 @@ ggplot(lt, aes(x=wet_weight_g, y=dry_weight_g, color=factor(date))) + geom_point
   geom_abline(slope=1-median(lt$water_content, na.rm=T), intercept = 0) + geom_smooth(se=F) + 
   coord_cartesian(xlim=c(0,NA), ylim=c(0, NA)) + labs(x="Wet weight (g)", y = "Dry weight (g)", color="Date") +
     scale_color_brewer(palette="Set1", direction=-1) + theme(legend.position="top")
+
+ggplot(lt, aes(x=sla_wet, y=sla, color=factor(date))) + geom_point() + geom_smooth(se=F) + geom_rug()+
+  labs(x=paste("Wet", tolower(traitnames.units["sla"])), y = traitnames["sla"], color="Date") +
+    scale_color_brewer(palette="Set1", direction=-1) + theme(legend.position="top")
+
+ggplot(lt, aes(x=sla_wet, y=sla, color=factor(date))) + geom_point()
 
 lt %>% pivot_longer(c(wet_weight_g, dry_weight_g, trichomes), names_to="trait") %>% 
   ggplot(aes(x=leaf_area_cm2, y=value, color=factor(date))) + facet_wrap(vars(trait), scales="free_y", ncol=1) + 
@@ -840,17 +866,26 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
 ### Compensation of water addition for early snowmelt
 
 ```{r compensation}
-#compare early snowmelt + addition vs. normal snowmelt + control
-emm.mod <- mt.mod.glht <- list()
-mnps.plantyr$snowwater <- paste0(mnps.plantyr$snow, mnps.subplot$water)
+mnps.plantyr <- mnps.plantyr %>% mutate(snowwater= paste0(snow, water))
+lt.plantyr.r2 <- lt.plantyr.r2 %>% mutate(snowwater= paste0(snow, water))
+pt.plantyr <- pt.plantyr %>% mutate(snowwater= paste0(snow, water))
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
-for(tr in traits) {
-    #emm.mod[[tr]] <- emmeans(mt.mod[[tr]], ~ water * snow, var=tr)
-    mt.mod.glht[[tr]] <- lmer(mnps.plantyr[[tr]] ~ snowwater * year+ (1|snow:plot) + (1|snow:plotid), data=mnps.plantyr) %>%
-      glht(linfct = mcp(snowwater = c("EarlyAddition - NormalControl = 0")))
-}
-map_dfr(mt.mod.glht, ~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=summary(.x)$test$pvalues), .id="trait") %>% kable(digits=3)
-detach("package:multcomp", unload = TRUE); detach("package:TH.data", unload = TRUE); detach("package:MASS", unload = TRUE)
+options(contrasts = c("contr.sum", "contr.poly"))
+mod.split.glht <- c(map(set_names(traits), 
+                   ~ lmer(mnps.plantyr[[.x]]  ~ snowwater * year + (1|snow:plot) + (1|snow:plotid),
+                          data=mnps.plantyr)),
+               map(set_names(leaftraits), 
+                   ~ lmer(lt.plantyr.r2[[.x]] ~ snowwater * year + (1|snow:plot) + (1|snow:plotid),
+                          data=lt.plantyr.r2)),
+               map(set_names(phystraits), 
+                   ~ lmer(pt.plantyr[[.x]]    ~ snowwater * year + (1|snow:plot) + (1|snow:plotid) + (1|round),
+                          data=pt.plantyr))) %>% 
+  #compare early snowmelt + addition vs. normal snowmelt + control
+  map(glht, linfct = mcp(snowwater = c("EarlyAddition - NormalControl = 0"))) %>% 
+  map_dfr(~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=summary(.x)$test$pvalues), .id="trait") 
+
+mod.split.glht %>% kable(digits=3)
+detach("package:multcomp", unload = TRUE); detach("package:TH.data", unload = TRUE)
 ```
 
 ### Compare treatment levels
@@ -867,7 +902,9 @@ map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ snow)), .id = "trait")
 
 ### Split plot repeated measures 
 
-```{r split_repeated}
+#### Leaf traits
+
+```{r lt_repeated}
 lt %>% group_by(plantid, year.round) %>% tally() %>% ungroup %>% 
   pivot_wider(names_from=year.round, values_from=n, values_fill=0) %>% 
   rowwise() %>% mutate(tot = sum(c_across(!plantid))) %>% 
@@ -875,7 +912,40 @@ ggplot(aes(tot)) + geom_histogram(binwidth=1, color="black", fill="white") +
   labs(x="Total samples", y="Number of plants", title="Leaf trait sampling") + theme_minimal()
 
 with(lt, table(plantid, year.round)) %>% heatmap(scale="none", Colv = NA, col=c("white",status_pal["vegetative"],"yellow"))
+```
 
+```{r lt_connected, fig.height=9, fig.width=9}
+lt %>% pivot_longer(all_of(leaftraits), names_to = "trait") %>% 
+ggplot(aes(y=value, x=factor(round),color=water, fill=water)) + 
+  facet_grid(trait ~year, scales="free_y", switch="y",labeller=as_labeller(c(traitnames.units, set_names(2018:2020)))) + 
+  geom_violin(position=position_identity(), alpha=0.1)+ #, linetype=snow
+  annotate("rect", xmin=1, xmax=2, ymin=-Inf, ymax=Inf, fill="white", color=NA) + 
+  geom_point() + geom_path(aes(group=plantid))+
+  scale_color_manual(values=water_pal) + scale_fill_manual(values=water_pal) + #scale_linetype_manual(values=c(2,1)) +
+  labs(x="Round", y="", color="Precipitation", fill="Precipitation") + scale_y_continuous(position="right") + 
+  theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
+                            panel.border = element_rect(fill=NA, colour = "black"), legend.position = "top")
+lt %>% pivot_longer(all_of(leaftraits), names_to = "trait") %>% 
+ggplot(aes(y=value, x=factor(round),color=snow, fill=snow)) + 
+  facet_grid(trait ~year, scales="free_y", switch="y",labeller=as_labeller(c(traitnames.units, set_names(2018:2020)))) + 
+  geom_violin(position=position_identity(), alpha=0.1)+ 
+  annotate("rect", xmin=1, xmax=2, ymin=-Inf, ymax=Inf, fill="white", color=NA) + 
+  geom_point() + geom_path(aes(group=plantid))+
+  scale_color_manual(values=snow_pal) + scale_fill_manual(values=snow_pal) + 
+  labs(x="Round", y="", color="Snowmelt", fill="Snowmelt") + scale_y_continuous(position="right") + 
+  theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
+                            panel.border = element_rect(fill=NA, colour = "black"), legend.position = "top")
+
+lt %>% pivot_longer(all_of(c(leaftraits, "sla_wet")), names_to = "trait") %>% arrange(date) %>% 
+  ggplot(aes(y=value, x=year.round, color=water)) + 
+  facet_wrap(vars(trait), scales="free_y",
+             labeller=as_labeller(c(traitnames.units, set_names(paste("Wet" ,tolower(traitnames.units["sla"])),"sla_wet")))) + 
+  geom_point() + geom_path(aes(group=plantid)) + scale_color_manual(values=water_pal) + 
+  labs(x="Year and round", y="", color="Precipitation") + theme_minimal() + theme(legend.position = "top")
+```
+
+
+```{r lt_repeated_split, fig.height=8, fig.width=8}
 lt.mod.split.rm <- map(set_names(leaftraits), 
                   ~ lmer(lt[[.x]] ~  year * round * water * snow + (1|snow:plot) + (1|snow:plotid) + (1|plantid), data=lt))
 lt.mod.split.rm.coefs <- map_dfr(lt.mod.split.rm, tidy, .id="trait")
@@ -885,6 +955,11 @@ lt.mod.split.rm.emm <- map_dfr(lt.mod.split.rm, ~ summary(emmeans(.x, ~  year * 
   mutate(year.round=paste(year,round,sep="."))
 plot_split_plot(lt.mod.split.rm.emm, lt.subplotround, leaftraits, facets="year.round") 
 
+```
+
+#### Physiology
+
+```{r pt_repeated}
 pt %>% group_by(plantid, year) %>% tally() %>% ungroup %>% 
   pivot_wider(names_from=year, values_from=n, values_fill=0) %>% 
   rowwise() %>% mutate(tot = sum(c_across(!plantid))) %>% 
@@ -979,20 +1054,31 @@ grid.arrange(plot_abs(mod.abs, lt.subplot.r2, leaftraits)+
 
 ### Slope plots and compensation
 
-```{r compensation_meltdate}
-# for corolla width there are effects of both predictors but no interaction
-mod.abs.emm.corolla_width <- bind_rows(
-  sun_date = emtrends(mod.abs$corolla_width, var="sun_date", ~1) %>% as_tibble %>% 
-    transmute(trend = sun_date.trend / alltraits.sd["corolla_width"], SE = SE / alltraits.sd["corolla_width"]),
-  precip_est_mm = emtrends(mod.abs$corolla_width, var="precip_est_mm", ~1) %>% as_tibble %>% 
-    transmute(trend = precip_est_mm.trend / alltraits.sd["corolla_width"], SE = SE / alltraits.sd["corolla_width"]), 
-  .id="predictor")
-mod.abs.emm.corolla_width$trend[1] / mod.abs.emm.corolla_width$trend[2] #compensation point in mm precip / day
-mean(groundcover$precip_est_mm, na.rm=T) # mean summer precip 1990 - 2020 (mm)
+Compensation points calculated at average value of other predictor - only use for traits where there are effects of both predictors but no interaction
+```{r compensation_meltdate_avg}
+mod.abs.emm.avg <- map_dfr(set_names(c("sun_date", "precip_est_mm")), 
+                   ~ mod.abs %>% map(emtrends, var = .x, ~1) %>% 
+                     map(as_tibble) %>% set_names(alltraits) %>% bind_rows(.id="trait") %>% 
+                     rename_with(.cols=ends_with("trend"), ~ "trend"), .id="predictor") %>% 
+  mutate(predictor=fct_relevel(predictor,"sun_date"), 
+         sd.plantyr = alltraits.sd[trait],
+         trend = trend / sd.plantyr, SE = SE / sd.plantyr)
 
+mod.abs.emm.avg.compensate <- mod.abs.emm.avg %>% 
+  pivot_wider(names_from=predictor, values_from=c(trend, SE), id_cols=c(trait)) %>% 
+  mutate(predictor = "compensation",
+         precip_mm_per_snow_day = trend_sun_date / trend_precip_est_mm, 
+         SE = abs(precip_mm_per_snow_day) * # propagate error in SEs using formula for quotients
+           sqrt((SE_precip_est_mm / trend_precip_est_mm)^2 + (SE_sun_date / trend_sun_date)^2),
+         prop_mean_total_precip_per_snow_day = precip_mm_per_snow_day / mean(groundcover$precip_est_mm, na.rm=T))
+# divide compensation by mean summer precip 1990 - 2020 (mm)
+mod.abs.emm.avg.compensate %>% select(-predictor) %>% kable(digits=3)
+```
 
-predictor.ranges <- list(sun_date=c(115,160) , precip_est_mm=c(25, 150)) #a bit narrower than the experiment
+Compensation points calculated at four corners of the ranges of environemtnal variables
+```{r compensation_meltdate, fig.width=9}
 #get slopes with emtrends at range of other predictor, and scale slopes by SD of the plant means
+predictor.ranges <- list(sun_date=c(115,160) , precip_est_mm=c(25, 150)) #a bit narrower than the experiment
 mod.abs.emm <- map_dfr(set_names(c("sun_date", "precip_est_mm")), 
                    ~ mod.abs %>% 
                      map(emtrends, var = .x, 
@@ -1029,12 +1115,12 @@ mod.abs.emm.plot.precip_est_mm <-
 
 #calculate how much summer precip is required to compensate for 1 day earlier snowmelt
 #mt.exclude.compensate <- mt.mod.abs.tests %>% filter(term %in% c("precip_est_mm", "sun_date"), p.value > 0.05) %>% pull(trait) %>% unique  #if P> 0.05 for effect of summer precip or snowmelt
-exclude.compensate<- c("height_cm", #snowmelt/precip slope too big and P > 0.05 for both
-                          "sepal_width",#sepal_width has interaction with sun_date,
-                        "seeds_per_flower", "seeds_per_fruit", "seeds_est", "open")
+exclude.compensate<- c("")#c("height_cm", #snowmelt/precip slope too big and P > 0.05 for both
+                      #    "sepal_width",#sepal_width has interaction with sun_date,
+                       # "seeds_per_flower", "seeds_per_fruit", "seeds_est", "open")
 mod.abs.emm.compensate <- mod.abs.emm %>% 
   pivot_wider(names_from=predictor, values_from=c(trend, SE), id_cols=c(trait, sun_date, precip_est_mm)) %>% 
-  mutate(predictor = "Compensation",
+  mutate(predictor = "compensation",
          precip_mm_per_snow_day = trend_sun_date / trend_precip_est_mm, 
          SE = abs(precip_mm_per_snow_day) * # propagate error in SEs using formula for quotients
            sqrt((SE_precip_est_mm / trend_precip_est_mm)^2 + (SE_sun_date / trend_sun_date)^2),
@@ -1270,20 +1356,57 @@ mod.selection.plots <- mod.selection %>% group_by(response, treatment, set) %>% 
 mod.selection.plots %>% group_by(response, treatment) %>% group_walk( ~ do.call(grid.arrange, .x$plots))
 ```
 
-## Selection vs. soil moisture
+## Selection vs. absolute snowmelt, precip
 
-```{r selection_sm, eval=FALSE}
-#TODO not working
-mod.selection.VWC <- 
-  tibble(response = c("survived","flowered"), treatment=c("VWC"), set = c("lt", "pt")) %>%
-  tidyr::expand(response, treatment, set) %>% 
+```{r selection_abs, results='asis'}
+pt.plantyr <- pt.plantyr %>% mutate(VWC = ifelse(is.na(VWC.plant), VWC.sm, VWC.plant)) #phys traits had the VWC measured next to the plant in 2019 and 2020 only - substitute VWC in subplot on closest date
+
+selection_mod_abs <- function(trait, response, set) {
+  t.plantyr <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% rename("trait"=trait)
+  options(contrasts = c("contr.sum", "contr.poly"))
+  glmmTMB(formula(paste(response, "~ trait * sun_date * precip_est_mm + (1|plot)")), data=t.plantyr, family="binomial")
+}
+
+mod.selection.abs <- 
+  tibble(response = c("survived","flowered"), set = c("lt", "pt")) %>%
+  tidyr::expand(response, set) %>% 
   full_join(tibble(trait=c(leaftraits, phystraits), 
                    set = c(rep("lt", length(leaftraits)), rep("pt", length(phystraits))))) %>% 
-  mutate(model = pmap(., step_selection_mod),
+  mutate(model = pmap(., selection_mod_abs),
          coefs = map(model, tidy),
          tests = map(model, ~ tidy(car::Anova(.x, type=3))))
+
+mod.selection.abs  %>% group_by(response) %>% 
+  group_walk(function(.x,.y) {cat(paste("Effect of trait on whether a plant",.y$response,"under different absolute snowmelt / summer precip conditions")); 
+    Anova_table(.x %>% unnest(tests)) %>% kable %>% print})
+
+#sjPlot::plot_model((mod.selection.abs %>% filter(trait=="conductance", response=="flowered") %>% pull(model))[[1]])
 ```
 
+## Selection vs. soil moisture
+
+```{r selection_sm, results='asis'}
+pt.plantyr <- pt.plantyr %>% mutate(VWC = ifelse(is.na(VWC.plant), VWC.sm, VWC.plant)) #phys traits had the VWC measured next to the plant in 2019 and 2020 only - substitute VWC in subplot on closest date
+
+selection_mod_sm <- function(trait, response, set) {
+  t.plantyr <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% rename("trait"=trait)
+  options(contrasts = c("contr.sum", "contr.poly"))
+  glmmTMB(formula(paste(response, "~ trait * year * VWC + (1|plot)")), data=t.plantyr, family="binomial")
+}
+
+mod.selection.sm <- 
+  tibble(response = c("survived","flowered"), set = c("lt", "pt")) %>%
+  tidyr::expand(response, set) %>% 
+  full_join(tibble(trait=c(leaftraits, phystraits), 
+                   set = c(rep("lt", length(leaftraits)), rep("pt", length(phystraits))))) %>% 
+  mutate(model = pmap(., selection_mod_sm),
+         coefs = map(model, tidy),
+         tests = map(model, ~ tidy(car::Anova(.x, type=3))))
+
+mod.selection.sm  %>% group_by(response) %>% 
+  group_walk(function(.x,.y) {cat(paste("Effect of trait on whether a plant",.y$response,"under different VWC conditions")); 
+    Anova_table(.x %>% unnest(tests)) %>% kable %>% print})
+```
 
 ```{r summaryfigures, fig.width=7, fig.height=3, eval=F}
 pt.plantyr %>% 
