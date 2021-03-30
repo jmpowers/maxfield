@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-03-26" />
+<meta name="date" content="2021-03-30" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-03-26</h4>
+<h4 class="date">2021-03-30</h4>
 
 </div>
 
@@ -328,6 +328,17 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
   theme(legend.position=&quot;right&quot;, axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())</code></pre>
 <p><img src="images/map-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
+  geom_point(aes(x=plot_x, y=plot_y, fill=snow), size=7*size_meter, shape=22, stroke=1)+
+  scale_fill_manual(&quot;Snowmelt&quot;, values=c(&quot;black&quot;,&quot;white&quot;), guide=guide_legend(override.aes = list(size = 2*size_meter)))+
+  new_scale_fill()+
+  geom_point(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, fill=water4), size=2*size_meter, shape=22, stroke=1) + 
+    geom_text(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, label=subplot), color=&quot;white&quot;) + 
+  scale_fill_grey(&quot;Precipitation&quot;, start=0.8, end=0.2) +
+  geom_text(aes(x=plot_x, y=plot_y, label=plot), color=&quot;white&quot;)+ theme_minimal() + 
+  theme(legend.position=&quot;right&quot;, axis.title=element_blank(), axis.text = element_blank(), 
+        axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())</code></pre>
+<p><img src="images/map-2.png" width="672" /></p>
 </div>
 <div id="snow-melt-vs.-treatments" class="section level1">
 <h1>Snow melt vs. treatments</h1>
@@ -444,6 +455,9 @@ ggpairs(monthly_all %&gt;% mutate(season=factor(c(&quot;wntr&quot;,&quot;smmr&qu
                  group_by(mo) %&gt;% summarize(mean_precip=mean(EPA_NOAA_filled)), 
                aes(x=1989, xend=2006, y=mean_precip, yend=mean_precip, color=factor(mo)), inherit.aes=F, size=1) </code></pre>
 <p><img src="images/weather_monthly-5.png" width="672" /></p>
+</div>
+<div id="precipitation-trends" class="section level2">
+<h2>Precipitation trends</h2>
 <pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021) %&gt;%
   mutate(julian = yday(date), decade = factor(floor(year(date)/10)*10), decade = recode(decade, &quot;2020&quot;=&quot;2010&quot;)) %&gt;%
   group_by(julian, decade) %&gt;% 
@@ -531,8 +545,8 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 Residual standard error: 13.32 on 43 degrees of freedom
 Multiple R-squared:  0.04174,   Adjusted R-squared:  0.01945 
 F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
-<pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point()+
-  geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;), fill=&quot;white&quot;) +
+<pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
+  geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;), fill=&quot;white&quot;, size=2) +
   scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
   labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;,size=&quot;# Subplots&quot;) + 
   theme_minimal()</code></pre>
@@ -3118,7 +3132,7 @@ ggplot(aes(y=value, x=factor(round),color=water, fill=water)) +
   labs(x=&quot;Round&quot;, y=&quot;&quot;, color=&quot;Precipitation&quot;, fill=&quot;Precipitation&quot;) + scale_y_continuous(position=&quot;right&quot;) + 
   theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;), legend.position = &quot;top&quot;)</code></pre>
-<p><img src="images/lt_connected-1.png" width="864" /></p>
+<p><img src="images/lt_connected-1.png" width="1056" /></p>
 <pre class="r"><code>lt %&gt;% pivot_longer(all_of(leaftraits), names_to = &quot;trait&quot;) %&gt;% 
 ggplot(aes(y=value, x=factor(round),color=snow, fill=snow)) + 
   facet_grid(trait ~year, scales=&quot;free_y&quot;, switch=&quot;y&quot;,labeller=as_labeller(c(traitnames.units, set_names(2018:2020)))) + 
@@ -3129,14 +3143,26 @@ ggplot(aes(y=value, x=factor(round),color=snow, fill=snow)) +
   labs(x=&quot;Round&quot;, y=&quot;&quot;, color=&quot;Snowmelt&quot;, fill=&quot;Snowmelt&quot;) + scale_y_continuous(position=&quot;right&quot;) + 
   theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;), legend.position = &quot;top&quot;)</code></pre>
-<p><img src="images/lt_connected-2.png" width="864" /></p>
+<p><img src="images/lt_connected-2.png" width="1056" /></p>
 <pre class="r"><code>lt %&gt;% pivot_longer(all_of(c(leaftraits, &quot;sla_wet&quot;)), names_to = &quot;trait&quot;) %&gt;% arrange(date) %&gt;% 
   ggplot(aes(y=value, x=year.round, color=water)) + 
   facet_wrap(vars(trait), scales=&quot;free_y&quot;,
              labeller=as_labeller(c(traitnames.units, set_names(paste(&quot;Wet&quot; ,tolower(traitnames.units[&quot;sla&quot;])),&quot;sla_wet&quot;)))) + 
   geom_point() + geom_path(aes(group=plantid)) + scale_color_manual(values=water_pal) + 
   labs(x=&quot;Year and round&quot;, y=&quot;&quot;, color=&quot;Precipitation&quot;) + theme_minimal() + theme(legend.position = &quot;top&quot;)</code></pre>
-<p><img src="images/lt_connected-3.png" width="864" /></p>
+<p><img src="images/lt_connected-3.png" width="1056" /></p>
+<pre class="r"><code>lt.water_content &lt;- lt %&gt;% select(year.round, plantid, water, snow, water_content) %&gt;% arrange(year.round) %&gt;% 
+  pivot_wider(names_from=&quot;year.round&quot;, values_from=&quot;water_content&quot;, values_fn=function(x) mean(x, na.rm=T))
+
+plot_rm_change &lt;- function(data, round_x, round_y, range_xy) {
+  ggplot(data, aes_(x=as.name(round_x), y=as.name(round_y), color=as.name(&quot;water&quot;))) + 
+    geom_abline(intercept=0, slope=1) + geom_smooth(se=F, span=0.9) + geom_point(size=1)  +  geom_rug() +
+    scale_color_manual(values=water_pal, guide=F) + coord_fixed(xlim=range_xy, ylim=range_xy) + theme_minimal()
+}
+
+do.call(grid.arrange, map2(c(levels(lt$year.round)[-6],&quot;2018.1&quot;), c(levels(lt$year.round)[-1],&quot;2019.1&quot;), plot_rm_change, data=lt.water_content, range_xy=range(lt$water_content, na.rm=T)))</code></pre>
+<p><img src="images/lt_plantcorr-1.png" width="720" /></p>
+<pre class="r"><code>#plot(lt.water_content %&gt;% select(-c(plantid,water,snow)))</code></pre>
 <pre class="r"><code>lt.mod.split.rm &lt;- map(set_names(leaftraits), 
                   ~ lmer(lt[[.x]] ~  year * round * water * snow + (1|snow:plot) + (1|snow:plotid) + (1|plantid), data=lt))
 lt.mod.split.rm.coefs &lt;- map_dfr(lt.mod.split.rm, tidy, .id=&quot;trait&quot;)

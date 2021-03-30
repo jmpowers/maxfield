@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -81,6 +81,17 @@ ggplot(treatments_map) + coord_fixed(clip="off")+
     geom_text(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, label=subplot)) + 
   scale_fill_manual("Precipitation", values=water4_pal) +
   geom_text(aes(x=plot_x, y=plot_y, label=plot))+ theme_minimal() + 
+  theme(legend.position="right", axis.title=element_blank(), axis.text = element_blank(), 
+        axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())
+
+ggplot(treatments_map) + coord_fixed(clip="off")+
+  geom_point(aes(x=plot_x, y=plot_y, fill=snow), size=7*size_meter, shape=22, stroke=1)+
+  scale_fill_manual("Snowmelt", values=c("black","white"), guide=guide_legend(override.aes = list(size = 2*size_meter)))+
+  new_scale_fill()+
+  geom_point(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, fill=water4), size=2*size_meter, shape=22, stroke=1) + 
+    geom_text(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, label=subplot), color="white") + 
+  scale_fill_grey("Precipitation", start=0.8, end=0.2) +
+  geom_text(aes(x=plot_x, y=plot_y, label=plot), color="white")+ theme_minimal() + 
   theme(legend.position="right", axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())
 ```
@@ -205,6 +216,8 @@ monthly_all %>% filter(mo %in% 5:9) %>% ggplot(aes(x=yr, color=factor(mo), group
                aes(x=1989, xend=2006, y=mean_precip, yend=mean_precip, color=factor(mo)), inherit.aes=F, size=1) 
 ```
 
+## Precipitation trends
+
 ```{r precip_trend}
 daily_all %>% filter(year(date)>1989, year(date)<2021) %>%
   mutate(julian = yday(date), decade = factor(floor(year(date)/10)*10), decade = recode(decade, "2020"="2010")) %>%
@@ -260,8 +273,8 @@ groundcover %>% mutate(first_snow_day=first_snow_day-365) %>%
 cat("SD of first bare ground =", round(sd(groundcover$first_0_cm_day),1),"days over",range(groundcover$year))
 summary(lm(first_0_cm_day ~ year, data=groundcover))
 
-treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point()+
-  geom_point(data=groundcover, aes(x=first_0_cm_day, color="Control", shape="1990-2017"), fill="white") +
+treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
+  geom_point(data=groundcover, aes(x=first_0_cm_day, color="Control", shape="1990-2017"), fill="white", size=2) +
   scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
   labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt date", color="Precipitation", shape="Year",size="# Subplots") + 
   theme_minimal()
@@ -914,7 +927,7 @@ ggplot(aes(tot)) + geom_histogram(binwidth=1, color="black", fill="white") +
 with(lt, table(plantid, year.round)) %>% heatmap(scale="none", Colv = NA, col=c("white",status_pal["vegetative"],"yellow"))
 ```
 
-```{r lt_connected, fig.height=9, fig.width=9}
+```{r lt_connected, fig.height=11, fig.width=11}
 lt %>% pivot_longer(all_of(leaftraits), names_to = "trait") %>% 
 ggplot(aes(y=value, x=factor(round),color=water, fill=water)) + 
   facet_grid(trait ~year, scales="free_y", switch="y",labeller=as_labeller(c(traitnames.units, set_names(2018:2020)))) + 
@@ -942,6 +955,21 @@ lt %>% pivot_longer(all_of(c(leaftraits, "sla_wet")), names_to = "trait") %>% ar
              labeller=as_labeller(c(traitnames.units, set_names(paste("Wet" ,tolower(traitnames.units["sla"])),"sla_wet")))) + 
   geom_point() + geom_path(aes(group=plantid)) + scale_color_manual(values=water_pal) + 
   labs(x="Year and round", y="", color="Precipitation") + theme_minimal() + theme(legend.position = "top")
+```
+
+```{r lt_plantcorr, fig.height=11, fig.width=7.5}
+lt.water_content <- lt %>% select(year.round, plantid, water, snow, water_content) %>% arrange(year.round) %>% 
+  pivot_wider(names_from="year.round", values_from="water_content", values_fn=function(x) mean(x, na.rm=T))
+
+plot_rm_change <- function(data, round_x, round_y, range_xy) {
+  ggplot(data, aes_(x=as.name(round_x), y=as.name(round_y), color=as.name("water"))) + 
+    geom_abline(intercept=0, slope=1) + geom_smooth(se=F, span=0.9) + geom_point(size=1)  +  geom_rug() +
+    scale_color_manual(values=water_pal, guide=F) + coord_fixed(xlim=range_xy, ylim=range_xy) + theme_minimal()
+}
+
+do.call(grid.arrange, map2(c(levels(lt$year.round)[-6],"2018.1"), c(levels(lt$year.round)[-1],"2019.1"), plot_rm_change, data=lt.water_content, range_xy=range(lt$water_content, na.rm=T)))
+
+#plot(lt.water_content %>% select(-c(plantid,water,snow)))
 ```
 
 
