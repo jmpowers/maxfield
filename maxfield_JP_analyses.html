@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-03-30" />
+<meta name="date" content="2021-03-31" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-03-30</h4>
+<h4 class="date">2021-03-31</h4>
 
 </div>
 
@@ -328,13 +328,13 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
   theme(legend.position=&quot;right&quot;, axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())</code></pre>
 <p><img src="images/map-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
+<pre class="r"><code>ggplot(treatments_map %&gt;% mutate(snow=fct_relevel(snow, &quot;Normal&quot;))) + coord_fixed(clip=&quot;off&quot;)+
   geom_point(aes(x=plot_x, y=plot_y, fill=snow), size=7*size_meter, shape=22, stroke=1)+
-  scale_fill_manual(&quot;Snowmelt&quot;, values=c(&quot;black&quot;,&quot;white&quot;), guide=guide_legend(override.aes = list(size = 2*size_meter)))+
+  scale_fill_manual(&quot;Snowmelt&quot;, values=c(&quot;grey&quot;,&quot;black&quot;), guide=guide_legend(override.aes = list(size = 2*size_meter)))+
   new_scale_fill()+
   geom_point(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, fill=water4), size=2*size_meter, shape=22, stroke=1) + 
-    geom_text(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, label=subplot), color=&quot;white&quot;) + 
-  scale_fill_grey(&quot;Precipitation&quot;, start=0.8, end=0.2) +
+    geom_text(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, label=subplot), color=&quot;black&quot;) + 
+  scale_fill_grey(&quot;Precipitation&quot;, start=1, end=0.2) +
   geom_text(aes(x=plot_x, y=plot_y, label=plot), color=&quot;white&quot;)+ theme_minimal() + 
   theme(legend.position=&quot;right&quot;, axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())</code></pre>
@@ -393,7 +393,7 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
 <div id="daily-weather" class="section level2">
 <h2>Daily weather</h2>
 <pre class="r"><code>ggplot(daily_all %&gt;% filter(year(date) %in% 2018:2020), aes(y=EPA_NOAA_filled, x=yday(date))) + geom_col(aes(fill=ground_covered)) + 
-  facet_wrap(vars(year(date)), ncol=1) + labs(x=&quot;Day of year&quot;, y=&quot;NOAA_billy precipiation (mm)&quot;, fill=&quot;Snow cover&quot;)</code></pre>
+  facet_wrap(vars(year(date)), ncol=1) + labs(x=&quot;Day of year&quot;, y=&quot;EPA/NOAA precipiation (mm)&quot;, fill=&quot;Snow cover&quot;)</code></pre>
 <p><img src="images/weather_daily-1.png" width="672" /></p>
 <pre class="r"><code>daily_all %&gt;% pivot_longer(unname(stations), names_to=&quot;station&quot;, values_to=&quot;precipitation_mm&quot;) %&gt;% 
   filter(yday(date) &gt;100, yday(date) &lt; 240, year(date) %in% 2018:2020) %&gt;%
@@ -464,13 +464,13 @@ ggpairs(monthly_all %&gt;% mutate(season=factor(c(&quot;wntr&quot;,&quot;smmr&qu
   summarize(EPA_NOAA_filled = mean(EPA_NOAA_filled, na.rm=T), ground_covered=mean(as.integer(ground_covered), na.rm=T)-1) %&gt;% 
   ggplot(aes(y=EPA_NOAA_filled, x=julian, color=decade)) + 
   geom_smooth(span=0.15, se=F)+  geom_point(shape=1, alpha=0.5) +   geom_line(aes(y=ground_covered*2), size=0.75) + 
-  labs(x=&quot;Day of year&quot;, y=&quot;Mean NOAA_billy precipiation (mm)&quot;, color=&quot;Decade&quot;, title=&quot;Snowmelt and monsoon timing by decade&quot;) +
+  labs(x=&quot;Day of year&quot;, y=&quot;Mean EPA/NOAA precipiation (mm)&quot;, color=&quot;Decade&quot;, title=&quot;Snowmelt and monsoon timing by decade&quot;) +
     scale_color_brewer(palette = &quot;Set1&quot;, direction = -1) + theme_minimal()</code></pre>
 <p><img src="images/precip_trend-1.png" width="672" /></p>
 <pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, ground_covered==&quot;smmr&quot;, EPA_NOAA_filled &gt; 0) %&gt;%   
   mutate(decade = factor(floor(year(date)/10)*10), decade = recode(decade, &quot;2020&quot;=&quot;2010&quot;)) %&gt;% group_by(decade) %&gt;% 
   ggplot(aes(x=EPA_NOAA_filled, color=decade)) + geom_density() +
-    labs(x=&quot;NOAA_billy precipiation (mm) &gt; 0&quot;, y=&quot;Density&quot;, color=&quot;Decade&quot;, title=&quot;Intensity spectrum of summer rainstorms&quot;) +
+    labs(x=&quot;EPA/NOAA precipiation (mm)&quot;, y=&quot;Proportion&quot;, color=&quot;Decade&quot;, title=&quot;Intensity spectrum of summer rainstorms &gt; 0 mm&quot;) +
       scale_color_brewer(palette = &quot;Set1&quot;, direction = -1) + 
   scale_x_continuous(breaks=scales::breaks_extended(10)) + theme_minimal()</code></pre>
 <p><img src="images/precip_trend-2.png" width="672" /></p>
@@ -491,7 +491,7 @@ ggpairs(monthly_all %&gt;% mutate(season=factor(c(&quot;wntr&quot;,&quot;smmr&qu
   labs(x=&quot;Year&quot;, y=&quot;Maximum daily precipitation (mm)&quot;)</code></pre>
 <p><img src="images/precip_trend-5.png" width="672" /></p>
 <pre class="r"><code>ggplot(groundcover, aes(x=year, y=precip_est_mm)) + geom_point() + geom_smooth(method=&quot;lm&quot;) +
-    labs(x=&quot;Year&quot;, y=&quot;Total precip from snowmelt to day 214 (mm)&quot;)</code></pre>
+    labs(x=&quot;Year&quot;, y=&quot;Total precip from snowmelt to day 214 (mm)&quot;) + xlim(c(1990, 2020))</code></pre>
 <p><img src="images/precip_trend-6.png" width="672" /></p>
 <pre class="r"><code>lm(precip_est_mm ~ year, data = groundcover) %&gt;% summary #total since snow melted</code></pre>
 <pre><code>
@@ -511,6 +511,52 @@ Residual standard error: 39.31 on 29 degrees of freedom
   (14 observations deleted due to missingness)
 Multiple R-squared:  0.0688,    Adjusted R-squared:  0.03669 
 F-statistic: 2.143 on 1 and 29 DF,  p-value: 0.154</code></pre>
+<p>Long-term precipitation trends from Crested Butte station</p>
+<pre class="r"><code>ggplot(daily_NOAA, aes(x=date, y=NOAA_stations_name[id], color=prcp_mm)) + geom_tile() </code></pre>
+<p><img src="images/precip_trend_long-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(daily_NOAA, aes(x=date, y=NOAA_stations_name[id], color=tmax_C)) + geom_tile()+ scale_color_viridis_c(option=&quot;inferno&quot;)</code></pre>
+<p><img src="images/precip_trend_long-2.png" width="672" /></p>
+<pre class="r"><code>#weird long run of high precipitation in Sept 1927
+daily_NOAA %&gt;% filter(id==&quot;USC00051959&quot;, year(date)&gt;1909, year(date)!=1927) %&gt;%
+  mutate(julian = yday(date), decade = factor(floor(year(date)/10)*10), decade = recode(decade, &quot;2020&quot;=&quot;2010&quot;)) %&gt;%
+  group_by(julian, decade) %&gt;% summarize(prcp_mm = mean(prcp_mm, na.rm=T)) %&gt;% 
+  ggplot(aes(y=prcp_mm, x=julian, color=decade)) + geom_smooth(span=0.15, se=F)+
+  labs(x=&quot;Day of year&quot;, y=&quot;Mean Crested Butte precipiation (mm)&quot;, color=&quot;Decade&quot;, title=&quot;Snowmelt and monsoon timing by decade&quot;) +
+  scale_color_viridis_d(option=&quot;inferno&quot;) + coord_cartesian(xlim=c(120,270)) + theme_dark()</code></pre>
+<p><img src="images/precip_trend_long-3.png" width="672" /></p>
+<pre class="r"><code>daily_NOAA %&gt;% filter(id==&quot;USC00051959&quot;, year(date)&gt;1909, year(date)!=1927,yday(date)&gt;=120, yday(date)&lt;= 270, prcp_mm &gt; 0) %&gt;%
+  mutate(decade = factor(floor(year(date)/10)*10), decade = recode(decade, &quot;2020&quot;=&quot;2010&quot;)) %&gt;% group_by(decade) %&gt;% 
+  ggplot(aes(x=prcp_mm, color=decade)) + geom_density() +
+    labs(x=&quot;Crested Butte precipiation (mm)&quot;, y=&quot;Proportion&quot;, color=&quot;Decade&quot;, 
+         title=&quot;Intensity spectrum of rainstorms &gt; 0 mm \n(day 120-270, Crested Butte)&quot;) +
+    scale_color_viridis_d(option=&quot;inferno&quot;) +  coord_cartesian(xlim=c(0,40)) +  theme_dark()</code></pre>
+<p><img src="images/precip_trend_long-4.png" width="672" /></p>
+<pre class="r"><code>daily_NOAA %&gt;% filter(id==&quot;USC00051959&quot;, year(date)&gt;1909, year(date)!=1927,prcp_mm &gt; 2) %&gt;%
+  mutate(drought_days = c(0,diff(date)), year=year(date)) %&gt;% filter(yday(date)&gt;=120, yday(date)&lt;= 270,) %&gt;% 
+  select(year, date, drought_days) %&gt;% group_by(year) %&gt;% summarize(max_drought_days = max(drought_days)) %&gt;% 
+  ggplot(aes(x= year, y=max_drought_days)) + geom_smooth(span=0.5) +geom_point() +
+  labs(x=&quot;Year&quot;, y=&quot;Consecutive drought days with &lt; 2 mm daily precipitation \n(day 120-270, Crested Butte)&quot;)</code></pre>
+<p><img src="images/precip_trend_long-5.png" width="672" /></p>
+<pre class="r"><code>daily_NOAA %&gt;% filter(id==&quot;USC00051959&quot;, year(date)&gt;1909, year(date)!=1927,yday(date)&gt;=120, yday(date)&lt;= 270, prcp_mm &gt; 2) %&gt;% 
+  count(year=year(date)) %&gt;% 
+    ggplot(aes(x= year, y=n)) + geom_smooth(span=0.5) + geom_point() + 
+  labs(x=&quot;Year&quot;, y=&quot;Days with &gt; 2 mm daily precipitation (day 120-270, Crested Butte)&quot;)</code></pre>
+<p><img src="images/precip_trend_long-6.png" width="672" /></p>
+<pre class="r"><code>daily_NOAA %&gt;% filter(id==&quot;USC00051959&quot;, year(date)&gt;1909, year(date)!=1927, yday(date)&gt;=120, yday(date)&lt;= 270) %&gt;% 
+  group_by(year=year(date)) %&gt;% summarize(total_mm=sum(prcp_mm, na.rm=T)) %&gt;% 
+    ggplot(aes(x= year, y=total_mm)) + geom_smooth(span=0.5) + geom_point() + 
+  labs(x=&quot;Year&quot;, y=&quot;Total precipitation (mm, day 120-270, Crested Butte)&quot;)</code></pre>
+<p><img src="images/precip_trend_long-7.png" width="672" /></p>
+<pre class="r"><code>daily_NOAA %&gt;% filter(id==&quot;USC00051959&quot;, year(date)&gt;1909, yday(date)&gt;=120, yday(date)&lt;= 270) %&gt;% 
+  group_by(year=year(date)) %&gt;% summarize(tmax_mean=mean(tmax_C, na.rm=T)) %&gt;% 
+    ggplot(aes(x= year, y=tmax_mean)) + geom_smooth(span=0.3) + geom_point() + 
+  labs(x=&quot;Year&quot;, y=&quot;Average maximum temperature (C, day 120-270, Crested Butte)&quot;)</code></pre>
+<p><img src="images/precip_trend_long-8.png" width="672" /></p>
+<pre class="r"><code>daily_NOAA %&gt;% filter(id==&quot;USC00051959&quot;, year(date)&gt;1909, yday(date)&gt;=120, yday(date)&lt;= 270) %&gt;% 
+  group_by(year=year(date)) %&gt;% summarize(tmin_mean=mean(tmin_C, na.rm=T)) %&gt;% 
+    ggplot(aes(x= year, y=tmin_mean)) + geom_smooth(span=0.3) + geom_point() + 
+  labs(x=&quot;Year&quot;, y=&quot;Average minimum temperature (C, day 120-270, Crested Butte)&quot;)</code></pre>
+<p><img src="images/precip_trend_long-9.png" width="672" /></p>
 </div>
 <div id="snowmelt-timing" class="section level2">
 <h2>Snowmelt timing</h2>
@@ -584,7 +630,7 @@ F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
   scale_color_manual(values=water_pal) +
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
-<p><img src="images/soil-1.png" width="1152" /></p>
+<p><img src="images/soil-1.png" width="864" /></p>
 <pre class="r"><code>ggplot(sm.subplot, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
       geom_col(data=daily_all %&gt;% filter(yr%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
@@ -595,8 +641,8 @@ F-statistic: 1.873 on 1 and 43 DF,  p-value: 0.1783</code></pre>
     scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=&quot;black&quot;, show.legend=F) +
   coord_cartesian(xlim=c(110, 230), ylim=c(0, round(max(sm.subplot$VWC, na.rm=T))), expand=F)+
-    labs(x=&quot;Day of year&quot;, y=&quot;Mean soil VWC in subplot (%) / Precipitation (mm)&quot;, color=&quot;Water&quot;, shape=&quot;Snowmelt&quot;, linetype=&quot;Snowmelt&quot;) + theme_minimal() + theme(legend.key.width = unit(2, &quot;lines&quot;))</code></pre>
-<p><img src="images/soil-2.png" width="1152" /></p>
+    labs(x=&quot;Day of year&quot;, y=&quot;Mean soil moisture in subplot (%VWC) / Precipitation (mm)&quot;, color=&quot;Water&quot;, shape=&quot;Snowmelt&quot;, linetype=&quot;Snowmelt&quot;) + theme_minimal() + theme(legend.key.width = unit(2, &quot;lines&quot;))</code></pre>
+<p><img src="images/soil-2.png" width="864" /></p>
 </div>
 <div id="treatments-1" class="section level2">
 <h2>Treatments</h2>
@@ -2745,7 +2791,7 @@ anova_table(mod.split.tests, mod.split) %&gt;% kable()</code></pre>
     labs(x=&quot;Precipitation&quot;, y=&quot;Standardized trait&quot;, color=&quot;Snowmelt&quot;) + 
     scale_y_continuous(position=&quot;right&quot;) + scale_x_discrete(guide=guide_axis(angle=90)) + 
     #coord_fixed() + #maintains y scale across plots if figure width is constant
-    scale_color_manual(values=snow_pal, guide=guide_legend(override.aes = list(shape=15, size=ifelse(plot.emm,5,1)))) + 
+    scale_color_manual(values=c(&quot;grey&quot;,&quot;black&quot;), guide=guide_legend(override.aes = list(shape=15, size=ifelse(plot.emm,5,1)))) + 
     theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                             axis.title.y= element_blank(),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;), 

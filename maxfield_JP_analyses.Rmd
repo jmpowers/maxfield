@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -84,13 +84,13 @@ ggplot(treatments_map) + coord_fixed(clip="off")+
   theme(legend.position="right", axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())
 
-ggplot(treatments_map) + coord_fixed(clip="off")+
+ggplot(treatments_map %>% mutate(snow=fct_relevel(snow, "Normal"))) + coord_fixed(clip="off")+
   geom_point(aes(x=plot_x, y=plot_y, fill=snow), size=7*size_meter, shape=22, stroke=1)+
-  scale_fill_manual("Snowmelt", values=c("black","white"), guide=guide_legend(override.aes = list(size = 2*size_meter)))+
+  scale_fill_manual("Snowmelt", values=c("grey","black"), guide=guide_legend(override.aes = list(size = 2*size_meter)))+
   new_scale_fill()+
   geom_point(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, fill=water4), size=2*size_meter, shape=22, stroke=1) + 
-    geom_text(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, label=subplot), color="white") + 
-  scale_fill_grey("Precipitation", start=0.8, end=0.2) +
+    geom_text(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, label=subplot), color="black") + 
+  scale_fill_grey("Precipitation", start=1, end=0.2) +
   geom_text(aes(x=plot_x, y=plot_y, label=plot), color="white")+ theme_minimal() + 
   theme(legend.position="right", axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())
@@ -152,7 +152,7 @@ meltdates %>% ggplot(aes(x=melt_offset, fill=snow)) + geom_dotplot(method="histo
 
 ```{r weather_daily}
 ggplot(daily_all %>% filter(year(date) %in% 2018:2020), aes(y=EPA_NOAA_filled, x=yday(date))) + geom_col(aes(fill=ground_covered)) + 
-  facet_wrap(vars(year(date)), ncol=1) + labs(x="Day of year", y="NOAA_billy precipiation (mm)", fill="Snow cover")
+  facet_wrap(vars(year(date)), ncol=1) + labs(x="Day of year", y="EPA/NOAA precipiation (mm)", fill="Snow cover")
 
 daily_all %>% pivot_longer(unname(stations), names_to="station", values_to="precipitation_mm") %>% 
   filter(yday(date) >100, yday(date) < 240, year(date) %in% 2018:2020) %>%
@@ -225,13 +225,13 @@ daily_all %>% filter(year(date)>1989, year(date)<2021) %>%
   summarize(EPA_NOAA_filled = mean(EPA_NOAA_filled, na.rm=T), ground_covered=mean(as.integer(ground_covered), na.rm=T)-1) %>% 
   ggplot(aes(y=EPA_NOAA_filled, x=julian, color=decade)) + 
   geom_smooth(span=0.15, se=F)+  geom_point(shape=1, alpha=0.5) +   geom_line(aes(y=ground_covered*2), size=0.75) + 
-  labs(x="Day of year", y="Mean NOAA_billy precipiation (mm)", color="Decade", title="Snowmelt and monsoon timing by decade") +
+  labs(x="Day of year", y="Mean EPA/NOAA precipiation (mm)", color="Decade", title="Snowmelt and monsoon timing by decade") +
     scale_color_brewer(palette = "Set1", direction = -1) + theme_minimal()
 
 daily_all %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr", EPA_NOAA_filled > 0) %>%   
   mutate(decade = factor(floor(year(date)/10)*10), decade = recode(decade, "2020"="2010")) %>% group_by(decade) %>% 
   ggplot(aes(x=EPA_NOAA_filled, color=decade)) + geom_density() +
-    labs(x="NOAA_billy precipiation (mm) > 0", y="Density", color="Decade", title="Intensity spectrum of summer rainstorms") +
+    labs(x="EPA/NOAA precipiation (mm)", y="Proportion", color="Decade", title="Intensity spectrum of summer rainstorms > 0 mm") +
       scale_color_brewer(palette = "Set1", direction = -1) + 
   scale_x_continuous(breaks=scales::breaks_extended(10)) + theme_minimal()
 
@@ -252,8 +252,55 @@ daily_all %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr") %
   labs(x="Year", y="Maximum daily precipitation (mm)")
 
 ggplot(groundcover, aes(x=year, y=precip_est_mm)) + geom_point() + geom_smooth(method="lm") +
-    labs(x="Year", y="Total precip from snowmelt to day 214 (mm)")
+    labs(x="Year", y="Total precip from snowmelt to day 214 (mm)") + xlim(c(1990, 2020))
 lm(precip_est_mm ~ year, data = groundcover) %>% summary #total since snow melted
+```
+
+Long-term precipitation trends from Crested Butte station
+```{r precip_trend_long}
+ggplot(daily_NOAA, aes(x=date, y=NOAA_stations_name[id], color=prcp_mm)) + geom_tile() 
+ggplot(daily_NOAA, aes(x=date, y=NOAA_stations_name[id], color=tmax_C)) + geom_tile()+ scale_color_viridis_c(option="inferno")
+
+#weird long run of high precipitation in Sept 1927
+daily_NOAA %>% filter(id=="USC00051959", year(date)>1909, year(date)!=1927) %>%
+  mutate(julian = yday(date), decade = factor(floor(year(date)/10)*10), decade = recode(decade, "2020"="2010")) %>%
+  group_by(julian, decade) %>% summarize(prcp_mm = mean(prcp_mm, na.rm=T)) %>% 
+  ggplot(aes(y=prcp_mm, x=julian, color=decade)) + geom_smooth(span=0.15, se=F)+
+  labs(x="Day of year", y="Mean Crested Butte precipiation (mm)", color="Decade", title="Snowmelt and monsoon timing by decade") +
+  scale_color_viridis_d(option="inferno") + coord_cartesian(xlim=c(120,270)) + theme_dark()
+
+daily_NOAA %>% filter(id=="USC00051959", year(date)>1909, year(date)!=1927,yday(date)>=120, yday(date)<= 270, prcp_mm > 0) %>%
+  mutate(decade = factor(floor(year(date)/10)*10), decade = recode(decade, "2020"="2010")) %>% group_by(decade) %>% 
+  ggplot(aes(x=prcp_mm, color=decade)) + geom_density() +
+    labs(x="Crested Butte precipiation (mm)", y="Proportion", color="Decade", 
+         title="Intensity spectrum of rainstorms > 0 mm \n(day 120-270, Crested Butte)") +
+    scale_color_viridis_d(option="inferno") +  coord_cartesian(xlim=c(0,40)) +  theme_dark()
+
+daily_NOAA %>% filter(id=="USC00051959", year(date)>1909, year(date)!=1927,prcp_mm > 2) %>%
+  mutate(drought_days = c(0,diff(date)), year=year(date)) %>% filter(yday(date)>=120, yday(date)<= 270,) %>% 
+  select(year, date, drought_days) %>% group_by(year) %>% summarize(max_drought_days = max(drought_days)) %>% 
+  ggplot(aes(x= year, y=max_drought_days)) + geom_smooth(span=0.5) +geom_point() +
+  labs(x="Year", y="Consecutive drought days with < 2 mm daily precipitation \n(day 120-270, Crested Butte)")
+
+daily_NOAA %>% filter(id=="USC00051959", year(date)>1909, year(date)!=1927,yday(date)>=120, yday(date)<= 270, prcp_mm > 2) %>% 
+  count(year=year(date)) %>% 
+    ggplot(aes(x= year, y=n)) + geom_smooth(span=0.5) + geom_point() + 
+  labs(x="Year", y="Days with > 2 mm daily precipitation (day 120-270, Crested Butte)")
+
+daily_NOAA %>% filter(id=="USC00051959", year(date)>1909, year(date)!=1927, yday(date)>=120, yday(date)<= 270) %>% 
+  group_by(year=year(date)) %>% summarize(total_mm=sum(prcp_mm, na.rm=T)) %>% 
+    ggplot(aes(x= year, y=total_mm)) + geom_smooth(span=0.5) + geom_point() + 
+  labs(x="Year", y="Total precipitation (mm, day 120-270, Crested Butte)")
+
+daily_NOAA %>% filter(id=="USC00051959", year(date)>1909, yday(date)>=120, yday(date)<= 270) %>% 
+  group_by(year=year(date)) %>% summarize(tmax_mean=mean(tmax_C, na.rm=T)) %>% 
+    ggplot(aes(x= year, y=tmax_mean)) + geom_smooth(span=0.3) + geom_point() + 
+  labs(x="Year", y="Average maximum temperature (C, day 120-270, Crested Butte)")
+
+daily_NOAA %>% filter(id=="USC00051959", year(date)>1909, yday(date)>=120, yday(date)<= 270) %>% 
+  group_by(year=year(date)) %>% summarize(tmin_mean=mean(tmin_C, na.rm=T)) %>% 
+    ggplot(aes(x= year, y=tmin_mean)) + geom_smooth(span=0.3) + geom_point() + 
+  labs(x="Year", y="Average minimum temperature (C, day 120-270, Crested Butte)")
 ```
 
 
@@ -285,7 +332,7 @@ treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))
 
 ## Precipitation
 
-```{r soil, fig.height=12, fig.width=12}
+```{r soil, fig.height=9, fig.width=9}
 ggplot(sm, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
   geom_jitter(aes(shape=snow, color=water, y = VWC), height=0, width=0.3) + 
@@ -324,7 +371,7 @@ ggplot(sm.subplot, aes(x=yday(date))) +
     scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="black", show.legend=F) +
   coord_cartesian(xlim=c(110, 230), ylim=c(0, round(max(sm.subplot$VWC, na.rm=T))), expand=F)+
-    labs(x="Day of year", y="Mean soil VWC in subplot (%) / Precipitation (mm)", color="Water", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"))
+    labs(x="Day of year", y="Mean soil moisture in subplot (%VWC) / Precipitation (mm)", color="Water", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"))
 ```
 
 ## Treatments
@@ -837,7 +884,7 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
     labs(x="Precipitation", y="Standardized trait", color="Snowmelt") + 
     scale_y_continuous(position="right") + scale_x_discrete(guide=guide_axis(angle=90)) + 
     #coord_fixed() + #maintains y scale across plots if figure width is constant
-    scale_color_manual(values=snow_pal, guide=guide_legend(override.aes = list(shape=15, size=ifelse(plot.emm,5,1)))) + 
+    scale_color_manual(values=c("grey","black"), guide=guide_legend(override.aes = list(shape=15, size=ifelse(plot.emm,5,1)))) + 
     theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                             axis.title.y= element_blank(),
                             panel.border = element_rect(fill=NA, colour = "black"), 

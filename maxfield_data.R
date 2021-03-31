@@ -128,17 +128,19 @@ daily_GTH161 <- hourly_GTH161 %>% mutate(date = date(DATE_TIME)) %>% group_by(da
   summarize(TEMPERATURE=mean(TEMPERATURE, na.rm=T), PRECIPITATION = sum(PRECIPITATION, na.rm=T))
 
 library(rnoaa)
-#station_data <- ghcnd_stations()# long download
-#maxfield_coords <- data.frame(id = "RMBL", latitude = 38.9495, longitude = -106.9908)
-#meteo_nearby_stations(lat_lon_df = maxfield_coords, station_data = station_data,
-#                      radius = 10, var = c("PRCP", "TAVG"))#stations within 10 km
-# billy barr's cabin in Gothic, CO https://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:US1COGN0018/detail
-#All units are in tenths of mm, converted to mm here.
- 
-daily_billy <- meteo_pull_monitors("US1COGN0018", keep_flags = T) %>% 
-  mutate(across(contains("flag"), as.factor)) %>% 
-  mutate(across(ghcnd_vars <- c("prcp","snow","snwd","wesd","wesf"), ~ as.integer(.x)/10, .names="{.col}_mm"), .keep="unused") %>% 
-  mutate(date = date - days(1)) # comparision to other 3 stations shows the precip is recorded the next day
+station_data <- ghcnd_stations()# long download
+maxfield_coords <- data.frame(id = "RMBL", latitude = 38.9495, longitude = -106.9908)
+(NOAA_stations <- meteo_nearby_stations(lat_lon_df = maxfield_coords, station_data = station_data,
+                      radius = 10, var = c("PRCP", "TAVG"))$RMBL %>% #stations within 10 km radius
+    left_join(station_data %>% filter(element=="PRCP")))
+remove(station_data)
+NOAA_stations_name <- with(NOAA_stations, set_names(name, id))
+
+daily_NOAA <- meteo_pull_monitors(NOAA_stations$id, keep_flags = T) %>% 
+  mutate(across(contains("flag"), as.factor)) %>% #All units are in tenths of mm, converted to mm here.
+  mutate(across(c("prcp","snow","snwd","wesd","wesf"), ~ as.integer(.x)/10, .names="{.col}_mm"), .keep="unused") %>% 
+  mutate(across(c("tmin","tavg","tmax"), ~ as.integer(.x)/10, .names="{.col}_C"), .keep="unused") %>% 
+  mutate(date = date - days(1)) # comparison of other 3 stations shows at least the US1COGN0018 precip is recorded the next day
 
 #library(GSODR)
 #gsodr.inventory <- get_inventory() %>% #50 km away from Maxfield Meadow - only get Crested Butte and Aspen airports
@@ -147,7 +149,8 @@ daily_billy <- meteo_pull_monitors("US1COGN0018", keep_flags = T) %>%
 #Combine weather station data
 stations <- c(GTH161="EPA_RsrchMdw",KCOMTCRE2="ESSDIVE_GoldLink",CORBIL="WRCC_billy",billy="NOAA_billy")#station="source_location"
 first_snow_2020 <- as.POSIXct(c("2020-10-25", "2020-12-31"), tz="UTC") #TODO check this first permanent snow of 2020 (not yet on billy's website)
-daily_all <- daily_billy %>% full_join(daily_GTH161) %>% full_join(daily_KCOMTCRE2) %>% full_join(daily_CORBIL) %>% 
+daily_all <- daily_NOAA %>% filter(id == "US1COGN0018") %>% # billy barr's cabin? in Gothic, CO https://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:US1COGN0018/detail
+  full_join(daily_GTH161) %>% full_join(daily_KCOMTCRE2) %>% full_join(daily_CORBIL) %>% 
   rename(EPA_RsrchMdw=PRECIPITATION, ESSDIVE_GoldLink=Precip, WRCC_billy=precip_mm, NOAA_billy=prcp_mm) %>% 
   mutate(yr = year(date), mo = month(date, label=F),
          ground_covered = factor(c("smmr","wntr"))[1+date %in% do.call(c, map2(c(groundcover$first_snow, first_snow_2020[1]), c(groundcover$first_0_cm, first_snow_2020[2]), ~ seq(date(.x), date(.y), by="day")))]) %>% 
