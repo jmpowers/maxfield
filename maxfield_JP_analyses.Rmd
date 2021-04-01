@@ -235,25 +235,26 @@ daily_all %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr", E
       scale_color_brewer(palette = "Set1", direction = -1) + 
   scale_x_continuous(breaks=scales::breaks_extended(10)) + theme_minimal()
 
-daily_all %>% filter(year(date)>1989, year(date)<2021, EPA_NOAA_filled > 2) %>% 
+summary_EPA_NOAA <- daily_all %>% filter(year(date)>1989, year(date)<2021, EPA_NOAA_filled > 2) %>% 
   mutate(drought_days = c(0,diff(date)), year=year(date)) %>% filter(ground_covered=="smmr") %>% 
-  select(year, date, drought_days) %>% group_by(year) %>% summarize(max_drought_days = max(drought_days)) %>% 
-  ggplot(aes(x= year, y=max_drought_days)) + geom_point() + geom_smooth(method="lm") +
-  labs(x="Year", y="Consecutive drought days with < 2 mm daily precipitation")
+  select(year, date, drought_days) %>% group_by(year) %>% summarize(max_drought_days_2mm = max(drought_days)) %>% 
+  left_join(daily_all %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr") %>% group_by(year=year(date)) %>% 
+              summarize(rain_days_2mm = sum(EPA_NOAA_filled > 2, na.rm=T),
+                        max_precip_mm = max(EPA_NOAA_filled, na.rm=T),
+                        total_precip_mm = sum(EPA_NOAA_filled, na.rm=T)))
 
-daily_all %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr", 
-                     EPA_NOAA_filled > 2) %>% count(year=year(date)) %>% 
-    ggplot(aes(x= year, y=n)) + geom_point() + geom_smooth(method="lm") +
-  labs(x="Year", y="Days with > 2 mm daily precipitation")
+summary_names <- c(max_drought_days_2mm="Longest drought (< 2 mm precipitation)", 
+                   rain_days_2mm = "Rain days (> 2 mm precipitation)",
+                   max_precip_mm = "Maximum daily precipitation (mm)",
+                   total_precip_mm = "Total precipitation (mm)")
 
-daily_all %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr") %>% 
-  group_by(year=year(date)) %>% summarize(max_precip = max(EPA_NOAA_filled, na.rm=T)) %>% 
-    ggplot(aes(x= year, y=max_precip)) + geom_point() + geom_smooth(method="lm") +
-  labs(x="Year", y="Maximum daily precipitation (mm)")
+ggplot(summary_EPA_NOAA %>% pivot_longer(!year), aes(y=value, x=year))+ 
+  facet_wrap(vars(name), scales="free_y", labeller=as_labeller(summary_names)) +
+  geom_smooth(method="lm", color="black", se=F) + geom_point() + labs(x="Year", y="") + 
+  theme_bw() +theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
+                            axis.title.y= element_blank(), strip.background = element_blank())
+  
 
-ggplot(groundcover, aes(x=year, y=precip_est_mm)) + geom_point() + geom_smooth(method="lm") +
-    labs(x="Year", y="Total precip from snowmelt to day 214 (mm)") + xlim(c(1990, 2020))
-lm(precip_est_mm ~ year, data = groundcover) %>% summary #total since snow melted
 ```
 
 Long-term precipitation trends from Crested Butte station

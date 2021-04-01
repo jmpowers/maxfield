@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-03-31" />
+<meta name="date" content="2021-04-01" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-03-31</h4>
+<h4 class="date">2021-04-01</h4>
 
 </div>
 
@@ -474,43 +474,25 @@ ggpairs(monthly_all %&gt;% mutate(season=factor(c(&quot;wntr&quot;,&quot;smmr&qu
       scale_color_brewer(palette = &quot;Set1&quot;, direction = -1) + 
   scale_x_continuous(breaks=scales::breaks_extended(10)) + theme_minimal()</code></pre>
 <p><img src="images/precip_trend-2.png" width="672" /></p>
-<pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, EPA_NOAA_filled &gt; 2) %&gt;% 
+<pre class="r"><code>summary_EPA_NOAA &lt;- daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, EPA_NOAA_filled &gt; 2) %&gt;% 
   mutate(drought_days = c(0,diff(date)), year=year(date)) %&gt;% filter(ground_covered==&quot;smmr&quot;) %&gt;% 
-  select(year, date, drought_days) %&gt;% group_by(year) %&gt;% summarize(max_drought_days = max(drought_days)) %&gt;% 
-  ggplot(aes(x= year, y=max_drought_days)) + geom_point() + geom_smooth(method=&quot;lm&quot;) +
-  labs(x=&quot;Year&quot;, y=&quot;Consecutive drought days with &lt; 2 mm daily precipitation&quot;)</code></pre>
+  select(year, date, drought_days) %&gt;% group_by(year) %&gt;% summarize(max_drought_days_2mm = max(drought_days)) %&gt;% 
+  left_join(daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, ground_covered==&quot;smmr&quot;) %&gt;% group_by(year=year(date)) %&gt;% 
+              summarize(rain_days_2mm = sum(EPA_NOAA_filled &gt; 2, na.rm=T),
+                        max_precip_mm = max(EPA_NOAA_filled, na.rm=T),
+                        total_precip_mm = sum(EPA_NOAA_filled, na.rm=T)))
+
+summary_names &lt;- c(max_drought_days_2mm=&quot;Longest drought (&lt; 2 mm precipitation)&quot;, 
+                   rain_days_2mm = &quot;Rain days (&gt; 2 mm precipitation)&quot;,
+                   max_precip_mm = &quot;Maximum daily precipitation (mm)&quot;,
+                   total_precip_mm = &quot;Total precipitation (mm)&quot;)
+
+ggplot(summary_EPA_NOAA %&gt;% pivot_longer(!year), aes(y=value, x=year))+ 
+  facet_wrap(vars(name), scales=&quot;free_y&quot;, labeller=as_labeller(summary_names)) +
+  geom_smooth(method=&quot;lm&quot;, color=&quot;black&quot;, se=F) + geom_point() + labs(x=&quot;Year&quot;, y=&quot;&quot;) + 
+  theme_bw() +theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
+                            axis.title.y= element_blank(), strip.background = element_blank())</code></pre>
 <p><img src="images/precip_trend-3.png" width="672" /></p>
-<pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, ground_covered==&quot;smmr&quot;, 
-                     EPA_NOAA_filled &gt; 2) %&gt;% count(year=year(date)) %&gt;% 
-    ggplot(aes(x= year, y=n)) + geom_point() + geom_smooth(method=&quot;lm&quot;) +
-  labs(x=&quot;Year&quot;, y=&quot;Days with &gt; 2 mm daily precipitation&quot;)</code></pre>
-<p><img src="images/precip_trend-4.png" width="672" /></p>
-<pre class="r"><code>daily_all %&gt;% filter(year(date)&gt;1989, year(date)&lt;2021, ground_covered==&quot;smmr&quot;) %&gt;% 
-  group_by(year=year(date)) %&gt;% summarize(max_precip = max(EPA_NOAA_filled, na.rm=T)) %&gt;% 
-    ggplot(aes(x= year, y=max_precip)) + geom_point() + geom_smooth(method=&quot;lm&quot;) +
-  labs(x=&quot;Year&quot;, y=&quot;Maximum daily precipitation (mm)&quot;)</code></pre>
-<p><img src="images/precip_trend-5.png" width="672" /></p>
-<pre class="r"><code>ggplot(groundcover, aes(x=year, y=precip_est_mm)) + geom_point() + geom_smooth(method=&quot;lm&quot;) +
-    labs(x=&quot;Year&quot;, y=&quot;Total precip from snowmelt to day 214 (mm)&quot;) + xlim(c(1990, 2020))</code></pre>
-<p><img src="images/precip_trend-6.png" width="672" /></p>
-<pre class="r"><code>lm(precip_est_mm ~ year, data = groundcover) %&gt;% summary #total since snow melted</code></pre>
-<pre><code>
-Call:
-lm(formula = precip_est_mm ~ year, data = groundcover)
-
-Residuals:
-    Min      1Q  Median      3Q     Max 
--57.166 -28.330  -3.535  20.781 105.005 
-
-Coefficients:
-             Estimate Std. Error t value Pr(&gt;|t|)
-(Intercept) 2398.0636  1582.8866   1.515    0.141
-year          -1.1556     0.7895  -1.464    0.154
-
-Residual standard error: 39.31 on 29 degrees of freedom
-  (14 observations deleted due to missingness)
-Multiple R-squared:  0.0688,    Adjusted R-squared:  0.03669 
-F-statistic: 2.143 on 1 and 29 DF,  p-value: 0.154</code></pre>
 <p>Long-term precipitation trends from Crested Butte station</p>
 <pre class="r"><code>ggplot(daily_NOAA, aes(x=date, y=NOAA_stations_name[id], color=prcp_mm)) + geom_tile() </code></pre>
 <p><img src="images/precip_trend_long-1.png" width="672" /></p>
