@@ -97,87 +97,8 @@ waterdates <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture &
 # Load output from maxfield_soil_moisture.R that fit soil moisture ~ precipitation model
 load("data/daily_precip_est.rda")
 
-# Weather data from billy barr's RMBL station in Gothic, CO, USA provided by the Western Regional Climate Center
-# Original (not FPA - unavailable) data from 2009-2021 in metric units
-# Downloaded as xls (which results in a tsv) from https://wrcc.dri.edu/cgi-bin/rawMAIN.pl?corbil
-# Columns renamed from WRCC names according to /metadata/WRCC/weather_wrcc_metadata.csv
-# Flags on each column indicate 0 = raw data, (M)issing data, (E)stimated data, (N)on-measuring time interval, per https://wrcc.dri.edu/cgi-bin/wea_listex.pl?flags
-
-wrcc_metadata <- read_tsv("metadata/WRCC/weather_wrcc_metadata.tsv") %>% mutate(index = row_number(), flag=F)
-wrcc_metadata <- bind_rows(wrcc_metadata, wrcc_metadata %>% select(name_metric, col_type, index) %>% filter(! name_metric %in% c("date","time")) %>% 
-  mutate(name_metric=paste0("flag_",name_metric), col_type="f",flag=T)) %>% arrange(index)
-
-tenmin_CORBIL <- read_tsv("data/wrcc_corbil.tsv.gz", skip = 4, 
-               col_types=paste0(wrcc_metadata$col_type, collapse=""), col_names=wrcc_metadata$name_metric) %>% 
-  filter(date >= as.Date("2015-07-01"))#when precip starts to have reasonable values, temp starts 2015-10-01.
-#no missing precip values in CORBIL - may not have been quality checked.
-hourly_CORBIL <- tenmin_CORBIL %>% mutate(hour=hour(time)) %>% group_by(date, hour) %>% summarize(precip_mm = sum(precip_mm), av_temp_2m_C=mean(av_temp_2m_C)) #take the mean of the precip rate per hour that is reported every 10 min
-daily_CORBIL <- hourly_CORBIL %>% group_by(date) %>% 
-  summarize(precip_mm = sum(precip_mm), #sum the hourly precip rates over each 24 hrs 
-            av_temp_2m_C=mean(av_temp_2m_C), max_temp_2m_C = max(av_temp_2m_C), min_temp_2m_C = min(av_temp_2m_C)) %>% 
-  mutate(year=factor(year(date)), julian=yday(date),
-         precip_mm = ifelse(precip_mm>50, NA, precip_mm)) #cut errors >50mm/day from daily_CORBIL
-
-# Other data (no precip) for Kettle Ponds S of Gothic, CO and Judd Falls E of Gothic, CO
-
-# Weather data from Gold Link station in Mt. Crested Butte. Michelle Newcomer and David Brian Rogers. 2020. Gap-filled meteorological data (2011-2020) and modeled potential evapotranspiration data from the KCOMTCRE2 WeatherUnderground weather station, from the East River Watershed, Colorado. ESS-DIVE: Deep Insight for Earth Science Data. doi:10.15485/1734790, version: ess-dive-ce2fd798f9d81f5-20201210T030125380.
-
-daily_KCOMTCRE2 <- read_csv("data/2011_2020_KComCret_1day_ETModeled.csv")
-
-# Weather data from EPA CASTNET GTH161 station, Gothic Research Meadow https://www3.epa.gov/castnet/site_pages/GTH161.html
-#Precip data is missing after 2011
-hourly_GTH161 <- read_csv("data/CASTNET-GTH161-Meteorological - Hourly.csv.gz", 
-                          col_types=cols(DATE_TIME=col_datetime("%m/%d/%Y %H:%M:%S"), QA_CODE=col_character()))
-daily_GTH161 <- hourly_GTH161 %>% mutate(date = date(DATE_TIME)) %>% filter(year(date) < 2012) %>% group_by(date) %>% 
-  summarize(TEMPERATURE=mean(TEMPERATURE, na.rm=T), PRECIPITATION = sum(PRECIPITATION, na.rm=T)) #TODO this keeps precip sums when there is missing data, including an entire day!
-
-library(rnoaa)
-station_data <- ghcnd_stations()# long download
-maxfield_coords <- data.frame(id = "RMBL", latitude = 38.9495, longitude = -106.9908)
-(NOAA_stations <- meteo_nearby_stations(lat_lon_df = maxfield_coords, station_data = station_data,
-                      radius = 10, var = c("PRCP", "TAVG"))$RMBL %>% #stations within 10 km radius
-    left_join(station_data %>% filter(element=="PRCP")))
-remove(station_data)
-NOAA_stations_name <- with(NOAA_stations, set_names(name, id))
-
-daily_NOAA <- meteo_pull_monitors(NOAA_stations$id, keep_flags = T) %>% 
-  mutate(across(contains("flag"), as.factor)) %>% #All units are in tenths of mm, converted to mm here.
-  mutate(across(c("prcp","snow","snwd","wesd","wesf"), ~ as.integer(.x)/10, .names="{.col}_mm"), .keep="unused") %>% 
-  mutate(across(c("tmin","tavg","tmax"), ~ as.integer(.x)/10, .names="{.col}_C"), .keep="unused") %>% 
-  mutate(date = date - days(1)) # comparison of other 3 stations shows at least the US1COGN0018 precip is recorded the next day
-
-#library(GSODR)
-#gsodr.inventory <- get_inventory() %>% #50 km away from Maxfield Meadow - only get Crested Butte and Aspen airports
-#  filter(STNID %in% nearest_stations(38.9495, -106.9908,50))
-
-#Combine weather station data in long format
-daily_long <- bind_rows( 
-  GTH161 = hourly_GTH161 %>% arrange(DATE_TIME) %>% mutate(date = date(DATE_TIME)) %>% group_by(date) %>% 
-    summarize(tavg_C=mean(TEMPERATURE), tmax_C=max(TEMPERATURE), tmin_C=min(TEMPERATURE),       #NA if missing any temperatures,
-              prcp_mm = ifelse(sum(is.na(PRECIPITATION))==0, sum(PRECIPITATION, na.rm=T), NA)), #or any precip (unlike day_GTH161)
-  KCOMTCRE2 = daily_KCOMTCRE2 %>% select(date, tavg_C = Tmean, tmax_C = Tmax, tmin_C = Tmin, prcp_mm = Precip),
-  CORBIL= daily_CORBIL %>% select(date, tavg_C = av_temp_2m_C, tmax_C = max_temp_2m_C, tmin_C = min_temp_2m_C, prcp_mm = precip_mm), #curiously, no NAs
-  .id="id") %>% bind_rows(daily_NOAA %>% select(id, date, tavg_C, tmax_C, tmin_C, prcp_mm)) %>% mutate(id=factor(id))
-
-#Combine weather station data in wide format
-stations <- c(GTH161="EPA_RsrchMdw",KCOMTCRE2="ESSDIVE_GoldLink",CORBIL="WRCC_billy",billy="NOAA_billy")#station="source_location"
-first_snow_2020 <- as.POSIXct(c("2020-10-25", "2020-12-31"), tz="UTC") #TODO check this first permanent snow of 2020 (not yet on billy's website)
-daily_all <- daily_NOAA %>% filter(id == "US1COGN0018") %>% # billy barr's cabin? in Gothic, CO https://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:US1COGN0018/detail
-  full_join(daily_GTH161) %>% full_join(daily_KCOMTCRE2) %>% full_join(daily_CORBIL) %>% 
-  rename(EPA_RsrchMdw=PRECIPITATION, ESSDIVE_GoldLink=Precip, WRCC_billy=precip_mm, NOAA_billy=prcp_mm) %>% 
-  mutate(yr = year(date), mo = month(date, label=F),
-         ground_covered = factor(c("smmr","wntr"))[1+date %in% do.call(c, map2(c(groundcover$first_snow, first_snow_2020[1]), c(groundcover$first_0_cm, first_snow_2020[2]), ~ seq(date(.x), date(.y), by="day")))]) 
-
-#correlate daily EPA_RsrchMdw and NOAA_billy to predict what EPA would look like for 2012-2020
-EPA_NOAA_daily_model <-  lm(EPA_RsrchMdw ~ NOAA_billy:ground_covered+0, data=daily_all)
-#EPA_NOAA_monthly_model <-lm(EPA_RsrchMdw ~ NOAA_billy*season, data=monthly_all %>% 
-#mutate(season=factor(c("wntr","smmr"))[1+mo %in% 6:9]))
-daily_all <- daily_all %>% 
-  mutate(EPA_predicted = is.na(EPA_RsrchMdw) & !is.na(NOAA_billy),
-         EPA_NOAA_filled = ifelse(is.na(EPA_RsrchMdw), predict(EPA_NOAA_daily_model, newdata=daily_all), EPA_RsrchMdw),)
-stations <- c("EPA_NOAA_filled", stations)
-monthly_all <- daily_all %>% group_by(yr, mo) %>% 
-  summarize(across(unname(stations), ~ ifelse(sum(is.na(.x))>5, NA, sum(.x, na.rm=T))), .groups="drop") %>% arrange(yr, mo) 
+# Load daily_all weather station data (EPA, Wunderground, WRCC, billy's NOAA station)
+load("data/weather/rmbl_weather.rda")
 
 #Add summer precip estimates to treatments from NOAA-filled EPA Research Meadow dataset
 # snowmelt date in each plot - start of watering (100% of precip)
