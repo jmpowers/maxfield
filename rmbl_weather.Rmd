@@ -328,6 +328,7 @@ ggplot(summary_EPA_NOAA %>% pivot_longer(!year), aes(y=value, x=year))+
 ```{r precip_trend_long}
 ggplot(daily_NOAA, aes(x=date, y=NOAA_stations_name[id], color=prcp_mm)) + geom_tile() 
 ggplot(daily_NOAA, aes(x=date, y=NOAA_stations_name[id], color=tmax_C)) + geom_tile()+ scale_color_viridis_c(option="inferno")
+ggplot(daily_WRCC, aes(x=date, y=id, color=av_temp_2m_C)) + geom_tile() + scale_color_viridis_c(option="inferno")
 
 #weird long run of high precipitation in Sept 1927
 daily_NOAA %>% filter(id=="USC00051959", year(date)>1909, year(date)!=1927) %>%
