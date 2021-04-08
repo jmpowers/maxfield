@@ -927,7 +927,7 @@ plot_abs <- function(mod, data, traits.plot, facets = "trait") {
     drop_na(value, water) %>% filter(trait %in% traits.plot)
   
   grid_emmeans <- function(mods, use.rounds = F) {
-    grid.points <- list(sun_date=range(treatments$sun_date), precip_est_mm=seq(25,150, by=25))
+    grid.points <- list(sun_date=range(treatments$sun_date), precip_est_mm=seq(50,175, by=25))
     if(use.rounds)  map_dfr(mods, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date * round, at=grid.points)), .id="trait")
     else            map_dfr(mods, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date,         at=grid.points)), .id="trait")
   }
@@ -941,8 +941,8 @@ plot_abs <- function(mod, data, traits.plot, facets = "trait") {
     geom_point(data = data.long, aes(y=value, shape=year), size=2) + geom_line() + 
     scale_color_gradientn(colors=rev(water_pal), 
                           values=rev(c(1, (treatments %>% group_by(water) %>% summarize(across(precip_est_mm, mean)) %>%
-                                             pull(precip_est_mm) %>% scales::rescale(from=c(25,150)))[2],0)),
-                          breaks=seq(25,150, by=25)) + 
+                                             pull(precip_est_mm) %>% scales::rescale(from=c(50,175)))[2],0)),
+                          breaks=seq(50,175, by=25)) + 
     labs(x="Snowmelt date", y="Standardized trait", color="Summer\nprecipitation\n(mm)", shape="Year") + 
     scale_y_continuous(position="right")+
     theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
@@ -995,7 +995,7 @@ mod.abs.emm.avg.compensate %>% select(-predictor) %>% kable(digits=3)
 Compensation points calculated at four corners of the ranges of environemtnal variables
 ```{r compensation_meltdate, fig.width=9}
 #get slopes with emtrends at range of other predictor, and scale slopes by SD of the plant means
-predictor.ranges <- list(sun_date=c(115,160) , precip_est_mm=c(25, 150)) #a bit narrower than the experiment
+predictor.ranges <- list(sun_date=c(115,160) , precip_est_mm=c(50, 175)) #a bit narrower than the experiment
 mod.abs.emm <- map_dfr(set_names(c("sun_date", "precip_est_mm")), 
                    ~ mod.abs %>% 
                      map(emtrends, var = .x, 
