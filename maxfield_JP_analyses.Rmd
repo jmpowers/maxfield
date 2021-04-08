@@ -1326,18 +1326,18 @@ mod.selection.sm  %>% group_by(response) %>%
 
 ```{r summaryfigures, fig.width=7, fig.height=3, eval=F}
 pt.plantyr %>% 
-    pivot_longer(all_of(c("conductance","WUE")),names_to="trait") %>% 
+    pivot_longer(all_of(c("WUE")),names_to="trait") %>% 
     filter(year!="2020") %>% mutate(year=fct_drop(year)) %>% 
     ggplot(aes_string(y="survived", x="value", color="water", linetype="year")) + 
-    facet_wrap(vars(trait), scales="free_x", labeller=as_labeller(traitnames.units))+
     geom_point() + geom_smooth(se=F, method="glm", method.args = list(family=binomial)) +
+    scale_linetype(guide=guide_legend(override.aes = list(color="black"))) + 
     scale_color_manual(values=c(water_pal, snow_pal)) + theme(legend.position="top") +
-    labs(linetype="Year",x="",color="Precipitation", y="Survival") +
+    labs(linetype="Year",x=traitnames.units[["WUE"]],color="Precipitation", y="Survival") +
     theme_minimal() + theme(text=element_text(color="black"), axis.text = element_text(color="black"),
                             panel.border = element_rect(fill=NA, colour = "black"), 
                             panel.spacing=unit(8, "pt"), plot.margin = margin(0,0,0,0, "pt"), 
-                            legend.position = "top") 
-ggsave(filename="../surv_water_pt.png", width=7, height=3)
+                            legend.position = "right") 
+ggsave(filename="../surv_water_pt.png", width=4.5, height=2.5)
 
 plot_abs(mod.abs, mnps.subplot, floraltraits[1:6]) + #Morphological traits - subplot means
     scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
