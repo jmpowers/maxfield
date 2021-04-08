@@ -95,10 +95,12 @@ waterdates <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture &
 # weather -----------------------------------------------------------------
 
 # Load output from maxfield_soil_moisture.R that fit soil moisture ~ precipitation model
+#TODO: not loaded, needs updating with latest precip data
 load("data/daily_precip_est.rda")
 
-# Load daily_all weather station data (EPA, Wunderground, WRCC, billy's NOAA station)
-load("data/weather/rmbl_weather.rda")
+# Load daily_filled_7am weather station data from the "RMBLweather" repo (EPA, Wunderground, WRCC, NOAA)
+load("data/daily_all.rda")
+daily_all <- daily_filled_7am
 
 #Add summer precip estimates to treatments from NOAA-filled EPA Research Meadow dataset
 # snowmelt date in each plot - start of watering (100% of precip)
@@ -120,7 +122,7 @@ treatments <- treatments %>%
          precip_est_mm = precip_prewater_mm + precip_postwater_mm)
 
 #Add summer precip for longer climate record, from snowmelt date to average last morphology/nectar day
-groundcover <- groundcover %>% mutate(precip_est_mm = pmap_dbl(list(year, first_0_cm_day, round(mean(mt.lastday$last_day))), precip_total), precip_est_mm = ifelse(year<1990, NA, precip_est_mm))
+groundcover <- groundcover %>% mutate(precip_est_mm = pmap_dbl(list(year, first_0_cm_day, round(mean(mt.lastday$last_day))), precip_total))
 
 # soil --------------------------------------------------------------------
 
@@ -336,7 +338,7 @@ cen.status <- cen %>% select(any_of(joiners) | (starts_with(c("status","check"))
                 ~ recode(.x, "flowering"=1,"vegetative"=0,"dead_nf"=0,.default=as.double(NA))),
          across(starts_with("status"), .names="alive_{.col}", 
                 ~ recode(.x, "flowering"=1,"vegetative"=1,"dead_nf"=0,.default=as.double(NA))))
-census.status %>% write_tsv(file="data/census_status.tsv") %>% 
+cen.status %>% write_tsv(file="data/census_status.tsv") %>% 
   write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet="census_status")
 
 cen.status.long <- cen.status %>% select(!starts_with("transition|flowering|alive")) %>% 
@@ -456,6 +458,7 @@ map_chr(paste0(licor.path, licor.files), read_file) %>%
   flatten_chr() %>% paste(collapse="\n\n\n\n") %>%
   write_file(file="data/licor_headers.xml") #not really xml
 
+# TODO check why this is throwing parsing warnings - okay? looks like it mostly works
 licor <- map_chr(paste0(licor.path, licor.files), read_file) %>% 
   str_split("\\$STARTOFDATA\\$") %>% # separate headers from actual data
   map(`[`, 2) %>% #extract just the second element, the actual data
@@ -494,7 +497,7 @@ licor.tally <- licor.plantid %>% select(group_cols(),n) %>%
   mutate(year=str_sub(year,3)) %>% arrange(year) %>% 
   pivot_wider(names_from=year, names_prefix="licor", values_from=n)
 
-read_csv("data/megatally.csv") %>% mutate(plot=as.character(plot)) %>% #read in the original megatally
+read_csv("data/megatally.csv") %>% mutate(plot=as.character(plot)) %>% #read in the original megatally (warnings from records with no plot (N) - OK"
   full_join(licor.tally) %>% write_tsv("data/megatally_licor.tsv", na="") #add licor columns
 
 #All measurements leaf area and VWC available from scans - filled into licor_sampleID.tsv
@@ -802,7 +805,6 @@ alltraits.mean <- c(map_dbl(traits,   ~mean(mnps.plantyr[[.x]], na.rm=T)),
 
 # export ------------------------------------------------------------------
 
-remove(hourly_GTH161, tenmin_CORBIL)
 #load("data/maxfield_data.rda")
 save.image("data/maxfield_data.rda")
 

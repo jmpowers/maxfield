@@ -124,7 +124,7 @@ ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=temp, color=plot)) +
   facet_wrap(vars(year), scales="free_x", ncol=1) + 
   geom_hline(yintercept=melt_threshold_warm) + geom_hline(yintercept=-melt_threshold_warm) +geom_line() +
   geom_segment(data=meltdates, aes(x=warm_time, y=-10, xend=sun_time, yend=-15, color=plot), size=1) +
-    geom_line(data=daily_CORBIL %>% filter(year!="2017", month(date)%in%4:6), aes(x=as.POSIXct(date), y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, "Oranges")[3]) +
+    #geom_line(data=daily_CORBIL %>% filter(year!="2017", month(date)%in%4:6), aes(x=as.POSIXct(date), y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, "Oranges")[3]) +
   labs(x="Date",y="Temperature (C)", color="Plot")
   
 ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=intensity, color=plot)) + 
@@ -178,10 +178,10 @@ ggplot(sm, aes(x=yday(date))) +
   facet_wrap(vars(year), ncol=1) +
   geom_jitter(aes(shape=snow, color=water, y = VWC), height=0, width=0.3) + 
   geom_smooth(aes(linetype=snow, color=water, y = VWC), se=F, span=0.5) +
-  geom_col(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
+  geom_col(data=daily_all %>% filter(year(date)%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
            fill=brewer.pal(3, "Greens")[3]) +
-  geom_line(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=av_temp_2m_C), 
-            color=brewer.pal(3, "Oranges")[3]) + 
+  #geom_line(data=daily_all %>% filter(year(date)%in%2018:2020), aes(x=yday(date), y=av_temp_2m_C), 
+  #          color=brewer.pal(3, "Oranges")[3]) + 
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=brewer.pal(3, "Purples")[3])+
   geom_line(data = snowcloth, aes(y=mean_snow_depth_cm/10, group=year))+
   geom_point(data = snowcloth, aes(y=mean_snow_depth_cm/10))+
@@ -196,7 +196,7 @@ ggplot(sm, aes(x=yday(date))) +
   geom_point(data=mt, aes(y= 18*corolla_length/corolla_length), color="purple", shape=0)+
   geom_point(data=mt, aes(y= 19*nectar_24_h_ul/nectar_24_h_ul), color="orange", shape=0)+
   scale_x_continuous(limits=c(85, 230), breaks=scales::breaks_extended(10), expand=expansion(0,0)) + scale_y_continuous(limits=c(-3, 20)) +
-  labs(y="Soil VWC (%) / Daily precipitation (mm) / Mean temp. (C) / Snowpack (dm)", 
+  labs(y="Soil VWC (%) / Daily precipitation (mm) / Snowpack (dm)", 
        x="Day of year", color="Precipitation", shape="Snow", linetype="Snow") +
   scale_color_manual(values=water_pal) +
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
@@ -204,7 +204,7 @@ ggplot(sm, aes(x=yday(date))) +
 
 ggplot(sm.subplot, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
-      geom_col(data=daily_all %>% filter(yr%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
+      geom_col(data=daily_all %>% filter(year(date)%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
            fill=brewer.pal(3, "Greens")[2]) +
   geom_line(data=daily_precip_est, aes(y=VWC_Control_4*100), color=brewer.pal(3, "Greens")[2], size=1) +
   geom_point(aes(shape=snow, color=water, y = VWC)) + 
@@ -771,6 +771,7 @@ mnps.plantyr <- mnps.plantyr %>% mutate(snowwater= paste0(snow, water))
 lt.plantyr.r2 <- lt.plantyr.r2 %>% mutate(snowwater= paste0(snow, water))
 pt.plantyr <- pt.plantyr %>% mutate(snowwater= paste0(snow, water))
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
+select <- dplyr::select
 options(contrasts = c("contr.sum", "contr.poly"))
 mod.split.glht <- c(map(set_names(traits), 
                    ~ lmer(mnps.plantyr[[.x]]  ~ snowwater * year + (1|snow:plot) + (1|snow:plotid),
@@ -786,7 +787,7 @@ mod.split.glht <- c(map(set_names(traits),
   map_dfr(~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=summary(.x)$test$pvalues), .id="trait") 
 
 mod.split.glht %>% kable(digits=3)
-detach("package:multcomp", unload = TRUE); detach("package:TH.data", unload = TRUE)
+#detach("package:multcomp", unload = TRUE); detach("package:TH.data", unload = TRUE);
 ```
 
 ### Compare treatment levels
