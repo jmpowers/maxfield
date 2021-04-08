@@ -67,7 +67,8 @@ Anova_table <- function(df) { #for glmmTMB models and car::Anova
 }
 re_table <- function(coefs) {
   coefs %>% filter(effect=="ran_pars") %>% select(trait, group, estimate) %>% pivot_wider(names_from=group, values_from=estimate)
-  }
+}
+select <- dplyr::select
 ```
 
 ```{r map}
@@ -683,7 +684,7 @@ The models are specified as:
 ### ANOVA tables
 
 ```{r splitplot}
-lt.subplot.r2 <- lt.subplotround %>% filter(round=="2")
+lt.subplot.r2 <- lt.subplotround %>% filter(round=="2") #No 2019R2 dry weight traits anymore
 lt.plantyr.r2 <- lt.plantyr %>% filter(round=="2")
 
 options(contrasts = c("contr.sum", "contr.poly"))
@@ -760,7 +761,7 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
 #   plot_split_plot(pt.mod.split.emm, pt, phystraits, geom="boxplot", plot.emm=F) + guides(color=F), nrow=1)
 
 #Vegetative and physiological traits - plot of EMMs and subplot means
-  plot_split_plot(mod.split.emm, lt.subplotround %>% filter(round==2), leaftraits) #second round only
+  plot_split_plot(mod.split.emm, lt.subplotround %>% filter(round==2), leaftraits) #second round only #No 2019R2 dry weight traits anymore
   plot_split_plot(mod.split.emm, pt.subplot, phystraits)
 ```
 
@@ -768,10 +769,9 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
 
 ```{r compensation}
 mnps.plantyr <- mnps.plantyr %>% mutate(snowwater= paste0(snow, water))
-lt.plantyr.r2 <- lt.plantyr.r2 %>% mutate(snowwater= paste0(snow, water))
+lt.plantyr.r2 <- lt.plantyr.r2 %>% mutate(snowwater= paste0(snow, water))#No 2019R2 dry weight traits anymore
 pt.plantyr <- pt.plantyr %>% mutate(snowwater= paste0(snow, water))
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
-select <- dplyr::select
 options(contrasts = c("contr.sum", "contr.poly"))
 mod.split.glht <- c(map(set_names(traits), 
                    ~ lmer(mnps.plantyr[[.x]]  ~ snowwater * year + (1|snow:plot) + (1|snow:plotid),
@@ -807,6 +807,7 @@ map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ snow)), .id = "trait")
 #### Leaf traits
 
 ```{r lt_repeated}
+#No 2019R2 dry weight traits anymore
 lt %>% group_by(plantid, year.round) %>% tally() %>% ungroup %>% 
   pivot_wider(names_from=year.round, values_from=n, values_fill=0) %>% 
   rowwise() %>% mutate(tot = sum(c_across(!plantid))) %>% 
@@ -817,6 +818,7 @@ with(lt, table(plantid, year.round)) %>% heatmap(scale="none", Colv = NA, col=c(
 ```
 
 ```{r lt_connected, fig.height=11, fig.width=11}
+#No 2019R2 dry weight traits anymore
 lt %>% pivot_longer(all_of(leaftraits), names_to = "trait") %>% 
 ggplot(aes(y=value, x=factor(round),color=water, fill=water)) + 
   facet_grid(trait ~year, scales="free_y", switch="y",labeller=as_labeller(c(traitnames.units, set_names(2018:2020)))) + 
@@ -847,6 +849,7 @@ lt %>% pivot_longer(all_of(c(leaftraits, "sla_wet")), names_to = "trait") %>% ar
 ```
 
 ```{r lt_plantcorr, fig.height=11, fig.width=7.5}
+#No 2019R2 dry weight traits anymore
 lt.water_content <- lt %>% select(year.round, plantid, water, snow, water_content) %>% arrange(year.round) %>% 
   pivot_wider(names_from="year.round", values_from="water_content", values_fn=function(x) mean(x, na.rm=T))
 
@@ -863,6 +866,7 @@ do.call(grid.arrange, map2(c(levels(lt$year.round)[-6],"2018.1"), c(levels(lt$ye
 
 
 ```{r lt_repeated_split, fig.height=8, fig.width=8}
+#No 2019R2 dry weight traits anymore
 lt.mod.split.rm <- map(set_names(leaftraits), 
                   ~ lmer(lt[[.x]] ~  year * round * water * snow + (1|snow:plot) + (1|snow:plotid) + (1|plantid), data=lt))
 lt.mod.split.rm.coefs <- map_dfr(lt.mod.split.rm, tidy, .id="trait")
@@ -898,7 +902,7 @@ anova_table(pt.mod.split.rm.tests, pt.mod.split.rm) %>% kable()
 ### ANOVA tables
 
 ```{r meltdate}
-lt.subplot.r2 <- lt.subplotround %>% filter(round=="2")
+lt.subplot.r2 <- lt.subplotround %>% filter(round=="2")#No 2019R2 dry weight traits anymore
 lt.plantyr.r2 <- lt.plantyr %>% filter(round=="2")
 
 options(contrasts = c("contr.sum", "contr.poly"))
@@ -962,7 +966,7 @@ plot_abs(mod.abs, mnps.subplot, floraltraits) + #Morphological traits - subplot 
 
 # grid.arrange(plot_abs(lt.mod.abs, lt, leaftraits), 
 #              plot_abs(pt.mod.abs, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
-grid.arrange(plot_abs(mod.abs, lt.subplot.r2, leaftraits)+ 
+grid.arrange(plot_abs(mod.abs, lt.subplot.r2, leaftraits)+ #No 2019R2 dry weight traits anymore
                scale_y_continuous(limits=c(-2.6, 1.8), breaks=c(-2:1)),
              plot_abs(mod.abs, pt.subplot, phystraits)+ guides(color=F, shape=F) +  
                scale_y_continuous(limits=c(-2.6, 1.8), breaks=c(-2:1)), ncol=1) #subplot means
@@ -1061,6 +1065,7 @@ grid.arrange(mod.abs.emm.plot.sun_date, mod.abs.emm.plot.precip_est_mm, mod.abs.
 ### Absolute snowmelt repeated measures 
 
 ```{r abs_repeated}
+#No 2019R2 dry weight traits anymore
 lt.mod.abs.rm <- map(set_names(leaftraits), 
                   ~ lmer(lt[[.x]] ~ sun_date * precip_est_mm * round + (1|plot) + (1|plotid) + (1|plantid), data=lt))
 lt.mod.abs.rm.coefs <- map_dfr(lt.mod.abs.rm, tidy, .id="trait")
@@ -1110,7 +1115,7 @@ The models are specified as:
 ### ANOVAs
 
 ```{r sm}
-lt.subplot.r2 <- lt.subplotround %>% filter(round=="2")
+lt.subplot.r2 <- lt.subplotround %>% filter(round=="2")#No 2019R2 dry weight traits anymore
 lt.plantyr.r2 <- lt.plantyr %>% filter(round=="2")
 
 pt.plantyr <- pt.plantyr %>% mutate(VWC = ifelse(is.na(VWC.plant), VWC.sm, VWC.plant)) #phys traits had the VWC measured next to the plant in 2019 and 2020 only - substitute VWC in subplot on closest date
@@ -1190,13 +1195,13 @@ plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5
 
 # grid.arrange(plot_sm(mod.sm, lt, leaftraits), 
 #              plot_sm(mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
-grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits),
+grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits), #No 2019R2 dry weight traits anymore
              plot_sm(mod.sm, pt.plantyr,    phystraits)+ guides(color=F, shape=F) + coord_fixed(ratio=3), ncol=1) #plant means
 ```
 
 ## Mortality/flowering selection vs. treatments
 
-```{r selection}
+```{r selection, eval=FALSE}
 step_selection_mod <- function(trait, response, treatment, set, family="binomial", level=0.05) {
   re <- ifelse(treatment =="snow", "snow:plot", "plot")
   t.plantyr <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% 
@@ -1216,7 +1221,7 @@ step_selection_mod <- function(trait, response, treatment, set, family="binomial
   }
   return(mod)
 }
-
+#No 2019R2 dry weight traits anymore
 mod.selection <- 
   tibble(response = c("survived","flowered"), treatment=c("water","snow"), set = c("lt", "pt")) %>%
   tidyr::expand(response, treatment, set) %>% 
@@ -1227,7 +1232,8 @@ mod.selection <-
          tests = map(model, ~ tidy(car::Anova(.x, type=3))))
 ```
 
-```{r anova_selection, results='asis'}
+```{r anova_selection, results='asis', eval=FALSE}
+#No 2019R2 dry weight traits anymore
 mod.selection %>% group_by(response, treatment) %>% 
   group_walk(function(.x,.y) {cat(paste("Effect of trait on whether a plant",.y$response,"under different",.y$treatment,"conditions")); 
     Anova_table(.x %>% unnest(tests)) %>% kable %>% print})
@@ -1237,7 +1243,7 @@ mod.selection %>% unnest(coefs) %>% filter(effect=="ran_pars") %>%
   pivot_wider(names_from=group, values_from=estimate) %>% kable(digits=3)
 ```
 
-```{r plot_selection}
+```{r plot_selection, eval=FALSE}
 # plot_selection <- function(trait, response, treatment, set) {
 # list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% 
 # ggplot(aes_string(y=response, x=trait, color=treatment, linetype="year")) + 
@@ -1266,7 +1272,7 @@ plot_selection_facets <- function(response, treatment, set) {
   if(set =="pt") return(p + guides(linetype=F, color=F))
   else return(p)
 }
-
+#No 2019R2 dry weight traits anymore
 mod.selection.plots <- mod.selection %>% group_by(response, treatment, set) %>% summarize(.groups="drop") %>%  
   mutate(plots = pmap(., plot_selection_facets))
 
@@ -1283,7 +1289,7 @@ selection_mod_abs <- function(trait, response, set) {
   options(contrasts = c("contr.sum", "contr.poly"))
   glmmTMB(formula(paste(response, "~ trait * sun_date * precip_est_mm + (1|plot)")), data=t.plantyr, family="binomial")
 }
-
+#No 2019R2 dry weight traits anymore
 mod.selection.abs <- 
   tibble(response = c("survived","flowered"), set = c("lt", "pt")) %>%
   tidyr::expand(response, set) %>% 
@@ -1302,7 +1308,7 @@ mod.selection.abs  %>% group_by(response) %>%
 
 ## Selection vs. soil moisture
 
-```{r selection_sm, results='asis'}
+```{r selection_sm, results='asis', eval=FALSE}
 pt.plantyr <- pt.plantyr %>% mutate(VWC = ifelse(is.na(VWC.plant), VWC.sm, VWC.plant)) #phys traits had the VWC measured next to the plant in 2019 and 2020 only - substitute VWC in subplot on closest date
 
 selection_mod_sm <- function(trait, response, set) {
@@ -1310,7 +1316,7 @@ selection_mod_sm <- function(trait, response, set) {
   options(contrasts = c("contr.sum", "contr.poly"))
   glmmTMB(formula(paste(response, "~ trait * year * VWC + (1|plot)")), data=t.plantyr, family="binomial")
 }
-
+#No 2019R2 dry weight traits anymore
 mod.selection.sm <- 
   tibble(response = c("survived","flowered"), set = c("lt", "pt")) %>%
   tidyr::expand(response, set) %>% 

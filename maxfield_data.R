@@ -437,6 +437,9 @@ lt <- map_dfr(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>%
   left_join(treatments) %>% left_join(sm.subplotyear) %>% 
   mutate_if(is.character, as.factor) 
 
+#drop traits that use irregular dry weights in 2019 round 2
+lt <- lt %>% mutate(across(c(sla, water_content, dry_weight_g), ~ ifelse(year.round=="2019.2",NA,.x)))
+
 lt.plantyr <- lt %>% 
   group_by(year, round, year.round, plot, subplot, plotid, plant, plantid, water, water4, snow) %>% 
   summarize_if(is.numeric, mean, na.rm=T)
