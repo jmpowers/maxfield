@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-04-09" />
+<meta name="date" content="2021-04-10" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-04-09</h4>
+<h4 class="date">2021-04-10</h4>
 
 </div>
 
@@ -1274,33 +1274,33 @@ bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits
 </tr>
 <tr class="odd">
 <td align="left">sla</td>
-<td align="right">599</td>
-<td align="right">590</td>
-<td align="right">330</td>
-<td align="right">268</td>
-<td align="right">1.02</td>
-<td align="right">1.82</td>
-<td align="right">2.24</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">497</td>
-<td align="right">488</td>
-<td align="right">325</td>
-<td align="right">263</td>
+<td align="right">505</td>
+<td align="right">496</td>
+<td align="right">329</td>
+<td align="right">267</td>
 <td align="right">1.02</td>
 <td align="right">1.53</td>
 <td align="right">1.89</td>
 </tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">593</td>
+<td align="right">584</td>
+<td align="right">329</td>
+<td align="right">267</td>
+<td align="right">1.02</td>
+<td align="right">1.80</td>
+<td align="right">2.22</td>
+</tr>
 <tr class="odd">
 <td align="left">water_content</td>
-<td align="right">599</td>
-<td align="right">590</td>
-<td align="right">330</td>
-<td align="right">268</td>
+<td align="right">505</td>
+<td align="right">496</td>
+<td align="right">329</td>
+<td align="right">267</td>
 <td align="right">1.02</td>
-<td align="right">1.82</td>
-<td align="right">2.24</td>
+<td align="right">1.53</td>
+<td align="right">1.89</td>
 </tr>
 <tr class="even">
 <td align="left">photosynthesis</td>
@@ -2120,7 +2120,7 @@ Confidence level used: 0.95 </code></pre>
 <pre><code>lmer(trait ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data = mnps.plantyr)</code></pre>
 <div id="anova-tables" class="section level3">
 <h3>ANOVA tables</h3>
-<pre class="r"><code>lt.subplot.r2 &lt;- lt.subplotround %&gt;% filter(round==&quot;2&quot;) #No 2019R2 dry weight traits anymore
+<pre class="r"><code>lt.subplot.r2 &lt;- lt.subplotround %&gt;% filter(round==&quot;2&quot;) 
 lt.plantyr.r2 &lt;- lt.plantyr %&gt;% filter(round==&quot;2&quot;)
 
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
@@ -2657,7 +2657,7 @@ anova_table(mod.split.tests, mod.split) %&gt;% kable()</code></pre>
 #   plot_split_plot(pt.mod.split.emm, pt, phystraits, geom=&quot;boxplot&quot;, plot.emm=F) + guides(color=F), nrow=1)
 
 #Vegetative and physiological traits - plot of EMMs and subplot means
-  plot_split_plot(mod.split.emm, lt.subplotround %&gt;% filter(round==2), leaftraits) #second round only #No 2019R2 dry weight traits anymore</code></pre>
+  plot_split_plot(mod.split.emm, lt.subplotround %&gt;% filter(round==2), leaftraits) #second round only </code></pre>
 <p><img src="images/multi_splitplot-3.png" width="432" /></p>
 <pre class="r"><code>  plot_split_plot(mod.split.emm, pt.subplot, phystraits)</code></pre>
 <p><img src="images/multi_splitplot-4.png" width="432" /></p>
@@ -2665,7 +2665,7 @@ anova_table(mod.split.tests, mod.split) %&gt;% kable()</code></pre>
 <div id="compensation-of-water-addition-for-early-snowmelt" class="section level3">
 <h3>Compensation of water addition for early snowmelt</h3>
 <pre class="r"><code>mnps.plantyr &lt;- mnps.plantyr %&gt;% mutate(snowwater= paste0(snow, water))
-lt.plantyr.r2 &lt;- lt.plantyr.r2 %&gt;% mutate(snowwater= paste0(snow, water))#No 2019R2 dry weight traits anymore
+lt.plantyr.r2 &lt;- lt.plantyr.r2 %&gt;% mutate(snowwater= paste0(snow, water))
 pt.plantyr &lt;- pt.plantyr %&gt;% mutate(snowwater= paste0(snow, water))
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
@@ -2905,8 +2905,8 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 </tr>
 <tr class="odd">
 <td align="left">sla</td>
-<td align="right">0.883</td>
-<td align="right">0.628</td>
+<td align="right">0.466</td>
+<td align="right">0.919</td>
 </tr>
 <tr class="even">
 <td align="left">trichome_density</td>
@@ -2915,8 +2915,8 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 </tr>
 <tr class="odd">
 <td align="left">water_content</td>
-<td align="right">0.223</td>
-<td align="right">0.981</td>
+<td align="right">0.002</td>
+<td align="right">0.225</td>
 </tr>
 <tr class="even">
 <td align="left">photosynthesis</td>
@@ -2936,51 +2936,51 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 </tbody>
 </table>
 <pre class="r"><code>map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ snow)), .id = &quot;trait&quot;)</code></pre>
-<pre><code> trait                snow    emmean      SE    df lower.CL upper.CL
- corolla_length       Early   24.743  0.3428  4.57   23.837   25.650
- corolla_length       Normal  24.679  0.3118  5.15   23.884   25.473
- style_length         Early   24.371  0.2909  4.47   23.596   25.146
- style_length         Normal  24.497  0.2684  5.11   23.811   25.182
- corolla_width        Early    3.280  0.0288  4.34    3.203    3.358
- corolla_width        Normal   3.296  0.0276  4.80    3.224    3.368
- sepal_width          Early    1.490  0.0291  4.87    1.414    1.565
- sepal_width          Normal   1.486  0.0248  4.69    1.421    1.551
- nectar_24_h_ul       Early    1.660  0.0963  4.52    1.405    1.916
- nectar_24_h_ul       Normal   1.850  0.0884  5.13    1.625    2.076
- nectar_conc          Early   28.160  0.9700  4.88   25.648   30.672
- nectar_conc          Normal  27.271  0.8577  5.22   25.093   29.448
- nectar_sugar_24_h_mg Early    0.556  0.0240  4.19    0.490    0.621
- nectar_sugar_24_h_mg Normal   0.590  0.0226  4.94    0.532    0.648
- height_cm            Early   33.809  0.9235  4.67   31.385   36.233
- height_cm            Normal  36.571  0.8685  5.76   34.425   38.718
- open                 Early    4.151  0.2983  4.59    3.363    4.939
- open                 Normal   4.057  0.2798  5.36    3.352    4.762
- seeds_per_fruit      Early    6.717  0.2531  4.63    6.051    7.384
- seeds_per_fruit      Normal   6.433  0.2242  4.38    5.831    7.035
- seeds_est            Early  114.545  8.8673  4.85   91.531  137.559
- seeds_est            Normal 118.796  7.8606  4.83   98.377  139.215
- fruits_nonaborted    Early   25.948  2.7531  5.28   18.984   32.913
- fruits_nonaborted    Normal  26.674  2.4438  5.46   20.547   32.801
- flowers_est          Early   45.508  3.1269  5.13   37.530   53.485
- flowers_est          Normal  44.416  2.7851  5.23   37.352   51.480
- prop_infested        Early    0.229  0.0216  4.86    0.173    0.285
- prop_infested        Normal   0.188  0.0192  4.87    0.138    0.238
- prop_aborted         Early    0.422  0.0352  4.79    0.330    0.513
- prop_aborted         Normal   0.387  0.0312  4.91    0.307    0.468
- seeds_per_flower     Early    2.268  0.1270  4.63    1.934    2.603
- seeds_per_flower     Normal   2.508  0.1125  4.38    2.206    2.810
- sla                  Early  132.864  9.4653  4.96  108.468  157.260
- sla                  Normal 126.272  8.3037  5.14  105.102  147.442
- trichome_density     Early  104.670 12.1009  5.10   73.745  135.595
- trichome_density     Normal 116.849 10.7970  5.40   89.706  143.993
- water_content        Early    0.693  0.0228  5.01    0.634    0.752
- water_content        Normal   0.652  0.0200  5.17    0.601    0.703
- photosynthesis       Early   18.643  1.5149 12.57   15.359   21.927
- photosynthesis       Normal  17.878  1.4084 11.77   14.802   20.953
- conductance          Early    0.214  0.0253 14.20    0.160    0.268
- conductance          Normal   0.232  0.0237 13.38    0.181    0.283
- WUE                  Early  118.801  6.3666 13.93  105.140  132.462
- WUE                  Normal 110.198  5.9840 13.60   97.328  123.067
+<pre><code> trait                snow    emmean       SE    df lower.CL upper.CL
+ corolla_length       Early   24.743  0.34278  4.57   23.837   25.650
+ corolla_length       Normal  24.679  0.31184  5.15   23.884   25.473
+ style_length         Early   24.371  0.29088  4.47   23.596   25.146
+ style_length         Normal  24.497  0.26837  5.11   23.811   25.182
+ corolla_width        Early    3.280  0.02877  4.34    3.203    3.358
+ corolla_width        Normal   3.296  0.02763  4.80    3.224    3.368
+ sepal_width          Early    1.490  0.02910  4.87    1.414    1.565
+ sepal_width          Normal   1.486  0.02482  4.69    1.421    1.551
+ nectar_24_h_ul       Early    1.660  0.09634  4.52    1.405    1.916
+ nectar_24_h_ul       Normal   1.850  0.08845  5.13    1.625    2.076
+ nectar_conc          Early   28.160  0.96999  4.88   25.648   30.672
+ nectar_conc          Normal  27.271  0.85768  5.22   25.093   29.448
+ nectar_sugar_24_h_mg Early    0.556  0.02403  4.19    0.490    0.621
+ nectar_sugar_24_h_mg Normal   0.590  0.02255  4.94    0.532    0.648
+ height_cm            Early   33.809  0.92346  4.67   31.385   36.233
+ height_cm            Normal  36.571  0.86845  5.76   34.425   38.718
+ open                 Early    4.151  0.29828  4.59    3.363    4.939
+ open                 Normal   4.057  0.27980  5.36    3.352    4.762
+ seeds_per_fruit      Early    6.717  0.25309  4.63    6.051    7.384
+ seeds_per_fruit      Normal   6.433  0.22420  4.38    5.831    7.035
+ seeds_est            Early  114.545  8.86725  4.85   91.531  137.559
+ seeds_est            Normal 118.796  7.86064  4.83   98.377  139.215
+ fruits_nonaborted    Early   25.948  2.75315  5.28   18.984   32.913
+ fruits_nonaborted    Normal  26.674  2.44383  5.46   20.547   32.801
+ flowers_est          Early   45.508  3.12693  5.13   37.530   53.485
+ flowers_est          Normal  44.416  2.78508  5.23   37.352   51.480
+ prop_infested        Early    0.229  0.02162  4.86    0.173    0.285
+ prop_infested        Normal   0.188  0.01925  4.87    0.138    0.238
+ prop_aborted         Early    0.422  0.03524  4.79    0.330    0.513
+ prop_aborted         Normal   0.387  0.03116  4.91    0.307    0.468
+ seeds_per_flower     Early    2.268  0.12698  4.63    1.934    2.603
+ seeds_per_flower     Normal   2.508  0.11248  4.38    2.206    2.810
+ sla                  Early  121.482  3.36478  4.48  112.520  130.443
+ sla                  Normal 129.317  3.34111  4.38  120.351  138.283
+ trichome_density     Early  104.670 12.10093  5.10   73.745  135.595
+ trichome_density     Normal 116.849 10.79701  5.40   89.706  143.993
+ water_content        Early    0.674  0.00586  4.95    0.659    0.689
+ water_content        Normal   0.670  0.00580  4.81    0.655    0.685
+ photosynthesis       Early   18.643  1.51488 12.57   15.359   21.927
+ photosynthesis       Normal  17.878  1.40844 11.77   14.802   20.953
+ conductance          Early    0.214  0.02527 14.20    0.160    0.268
+ conductance          Normal   0.232  0.02369 13.38    0.181    0.283
+ WUE                  Early  118.801  6.36655 13.93  105.140  132.462
+ WUE                  Normal 110.198  5.98395 13.60   97.328  123.067
 
 Results are averaged over the levels of: year, water 
 Degrees-of-freedom method: kenward-roger 
@@ -2990,8 +2990,7 @@ Confidence level used: 0.95 </code></pre>
 <h3>Split plot repeated measures</h3>
 <div id="leaf-traits-1" class="section level4">
 <h4>Leaf traits</h4>
-<pre class="r"><code>#No 2019R2 dry weight traits anymore
-lt %&gt;% group_by(plantid, year.round) %&gt;% tally() %&gt;% ungroup %&gt;% 
+<pre class="r"><code>lt %&gt;% group_by(plantid, year.round) %&gt;% tally() %&gt;% ungroup %&gt;% 
   pivot_wider(names_from=year.round, values_from=n, values_fill=0) %&gt;% 
   rowwise() %&gt;% mutate(tot = sum(c_across(!plantid))) %&gt;% 
 ggplot(aes(tot)) + geom_histogram(binwidth=1, color=&quot;black&quot;, fill=&quot;white&quot;) + 
@@ -2999,8 +2998,7 @@ ggplot(aes(tot)) + geom_histogram(binwidth=1, color=&quot;black&quot;, fill=&quo
 <p><img src="images/lt_repeated-1.png" width="672" /></p>
 <pre class="r"><code>with(lt, table(plantid, year.round)) %&gt;% heatmap(scale=&quot;none&quot;, Colv = NA, col=c(&quot;white&quot;,status_pal[&quot;vegetative&quot;],&quot;yellow&quot;))</code></pre>
 <p><img src="images/lt_repeated-2.png" width="672" /></p>
-<pre class="r"><code>#No 2019R2 dry weight traits anymore
-lt %&gt;% pivot_longer(all_of(leaftraits), names_to = &quot;trait&quot;) %&gt;% 
+<pre class="r"><code>lt %&gt;% pivot_longer(all_of(leaftraits), names_to = &quot;trait&quot;) %&gt;% 
 ggplot(aes(y=value, x=factor(round),color=water, fill=water)) + 
   facet_grid(trait ~year, scales=&quot;free_y&quot;, switch=&quot;y&quot;,labeller=as_labeller(c(traitnames.units, set_names(2018:2020)))) + 
   geom_violin(position=position_identity(), alpha=0.1)+ #, linetype=snow
@@ -3042,8 +3040,7 @@ ggplot(lt.long.repeated, aes(y=value, x=year.round, color=water)) +
   scale_color_manual(values=water_pal) + 
   labs(x=&quot;Year and round&quot;, y=&quot;&quot;, color=&quot;Precipitation&quot;) + theme_minimal() + theme(legend.position = &quot;top&quot;)</code></pre>
 <p><img src="images/lt_connected-4.png" width="1056" /></p>
-<pre class="r"><code>#No 2019R2 dry weight traits anymore
-lt.water_content &lt;- lt %&gt;% select(year.round, plantid, water, snow, water_content) %&gt;% arrange(year.round) %&gt;% 
+<pre class="r"><code>lt.water_content &lt;- lt %&gt;% select(year.round, plantid, water, snow, water_content) %&gt;% arrange(year.round) %&gt;% 
   pivot_wider(names_from=&quot;year.round&quot;, values_from=&quot;water_content&quot;, values_fn=function(x) mean(x, na.rm=T))
 
 plot_rm_change &lt;- function(data, round_x, round_y, range_xy) {
@@ -3055,9 +3052,7 @@ plot_rm_change &lt;- function(data, round_x, round_y, range_xy) {
 do.call(grid.arrange, map2(c(levels(lt$year.round)[-6],&quot;2018.1&quot;), c(levels(lt$year.round)[-1],&quot;2019.1&quot;), plot_rm_change, data=lt.water_content, range_xy=range(lt$water_content, na.rm=T)))</code></pre>
 <p><img src="images/lt_plantcorr-1.png" width="720" /></p>
 <pre class="r"><code>#plot(lt.water_content %&gt;% select(-c(plantid,water,snow)))</code></pre>
-<pre class="r"><code>#No 2019R2 dry weight traits anymore
-
-#just the plants that were sampled in more than one round for each trait
+<pre class="r"><code>#just the plants that were sampled in more than one round for each trait
 lt.repeated &lt;- lt.long.repeated %&gt;% pivot_wider(names_from=&quot;trait&quot;)
 lt.repeated.subplot &lt;- lt.repeated %&gt;% group_by(year.round, plotid) %&gt;% summarize(across(all_of(leaftraits), mean, na.rm=T))
 
@@ -3112,13 +3107,13 @@ anova_table(lt.mod.split.rm.tests, lt.mod.split.rm) %&gt;% kable()</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">sla</td>
-<td align="left">1.2 x 10<sup>-21</sup></td>
-<td align="left">9.1 x 10<sup>-17</sup></td>
+<td align="left">1.3 x 10<sup>-21</sup></td>
+<td align="left">8.7 x 10<sup>-17</sup></td>
 <td align="left">0.35</td>
 <td align="left">0.26</td>
-<td align="left">3.7 x 10<sup>-16</sup></td>
-<td align="left">0.055</td>
-<td align="left">0.062</td>
+<td align="left">3.6 x 10<sup>-16</sup></td>
+<td align="left">0.056</td>
+<td align="left">0.061</td>
 <td align="left">0.13</td>
 <td align="left">0.16</td>
 <td align="left">0.42</td>
@@ -3128,47 +3123,47 @@ anova_table(lt.mod.split.rm.tests, lt.mod.split.rm) %&gt;% kable()</code></pre>
 <td align="left">0.63</td>
 <td align="left">0.85</td>
 <td align="left">TRUE</td>
-<td align="right">0.4665385</td>
+<td align="right">0.4664640</td>
 </tr>
 <tr class="even">
 <td align="left">trichome_density</td>
-<td align="left">1.2 x 10<sup>-16</sup></td>
-<td align="left">4.4 x 10<sup>-5</sup></td>
-<td align="left">0.96</td>
-<td align="left">0.31</td>
-<td align="left">9.4 x 10<sup>-11</sup></td>
+<td align="left">2.2 x 10<sup>-21</sup></td>
+<td align="left">7.9 x 10<sup>-11</sup></td>
+<td align="left">0.97</td>
 <td align="left">0.21</td>
-<td align="left">0.49</td>
-<td align="left">0.90</td>
-<td align="left">0.51</td>
-<td align="left">0.91</td>
-<td align="left">0.48</td>
-<td align="left">0.71</td>
-<td align="left">0.52</td>
-<td align="left">0.81</td>
-<td align="left">0.67</td>
-<td align="left">FALSE</td>
-<td align="right">0.2620668</td>
+<td align="left">1.1 x 10<sup>-10</sup></td>
+<td align="left">0.096</td>
+<td align="left">0.18</td>
+<td align="left">0.87</td>
+<td align="left">0.55</td>
+<td align="left">0.87</td>
+<td align="left">0.80</td>
+<td align="left">0.78</td>
+<td align="left">0.57</td>
+<td align="left">0.70</td>
+<td align="left">0.66</td>
+<td align="left">TRUE</td>
+<td align="right">0.2958039</td>
 </tr>
 <tr class="odd">
 <td align="left">water_content</td>
 <td align="left">8.8 x 10<sup>-57</sup></td>
-<td align="left">0.077</td>
+<td align="left">0.078</td>
 <td align="left">6 x 10<sup>-3</sup></td>
 <td align="left">0.48</td>
-<td align="left">5.7 x 10<sup>-18</sup></td>
+<td align="left">5.8 x 10<sup>-18</sup></td>
 <td align="left">1.5 x 10<sup>-5</sup></td>
 <td align="left">1.3 x 10<sup>-3</sup></td>
 <td align="left">1.7 x 10<sup>-4</sup></td>
 <td align="left">1.5 x 10<sup>-3</sup></td>
-<td align="left">0.52</td>
+<td align="left">0.51</td>
 <td align="left">1.1 x 10<sup>-5</sup></td>
 <td align="left">0.20</td>
 <td align="left">0.32</td>
 <td align="left">0.051</td>
 <td align="left">0.16</td>
 <td align="left">FALSE</td>
-<td align="right">0.6129448</td>
+<td align="right">0.6129386</td>
 </tr>
 </tbody>
 </table>
@@ -3265,7 +3260,7 @@ anova_table(pt.mod.split.rm.tests, pt.mod.split.rm) %&gt;% kable()</code></pre>
 <h2>Plasticity: absolute snowmelt date and estimated summer precipitation</h2>
 <div id="anova-tables-1" class="section level3">
 <h3>ANOVA tables</h3>
-<pre class="r"><code>lt.subplot.r2 &lt;- lt.subplotround %&gt;% filter(round==&quot;2&quot;)#No 2019R2 dry weight traits anymore
+<pre class="r"><code>lt.subplot.r2 &lt;- lt.subplotround %&gt;% filter(round==&quot;2&quot;)
 lt.plantyr.r2 &lt;- lt.plantyr %&gt;% filter(round==&quot;2&quot;)
 
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
@@ -3684,7 +3679,7 @@ plot_abs(mod.abs, mnps.subplot, floraltraits) + #Morphological traits - subplot 
 <p><img src="images/multi_meltdate-1.png" width="864" /></p>
 <pre class="r"><code># grid.arrange(plot_abs(lt.mod.abs, lt, leaftraits), 
 #              plot_abs(pt.mod.abs, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
-plot_abs(mod.abs, bind_rows(lt.subplot.r2, pt.subplot), c(leaftraits[2],phystraits[c(3,1,2)])) +#No 2019R2 dry weight traits anymore
+plot_abs(mod.abs, bind_rows(lt.subplot.r2, pt.subplot), c(leaftraits[2],phystraits[c(3,1,2)])) +
   scale_y_continuous(&quot;&quot;, limits=c(-1.3, 1.8), breaks=c(-2:1))#subplot means</code></pre>
 <p><img src="images/multi_meltdate-2.png" width="864" /></p>
 </div>
@@ -3894,13 +3889,13 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable(digits=3)</cod
 </tr>
 <tr class="odd">
 <td align="left">sla</td>
-<td align="right">0.020</td>
-<td align="right">0.002</td>
-<td align="right">0.004</td>
+<td align="right">0.210</td>
 <td align="right">0.001</td>
-<td align="right">10.198</td>
-<td align="right">7.754</td>
-<td align="right">0.117</td>
+<td align="right">0.014</td>
+<td align="right">0.001</td>
+<td align="right">210.649</td>
+<td align="right">208.296</td>
+<td align="right">2.422</td>
 </tr>
 <tr class="even">
 <td align="left">trichome_density</td>
@@ -3914,13 +3909,13 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable(digits=3)</cod
 </tr>
 <tr class="odd">
 <td align="left">water_content</td>
+<td align="right">0.004</td>
+<td align="right">0.005</td>
+<td align="right">0.010</td>
 <td align="right">0.001</td>
-<td align="right">0.002</td>
-<td align="right">0.003</td>
-<td align="right">0.001</td>
-<td align="right">0.552</td>
-<td align="right">1.819</td>
-<td align="right">0.006</td>
+<td align="right">0.825</td>
+<td align="right">2.263</td>
+<td align="right">0.009</td>
 </tr>
 <tr class="even">
 <td align="left">photosynthesis</td>
@@ -4020,8 +4015,7 @@ grid.arrange(mod.abs.emm.plot.sun_date, mod.abs.emm.plot.precip_est_mm, mod.abs.
 </div>
 <div id="absolute-snowmelt-repeated-measures" class="section level3">
 <h3>Absolute snowmelt repeated measures</h3>
-<pre class="r"><code>#No 2019R2 dry weight traits anymore
-lt.mod.abs.rm &lt;- map(set_names(leaftraits), 
+<pre class="r"><code>lt.mod.abs.rm &lt;- map(set_names(leaftraits), 
                   ~ lmer(lt[[.x]] ~ sun_date * precip_est_mm * round + (1|plot) + (1|plotid) + (1|plantid), data=lt))
 lt.mod.abs.rm.coefs &lt;- map_dfr(lt.mod.abs.rm, tidy, .id=&quot;trait&quot;)
 lt.mod.abs.rm.tests &lt;- map(lt.mod.abs.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
@@ -4064,19 +4058,19 @@ anova_table(lt.mod.abs.rm.tests, lt.mod.abs.rm) %&gt;% kable()</code></pre>
 <td align="left">0.71</td>
 <td align="left">0.68</td>
 <td align="left">TRUE</td>
-<td align="right">0.4062489</td>
+<td align="right">0.4062264</td>
 </tr>
 <tr class="even">
 <td align="left">trichome_density</td>
-<td align="left">0.35</td>
-<td align="left">0.15</td>
-<td align="left">5.9 x 10<sup>-5</sup></td>
-<td align="left">0.16</td>
-<td align="left">4.3 x 10<sup>-5</sup></td>
-<td align="left">0.75</td>
-<td align="left">0.93</td>
+<td align="left">0.015</td>
+<td align="left">0.026</td>
+<td align="left">0.18</td>
+<td align="left">6 x 10<sup>-2</sup></td>
+<td align="left">0.094</td>
+<td align="left">0.81</td>
+<td align="left">0.90</td>
 <td align="left">TRUE</td>
-<td align="right">0.2005365</td>
+<td align="right">0.0871631</td>
 </tr>
 <tr class="odd">
 <td align="left">water_content</td>
@@ -4088,7 +4082,7 @@ anova_table(lt.mod.abs.rm.tests, lt.mod.abs.rm) %&gt;% kable()</code></pre>
 <td align="left">0.75</td>
 <td align="left">0.84</td>
 <td align="left">TRUE</td>
-<td align="right">0.4117308</td>
+<td align="right">0.4117307</td>
 </tr>
 </tbody>
 </table>
@@ -4311,7 +4305,7 @@ anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
 <pre><code>lmer(trait ~ year * VWC + (1|plotid), data = mt.plantyr)</code></pre>
 <div id="anovas" class="section level3">
 <h3>ANOVAs</h3>
-<pre class="r"><code>lt.subplot.r2 &lt;- lt.subplotround %&gt;% filter(round==&quot;2&quot;)#No 2019R2 dry weight traits anymore
+<pre class="r"><code>lt.subplot.r2 &lt;- lt.subplotround %&gt;% filter(round==&quot;2&quot;)
 lt.plantyr.r2 &lt;- lt.plantyr %&gt;% filter(round==&quot;2&quot;)
 
 pt.plantyr &lt;- pt.plantyr %&gt;% mutate(VWC = ifelse(is.na(VWC.plant), VWC.sm, VWC.plant)) #phys traits had the VWC measured next to the plant in 2019 and 2020 only - substitute VWC in subplot on closest date
@@ -4744,7 +4738,7 @@ plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5
 <p><img src="images/multi_sm-1.png" width="768" /></p>
 <pre class="r"><code># grid.arrange(plot_sm(mod.sm, lt, leaftraits), 
 #              plot_sm(mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
-grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits), #No 2019R2 dry weight traits anymore
+grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits), 
              plot_sm(mod.sm, pt.plantyr,    phystraits)+ guides(color=F, shape=F) + coord_fixed(ratio=3), ncol=1) #plant means</code></pre>
 <p><img src="images/multi_sm-2.png" width="768" /></p>
 </div>
@@ -4776,7 +4770,7 @@ grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits), #No 2019R2 dry weight t
   }
   return(mod)
 }
-#No 2019R2 dry weight traits anymore
+
 mod.selection &lt;- 
   tibble(response = c(&quot;survived&quot;,&quot;flowered&quot;), treatment=c(&quot;water&quot;,&quot;snow&quot;), set = c(&quot;lt&quot;, &quot;pt&quot;)) %&gt;%
   tidyr::expand(response, treatment, set) %&gt;% 
@@ -4786,8 +4780,7 @@ mod.selection &lt;-
   mutate(model = pmap(., step_selection_mod),
          coefs = map(model, tidy),
          tests = map(model, ~ tidy(car::Anova(.x, type=3))))</code></pre>
-<pre class="r"><code>#No 2019R2 dry weight traits anymore
-mod.selection %&gt;% group_by(response, treatment) %&gt;% 
+<pre class="r"><code>mod.selection %&gt;% group_by(response, treatment) %&gt;% 
   group_walk(function(.x,.y) {cat(paste(&quot;Effect of trait on whether a plant&quot;,.y$response,&quot;under different&quot;,.y$treatment,&quot;conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable %&gt;% print})</code></pre>
 <p>Effect of trait on whether a plant flowered under different snow conditions</p>
@@ -5264,12 +5257,12 @@ plot_selection_facets &lt;- function(response, treatment, set) {
   if(set ==&quot;pt&quot;) return(p + guides(linetype=F, color=F))
   else return(p)
 }
-#No 2019R2 dry weight traits anymore
+
 mod.selection.plots &lt;- mod.selection %&gt;% group_by(response, treatment, set) %&gt;% summarize(.groups=&quot;drop&quot;) %&gt;%  
   mutate(plots = pmap(., plot_selection_facets))
 
 mod.selection.plots %&gt;% group_by(response, treatment) %&gt;% group_walk( ~ do.call(grid.arrange, .x$plots))</code></pre>
-<p><img src="images/plot_selection-1.png" width="960" /><img src="images/plot_selection-2.png" width="960" /><img src="images/plot_selection-3.png" width="960" /><img src="images/plot_selection-4.png" width="960" /></p>
+<p><img src="images/plot_selection-1.png" width="864" /><img src="images/plot_selection-2.png" width="864" /><img src="images/plot_selection-3.png" width="864" /><img src="images/plot_selection-4.png" width="864" /></p>
 <pre class="r"><code>#TODO use the model results to make plots instead of geom_smooth</code></pre>
 </div>
 <div id="selection-vs.-absolute-snowmelt-precip" class="section level2">
@@ -5281,7 +5274,7 @@ selection_mod_abs &lt;- function(trait, response, set) {
   options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
   glmmTMB(formula(paste(response, &quot;~ trait * sun_date * precip_est_mm + (1|plot)&quot;)), data=t.plantyr, family=&quot;binomial&quot;)
 }
-#No 2019R2 dry weight traits anymore
+
 mod.selection.abs &lt;- 
   tibble(response = c(&quot;survived&quot;,&quot;flowered&quot;), set = c(&quot;lt&quot;, &quot;pt&quot;)) %&gt;%
   tidyr::expand(response, set) %&gt;% 
@@ -5482,7 +5475,7 @@ selection_mod_sm &lt;- function(trait, response, set, test_year=TRUE) {
   if(test_year)  glmmTMB(formula(paste(response, &quot;~ trait * year * VWC + (1|plot)&quot;)), data=t.plantyr, family=&quot;binomial&quot;)
   else           glmmTMB(formula(paste(response, &quot;~ trait *        VWC + (1|plot)&quot;)), data=t.plantyr, family=&quot;binomial&quot;)
 }
-#No 2019R2 dry weight traits anymore
+
 mod.selection.sm &lt;- 
   tibble(response = c(&quot;survived&quot;,&quot;flowered&quot;), set = c(&quot;lt&quot;, &quot;pt&quot;)) %&gt;%
   tidyr::expand(response, set) %&gt;% 
@@ -5784,7 +5777,7 @@ Eigenvalues for unconstrained axes:
 <td align="right">2</td>
 <td align="right">0.017</td>
 <td align="right">0.995</td>
-<td align="right">0.397</td>
+<td align="right">0.396</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>
@@ -5862,7 +5855,7 @@ Eigenvalues for unconstrained axes:
 <td align="right">1</td>
 <td align="right">0.0027923</td>
 <td align="right">0.6214276</td>
-<td align="right">0.484</td>
+<td align="right">0.485</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>

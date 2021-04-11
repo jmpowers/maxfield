@@ -101,6 +101,7 @@ load("data/daily_precip_est.rda")
 # Load daily_filled_7am weather station data from the "RMBLweather" repo (EPA, Wunderground, WRCC, NOAA)
 load("data/daily_all.rda")
 daily_all <- daily_filled_7am
+remove(daily_filled_7am)
 
 #Add summer precip estimates to treatments from NOAA-filled EPA Research Meadow dataset
 # snowmelt date in each plot - start of watering (100% of precip)
@@ -438,7 +439,7 @@ lt <- map_dfr(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>%
   mutate_if(is.character, as.factor) 
 
 #drop traits that use irregular dry weights in 2019 round 2
-lt <- lt %>% mutate(across(c(sla, water_content, dry_weight_g), ~ ifelse(year.round=="2019.2",NA,.x)))
+lt <- lt %>% mutate(across(c(sla, water_content), ~ ifelse(year.round=="2019.2",NA,.x)))
 
 lt.plantyr <- lt %>% 
   group_by(year, round, year.round, plot, subplot, plotid, plant, plantid, water, water4, snow) %>% 
@@ -809,6 +810,7 @@ alltraits.mean <- c(map_dbl(traits,   ~mean(mnps.plantyr[[.x]], na.rm=T)),
 # export ------------------------------------------------------------------
 
 #load("data/maxfield_data.rda")
+remove(datasheets)
 save.image("data/maxfield_data.rda")
 
 alldata <- list("treatments"=treatments,
