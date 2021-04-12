@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -710,7 +710,7 @@ re_table(mod.split.coefs) %>% kable(digits=3)
 ```{r multi_splitplot, fig.width=4.5, fig.height=10}
 plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = TRUE, facets="year") {
   
-  data.long <- data %>% select(c(all_of(traits.plot), all_of(facets), water, snow, sun_date, precip_est_mm)) %>% 
+  data.long <- data %>% select(c(all_of(traits.plot), all_of(facets), water, snow)) %>% 
     pivot_longer(all_of(traits.plot), names_to="trait") %>% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal")) %>% 
            #value = (value - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)]) %>% 
@@ -745,7 +745,7 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
   if(plot.emm) { return(split_plot + 
                           geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE,), position=position_dodge(width=0.8), size=1, show.legend=F) +
                           geom_point(aes(y=emmean), position=position_dodge(width=0.8), shape="-", size=16))
-  } else return(split_plot + coord_cartesian(ylim=c(0,NA)))
+  } else return(split_plot)
 }
 
 # grid.arrange( #Morphological traits - boxplot of raw data
@@ -799,7 +799,7 @@ mod.split.tests.water <- map(mod.split, multcomp::glht,
 
 mod.split.tests.water %>% select(trait, contrast, adj.p.value) %>% pivot_wider(names_from=contrast, values_from=adj.p.value) %>% kable(digits=3)
 
-map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ snow)), .id = "trait")
+#map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ snow)), .id = "trait")
 ```
 
 ### Split plot repeated measures 
@@ -847,13 +847,7 @@ lt %>% pivot_longer(all_of(c(leaftraits, "sla_wet")), names_to = "trait") %>% ar
   geom_point() + geom_path(aes(group=plantid)) + scale_color_manual(values=water_pal) + 
   labs(x="Year and round", y="", color="Precipitation") + theme_minimal() + theme(legend.position = "top")
 
-lt.long <- lt %>% pivot_longer(all_of(leaftraits), names_to = "trait") %>% arrange(date) %>% drop_na(value)
-lt.long.repeated <- lt.long %>% filter(paste(trait, plantid) %in% 
-                     (lt.long %>% group_by(plantid, trait) %>% summarize(n = length(unique(year.round))) %>% 
-                        filter(n>1) %>% mutate(trait_plantid = paste(trait, plantid)) %>% pull(trait_plantid))) %>% 
-  group_by(trait, plotid, plantid, water, year.round) %>% summarize(value=mean(value)) 
-
-ggplot(lt.long.repeated, aes(y=value, x=year.round, color=water)) + 
+ggplot(lt %>% pivot_longer(all_of(leaftraits), names_to = "trait"), aes(y=value, x=year.round, color=water)) + 
   facet_wrap(vars(trait), scales="free_y",labeller=as_labeller(traitnames.units),ncol=1) + 
   geom_path(aes(group=paste(water, plantid)), position=position_dodge2(width=0.9), alpha=0.3) + #dodging not lining up
   geom_boxplot(outlier.size=0.3) + 
@@ -868,7 +862,7 @@ lt.water_content <- lt %>% select(year.round, plantid, water, snow, water_conten
 
 plot_rm_change <- function(data, round_x, round_y, range_xy) {
   ggplot(data, aes_(x=as.name(round_x), y=as.name(round_y), color=as.name("water"))) + 
-    geom_abline(intercept=0, slope=1) + geom_smooth(se=F, span=0.9) + geom_point(size=1)  +  geom_rug() +
+    geom_abline(intercept=0, slope=1) + geom_smooth(se=F, method="lm") + geom_point(size=1)  +  geom_rug() +
     scale_color_manual(values=water_pal, guide=F) + coord_fixed(xlim=range_xy, ylim=range_xy) + theme_minimal()
 }
 
@@ -879,12 +873,6 @@ do.call(grid.arrange, map2(c(levels(lt$year.round)[-6],"2018.1"), c(levels(lt$ye
 
 
 ```{r lt_repeated_split, fig.height=8, fig.width=8}
-
-
-#just the plants that were sampled in more than one round for each trait
-lt.repeated <- lt.long.repeated %>% pivot_wider(names_from="trait")
-lt.repeated.subplot <- lt.repeated %>% group_by(year.round, plotid) %>% summarize(across(all_of(leaftraits), mean, na.rm=T))
-
 lt.mod.split.rm <- map(set_names(leaftraits), 
                   ~ lmer(lt[[.x]] ~  year * round * water * snow + (1|snow:plot) + (1|snow:plotid) + (1|plantid), data=lt))
 lt.mod.split.rm.coefs <- map_dfr(lt.mod.split.rm, tidy, .id="trait")
@@ -894,6 +882,30 @@ lt.mod.split.rm.emm <- map_dfr(lt.mod.split.rm, ~ summary(emmeans(.x, ~  year * 
   mutate(year.round=paste(year,round,sep="."))
 plot_split_plot(lt.mod.split.rm.emm, lt.subplotround, leaftraits, facets="year.round") 
 ```
+
+#### First three rounds
+
+```{r lt_first_three, fig.height=8, fig.width=4}
+# get plants that were sampled more than once for the first three rounds
+lt.long.3 <- lt %>% pivot_longer(all_of(leaftraits), names_to = "trait") %>% arrange(date) %>% drop_na(value) %>%
+  filter(year.round %in% c("2018.1","2018.2","2019.1"))
+lt.long.repeated.3 <- lt.long.3  %>% filter(paste(trait, plantid) %in% 
+                     (lt.long.3 %>% group_by(plantid, trait) %>% summarize(n = length(unique(year.round))) %>% 
+                        filter(n>1) %>% mutate(trait_plantid = paste(trait, plantid)) %>% pull(trait_plantid))) %>% 
+  group_by(trait, plot, plotid, plantid, water, snow, year.round) %>% summarize(value=mean(value)) 
+lt.repeated.3 <- lt.long.repeated.3 %>% pivot_wider(names_from="trait")
+lt.repeated.3.subplotround <- lt.repeated.3 %>% group_by(year.round, water, snow, plotid) %>% 
+  summarize(across(all_of(leaftraits), mean, na.rm=T))
+
+lt.mod.split.rm.3 <- map(set_names(leaftraits), 
+                  ~ lmer(lt.repeated.3[[.x]] ~  year.round * water * snow + (1|snow:plot) + (1|snow:plotid) + (1|plantid), data=lt.repeated.3))
+lt.mod.split.rm.3.tests <- map(lt.mod.split.rm.3, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+anova_table(lt.mod.split.rm.3.tests, lt.mod.split.rm.3) %>% kable()
+lt.mod.split.rm.3.emm <- map_dfr(lt.mod.split.rm.3, ~ summary(emmeans(.x, ~  year.round * water * snow)), .id="trait")
+plot_split_plot(lt.mod.split.rm.3.emm, lt.repeated.3.subplotround, leaftraits, facets="year.round") 
+#plot_split_plot(lt.mod.split.rm.3.emm, lt.repeated.3, leaftraits, geom="boxplot", plot.emm=FALSE, facets="year.round") 
+```
+
 
 #### Physiology
 
