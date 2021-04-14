@@ -784,7 +784,7 @@ alltraits <- c(traits, leaftraits, phystraits)
 traitnames <- set_names(c(
   "Corolla length", "Style length", "Corolla width", "Sepal width", 
   "Nectar production", "Nectar concentration", "Nectar sucrose", "Inflorescence height", 
-  "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", 
+  "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Flower number", 
   "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower",
   "Specific leaf area", "Trichome density", "Water content", 
   "Photosynthetic rate", "Stomatal conductance", "Intrinsic water-use efficiency"), alltraits)
@@ -793,7 +793,7 @@ traitnames.units <- set_names(c(
   "Corolla length (mm)", "Style length (mm)", "Corolla width (mm)", "Sepal width (mm)", 
   "Nectar production (\U00B5L/day)", "Nectar conc. (% by mass)", "Nectar sucrose (mg/day)", 
   "Inflorescence height (cm)", 
-  "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Estimated total flowers", 
+  "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Flower number", 
   "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower",
   "Specific leaf area (cm\U00B2 g\U207B\U00B9)", "Trichome density (cm\U207B\U00B2)", "Water content", 
   "Photosynthetic rate (\U00B5mol CO\U2082 m\U207B\U00B2 s\U207B\U00B9)", 
