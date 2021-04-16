@@ -95,7 +95,6 @@ waterdates <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture &
 # weather -----------------------------------------------------------------
 
 # Load output from maxfield_soil_moisture.R that fit soil moisture ~ precipitation model
-#TODO: not loaded, needs updating with latest precip data
 load("data/daily_precip_est.rda")
 
 # Load daily_filled_7am weather station data from the "RMBLweather" repo (EPA, Wunderground, WRCC, NOAA)

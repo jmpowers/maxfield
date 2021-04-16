@@ -7,6 +7,7 @@
 #TODO look at how continuous soil moisture data from Kettle Ponds S of Gothic, CO and Judd Falls compares to precip
 
 library(tidyverse)
+library(lubridate)
 library(profvis)
 
 load("data/maxfield_data.rda")
@@ -30,11 +31,11 @@ sun_indices <- map(setNames(1:6,as.character(1:6)), ~ meltdates %>% filter(plot 
                                                 as.Date("2018-01-01"))) %>% pull(sun_date))
 
 # make a fast vector of the precipitation data indexed by days since 2018 started
-daily_precip_est <- daily_all %>% select(year, date, EPA_NOAA_filled, ground_covered) %>% 
+daily_precip_est <- daily_all %>% mutate(year=factor(year(date))) %>% select(year, date, EPA_NOAA_filled, ground_covered) %>% 
   filter(year %in% 2018:2020) %>% arrange(date) %>% 
   mutate(year = fct_drop(year),
          droughted = findInterval(date, as.Date(waterdates$date)) %% 2 == 1,
-         EPA_NOAA_filled  = replace_na(EPA_NOAA_filled, 0), #  fill a a few missing precip days with 0 mm - NOAA_billy data missing 
+         EPA_NOAA_filled  = replace_na(EPA_NOAA_filled, 0), #  fill one missing precip day (2018-07-28) with 0 mm
          est_Reduction = EPA_NOAA_filled * ifelse(droughted, 0.5, 1),
          est_Control   = EPA_NOAA_filled,
          est_Addition  = EPA_NOAA_filled + ifelse(date %in% watering_dates, 3.5, 0))
@@ -73,7 +74,7 @@ betasum <- function(start, n, z, c_eta, water, plot, checkstart = TRUE, ...) {
       pull(sun_date) %>% paste0("-",yr) %>% parse_date_time(orders="jy") %>% as.Date
     if(daily_precip_est$date[start] < plot_sun_date) return(NA) #TODO add back start - n
     # don't calculate betasum if start date is after first snow in fall
-    first_snow_date <- groundcover %>% bind_rows(data.frame(first_snow=first_snow_2020[1])) %>% 
+    first_snow_date <- groundcover %>% bind_rows(data.frame(first_snow=ymd("2020-11-07"))) %>% #TODO check this date
       filter(year(first_snow)==yr) %>% pull(first_snow) %>% as.Date
     if(daily_precip_est$date[start] >= first_snow_date) return(NA)
   }
@@ -108,10 +109,13 @@ GA.betasum <- ga(type = "real-valued", lower = c(0, 0, 0), upper = c(20, 20, 366
 summary(GA.betasum)
 daily_precip_est$eta <- map_dbl(1:nrow(daily_precip_est), eta, c_eta=GA.betasum@solution, start=1001)
 
-#the eta solution is very flat through time and at its minimum (should be maximal in the summer) - simpler to just fix the eta value.
-eta_optim_df <- tibble(c1=seq(from=13.8,to=14.2,by=0.05), cor=map_dbl(c1, ~ betasum_VWC_cor(n=15, z=60, c_eta=c(.x,0,0))$cor))
-ggplot(eta_optim_df, aes(x=c1, y=cor))+ geom_point()+ geom_smooth(se=F) #eta= c1 = 13.9 mm/day is best loss parameter with n=15, z=60
-c_eta_optim <- c(13.9, 0, 0)
+# old NOAA_billy dataset: "the eta solution is very flat through time and at its minimum (should be maximal in the summer)" 
+# and c1 is in this range = seq(from=13.8,to=14.2,by=0.05), best cor at 13.9 
+# with CB dataset, eta solution is too variable through time, runs from 2 - 16.
+# simpler to just fix the eta value.
+eta_optim_df <- tibble(c1=seq(from=1,to=20,by=1), cor=map_dbl(c1, ~ betasum_VWC_cor(n=15, z=60, c_eta=c(.x,0,0))$cor))
+c_eta_optim <- c(10.3, 0, 0)#eta= c1 = 10.3 mm/day is best loss parameter with n=15, z=60
+ggplot(eta_optim_df, aes(x=c1, y=cor))+ geom_point()+ geom_smooth(se=F) + geom_vline(xintercept=c_eta_optim[1])
 
 # find the optimum window size n given a fixed eta - this is not what is described in Coopersmith papers
 #n_optim_df <- tibble(n=seq(from=1,to=20,by=1), cor=map_dbl(n, ~ betasum_VWC_cor(n=.x, z=60, c_eta=c_eta_optim)$cor))
@@ -127,7 +131,7 @@ c_eta_optim <- c(13.9, 0, 0)
 betasum.large_n <- betasum_VWC_cor(n=80, z=60, c_eta=c_eta_optim)$betasum
 n_limit_df <- tibble(n=seq(from=1,to=20,by=1), betacor = map(n, ~ betasum_VWC_cor(n=.x, z=60, c_eta=c_eta_optim)$betasum) %>% 
                        map_dbl(cor, betasum.large_n)) 
-ggplot(n_limit_df, aes(x=n, y=betacor))+ geom_point()+ geom_line() #n=15 has correlation >0.999 with n=80
+ggplot(n_limit_df, aes(x=n, y=betacor))+ geom_point()+ geom_line()+geom_hline(yintercept=1) #n=15 has correlation >0.999 with n=80
 
 # genetic algorithm to minimize theta_VWC_rms with c_theta
 # c_theta[1] = theta_re = residual soil moisture
@@ -135,10 +139,10 @@ ggplot(n_limit_df, aes(x=n, y=betacor))+ geom_point()+ geom_line() #n=15 has cor
 # c_theta[3] = c4 = soil hydraulic properties (conductance/drainage)
 GA.theta <- ga(type = "real-valued", lower = c(0, 0, 0, 0), upper = c(0.03, 0.7, 5, 20), 
                  fitness =  function(x) -theta_VWC_rms(n=15, z=60, c_eta=c(x[4],0,0), c_theta=c(x[1],x[2],x[3]))$rms,
-                 popSize = 25, maxiter = 1, run = 1)
+                 popSize = 50, maxiter = 100, run=5, parallel=T)
 summary(GA.theta)
-c_theta_optim=GA.theta@solution[1:3]#c(0.02, 0.4, 1.2)
-c_eta_optim=c(GA.theta@solution[4],0,0)#c(13.9,0,0)
+c_theta_optim=GA.theta@solution[1:3]#old with NOAA_billy c(0.02, 0.4, 1.2), now c(0.02226 0.32319 1.20287)
+c_eta_optim=c(GA.theta@solution[4],0,0)#old with NOAA_billy c(13.9,0,0), now 10.39
 
 # now that model is fit, predict soil moisture at each measuring date
 sm.waterplot$VWC_pred <- theta_VWC_rms(n=15, z=60, c_eta=c_eta_optim, c_theta=c_theta_optim)$VWC_pred
@@ -150,11 +154,14 @@ ggplot(sm.waterplot, aes(x=date, color=water))+ facet_wrap(vars(year), scales="f
 ggplot(sm.waterplot, aes(y=VWC_pred, x=VWC/100, color=water))+ facet_wrap(vars(year), scales="free_x") + geom_point() + scale_color_manual(values=water_pal) + geom_smooth(method="lm", se=F) + geom_abline(intercept = 0, slope=1)
 
 # predict soil moisture throughout the year
+daily_precip_est$VWC_Control_3 <- map_dbl(1:nrow(daily_precip_est), 
+                                          theta_est, n=15, z=60, c_eta= c_eta_optim, c_theta=c_theta_optim, 
+                                          water="Control",plot="3")
 daily_precip_est$VWC_Control_4 <- map_dbl(1:nrow(daily_precip_est), 
                                            theta_est, n=15, z=60, c_eta= c_eta_optim, c_theta=c_theta_optim, 
                                            water="Control",plot="4")
 ggplot(daily_precip_est, aes(x=date))+ facet_wrap(vars(year), scales="free_x", ncol=1) + 
-  geom_line(aes(y=VWC_Control_3, color=droughted, group=1)) + scale_color_manual(values=c("black","blue"))+
+  geom_line(aes(y=VWC_Control_4, color=droughted, group=1)) + scale_color_manual(values=c("black","blue"))+
   geom_col(data=daily_precip_est, aes(y=est_Control/100, fill=ground_covered))
   #geom_line(aes(y=eta/100, color=droughted, group=1))
 

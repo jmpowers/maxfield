@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-04-14" />
+<meta name="date" content="2021-04-15" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-04-14</h4>
+<h4 class="date">2021-04-15</h4>
 
 </div>
 
@@ -443,11 +443,10 @@ F-statistic: 1.87 on 1 and 43 DF,  p-value: 0.178</code></pre>
   facet_wrap(vars(year), ncol=1) +
   geom_jitter(aes(shape=snow, color=water, y = VWC), height=0, width=0.3) + 
   geom_smooth(aes(linetype=snow, color=water, y = VWC), se=F, span=0.5) +
-  geom_col(data=daily_all %&gt;% filter(year(date)%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
-           fill=brewer.pal(3, &quot;Greens&quot;)[3]) +
+  geom_col(data=daily_precip_est, aes(x=yday(date), y=EPA_NOAA_filled), fill=brewer.pal(7, &quot;Set3&quot;)[7]) +
   #geom_line(data=daily_all %&gt;% filter(year(date)%in%2018:2020), aes(x=yday(date), y=av_temp_2m_C), 
-  #          color=brewer.pal(3, &quot;Oranges&quot;)[3]) + 
-  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=brewer.pal(3, &quot;Purples&quot;)[3])+
+  #          color=brewer.pal(3, &quot;Oranges&quot;)[3])+ 
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=&quot;black&quot;)+
   geom_line(data = snowcloth, aes(y=mean_snow_depth_cm/10, group=year))+
   geom_point(data = snowcloth, aes(y=mean_snow_depth_cm/10))+
   geom_line(data=groundcover %&gt;% pivot_longer(ends_with(&quot;day&quot;), names_to=&quot;threshold&quot;, values_to=&quot;day&quot;) %&gt;%
@@ -467,17 +466,19 @@ F-statistic: 1.87 on 1 and 43 DF,  p-value: 0.178</code></pre>
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/soil-1.png" width="864" /></p>
-<pre class="r"><code>ggplot(sm.subplot, aes(x=yday(date))) + 
+<pre class="r"><code>max_VWC &lt;- max(sm.subplot$VWC, na.rm=T)
+ggplot(sm.subplot, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
-      geom_col(data=daily_all %&gt;% filter(year(date)%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
-           fill=brewer.pal(3, &quot;Greens&quot;)[2]) +
-  geom_line(data=daily_precip_est, aes(y=VWC_Control_4*100), color=brewer.pal(3, &quot;Greens&quot;)[2], size=1) +
+  geom_segment(data=waterdates %&gt;% pivot_wider(names_from=precip_treatments, values_from=c(day,date)),
+               aes(x=day_started, xend=day_ended, y=max_VWC+0.5, yend=max_VWC+0.5)) +
+  geom_col(data=daily_precip_est, aes(x=yday(date), y=EPA_NOAA_filled), fill=brewer.pal(7, &quot;Set3&quot;)[7]) +
+  geom_line(data=daily_precip_est, aes(y=VWC_Control_4*100), color=brewer.pal(7, &quot;Set3&quot;)[6], size=1) +
   geom_point(aes(shape=snow, color=water, y = VWC)) + 
   geom_line(data=sm.subplot %&gt;% group_by(water, snow, year, date) %&gt;% summarize(VWC=mean(VWC, na.rm=T)), aes(linetype=snow, color=water, y = VWC)) +
-    scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
+  scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=&quot;black&quot;, show.legend=F) +
-  coord_cartesian(xlim=c(110, 230), ylim=c(0, round(max(sm.subplot$VWC, na.rm=T))), expand=F)+
-    labs(x=&quot;Day of year&quot;, y=&quot;Mean soil moisture in subplot (%VWC) / Precipitation (mm)&quot;, color=&quot;Water&quot;, shape=&quot;Snowmelt&quot;, linetype=&quot;Snowmelt&quot;) + theme_minimal() + theme(legend.key.width = unit(2, &quot;lines&quot;))</code></pre>
+  coord_cartesian(xlim=c(110, 230), ylim=c(0, max_VWC+1), expand=F)+
+  labs(x=&quot;Day of year&quot;, y=&quot;Mean soil moisture in subplot (%VWC) / Precipitation (mm)&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;, linetype=&quot;Snowmelt&quot;) + theme_minimal() + theme(legend.key.width = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/soil-2.png" width="864" /></p>
 </div>
 <div id="treatments-1" class="section level2">
@@ -4352,8 +4353,10 @@ mod.sm &lt;- c(map(set_names(traits),
                   ~ lmer(mnps.plantyr[[.x]]  ~ year * VWC + (1|plotid), data=mnps.plantyr)),
             map(set_names(leaftraits), 
                   ~ lmer(lt.plantyr.r2[[.x]] ~ year * VWC + (1|plotid), data=lt.plantyr.r2)),
-            map(set_names(phystraits), 
-                  ~ lmer(pt.plantyr[[.x]]    ~ year * VWC + I(VWC^2) + (1|plotid) + (1|round), data=pt.plantyr)))
+            map(set_names(phystraits[1:2]), 
+                  ~ lmer(pt.plantyr[[.x]]    ~ year * VWC + I(VWC^2) + (1|plotid) + (1|round), data=pt.plantyr)),
+            map(set_names(phystraits[3]), 
+                  ~ lmer(pt.plantyr[[.x]]    ~ year * VWC            + (1|plotid) + (1|round), data=pt.plantyr)))
 #significant effect of quadratic term for sepal_width, photosynthesis, conductance, but not year * VWC^2
 
 mod.sm.coefs &lt;- map_dfr(mod.sm, tidy, .id=&quot;trait&quot;)
@@ -4564,10 +4567,10 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 <tr class="even">
 <td align="left">WUE</td>
 <td align="right">0.0000</td>
-<td align="right">0.0510</td>
-<td align="right">0.0075</td>
-<td align="right">0.9378</td>
-<td align="right">0.4337</td>
+<td align="right">0.0000</td>
+<td align="right">0.0030</td>
+<td align="right">NA</td>
+<td align="right">0.4346</td>
 <td align="left">FALSE</td>
 </tr>
 </tbody>
@@ -4711,9 +4714,9 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="even">
 <td align="left">WUE</td>
-<td align="right">8.8460</td>
-<td align="right">41.6221</td>
-<td align="right">14.5834</td>
+<td align="right">8.8271</td>
+<td align="right">41.5582</td>
+<td align="right">14.5626</td>
 </tr>
 </tbody>
 </table>
@@ -4757,12 +4760,12 @@ mod.sm.emm %&gt;% #filter(trait %in% floraltraits) %&gt;%
   traitnames.multiline &lt;- ifelse(nchar(traitnames) &gt; 30, str_replace(traitnames, fixed(&quot;(&quot;),&quot;\n(&quot;), traitnames)
   
   sm_plot &lt;- ggplot(emm.grid, aes(x=VWC, y=emmean, color=year, group=year)) + 
-    facet_wrap(vars(trait), scales=&quot;fixed&quot;, dir=&quot;v&quot;, ncol=2, labeller = as_labeller(traitnames.multiline))+
+    facet_wrap(vars(trait), scales=&quot;fixed&quot;, dir=&quot;v&quot;, ncol=ifelse(length(traits.plot)&gt;3,2,4), labeller = as_labeller(traitnames.multiline))+
     geom_point(data = data.long, aes(y=value, color=year), size=1) +  
     geom_line(size=2) + 
     scale_color_manual(values=year_pal) + 
     labs(x=ifelse(&quot;WUE&quot; %in% traits.plot, &quot;Soil moisture next to plant or in subplot on closest date (%VWC)&quot;, 
-                  &quot;Summer mean of soil moisture in subplot (%VWC)&quot;), y=&quot;&quot;, color=&quot;Year&quot;) + 
+                  &quot;Summer mean of soil moisture in subplot (%VWC)&quot;), y=&quot;Standardized trait&quot;, color=&quot;Year&quot;) + 
     #coord_fixed() + 
     theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;))
@@ -4770,12 +4773,12 @@ mod.sm.emm %&gt;% #filter(trait %in% floraltraits) %&gt;%
 }
 
 # plot_sm(mod.sm, mnps, floraltraits) #Morphological traits - raw data
-plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5), breaks=-4:4) #Morphological traits - plant means</code></pre>
+plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5)) #Morphological traits - plant means</code></pre>
 <p><img src="images/multi_sm-1.png" width="576" /></p>
 <pre class="r"><code># grid.arrange(plot_sm(mod.sm, lt, leaftraits), 
 #              plot_sm(mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
 grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits), 
-             plot_sm(mod.sm, pt.plantyr,    phystraits)+ guides(color=F, shape=F) + coord_fixed(ratio=3), ncol=1) #plant means</code></pre>
+             plot_sm(mod.sm, pt.plantyr,    phystraits)+ guides(color=F, shape=F), ncol=1) #plant means</code></pre>
 <p><img src="images/multi_sm-2.png" width="576" /></p>
 </div>
 </div>

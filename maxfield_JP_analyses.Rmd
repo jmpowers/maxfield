@@ -185,11 +185,10 @@ ggplot(sm, aes(x=yday(date))) +
   facet_wrap(vars(year), ncol=1) +
   geom_jitter(aes(shape=snow, color=water, y = VWC), height=0, width=0.3) + 
   geom_smooth(aes(linetype=snow, color=water, y = VWC), se=F, span=0.5) +
-  geom_col(data=daily_all %>% filter(year(date)%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
-           fill=brewer.pal(3, "Greens")[3]) +
+  geom_col(data=daily_precip_est, aes(x=yday(date), y=EPA_NOAA_filled), fill=brewer.pal(7, "Set3")[7]) +
   #geom_line(data=daily_all %>% filter(year(date)%in%2018:2020), aes(x=yday(date), y=av_temp_2m_C), 
-  #          color=brewer.pal(3, "Oranges")[3]) + 
-  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=brewer.pal(3, "Purples")[3])+
+  #          color=brewer.pal(3, "Oranges")[3])+ 
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="black")+
   geom_line(data = snowcloth, aes(y=mean_snow_depth_cm/10, group=year))+
   geom_point(data = snowcloth, aes(y=mean_snow_depth_cm/10))+
   geom_line(data=groundcover %>% pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>%
@@ -209,17 +208,19 @@ ggplot(sm, aes(x=yday(date))) +
   scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 
+max_VWC <- max(sm.subplot$VWC, na.rm=T)
 ggplot(sm.subplot, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
-      geom_col(data=daily_all %>% filter(year(date)%in%2018:2020), aes(x=yday(date), y=EPA_NOAA_filled), 
-           fill=brewer.pal(3, "Greens")[2]) +
-  geom_line(data=daily_precip_est, aes(y=VWC_Control_4*100), color=brewer.pal(3, "Greens")[2], size=1) +
+  geom_segment(data=waterdates %>% pivot_wider(names_from=precip_treatments, values_from=c(day,date)),
+               aes(x=day_started, xend=day_ended, y=max_VWC+0.5, yend=max_VWC+0.5)) +
+  geom_col(data=daily_precip_est, aes(x=yday(date), y=EPA_NOAA_filled), fill=brewer.pal(7, "Set3")[7]) +
+  geom_line(data=daily_precip_est, aes(y=VWC_Control_4*100), color=brewer.pal(7, "Set3")[6], size=1) +
   geom_point(aes(shape=snow, color=water, y = VWC)) + 
   geom_line(data=sm.subplot %>% group_by(water, snow, year, date) %>% summarize(VWC=mean(VWC, na.rm=T)), aes(linetype=snow, color=water, y = VWC)) +
-    scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
+  scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="black", show.legend=F) +
-  coord_cartesian(xlim=c(110, 230), ylim=c(0, round(max(sm.subplot$VWC, na.rm=T))), expand=F)+
-    labs(x="Day of year", y="Mean soil moisture in subplot (%VWC) / Precipitation (mm)", color="Water", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"))
+  coord_cartesian(xlim=c(110, 230), ylim=c(0, max_VWC+1), expand=F)+
+  labs(x="Day of year", y="Mean soil moisture in subplot (%VWC) / Precipitation (mm)", color="Precipitation", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"))
 ```
 
 ## Treatments
@@ -1160,8 +1161,10 @@ mod.sm <- c(map(set_names(traits),
                   ~ lmer(mnps.plantyr[[.x]]  ~ year * VWC + (1|plotid), data=mnps.plantyr)),
             map(set_names(leaftraits), 
                   ~ lmer(lt.plantyr.r2[[.x]] ~ year * VWC + (1|plotid), data=lt.plantyr.r2)),
-            map(set_names(phystraits), 
-                  ~ lmer(pt.plantyr[[.x]]    ~ year * VWC + I(VWC^2) + (1|plotid) + (1|round), data=pt.plantyr)))
+            map(set_names(phystraits[1:2]), 
+                  ~ lmer(pt.plantyr[[.x]]    ~ year * VWC + I(VWC^2) + (1|plotid) + (1|round), data=pt.plantyr)),
+            map(set_names(phystraits[3]), 
+                  ~ lmer(pt.plantyr[[.x]]    ~ year * VWC            + (1|plotid) + (1|round), data=pt.plantyr)))
 #significant effect of quadratic term for sepal_width, photosynthesis, conductance, but not year * VWC^2
 
 mod.sm.coefs <- map_dfr(mod.sm, tidy, .id="trait")
@@ -1212,12 +1215,12 @@ plot_sm <- function(mod, data, traits.plot) {
   traitnames.multiline <- ifelse(nchar(traitnames) > 30, str_replace(traitnames, fixed("("),"\n("), traitnames)
   
   sm_plot <- ggplot(emm.grid, aes(x=VWC, y=emmean, color=year, group=year)) + 
-    facet_wrap(vars(trait), scales="fixed", dir="v", ncol=2, labeller = as_labeller(traitnames.multiline))+
+    facet_wrap(vars(trait), scales="fixed", dir="v", ncol=ifelse(length(traits.plot)>3,2,4), labeller = as_labeller(traitnames.multiline))+
     geom_point(data = data.long, aes(y=value, color=year), size=1) +  
     geom_line(size=2) + 
     scale_color_manual(values=year_pal) + 
     labs(x=ifelse("WUE" %in% traits.plot, "Soil moisture next to plant or in subplot on closest date (%VWC)", 
-                  "Summer mean of soil moisture in subplot (%VWC)"), y="", color="Year") + 
+                  "Summer mean of soil moisture in subplot (%VWC)"), y="Standardized trait", color="Year") + 
     #coord_fixed() + 
     theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                             panel.border = element_rect(fill=NA, colour = "black"))
@@ -1225,12 +1228,12 @@ plot_sm <- function(mod, data, traits.plot) {
 }
 
 # plot_sm(mod.sm, mnps, floraltraits) #Morphological traits - raw data
-plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5), breaks=-4:4) #Morphological traits - plant means
+plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5)) #Morphological traits - plant means
 
 # grid.arrange(plot_sm(mod.sm, lt, leaftraits), 
 #              plot_sm(mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
 grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits), 
-             plot_sm(mod.sm, pt.plantyr,    phystraits)+ guides(color=F, shape=F) + coord_fixed(ratio=3), ncol=1) #plant means
+             plot_sm(mod.sm, pt.plantyr,    phystraits)+ guides(color=F, shape=F), ncol=1) #plant means
 ```
 
 ## Mortality/flowering selection vs. treatments
