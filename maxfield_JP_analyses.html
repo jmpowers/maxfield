@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-04-15" />
+<meta name="date" content="2021-04-16" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-04-15</h4>
+<h4 class="date">2021-04-16</h4>
 
 </div>
 
@@ -5834,14 +5834,14 @@ ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) +
   geom_point(data=mt.rda.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(mt.morph.plantyr), aes(color=VWC))+
   geom_segment(data=mt.rda.df %&gt;% filter(Label==&quot;VWC&quot;), aes(x=0,y=0,xend=RDA1*3, yend=RDA2*3), 
                arrow=arrow(length=unit(0.5, &quot;lines&quot;)), size=1.5)+
-  geom_text(   data=mt.rda.df %&gt;% filter(Label==&quot;VWC&quot;), aes(x=RDA1*3.5, y=RDA2*3.5, angle=atan(RDA2/RDA1)*180/pi))+
+  geom_text(   data=mt.rda.df %&gt;% filter(Label==&quot;VWC&quot;), aes(x=RDA1*3.7, y=RDA2*3.7, angle=atan(RDA2/RDA1)*180/pi), label=&quot;Soil moisture&quot;)+
   geom_segment(data=mt.rda.df %&gt;% filter(Score==&quot;species&quot;), aes(x=0,y=0,xend=RDA1, yend=RDA2), 
                arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
-  geom_text(   data=mt.rda.df %&gt;% filter(Score==&quot;species&quot;), aes(x=RDA1*1.9, y=RDA2*1.9, angle=atan(RDA2/RDA1)*180/pi,
+  geom_text(   data=mt.rda.df %&gt;% filter(Score==&quot;species&quot;), aes(x=RDA1*1.7, y=RDA2*1.7, angle=atan(RDA2/RDA1)*180/pi,
     label = c(traitnames, c(&quot;anther_max&quot;=&quot;Max stamen length&quot;, &quot;anther_min&quot;=&quot;Min stamen length&quot;))[as.character(Label)] %&gt;% str_remove(fixed(&quot; (mm)&quot;))), size=3)+
   geom_text(data=mt.rda.df %&gt;% filter(Score==&quot;centroids&quot;), aes(label=str_remove(Label, &quot;year&quot;)), fontface=2, size=6)+
-  scale_color_viridis(direction=-1, option=&quot;plasma&quot;) + coord_fixed() + 
-  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal()</code></pre>
+  scale_color_viridis(&quot;Soil\nmoisture\n(%VWC)&quot;, direction=-1, option=&quot;plasma&quot;) + coord_fixed() + 
+  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + theme(panel.grid.minor=element_blank())</code></pre>
 <p><img src="images/multresp_VWC-1.png" width="768" /></p>
 <pre class="r"><code>mt.morph.wm &lt;- mt[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;precip_est_mm&quot;, &quot;sun_date&quot;)] %&gt;% drop_na(1:6) #and nectar (19,20) too
 mt.cap.wm &lt;- capscale(scale(mt.morph.wm[,-(6:8)]) ~ precip_est_mm * sun_date, data=mt.morph.wm)

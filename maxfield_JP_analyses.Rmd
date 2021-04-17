@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -1454,14 +1454,14 @@ ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) +
   geom_point(data=mt.rda.df %>% filter(Score=="sites") %>% bind_cols(mt.morph.plantyr), aes(color=VWC))+
   geom_segment(data=mt.rda.df %>% filter(Label=="VWC"), aes(x=0,y=0,xend=RDA1*3, yend=RDA2*3), 
                arrow=arrow(length=unit(0.5, "lines")), size=1.5)+
-  geom_text(   data=mt.rda.df %>% filter(Label=="VWC"), aes(x=RDA1*3.5, y=RDA2*3.5, angle=atan(RDA2/RDA1)*180/pi))+
+  geom_text(   data=mt.rda.df %>% filter(Label=="VWC"), aes(x=RDA1*3.7, y=RDA2*3.7, angle=atan(RDA2/RDA1)*180/pi), label="Soil moisture")+
   geom_segment(data=mt.rda.df %>% filter(Score=="species"), aes(x=0,y=0,xend=RDA1, yend=RDA2), 
                arrow=arrow(length=unit(0.5, "lines")))+
-  geom_text(   data=mt.rda.df %>% filter(Score=="species"), aes(x=RDA1*1.9, y=RDA2*1.9, angle=atan(RDA2/RDA1)*180/pi,
+  geom_text(   data=mt.rda.df %>% filter(Score=="species"), aes(x=RDA1*1.7, y=RDA2*1.7, angle=atan(RDA2/RDA1)*180/pi,
     label = c(traitnames, c("anther_max"="Max stamen length", "anther_min"="Min stamen length"))[as.character(Label)] %>% str_remove(fixed(" (mm)"))), size=3)+
   geom_text(data=mt.rda.df %>% filter(Score=="centroids"), aes(label=str_remove(Label, "year")), fontface=2, size=6)+
-  scale_color_viridis(direction=-1, option="plasma") + coord_fixed() + 
-  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal()
+  scale_color_viridis("Soil\nmoisture\n(%VWC)", direction=-1, option="plasma") + coord_fixed() + 
+  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + theme(panel.grid.minor=element_blank())
 ```
 
 
