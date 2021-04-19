@@ -101,6 +101,7 @@ ggplot(treatments_map %>% mutate(snow=fct_relevel(snow, "Normal"))) + coord_fixe
   geom_text(aes(x=plot_x, y=plot_y, label=plot), color="white")+ theme_minimal() + 
   theme(legend.position="right", axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())
+ggsave("images/map-2.eps", height=5, width=7, device=cairo_ps)
 ```
 
 
@@ -172,8 +173,9 @@ summary(lm(first_0_cm_day ~ year, data=groundcover))
 treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
   geom_point(data=groundcover, aes(x=first_0_cm_day, color="Control", shape="1990-2017"), fill="white", size=2) +
   scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
-  labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt date", color="Precipitation", shape="Year",size="# Subplots") + 
+  labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt date", color="Precipitation", shape="Year") + 
   theme_minimal()
+ggsave("images/groundcover-2.eps", height=5, width=7, device=cairo_ps)
 ```
 
 # Soil moisture
@@ -714,7 +716,7 @@ re_table(mod.split.coefs) %>% kable()
 
 ### Plots
 
-```{r multi_splitplot, fig.width=4.5, fig.height=10}
+```{r multi_splitplot, fig.width=9, fig.height=10}
 plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = TRUE, facets="year") {
   
   data.long <- data %>% select(c(all_of(traits.plot), all_of(facets), water, snow)) %>% 
@@ -760,16 +762,19 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
 #   plot_split_plot(mt.mod.split.emm, mnps, floraltraits[5:8], geom="boxplot", plot.emm=F)+ guides(color=F), nrow=1)
 
 #Morphological traits - plot of EMMs and subplot means
-  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[1:4])
-  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8])
+(split_plot.floral <- grid.arrange(
+  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[1:4]),
+  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8]), nrow=1))
+ggsave("images/multi_splitplot-1.eps", split_plot.floral, height=10, width=9, device=cairo_ps)
 
 # grid.arrange( #Vegetative and physiological traits - plot of raw data
 #   plot_split_plot(lt.mod.split.emm, lt %>% filter(round==2), leaftraits, geom="boxplot", plot.emm=F), #second round only
 #   plot_split_plot(pt.mod.split.emm, pt, phystraits, geom="boxplot", plot.emm=F) + guides(color=F), nrow=1)
 
 #Vegetative and physiological traits - plot of EMMs and subplot means
-  plot_split_plot(mod.split.emm, lt.subplotround %>% filter(round==2), leaftraits) #second round only 
-  plot_split_plot(mod.split.emm, pt.subplot, phystraits)
+grid.arrange(
+  plot_split_plot(mod.split.emm, lt.subplotround %>% filter(round==2), leaftraits), #second round only 
+  plot_split_plot(mod.split.emm, pt.subplot, phystraits), nrow=1)
 ```
 
 ### Compensation of water addition for early snowmelt
@@ -1000,6 +1005,7 @@ plot_abs <- function(mod, data, traits.plot, facets = "trait") {
 # plot_abs(mt.mod.abs, mnps, floraltraits) #Morphological traits - raw data
 plot_abs(mod.abs, mnps.subplot, floraltraits) + #Morphological traits - subplot means
   scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
+ggsave("images/multi_meltdate-1.eps", height=10, width=6, device=cairo_ps)
 
 # grid.arrange(plot_abs(lt.mod.abs, lt, leaftraits), 
 #              plot_abs(pt.mod.abs, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
@@ -1229,6 +1235,7 @@ plot_sm <- function(mod, data, traits.plot) {
 
 # plot_sm(mod.sm, mnps, floraltraits) #Morphological traits - raw data
 plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5)) #Morphological traits - plant means
+ggsave("images/multi_sm-1.eps", height=10, width=6, device=cairo_ps)
 
 # grid.arrange(plot_sm(mod.sm, lt, leaftraits), 
 #              plot_sm(mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data

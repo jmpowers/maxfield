@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-04-16" />
+<meta name="date" content="2021-04-19" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-04-16</h4>
+<h4 class="date">2021-04-19</h4>
 
 </div>
 
@@ -346,6 +346,7 @@ ggplot(treatments_map %&gt;% mutate(snow=fct_relevel(snow, &quot;Normal&quot;)))
   theme(legend.position=&quot;right&quot;, axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())</code></pre>
 <p><img src="images/map-2.png" width="672" /></p>
+<pre class="r"><code>ggsave(&quot;images/map-2.eps&quot;, height=5, width=7, device=cairo_ps)</code></pre>
 </div>
 <div id="snow-melt-vs.-treatments" class="section level1">
 <h1>Snow melt vs. treatments</h1>
@@ -430,9 +431,10 @@ F-statistic: 1.87 on 1 and 43 DF,  p-value: 0.178</code></pre>
 <pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
   geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;), fill=&quot;white&quot;, size=2) +
   scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
-  labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;,size=&quot;# Subplots&quot;) + 
+  labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;) + 
   theme_minimal()</code></pre>
 <p><img src="images/groundcover-2.png" width="672" /></p>
+<pre class="r"><code>ggsave(&quot;images/groundcover-2.eps&quot;, height=5, width=7, device=cairo_ps)</code></pre>
 </div>
 </div>
 <div id="soil-moisture" class="section level1">
@@ -2655,19 +2657,25 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 #   plot_split_plot(mt.mod.split.emm, mnps, floraltraits[5:8], geom=&quot;boxplot&quot;, plot.emm=F)+ guides(color=F), nrow=1)
 
 #Morphological traits - plot of EMMs and subplot means
-  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[1:4])</code></pre>
-<p><img src="images/multi_splitplot-1.png" width="432" /></p>
-<pre class="r"><code>  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8])</code></pre>
-<p><img src="images/multi_splitplot-2.png" width="432" /></p>
-<pre class="r"><code># grid.arrange( #Vegetative and physiological traits - plot of raw data
+(split_plot.floral &lt;- grid.arrange(
+  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[1:4]),
+  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8]), nrow=1))</code></pre>
+<p><img src="images/multi_splitplot-1.png" width="864" /></p>
+<pre><code>TableGrob (1 x 2) &quot;arrange&quot;: 2 grobs
+  z     cells    name           grob
+1 1 (1-1,1-1) arrange gtable[layout]
+2 2 (1-1,2-2) arrange gtable[layout]</code></pre>
+<pre class="r"><code>ggsave(&quot;images/multi_splitplot-1.eps&quot;, split_plot.floral, height=10, width=9, device=cairo_ps)
+
+# grid.arrange( #Vegetative and physiological traits - plot of raw data
 #   plot_split_plot(lt.mod.split.emm, lt %&gt;% filter(round==2), leaftraits, geom=&quot;boxplot&quot;, plot.emm=F), #second round only
 #   plot_split_plot(pt.mod.split.emm, pt, phystraits, geom=&quot;boxplot&quot;, plot.emm=F) + guides(color=F), nrow=1)
 
 #Vegetative and physiological traits - plot of EMMs and subplot means
-  plot_split_plot(mod.split.emm, lt.subplotround %&gt;% filter(round==2), leaftraits) #second round only </code></pre>
-<p><img src="images/multi_splitplot-3.png" width="432" /></p>
-<pre class="r"><code>  plot_split_plot(mod.split.emm, pt.subplot, phystraits)</code></pre>
-<p><img src="images/multi_splitplot-4.png" width="432" /></p>
+grid.arrange(
+  plot_split_plot(mod.split.emm, lt.subplotround %&gt;% filter(round==2), leaftraits), #second round only 
+  plot_split_plot(mod.split.emm, pt.subplot, phystraits), nrow=1)</code></pre>
+<p><img src="images/multi_splitplot-2.png" width="864" /></p>
 </div>
 <div id="compensation-of-water-addition-for-early-snowmelt" class="section level3">
 <h3>Compensation of water addition for early snowmelt</h3>
@@ -3714,7 +3722,9 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 plot_abs(mod.abs, mnps.subplot, floraltraits) + #Morphological traits - subplot means
   scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))</code></pre>
 <p><img src="images/multi_meltdate-1.png" width="576" /></p>
-<pre class="r"><code># grid.arrange(plot_abs(lt.mod.abs, lt, leaftraits), 
+<pre class="r"><code>ggsave(&quot;images/multi_meltdate-1.eps&quot;, height=10, width=6, device=cairo_ps)
+
+# grid.arrange(plot_abs(lt.mod.abs, lt, leaftraits), 
 #              plot_abs(pt.mod.abs, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
 plot_abs(mod.abs, bind_rows(lt.subplot.r2, pt.subplot), c(leaftraits[2],phystraits[c(3,1,2)])) +
   scale_y_continuous(&quot;&quot;, limits=c(-1.3, 1.8), breaks=c(-2:1))#subplot means</code></pre>
@@ -4775,7 +4785,9 @@ mod.sm.emm %&gt;% #filter(trait %in% floraltraits) %&gt;%
 # plot_sm(mod.sm, mnps, floraltraits) #Morphological traits - raw data
 plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5)) #Morphological traits - plant means</code></pre>
 <p><img src="images/multi_sm-1.png" width="576" /></p>
-<pre class="r"><code># grid.arrange(plot_sm(mod.sm, lt, leaftraits), 
+<pre class="r"><code>ggsave(&quot;images/multi_sm-1.eps&quot;, height=10, width=6, device=cairo_ps)
+
+# grid.arrange(plot_sm(mod.sm, lt, leaftraits), 
 #              plot_sm(mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
 grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits), 
              plot_sm(mod.sm, pt.plantyr,    phystraits)+ guides(color=F, shape=F), ncol=1) #plant means</code></pre>
