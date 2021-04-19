@@ -70,7 +70,7 @@ re_table <- function(coefs) {
 select <- dplyr::select
 ```
 
-```{r map}
+```{r map, fig.height=4, fig.width=6.5}
 subplot_offset <- 1/6
 size_meter <- 6
 ggplot(treatments_map) + coord_fixed(clip="off")+
@@ -101,7 +101,7 @@ ggplot(treatments_map %>% mutate(snow=fct_relevel(snow, "Normal"))) + coord_fixe
   geom_text(aes(x=plot_x, y=plot_y, label=plot), color="white")+ theme_minimal() + 
   theme(legend.position="right", axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())
-ggsave("images/map-2.eps", height=5, width=7, device=cairo_ps)
+ggsave("images/map-2.eps", height=4, width=6.5, device=cairo_ps)
 ```
 
 
@@ -156,7 +156,7 @@ meltdates %>% ggplot(aes(x=melt_offset, fill=snow)) + geom_dotplot(method="histo
 
 ## Snowmelt timing
 
-```{r groundcover}
+```{r groundcover, fig.height=4, fig.width=6.5}
 groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% 
   pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>% drop_na(day) %>% select(-starts_with("first")) %>% 
   mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %>% 
@@ -165,17 +165,19 @@ groundcover %>% mutate(first_snow_day=first_snow_day-365) %>%
   geom_line(aes(group=year), size=2)+ geom_smooth( method="lm", se=F) +geom_point() +
   scale_x_continuous(minor_breaks = 1976:2020, position = "top") + scale_y_continuous(n.breaks=10)+
   scale_color_grey(labels=function(x) str_to_sentence(str_replace_all(x, "_", " ")), start=0, end=0.85) +
-  labs(x="Year", y="Day of year", color="Threshold") + theme_minimal()
+  labs(x="Year", y="Day of year", color="Threshold") + theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),  panel.border = element_rect(fill=NA, colour = "black"))
 
 cat("SD of first bare ground =", round(sd(groundcover$first_0_cm_day),1),"days over",range(groundcover$year))
 summary(lm(first_0_cm_day ~ year, data=groundcover))
 
 treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
   geom_point(data=groundcover, aes(x=first_0_cm_day, color="Control", shape="1990-2017"), fill="white", size=2) +
-  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
-  labs(y="Estimated summer precipiation with treatments (mm)", x="Snowmelt date", color="Precipitation", shape="Year") + 
-  theme_minimal()
-ggsave("images/groundcover-2.eps", height=5, width=7, device=cairo_ps)
+  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ 
+  scale_y_continuous(limits=c(0,NA), expand=expansion(mult = c(0,0.05)))+
+  labs(y="Summer precipiation (mm)", x="Snowmelt date", color="Precipitation", shape="Year") + 
+  theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
+                            panel.border = element_rect(fill=NA, colour = "black"))
+ggsave("images/groundcover-2.eps", height=4, width=6.5, device=cairo_ps)
 ```
 
 # Soil moisture
@@ -222,7 +224,7 @@ ggplot(sm.subplot, aes(x=yday(date))) +
   scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="black", show.legend=F) +
   coord_cartesian(xlim=c(110, 230), ylim=c(0, max_VWC+1), expand=F)+
-  labs(x="Day of year", y="Mean soil moisture in subplot (%VWC) / Precipitation (mm)", color="Precipitation", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"))
+  labs(x="Day of year", y="Mean soil moisture in subplot (%VWC) / Precipitation (mm)", color="Precipitation", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"), text=element_text(color="black", size=14), axis.text = element_text(color="black"), panel.border = element_rect(fill=NA, colour = "black"))
 ```
 
 ## Treatments
@@ -311,7 +313,8 @@ ggplot(aes(y=variable, color=year))+
   scale_color_manual("Year", values=year_pal, guide=guide_legend(override.aes = list(size=5))) + 
   scale_y_discrete("", labels=timings_labels)+
   scale_x_continuous("Day of year", breaks=seq(80,240, by=20)) +
-  theme_minimal() + theme(legend.position = "top")
+  theme_minimal() + theme(legend.position = "top", text=element_text(size=14, color="black"), axis.text = element_text(color="black"),
+                            panel.border = element_rect(fill=NA, colour = "black"))
 }
 
 plot_timings(filter(timings, !variable %in% c("sds","lt","pt")))
@@ -762,6 +765,11 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
 #   plot_split_plot(mt.mod.split.emm, mnps, floraltraits[5:8], geom="boxplot", plot.emm=F)+ guides(color=F), nrow=1)
 
 #Morphological traits - plot of EMMs and subplot means
+(split_plot.floral <- grid.arrange(
+  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[1:4]),
+  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8]) + 
+    guides(color = guide_legend(override.aes = list(color="white", shape=15, size=5))) + 
+    theme(legend.title = element_text(color = "white"), legend.text = element_text(color = "white")), nrow=1))
 (split_plot.floral <- grid.arrange(
   plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[1:4]),
   plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8]), nrow=1))
@@ -1468,7 +1476,9 @@ ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) +
     label = c(traitnames, c("anther_max"="Max stamen length", "anther_min"="Min stamen length"))[as.character(Label)] %>% str_remove(fixed(" (mm)"))), size=3)+
   geom_text(data=mt.rda.df %>% filter(Score=="centroids"), aes(label=str_remove(Label, "year")), fontface=2, size=6)+
   scale_color_viridis("Soil\nmoisture\n(%VWC)", direction=-1, option="plasma") + coord_fixed() + 
-  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + theme(panel.grid.minor=element_blank())
+  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + 
+  theme(panel.grid.minor=element_blank(), text=element_text(color="black", size=14), axis.text = element_text(color="black"),
+                            panel.border = element_rect(fill=NA, colour = "black"))
 ```
 
 

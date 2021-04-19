@@ -327,7 +327,7 @@ ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
   geom_text(aes(x=plot_x, y=plot_y, label=plot))+ theme_minimal() + 
   theme(legend.position=&quot;right&quot;, axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())</code></pre>
-<p><img src="images/map-1.png" width="672" /></p>
+<p><img src="images/map-1.png" width="624" /></p>
 <pre class="r"><code>size_meter &lt;- 0.11
 subplot_offset &lt;- size_meter * 1.5
 library(ggpattern)
@@ -345,8 +345,8 @@ ggplot(treatments_map %&gt;% mutate(snow=fct_relevel(snow, &quot;Normal&quot;)))
   geom_text(aes(x=plot_x, y=plot_y, label=plot), color=&quot;white&quot;)+ theme_minimal() + 
   theme(legend.position=&quot;right&quot;, axis.title=element_blank(), axis.text = element_blank(), 
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())</code></pre>
-<p><img src="images/map-2.png" width="672" /></p>
-<pre class="r"><code>ggsave(&quot;images/map-2.eps&quot;, height=5, width=7, device=cairo_ps)</code></pre>
+<p><img src="images/map-2.png" width="624" /></p>
+<pre class="r"><code>ggsave(&quot;images/map-2.eps&quot;, height=4, width=6.5, device=cairo_ps)</code></pre>
 </div>
 <div id="snow-melt-vs.-treatments" class="section level1">
 <h1>Snow melt vs. treatments</h1>
@@ -405,8 +405,8 @@ ggplot(treatments_map %&gt;% mutate(snow=fct_relevel(snow, &quot;Normal&quot;)))
   geom_line(aes(group=year), size=2)+ geom_smooth( method=&quot;lm&quot;, se=F) +geom_point() +
   scale_x_continuous(minor_breaks = 1976:2020, position = &quot;top&quot;) + scale_y_continuous(n.breaks=10)+
   scale_color_grey(labels=function(x) str_to_sentence(str_replace_all(x, &quot;_&quot;, &quot; &quot;)), start=0, end=0.85) +
-  labs(x=&quot;Year&quot;, y=&quot;Day of year&quot;, color=&quot;Threshold&quot;) + theme_minimal()</code></pre>
-<p><img src="images/groundcover-1.png" width="672" /></p>
+  labs(x=&quot;Year&quot;, y=&quot;Day of year&quot;, color=&quot;Threshold&quot;) + theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),  panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
+<p><img src="images/groundcover-1.png" width="624" /></p>
 <pre class="r"><code>cat(&quot;SD of first bare ground =&quot;, round(sd(groundcover$first_0_cm_day),1),&quot;days over&quot;,range(groundcover$year))</code></pre>
 <pre><code>SD of first bare ground = 13.5 days over 1976 2020</code></pre>
 <pre class="r"><code>summary(lm(first_0_cm_day ~ year, data=groundcover))</code></pre>
@@ -430,11 +430,13 @@ Multiple R-squared:  0.0417,    Adjusted R-squared:  0.0195
 F-statistic: 1.87 on 1 and 43 DF,  p-value: 0.178</code></pre>
 <pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
   geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;), fill=&quot;white&quot;, size=2) +
-  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ coord_cartesian(ylim=c(0,NA))+
-  labs(y=&quot;Estimated summer precipiation with treatments (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;) + 
-  theme_minimal()</code></pre>
-<p><img src="images/groundcover-2.png" width="672" /></p>
-<pre class="r"><code>ggsave(&quot;images/groundcover-2.eps&quot;, height=5, width=7, device=cairo_ps)</code></pre>
+  scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ 
+  scale_y_continuous(limits=c(0,NA), expand=expansion(mult = c(0,0.05)))+
+  labs(y=&quot;Summer precipiation (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;) + 
+  theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
+                            panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
+<p><img src="images/groundcover-2.png" width="624" /></p>
+<pre class="r"><code>ggsave(&quot;images/groundcover-2.eps&quot;, height=4, width=6.5, device=cairo_ps)</code></pre>
 </div>
 </div>
 <div id="soil-moisture" class="section level1">
@@ -480,7 +482,7 @@ ggplot(sm.subplot, aes(x=yday(date))) +
   scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
   geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color=&quot;black&quot;, show.legend=F) +
   coord_cartesian(xlim=c(110, 230), ylim=c(0, max_VWC+1), expand=F)+
-  labs(x=&quot;Day of year&quot;, y=&quot;Mean soil moisture in subplot (%VWC) / Precipitation (mm)&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;, linetype=&quot;Snowmelt&quot;) + theme_minimal() + theme(legend.key.width = unit(2, &quot;lines&quot;))</code></pre>
+  labs(x=&quot;Day of year&quot;, y=&quot;Mean soil moisture in subplot (%VWC) / Precipitation (mm)&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;, linetype=&quot;Snowmelt&quot;) + theme_minimal() + theme(legend.key.width = unit(2, &quot;lines&quot;), text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;), panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
 <p><img src="images/soil-2.png" width="864" /></p>
 </div>
 <div id="treatments-1" class="section level2">
@@ -886,7 +888,8 @@ ggplot(aes(y=variable, color=year))+
   scale_color_manual(&quot;Year&quot;, values=year_pal, guide=guide_legend(override.aes = list(size=5))) + 
   scale_y_discrete(&quot;&quot;, labels=timings_labels)+
   scale_x_continuous(&quot;Day of year&quot;, breaks=seq(80,240, by=20)) +
-  theme_minimal() + theme(legend.position = &quot;top&quot;)
+  theme_minimal() + theme(legend.position = &quot;top&quot;, text=element_text(size=14, color=&quot;black&quot;), axis.text = element_text(color=&quot;black&quot;),
+                            panel.border = element_rect(fill=NA, colour = &quot;black&quot;))
 }
 
 plot_timings(filter(timings, !variable %in% c(&quot;sds&quot;,&quot;lt&quot;,&quot;pt&quot;)))</code></pre>
@@ -2659,8 +2662,18 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 #Morphological traits - plot of EMMs and subplot means
 (split_plot.floral &lt;- grid.arrange(
   plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[1:4]),
-  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8]), nrow=1))</code></pre>
+  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8]) + 
+    guides(color = guide_legend(override.aes = list(color=&quot;white&quot;, shape=15, size=5))) + 
+    theme(legend.title = element_text(color = &quot;white&quot;), legend.text = element_text(color = &quot;white&quot;)), nrow=1))</code></pre>
 <p><img src="images/multi_splitplot-1.png" width="864" /></p>
+<pre><code>TableGrob (1 x 2) &quot;arrange&quot;: 2 grobs
+  z     cells    name           grob
+1 1 (1-1,1-1) arrange gtable[layout]
+2 2 (1-1,2-2) arrange gtable[layout]</code></pre>
+<pre class="r"><code>(split_plot.floral &lt;- grid.arrange(
+  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[1:4]),
+  plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8]), nrow=1))</code></pre>
+<p><img src="images/multi_splitplot-2.png" width="864" /></p>
 <pre><code>TableGrob (1 x 2) &quot;arrange&quot;: 2 grobs
   z     cells    name           grob
 1 1 (1-1,1-1) arrange gtable[layout]
@@ -2675,7 +2688,7 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 grid.arrange(
   plot_split_plot(mod.split.emm, lt.subplotround %&gt;% filter(round==2), leaftraits), #second round only 
   plot_split_plot(mod.split.emm, pt.subplot, phystraits), nrow=1)</code></pre>
-<p><img src="images/multi_splitplot-2.png" width="864" /></p>
+<p><img src="images/multi_splitplot-3.png" width="864" /></p>
 </div>
 <div id="compensation-of-water-addition-for-early-snowmelt" class="section level3">
 <h3>Compensation of water addition for early snowmelt</h3>
@@ -5853,7 +5866,9 @@ ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) +
     label = c(traitnames, c(&quot;anther_max&quot;=&quot;Max stamen length&quot;, &quot;anther_min&quot;=&quot;Min stamen length&quot;))[as.character(Label)] %&gt;% str_remove(fixed(&quot; (mm)&quot;))), size=3)+
   geom_text(data=mt.rda.df %&gt;% filter(Score==&quot;centroids&quot;), aes(label=str_remove(Label, &quot;year&quot;)), fontface=2, size=6)+
   scale_color_viridis(&quot;Soil\nmoisture\n(%VWC)&quot;, direction=-1, option=&quot;plasma&quot;) + coord_fixed() + 
-  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + theme(panel.grid.minor=element_blank())</code></pre>
+  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + 
+  theme(panel.grid.minor=element_blank(), text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
+                            panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
 <p><img src="images/multresp_VWC-1.png" width="768" /></p>
 <pre class="r"><code>mt.morph.wm &lt;- mt[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;precip_est_mm&quot;, &quot;sun_date&quot;)] %&gt;% drop_na(1:6) #and nectar (19,20) too
 mt.cap.wm &lt;- capscale(scale(mt.morph.wm[,-(6:8)]) ~ precip_est_mm * sun_date, data=mt.morph.wm)
