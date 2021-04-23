@@ -440,6 +440,12 @@ lt <- map_dfr(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>%
 #drop traits that use irregular dry weights in 2019 round 2
 lt <- lt %>% mutate(across(c(sla, water_content), ~ ifelse(year.round=="2019.2",NA,.x)))
 
+#add VWC based on subplot mean taken closest in time
+lt <- lt %>%   
+  left_join(sm.subplot, by = c("year","plot","subplot","plotid"), suffix=c("",".sm")) %>%
+  mutate(date_diff = abs(date - date.sm) + (date - date.sm)/100) %>%  #later date breaks ties
+  group_by(plotid, date) %>%  filter(date_diff == min(date_diff)) %>% ungroup
+
 lt.plantyr <- lt %>% 
   group_by(year, round, year.round, plot, subplot, plotid, plant, plantid, water, water4, snow) %>% 
   summarize_if(is.numeric, mean, na.rm=T)

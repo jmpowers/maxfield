@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -1234,7 +1234,7 @@ mod.sm.emm %>% #filter(trait %in% floraltraits) %>%
 
 ```
 
-```{r multi_sm, fig.width=7, fig.height=10}
+```{r multi_sm, fig.width=10, fig.height=6}
 plot_sm <- function(mod, data, traits.plot) {
   data.long <- data %>% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm, VWC) %>% 
     pivot_longer(all_of(traits.plot), names_to="trait") %>% 
@@ -1256,25 +1256,44 @@ plot_sm <- function(mod, data, traits.plot) {
     facet_wrap(vars(trait), scales="fixed", dir="v", ncol=ifelse(length(traits.plot)>3,2,4), labeller = as_labeller(traitnames.multiline))+
     geom_point(data = data.long, aes(y=value, color=year), size=1) +  
     geom_line(size=2) + 
-    scale_color_manual(values=year_pal) + 
-    labs(x=ifelse("WUE" %in% traits.plot, "Soil moisture next to plant or in subplot on closest date (%VWC)", 
-                  "Summer mean of soil moisture in subplot (%VWC)"), y="Standardized trait", color="Year") + 
+    scale_color_manual(values=year_pal) + ylab("Standardized trait") + labs(color="Year") + 
     #coord_fixed() + 
     theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                             panel.border = element_rect(fill=NA, colour = "black"))
   return(sm_plot)
 }
 
-# plot_sm(mod.sm, mnps, floraltraits) #Morphological traits - raw data
-plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5)) #Morphological traits - plant means
+plot_sm(mod.sm, mnps.plantyr, floraltraits) + 
+  scale_y_continuous(limits=c(-4.3,5)) + xlab("Summer mean of soil moisture in subplot (%VWC)")
 ggsave("images/multi_sm-1.eps", height=10, width=6, device=cairo_ps)
-
-# grid.arrange(plot_sm(mod.sm, lt, leaftraits), 
-#              plot_sm(mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
-grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits), 
-             plot_sm(mod.sm, pt.plantyr,    phystraits)+ guides(color=F, shape=F), ncol=1) #plant means
-
 ```
+
+```{r multi_sm_ltpt, fig.width=8, fig.height=6}
+plot_sm(mod.sm, lt.plantyr.r2, leaftraits) + xlab("Summer mean of soil moisture in subplot (%VWC)")
+
+plot_sm(mod.sm, pt.plantyr, phystraits) + xlab("Soil moisture next to plant or in subplot on closest date (%VWC)")
+```
+
+
+### Soil moisture repeated measures
+
+```{r lt_repeated_sm, fig.width=8, fig.height=6}
+options(contrasts = c("contr.sum", "contr.poly"))
+lt.mod.sm.rm <- map(set_names(leaftraits), ~ lmer(lt.plantyr[[.x]] ~ year * VWC + (1|plotid) + (1|plantid), 
+                                                  data=lt.plantyr %>% mutate(VWC=VWC.sm, year=year.round)))
+lt.mod.sm.rm.coefs <- map_dfr(lt.mod.sm.rm , tidy, .id="trait")
+lt.mod.sm.rm.tests <- map(lt.mod.sm.rm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait") %>% 
+  mutate(term= str_replace(term, "year","year.round"))
+anova_table(lt.mod.sm.rm.tests, lt.mod.sm.rm) %>% kable()
+re_table(lt.mod.sm.rm.coefs) %>% kable()
+
+plot_sm(lt.mod.sm.rm, lt.plantyr %>% mutate(VWC=VWC.sm, year=year.round), leaftraits) + 
+  scale_color_manual(values=c(set_names(year_pal, paste0(names(year_pal),".2")), 
+                              set_names(brewer.pal(6, "Dark2")[c(2,3,6)], paste0(names(year_pal),".1"))))+
+  geom_smooth(aes(group=1), color="black", se=F) + scale_y_continuous(breaks = -5:5) +
+  labs(color="Year, round") + xlab("Soil moisture in subplot on closest date (%VWC)") 
+```
+
 
 # Multivariate models
 

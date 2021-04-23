@@ -4800,25 +4800,106 @@ mod.sm.emm %&gt;% #filter(trait %in% floraltraits) %&gt;%
     facet_wrap(vars(trait), scales=&quot;fixed&quot;, dir=&quot;v&quot;, ncol=ifelse(length(traits.plot)&gt;3,2,4), labeller = as_labeller(traitnames.multiline))+
     geom_point(data = data.long, aes(y=value, color=year), size=1) +  
     geom_line(size=2) + 
-    scale_color_manual(values=year_pal) + 
-    labs(x=ifelse(&quot;WUE&quot; %in% traits.plot, &quot;Soil moisture next to plant or in subplot on closest date (%VWC)&quot;, 
-                  &quot;Summer mean of soil moisture in subplot (%VWC)&quot;), y=&quot;Standardized trait&quot;, color=&quot;Year&quot;) + 
+    scale_color_manual(values=year_pal) + ylab(&quot;Standardized trait&quot;) + labs(color=&quot;Year&quot;) + 
     #coord_fixed() + 
     theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;))
   return(sm_plot)
 }
 
-# plot_sm(mod.sm, mnps, floraltraits) #Morphological traits - raw data
-plot_sm(mod.sm, mnps.plantyr, floraltraits) + scale_y_continuous(limits=c(-4.3,5)) #Morphological traits - plant means</code></pre>
-<p><img src="images/multi_sm-1.png" width="672" /></p>
-<pre class="r"><code>ggsave(&quot;images/multi_sm-1.eps&quot;, height=10, width=6, device=cairo_ps)
-
-# grid.arrange(plot_sm(mod.sm, lt, leaftraits), 
-#              plot_sm(mod.sm, pt, phystraits) + guides(color=F, shape=F), ncol=1) #raw data
-grid.arrange(plot_sm(mod.sm, lt.plantyr.r2, leaftraits), 
-             plot_sm(mod.sm, pt.plantyr,    phystraits)+ guides(color=F, shape=F), ncol=1) #plant means</code></pre>
-<p><img src="images/multi_sm-2.png" width="672" /></p>
+plot_sm(mod.sm, mnps.plantyr, floraltraits) + 
+  scale_y_continuous(limits=c(-4.3,5)) + xlab(&quot;Summer mean of soil moisture in subplot (%VWC)&quot;)</code></pre>
+<p><img src="images/multi_sm-1.png" width="960" /></p>
+<pre class="r"><code>ggsave(&quot;images/multi_sm-1.eps&quot;, height=10, width=6, device=cairo_ps)</code></pre>
+<pre class="r"><code>plot_sm(mod.sm, lt.plantyr.r2, leaftraits) + xlab(&quot;Summer mean of soil moisture in subplot (%VWC)&quot;)</code></pre>
+<p><img src="images/multi_sm_ltpt-1.png" width="768" /></p>
+<pre class="r"><code>plot_sm(mod.sm, pt.plantyr, phystraits) + xlab(&quot;Soil moisture next to plant or in subplot on closest date (%VWC)&quot;)</code></pre>
+<p><img src="images/multi_sm_ltpt-2.png" width="768" /></p>
+</div>
+<div id="soil-moisture-repeated-measures" class="section level3">
+<h3>Soil moisture repeated measures</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+lt.mod.sm.rm &lt;- map(set_names(leaftraits), ~ lmer(lt.plantyr[[.x]] ~ year * VWC + (1|plotid) + (1|plantid), 
+                                                  data=lt.plantyr %&gt;% mutate(VWC=VWC.sm, year=year.round)))
+lt.mod.sm.rm.coefs &lt;- map_dfr(lt.mod.sm.rm , tidy, .id=&quot;trait&quot;)
+lt.mod.sm.rm.tests &lt;- map(lt.mod.sm.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;) %&gt;% 
+  mutate(term= str_replace(term, &quot;year&quot;,&quot;year.round&quot;))
+anova_table(lt.mod.sm.rm.tests, lt.mod.sm.rm) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="right">year.round</th>
+<th align="right">VWC</th>
+<th align="right">year.round:VWC</th>
+<th align="right">R2m</th>
+<th align="left">singular</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0e+00</td>
+<td align="right">0.3840</td>
+<td align="right">0.3851</td>
+<td align="right">0.4487</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">7e-04</td>
+<td align="right">0.8223</td>
+<td align="right">0.2064</td>
+<td align="right">0.2964</td>
+<td align="left">FALSE</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">0e+00</td>
+<td align="right">0.0063</td>
+<td align="right">0.0001</td>
+<td align="right">0.5373</td>
+<td align="left">TRUE</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>re_table(lt.mod.sm.rm.coefs) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="right">plantid</th>
+<th align="right">plotid</th>
+<th align="right">Residual</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">10.81</td>
+<td align="right">2.0418</td>
+<td align="right">23.1338</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">41.31</td>
+<td align="right">9.8162</td>
+<td align="right">67.1764</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">0.00</td>
+<td align="right">0.0147</td>
+<td align="right">0.0522</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>plot_sm(lt.mod.sm.rm, lt.plantyr %&gt;% mutate(VWC=VWC.sm, year=year.round), leaftraits) + 
+  scale_color_manual(values=c(set_names(year_pal, paste0(names(year_pal),&quot;.2&quot;)), 
+                              set_names(brewer.pal(6, &quot;Dark2&quot;)[c(2,3,6)], paste0(names(year_pal),&quot;.1&quot;))))+
+  geom_smooth(aes(group=1), color=&quot;black&quot;, se=F) + scale_y_continuous(breaks = -5:5) +
+  labs(color=&quot;Year, round&quot;) + xlab(&quot;Soil moisture in subplot on closest date (%VWC)&quot;) </code></pre>
+<p><img src="images/lt_repeated_sm-1.png" width="768" /></p>
 </div>
 </div>
 </div>
