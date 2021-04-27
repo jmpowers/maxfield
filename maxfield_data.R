@@ -350,9 +350,14 @@ cen.status.long <- cen.status %>% select(!starts_with("transition|flowering|aliv
          flowered = as.integer(case_when(census == "2018" ~ flowering_status_19,
                               census == "2019" ~ flowering_status_20))-1) 
 
-cen.size.long <- cen %>% select(plantid|starts_with("n_rosettes")) %>% 
-  pivot_longer(starts_with("n_rosettes"),names_to="census",values_to="n_rosettes") %>%
-  mutate(census = paste0("20",str_remove(census, "n_rosettes_")))
+cen.size.long <- cen %>% select(plantid|starts_with("n_rosettes")|contains(c("longest","leaves"))) %>% 
+  pivot_longer(-plantid) %>% separate(name, into=c("rosette","variable","census")) %>% drop_na(value)
+
+cen.size <- cen.size.long %>% filter(rosette != "n") %>% pivot_wider(names_from=variable) %>% 
+  mutate(size = longest * leaves) %>% #Campbell and Wendlandt 2013 "size" definition
+  group_by(plantid, census) %>% summarize(size=sum(size, na.rm=T)) %>% #sum sizes of all rosettes
+    mutate(year = paste0("20",str_remove(census,"r2")), plotid = str_sub(plantid, 1,2)) %>% 
+    left_join(treatments)
 
 # phenology ---------------------------------------------------------------
 

@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-04-23" />
+<meta name="date" content="2021-04-26" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-04-23</h4>
+<h4 class="date">2021-04-26</h4>
 
 </div>
 
@@ -1383,19 +1383,17 @@ with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_sta
 <h2>Census status</h2>
 <p>The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).</p>
 <p>Visualize a plant’s status in each census</p>
-<pre class="r"><code>ggplot(cen.size.long %&gt;% filter(census!=&quot;2018r2&quot;), aes(x=census, y=n_rosettes, group=plantid))+geom_path()+ geom_point() + scale_y_continuous(breaks=0:10)</code></pre>
-<p><img src="images/status-1.png" width="672" /></p>
 <pre class="r"><code>ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
   scale_fill_manual(values=brewer.pal(8, name=&quot;Set1&quot;)[c(1,3,5,2,7,6)])+
   theme(axis.text.y=element_blank(), axis.ticks = element_blank()) +
   labs(fill=&quot;Status&quot;, x=&quot;Census year&quot;,y=&quot;Plant ID&quot;)</code></pre>
-<p><img src="images/status-2.png" width="672" /></p>
+<p><img src="images/status-1.png" width="672" /></p>
 <pre class="r"><code>ggplot(megatally.status.long, aes(y=plantid, x=dataset, fill=status)) + geom_tile() +
   scale_fill_manual(values=c(brewer.pal(5, name=&quot;Set1&quot;)[c(1,3,5,2)],brewer.pal(8, &quot;Set2&quot;)[7:8]))+
   scale_x_discrete(position=&quot;top&quot;) +
   theme(axis.text.y=element_blank(), axis.ticks = element_blank(), axis.text.x = element_text(angle=90, size=14)) + 
   labs(fill=&quot;Status&quot;, x=&quot;Dataset and year&quot;,y=&quot;Plant ID&quot;)</code></pre>
-<p><img src="images/status-3.png" width="672" /></p>
+<p><img src="images/status-2.png" width="672" /></p>
 </div>
 <div id="status-vs.-treatment" class="section level2">
 <h2>Status vs. treatment</h2>
@@ -1797,8 +1795,8 @@ Conditional model:
     labs(x=&quot;2019 Rosette 1 # Leaves&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/growth-4.png" width="672" /></p>
 </div>
-<div id="plant-size-vs.-treatments" class="section level2">
-<h2>Plant size vs. treatments</h2>
+<div id="leaf-number-length-vs.-treatments" class="section level2">
+<h2>Leaf number, length vs. treatments</h2>
 <pre class="r"><code>ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_longest)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2018 Rosette 1 Longest Leaf (mm)&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-1.png" width="672" /></p>
 <pre class="r"><code>ggplot(drop_na(cen18, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal)+ labs(x=&quot;Precipitation&quot;, y=&quot;2018 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
@@ -1811,6 +1809,23 @@ Conditional model:
 <p><img src="images/plantsize-5.png" width="672" /></p>
 <pre class="r"><code>ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-6.png" width="672" /></p>
+</div>
+<div id="combined-leaf-number-and-longest-length" class="section level2">
+<h2>Combined leaf number and longest length</h2>
+<p>Multiply longest leaf (mm) by number of leaves and sum across rosettes to get plant size metric (campbel and Wendlandt 2013).</p>
+<pre class="r"><code>ggplot(cen.size, aes(x=census, y=size, color=water))+ facet_wrap(vars(water))+
+  geom_boxplot(outlier.size=0.1)+ geom_path(aes(group=plantid), size=0.1)+
+  scale_color_manual(values=water_pal, guide=F) + theme_minimal() + 
+  scale_y_sqrt() + labs(x=&quot;Census&quot;, y=&quot;Longest leaf (mm) * number of leaves&quot;)</code></pre>
+<p><img src="images/sizemetric-1.png" width="672" /></p>
+<pre class="r"><code>cen.size %&gt;% select(plantid, plotid, census, size) %&gt;%
+  pivot_wider(names_from=&quot;census&quot;, names_prefix=&quot;size&quot;, values_from=&quot;size&quot;) %&gt;% 
+  mutate(RGR_18r2 = size18r2/size18, RGR_19=size19/size18, RGR_20=size20/size19, year=&quot;2018&quot;) %&gt;% left_join(treatments) %&gt;% pivot_longer(starts_with(&quot;RGR&quot;), names_to=&quot;census&quot;, values_to=&quot;RGR&quot;) %&gt;% 
+  ggplot(aes(x=census, y=RGR, color=water))+ facet_wrap(vars(water))+
+  geom_boxplot(outlier.size=0.1)+ geom_path(aes(group=plantid), size=0.1)+
+  scale_color_manual(values=water_pal, guide=F) + theme_minimal() + 
+  scale_y_sqrt() + labs(x=&quot;Census&quot;, y=&quot;RGR&quot;)</code></pre>
+<p><img src="images/sizemetric-2.png" width="672" /></p>
 </div>
 </div>
 <div id="leaf-traits" class="section level1">
@@ -4821,17 +4836,29 @@ plot_sm(mod.sm, mnps.plantyr, floraltraits) +
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 lt.mod.sm.rm &lt;- map(set_names(leaftraits), ~ lmer(lt.plantyr[[.x]] ~ year * VWC + (1|plotid) + (1|plantid), 
                                                   data=lt.plantyr %&gt;% mutate(VWC=VWC.sm, year=year.round)))
+
+plot_sm(lt.mod.sm.rm, lt.plantyr %&gt;% mutate(VWC=VWC.sm, year=year.round), leaftraits) + 
+  scale_color_manual(values=c(set_names(year_pal, paste0(names(year_pal),&quot;.2&quot;)), 
+                              set_names(brewer.pal(6, &quot;Dark2&quot;)[c(2,3,6)], paste0(names(year_pal),&quot;.1&quot;))))+
+  geom_smooth(aes(group=1), color=&quot;black&quot;, se=F) + scale_y_continuous(breaks = -5:5) +
+  labs(color=&quot;Year, round&quot;) + xlab(&quot;Soil moisture in subplot on closest date (%VWC)&quot;) </code></pre>
+<p><img src="images/lt_repeated_sm-1.png" width="768" /></p>
+<pre class="r"><code>lt.mod.sm.rm &lt;- map(set_names(leaftraits), ~ lmer(lt.plantyr[[.x]] ~ year * round * VWC + (1|plotid) + (1|plantid), 
+                                                  data=lt.plantyr %&gt;% mutate(VWC=VWC.sm)))
 lt.mod.sm.rm.coefs &lt;- map_dfr(lt.mod.sm.rm , tidy, .id=&quot;trait&quot;)
-lt.mod.sm.rm.tests &lt;- map(lt.mod.sm.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;) %&gt;% 
-  mutate(term= str_replace(term, &quot;year&quot;,&quot;year.round&quot;))
+lt.mod.sm.rm.tests &lt;- map(lt.mod.sm.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 anova_table(lt.mod.sm.rm.tests, lt.mod.sm.rm) %&gt;% kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left">trait</th>
-<th align="right">year.round</th>
+<th align="right">year</th>
+<th align="right">round</th>
 <th align="right">VWC</th>
-<th align="right">year.round:VWC</th>
+<th align="right">year:round</th>
+<th align="right">year:VWC</th>
+<th align="right">round:VWC</th>
+<th align="right">year:round:VWC</th>
 <th align="right">R2m</th>
 <th align="left">singular</th>
 </tr>
@@ -4839,25 +4866,37 @@ anova_table(lt.mod.sm.rm.tests, lt.mod.sm.rm) %&gt;% kable()</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">sla</td>
-<td align="right">0e+00</td>
-<td align="right">0.3840</td>
-<td align="right">0.3851</td>
+<td align="right">0.0047</td>
+<td align="right">0.0003</td>
+<td align="right">0.4597</td>
+<td align="right">0.0261</td>
+<td align="right">0.9032</td>
+<td align="right">0.2652</td>
+<td align="right">0.5480</td>
 <td align="right">0.4487</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="even">
 <td align="left">trichome_density</td>
-<td align="right">7e-04</td>
-<td align="right">0.8223</td>
-<td align="right">0.2064</td>
+<td align="right">0.0002</td>
+<td align="right">0.6022</td>
+<td align="right">0.8230</td>
+<td align="right">0.2175</td>
+<td align="right">0.1908</td>
+<td align="right">0.0845</td>
+<td align="right">0.1105</td>
 <td align="right">0.2964</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="odd">
 <td align="left">water_content</td>
-<td align="right">0e+00</td>
-<td align="right">0.0063</td>
-<td align="right">0.0001</td>
+<td align="right">0.0000</td>
+<td align="right">0.9217</td>
+<td align="right">0.0059</td>
+<td align="right">0.0000</td>
+<td align="right">0.0759</td>
+<td align="right">0.2187</td>
+<td align="right">0.0000</td>
 <td align="right">0.5373</td>
 <td align="left">TRUE</td>
 </tr>
@@ -4894,12 +4933,6 @@ anova_table(lt.mod.sm.rm.tests, lt.mod.sm.rm) %&gt;% kable()</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>plot_sm(lt.mod.sm.rm, lt.plantyr %&gt;% mutate(VWC=VWC.sm, year=year.round), leaftraits) + 
-  scale_color_manual(values=c(set_names(year_pal, paste0(names(year_pal),&quot;.2&quot;)), 
-                              set_names(brewer.pal(6, &quot;Dark2&quot;)[c(2,3,6)], paste0(names(year_pal),&quot;.1&quot;))))+
-  geom_smooth(aes(group=1), color=&quot;black&quot;, se=F) + scale_y_continuous(breaks = -5:5) +
-  labs(color=&quot;Year, round&quot;) + xlab(&quot;Soil moisture in subplot on closest date (%VWC)&quot;) </code></pre>
-<p><img src="images/lt_repeated_sm-1.png" width="768" /></p>
 </div>
 </div>
 </div>
