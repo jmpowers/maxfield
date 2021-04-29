@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-04-26" />
+<meta name="date" content="2021-04-29" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-04-26</h4>
+<h4 class="date">2021-04-29</h4>
 
 </div>
 
@@ -314,7 +314,9 @@ Anova_table &lt;- function(df) { #for glmmTMB models and car::Anova
 re_table &lt;- function(coefs) {
   coefs %&gt;% filter(effect==&quot;ran_pars&quot;) %&gt;% select(trait, group, estimate) %&gt;% pivot_wider(names_from=group, values_from=estimate)
 }
-select &lt;- dplyr::select</code></pre>
+select &lt;- dplyr::select
+year.round_pal &lt;- c(set_names(year_pal, paste0(names(year_pal),&quot;.2&quot;)), 
+                              set_names(brewer.pal(6, &quot;Dark2&quot;)[c(2,3,6)], paste0(names(year_pal),&quot;.1&quot;)))</code></pre>
 <pre class="r"><code>subplot_offset &lt;- 1/6
 size_meter &lt;- 6
 ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
@@ -1818,9 +1820,15 @@ Conditional model:
   scale_color_manual(values=water_pal, guide=F) + theme_minimal() + 
   scale_y_sqrt() + labs(x=&quot;Census&quot;, y=&quot;Longest leaf (mm) * number of leaves&quot;)</code></pre>
 <p><img src="images/sizemetric-1.png" width="672" /></p>
-<pre class="r"><code>cen.size %&gt;% select(plantid, plotid, census, size) %&gt;%
+<pre class="r"><code>cen.RGR &lt;- cen.size %&gt;% select(plantid, plotid, census, size) %&gt;%
   pivot_wider(names_from=&quot;census&quot;, names_prefix=&quot;size&quot;, values_from=&quot;size&quot;) %&gt;% 
-  mutate(RGR_18r2 = size18r2/size18, RGR_19=size19/size18, RGR_20=size20/size19, year=&quot;2018&quot;) %&gt;% left_join(treatments) %&gt;% pivot_longer(starts_with(&quot;RGR&quot;), names_to=&quot;census&quot;, values_to=&quot;RGR&quot;) %&gt;% 
+  mutate(RGR_18r2 = size18r2/size18, RGR_19=size19/size18, RGR_20=size20/size19)
+
+cen.RGR.long &lt;- cen.RGR %&gt;% select(plantid, plotid, starts_with(&quot;RGR&quot;)) %&gt;% 
+  pivot_longer(starts_with(&quot;RGR&quot;), names_to=&quot;census&quot;, names_prefix=&quot;RGR_&quot;, values_to=&quot;RGR&quot;) %&gt;% 
+  mutate(year=recode(census, `18r2`=&quot;2017&quot;, `19`=&quot;2018&quot;, `20`=&quot;2019&quot;)) #growth to next year
+  
+cen.RGR.long %&gt;% mutate(year = as.character(as.integer(year)+1)) %&gt;% left_join(treatments) %&gt;% #get the second year to match with treatments
   ggplot(aes(x=census, y=RGR, color=water))+ facet_wrap(vars(water))+
   geom_boxplot(outlier.size=0.1)+ geom_path(aes(group=plantid), size=0.1)+
   scale_color_manual(values=water_pal, guide=F) + theme_minimal() + 
@@ -4838,8 +4846,7 @@ lt.mod.sm.rm &lt;- map(set_names(leaftraits), ~ lmer(lt.plantyr[[.x]] ~ year * V
                                                   data=lt.plantyr %&gt;% mutate(VWC=VWC.sm, year=year.round)))
 
 plot_sm(lt.mod.sm.rm, lt.plantyr %&gt;% mutate(VWC=VWC.sm, year=year.round), leaftraits) + 
-  scale_color_manual(values=c(set_names(year_pal, paste0(names(year_pal),&quot;.2&quot;)), 
-                              set_names(brewer.pal(6, &quot;Dark2&quot;)[c(2,3,6)], paste0(names(year_pal),&quot;.1&quot;))))+
+  scale_color_manual(values=year.round_pal)+
   geom_smooth(aes(group=1), color=&quot;black&quot;, se=F) + scale_y_continuous(breaks = -5:5) +
   labs(color=&quot;Year, round&quot;) + xlab(&quot;Soil moisture in subplot on closest date (%VWC)&quot;) </code></pre>
 <p><img src="images/lt_repeated_sm-1.png" width="768" /></p>
@@ -6068,6 +6075,181 @@ plot_abs(mod.abs, mnps.subplot, floraltraits[1:6]) + #Morphological traits - sub
     scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
 ggsave(filename=&quot;../snow_precip_mt.png&quot;, width=7, height=4)</code></pre>
 </div>
+</div>
+<div id="growth-rate-selection" class="section level1">
+<h1>Growth rate selection</h1>
+<pre class="r"><code>lt.plantyr %&gt;% left_join(cen.RGR.long) %&gt;% select(all_of(c(leaftraits, &quot;RGR&quot;)), year) %&gt;% 
+  pivot_longer(all_of(leaftraits), names_to=&quot;trait&quot;) %&gt;% 
+  ggplot(aes(x=value, y=RGR, color=year.round)) + geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
+  facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller=as_labeller(traitnames)) + 
+  labs(x=&quot;Trait&quot;, y=&quot;RGR&quot;, color=&quot;Year&quot;)+ scale_y_sqrt()+
+  theme_bw() + scale_color_manual(values=year.round_pal)</code></pre>
+<p><img src="images/rgr_selection-1.png" width="576" /></p>
+<pre class="r"><code>pt.plantyr %&gt;% left_join(cen.RGR.long) %&gt;% select(all_of(c(phystraits, &quot;RGR&quot;)), year) %&gt;% 
+  pivot_longer(all_of(phystraits), names_to=&quot;trait&quot;) %&gt;% 
+  ggplot(aes(x=value, y=RGR, color=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
+  facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller=as_labeller(traitnames)) + 
+  labs(x=&quot;Trait&quot;, y=&quot;RGR&quot;, color=&quot;Year&quot;)+ scale_y_sqrt()+
+  theme_bw() + scale_color_manual(values=year_pal)</code></pre>
+<p><img src="images/rgr_selection-2.png" width="576" /></p>
+<pre class="r"><code>map(map(set_names(leaftraits), 
+                   ~ lm(RGR_rel ~ trait.z, 
+                         data=lt.plantyr.r2 %&gt;% ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = lt.plantyr.r2[[.x]] / alltraits.sd[[.x]]) %&gt;% 
+                           group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm=T), year=factor(year)))), summary)</code></pre>
+<pre><code>$sla
+
+Call:
+lm(formula = RGR_rel ~ trait.z, data = lt.plantyr.r2 %&gt;% ungroup %&gt;% 
+    left_join(cen.RGR.long) %&gt;% mutate(trait.z = lt.plantyr.r2[[.x]]/alltraits.sd[[.x]]) %&gt;% 
+    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
+    year = factor(year)))
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-0.995 -0.669 -0.329  0.391  3.893 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)
+(Intercept)    1.713      1.428     1.2     0.24
+trait.z       -0.247      0.492    -0.5     0.62
+
+Residual standard error: 1.03 on 43 degrees of freedom
+  (234 observations deleted due to missingness)
+Multiple R-squared:  0.00583,   Adjusted R-squared:  -0.0173 
+F-statistic: 0.252 on 1 and 43 DF,  p-value: 0.618
+
+
+$trichome_density
+
+Call:
+lm(formula = RGR_rel ~ trait.z, data = lt.plantyr.r2 %&gt;% ungroup %&gt;% 
+    left_join(cen.RGR.long) %&gt;% mutate(trait.z = lt.plantyr.r2[[.x]]/alltraits.sd[[.x]]) %&gt;% 
+    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
+    year = factor(year)))
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-1.014 -0.596 -0.274  0.307  3.911 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)    1.240      0.259    4.78    1e-05 ***
+trait.z       -0.173      0.168   -1.03     0.31    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 0.932 on 66 degrees of freedom
+  (211 observations deleted due to missingness)
+Multiple R-squared:  0.0158,    Adjusted R-squared:  0.00091 
+F-statistic: 1.06 on 1 and 66 DF,  p-value: 0.307
+
+
+$water_content
+
+Call:
+lm(formula = RGR_rel ~ trait.z, data = lt.plantyr.r2 %&gt;% ungroup %&gt;% 
+    left_join(cen.RGR.long) %&gt;% mutate(trait.z = lt.plantyr.r2[[.x]]/alltraits.sd[[.x]]) %&gt;% 
+    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
+    year = factor(year)))
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-1.153 -0.564 -0.132  0.107  3.695 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)  
+(Intercept)   -3.043      2.121   -1.43    0.159  
+trait.z        0.481      0.252    1.91    0.063 .
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 0.99 on 43 degrees of freedom
+  (234 observations deleted due to missingness)
+Multiple R-squared:  0.0783,    Adjusted R-squared:  0.0568 
+F-statistic: 3.65 on 1 and 43 DF,  p-value: 0.0627</code></pre>
+<pre class="r"><code>map(map(set_names(phystraits), 
+                   ~ lm(RGR_rel ~ trait.z * year, 
+                         data=pt.plantyr %&gt;% ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = pt.plantyr[[.x]] / alltraits.sd[[.x]]) %&gt;% 
+                           group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm=T), year=factor(year)))), summary)</code></pre>
+<pre><code>$photosynthesis
+
+Call:
+lm(formula = RGR_rel ~ trait.z * year, data = pt.plantyr %&gt;% 
+    ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = pt.plantyr[[.x]]/alltraits.sd[[.x]]) %&gt;% 
+    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
+    year = factor(year)))
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-1.615 -0.609 -0.312  0.360  4.279 
+
+Coefficients:
+              Estimate Std. Error t value Pr(&gt;|t|)   
+(Intercept)      0.771      0.248    3.10   0.0026 **
+trait.z          0.186      0.142    1.32   0.1919   
+year1           -0.268      0.248   -1.08   0.2843   
+trait.z:year1    0.209      0.142    1.48   0.1428   
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 1.04 on 82 degrees of freedom
+  (241 observations deleted due to missingness)
+Multiple R-squared:  0.0569,    Adjusted R-squared:  0.0224 
+F-statistic: 1.65 on 3 and 82 DF,  p-value: 0.184
+
+
+$conductance
+
+Call:
+lm(formula = RGR_rel ~ trait.z * year, data = pt.plantyr %&gt;% 
+    ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = pt.plantyr[[.x]]/alltraits.sd[[.x]]) %&gt;% 
+    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
+    year = factor(year)))
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-1.656 -0.574 -0.244  0.245  4.445 
+
+Coefficients:
+              Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)     1.0588     0.2445    4.33  4.2e-05 ***
+trait.z         0.0479     0.1385    0.35    0.730    
+year1          -0.4094     0.2445   -1.67    0.098 .  
+trait.z:year1   0.3271     0.1385    2.36    0.021 *  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 1.02 on 82 degrees of freedom
+  (241 observations deleted due to missingness)
+Multiple R-squared:  0.0926,    Adjusted R-squared:  0.0594 
+F-statistic: 2.79 on 3 and 82 DF,  p-value: 0.0456
+
+
+$WUE
+
+Call:
+lm(formula = RGR_rel ~ trait.z * year, data = pt.plantyr %&gt;% 
+    ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = pt.plantyr[[.x]]/alltraits.sd[[.x]]) %&gt;% 
+    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
+    year = factor(year)))
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-1.345 -0.654 -0.308  0.314  4.384 
+
+Coefficients:
+              Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)     1.2068     0.2645    4.56  1.8e-05 ***
+trait.z        -0.0979     0.1837   -0.53     0.60    
+year1           0.2517     0.2645    0.95     0.34    
+trait.z:year1  -0.1386     0.1837   -0.75     0.45    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 1.06 on 82 degrees of freedom
+  (241 observations deleted due to missingness)
+Multiple R-squared:  0.0343,    Adjusted R-squared:  -0.001 
+F-statistic: 0.972 on 3 and 82 DF,  p-value: 0.41</code></pre>
 </div>
 <div id="phenology" class="section level1">
 <h1>Phenology</h1>

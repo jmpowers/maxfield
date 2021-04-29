@@ -68,6 +68,8 @@ re_table <- function(coefs) {
   coefs %>% filter(effect=="ran_pars") %>% select(trait, group, estimate) %>% pivot_wider(names_from=group, values_from=estimate)
 }
 select <- dplyr::select
+year.round_pal <- c(set_names(year_pal, paste0(names(year_pal),".2")), 
+                              set_names(brewer.pal(6, "Dark2")[c(2,3,6)], paste0(names(year_pal),".1")))
 ```
 
 ```{r map, fig.height=4, fig.width=6.5}
@@ -539,9 +541,15 @@ ggplot(cen.size, aes(x=census, y=size, color=water))+ facet_wrap(vars(water))+
   scale_color_manual(values=water_pal, guide=F) + theme_minimal() + 
   scale_y_sqrt() + labs(x="Census", y="Longest leaf (mm) * number of leaves")
 
-cen.size %>% select(plantid, plotid, census, size) %>%
+cen.RGR <- cen.size %>% select(plantid, plotid, census, size) %>%
   pivot_wider(names_from="census", names_prefix="size", values_from="size") %>% 
-  mutate(RGR_18r2 = size18r2/size18, RGR_19=size19/size18, RGR_20=size20/size19, year="2018") %>% left_join(treatments) %>% pivot_longer(starts_with("RGR"), names_to="census", values_to="RGR") %>% 
+  mutate(RGR_18r2 = size18r2/size18, RGR_19=size19/size18, RGR_20=size20/size19)
+
+cen.RGR.long <- cen.RGR %>% select(plantid, plotid, starts_with("RGR")) %>% 
+  pivot_longer(starts_with("RGR"), names_to="census", names_prefix="RGR_", values_to="RGR") %>% 
+  mutate(year=recode(census, `18r2`="2017", `19`="2018", `20`="2019")) #growth to next year
+  
+cen.RGR.long %>% mutate(year = as.character(as.integer(year)+1)) %>% left_join(treatments) %>% #get the second year to match with treatments
   ggplot(aes(x=census, y=RGR, color=water))+ facet_wrap(vars(water))+
   geom_boxplot(outlier.size=0.1)+ geom_path(aes(group=plantid), size=0.1)+
   scale_color_manual(values=water_pal, guide=F) + theme_minimal() + 
@@ -1301,8 +1309,7 @@ lt.mod.sm.rm <- map(set_names(leaftraits), ~ lmer(lt.plantyr[[.x]] ~ year * VWC 
                                                   data=lt.plantyr %>% mutate(VWC=VWC.sm, year=year.round)))
 
 plot_sm(lt.mod.sm.rm, lt.plantyr %>% mutate(VWC=VWC.sm, year=year.round), leaftraits) + 
-  scale_color_manual(values=c(set_names(year_pal, paste0(names(year_pal),".2")), 
-                              set_names(brewer.pal(6, "Dark2")[c(2,3,6)], paste0(names(year_pal),".1"))))+
+  scale_color_manual(values=year.round_pal)+
   geom_smooth(aes(group=1), color="black", se=F) + scale_y_continuous(breaks = -5:5) +
   labs(color="Year, round") + xlab("Soil moisture in subplot on closest date (%VWC)") 
 
@@ -1559,6 +1566,37 @@ plot_abs(mod.abs, mnps.subplot, floraltraits[1:6]) + #Morphological traits - sub
     scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
 ggsave(filename="../snow_precip_mt.png", width=7, height=4)
 ```
+
+# Growth rate selection
+
+```{r rgr_selection, fig.height=6, fig.width=6}
+lt.plantyr %>% left_join(cen.RGR.long) %>% select(all_of(c(leaftraits, "RGR")), year) %>% 
+  pivot_longer(all_of(leaftraits), names_to="trait") %>% 
+  ggplot(aes(x=value, y=RGR, color=year.round)) + geom_point() + geom_smooth(method="lm",se=F) + 
+  facet_wrap(vars(trait), scales="free_x", labeller=as_labeller(traitnames)) + 
+  labs(x="Trait", y="RGR", color="Year")+ scale_y_sqrt()+
+  theme_bw() + scale_color_manual(values=year.round_pal)
+
+pt.plantyr %>% left_join(cen.RGR.long) %>% select(all_of(c(phystraits, "RGR")), year) %>% 
+  pivot_longer(all_of(phystraits), names_to="trait") %>% 
+  ggplot(aes(x=value, y=RGR, color=year)) + geom_point() + geom_smooth(method="lm",se=F) + 
+  facet_wrap(vars(trait), scales="free_x", labeller=as_labeller(traitnames)) + 
+  labs(x="Trait", y="RGR", color="Year")+ scale_y_sqrt()+
+  theme_bw() + scale_color_manual(values=year_pal)
+```
+
+```{r rgr_selection_mod}
+map(map(set_names(leaftraits), 
+                   ~ lm(RGR_rel ~ trait.z, 
+                         data=lt.plantyr.r2 %>% ungroup %>% left_join(cen.RGR.long) %>% mutate(trait.z = lt.plantyr.r2[[.x]] / alltraits.sd[[.x]]) %>% 
+                           group_by(year) %>% mutate(RGR_rel = RGR/mean(RGR, na.rm=T), year=factor(year)))), summary)
+
+map(map(set_names(phystraits), 
+                   ~ lm(RGR_rel ~ trait.z * year, 
+                         data=pt.plantyr %>% ungroup %>% left_join(cen.RGR.long) %>% mutate(trait.z = pt.plantyr[[.x]] / alltraits.sd[[.x]]) %>% 
+                           group_by(year) %>% mutate(RGR_rel = RGR/mean(RGR, na.rm=T), year=factor(year)))), summary)
+```
+
 
 # Phenology
 
