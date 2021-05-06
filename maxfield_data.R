@@ -79,6 +79,8 @@ water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,8,1)], levels(treatments$
 water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$water))
 snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
 year_pal <- setNames(brewer.pal(8, name="Set2")[c(2,3,6)], levels(treatments$year))
+year.round_pal <- c(set_names(year_pal, paste0(names(year_pal),".2")), 
+                    set_names(brewer.pal(6, "Dark2")[c(2,3,6)], paste0(names(year_pal),".1")))
 
 #Get average snowmelt dates in plots
 normal_meltdate <- meltdates %>% group_by(year) %>% filter(snow=="Normal") %>% summarize(date=mean(sun_time)) %>%
@@ -104,24 +106,32 @@ remove(daily_filled_7am)
 
 #Add summer precip estimates to treatments from NOAA-filled EPA Research Meadow dataset
 # snowmelt date in each plot - start of watering (100% of precip)
-# start of watering - last morphology/nectar measurement (100% for controls, 50% for water reduction, or 100% + 1.75 mm/day for water addition)
+# start of watering - last morphology measurement (100% for controls, 50% for water reduction, or 100% + 1.75 mm/day for water addition)
 precip_total <- function(year_start, day_start, day_end) {
   daily_all %>% filter(year(date)==year_start, yday(date) > day_start, yday(date) < day_end) %>% 
     summarize(tot=sum(EPA_NOAA_filled, na.rm=T)) %>% pull(tot)
 }
-mt.lastday <- data.frame(year=factor(2018:2020), last_day=c(212,219,210))
+mt.lastday <- data.frame(year=factor(2018:2020), last_day=c(212,219,210))#last morphology measurements only (no nectar, phenology)
 treatments <- treatments %>% 
   inner_join(waterdates %>% select(-date) %>% pivot_wider(names_from=precip_treatments, values_from=day) %>% 
                mutate(year=factor(year)) %>% rename(water_begin=started, water_end=ended)) %>% 
   inner_join(mt.lastday) %>% # Maxfield Results - timings (mt)
-  #inner_join(mt %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) %>% #can't call mt before its made
+  #inner_join(mt %>% group_by(year) %>% summarize(last_day=yday(max(date, na.rm=T)))) %>% #would include nectar measurements
   #mnps %>% filter(is.na(seeds)) would include phenology measurements
   mutate(precip_prewater_mm = pmap_dbl(list(year, sun_date, water_begin), precip_total),
          precip_postwater_mm = pmap_dbl(list(year, water_begin, last_day), precip_total) * ifelse(water=="Reduction",.5,1) + 
            ifelse(water=="Addition", (14 / 4 / 2) * (last_day - water_begin),0),
          precip_est_mm = precip_prewater_mm + precip_postwater_mm)
 
-#Add summer precip for longer climate record, from snowmelt date to average last morphology/nectar day
+# get correlations between precip summed to different end dates by modifying inner_join(mt.lastday) above
+#pt.lastday <- data.frame(year=factor(2018:2020), last_day=c(208,227,213))
+#lt.lastday <- data.frame(year=factor(2018:2020), last_day=c(229,220,210))
+#treatments.lastdays <- treatments.lastdays %>% mutate(precip_est_mm_lt = treatments.lt$precip_est_mm)
+#treatments.lastdays <- treatments.lastdays %>% mutate(precip_est_mm_pt = treatments.pt$precip_est_mm)
+#with(treatments.lastdays, cor(precip_est_mm_lt, precip_est_mm))
+#with(treatments.lastdays, cor(precip_est_mm_pt, precip_est_mm))
+
+#Add summer precip for longer climate record, from snowmelt date to average last morphology day
 groundcover <- groundcover %>% mutate(precip_est_mm = pmap_dbl(list(year, first_0_cm_day, round(mean(mt.lastday$last_day))), precip_total))
 
 # soil --------------------------------------------------------------------
@@ -343,21 +353,34 @@ cen.status %>% write_tsv(file="data/census_status.tsv") %>%
 
 cen.status.long <- cen.status %>% select(!starts_with("transition|flowering|alive")) %>% 
   pivot_longer(starts_with("status"),names_to="census",values_to="status") %>% 
-  mutate(census = paste0("20",str_remove(census, "status_"))) %>% 
+  mutate(census = paste0("20",str_remove(census, "status_")), year=str_remove(census,"r2")) %>% 
   mutate(across(.fns=factor)) %>% 
-  mutate(survived = as.integer(case_when(census == "2018" ~ alive_status_19,
-                              census == "2019" ~ alive_status_20))-1,
-         flowered = as.integer(case_when(census == "2018" ~ flowering_status_19,
-                              census == "2019" ~ flowering_status_20))-1) 
+  mutate(survived = as.integer(case_when(year == "2018" ~ alive_status_19,
+                                         year == "2019" ~ alive_status_20))-1,
+         flowered = as.integer(case_when(year == "2018" ~ flowering_status_19,
+                                         year == "2019" ~ flowering_status_20))-1) 
 
 cen.size.long <- cen %>% select(plantid|starts_with("n_rosettes")|contains(c("longest","leaves"))) %>% 
   pivot_longer(-plantid) %>% separate(name, into=c("rosette","variable","census")) %>% drop_na(value)
 
 cen.size <- cen.size.long %>% filter(rosette != "n") %>% pivot_wider(names_from=variable) %>% 
-  mutate(size = longest * leaves) %>% #Campbell and Wendlandt 2013 "size" definition
-  group_by(plantid, census) %>% summarize(size=sum(size, na.rm=T)) %>% #sum sizes of all rosettes
-    mutate(year = paste0("20",str_remove(census,"r2")), plotid = str_sub(plantid, 1,2)) %>% 
-    left_join(treatments)
+  mutate(size = longest * leaves) %>% #Campbell and Wendlandt 2013 "size" definition - maybe proportional to total leaf length
+  group_by(plantid, census) %>% summarize(size=sum(size, na.rm=T)) %>% #sum sizes of all rosettes, not equal to Campbell 1997 = mean(longest) * sum(leaves)
+  mutate(year = paste0("20",str_remove(census,"r2")), plotid = str_sub(plantid, 1,2)) %>% 
+  left_join(treatments)
+
+cen.RGR <- cen.size %>% select(plantid, plotid, census, size) %>%
+  pivot_wider(names_from="census", names_prefix="size", values_from="size") %>% 
+  mutate(RGR_18r2 = 1.41*log(size18r2/size18)/(63/365), RGR_19=1.41*log(size19/size18)/(373/365), RGR_20=1.41*log(size20/size19)/(363/365))
+# scaling between dry mass and leaf length follows a power law with exponent 1.41 (see NLS in maxfield_JP_analyses.Rmd/leaf_scaling_length)
+# time interval is in years between census dates with most individuals, so the RGR units are 1/year (pseudo-mass units cancel)
+# ymd("2018-08-13") - ymd("2018-06-11"), ymd("2019-06-19") - ymd("2018-06-11"), ymd("2020-06-16") - ymd("2019-06-19")
+# TODO change time interval to actual plant measurements (might be tricky if plant in census twice)
+
+cen.RGR.long <- cen.RGR %>% select(plantid, plotid, starts_with("RGR")) %>% 
+  pivot_longer(starts_with("RGR"), names_to="census", names_prefix="RGR_", values_to="RGR") %>% 
+  mutate(RGR = ifelse(is.infinite(RGR), NA, RGR), 
+    year=recode(census, `18r2`="2017", `19`="2018", `20`="2019")) #growth to next year
 
 # phenology ---------------------------------------------------------------
 
@@ -439,7 +462,7 @@ lt <- map_dfr(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>%
          water_content = (wet_weight_g-dry_weight_g)/wet_weight_g) %>% 
   rename(date = date_collected) %>% 
   group_by(year) %>% group_split() %>% map2_dfr(paste0("leaf",18:20), fix_dataset) %>% 
-  left_join(treatments) %>% left_join(sm.subplotyear) %>% 
+  left_join(treatments) %>% left_join(sm.subplotyear) %>% left_join(cen.RGR.long) %>% 
   mutate_if(is.character, as.factor) 
 
 #drop traits that use irregular dry weights in 2019 round 2
@@ -541,7 +564,7 @@ pt.sm <- pt.raw %>%
 pt <- pt.raw %>% left_join(pt.sm %>% select(plantid, date, duplicate, date.sm, date_diff, VWC.sm)) %>%
   rename(VWC.plant = VWC) %>% 
   group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:20), fix_dataset) %>% 
-  left_join(treatments) %>% left_join(sm.subplotyear) %>% 
+  left_join(treatments) %>% left_join(sm.subplotyear) %>% left_join(cen.RGR.long) %>% 
   rename(VWC.sm.year = VWC)
 
 # TODO does not lump leaves from the same plant measured in multiple rounds
@@ -775,7 +798,10 @@ timings <- bind_rows(
   pt = pt %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
   lt = lt %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
   ph = ph %>% drop_na(height_cm) %>% group_by(year) %>% summarize(begin = min(julian), end = max(julian)),
-  sds= sds20.date %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)), 
+  sds = sds20.date %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
+  cen = cen %>% select(starts_with("date")) %>% pivot_longer(everything(), names_to="census", names_prefix = "date_", values_to="date") %>% 
+    filter(census != "18r2", date != ymd("2020-07-27")) %>% drop_na(date) %>% mutate(year=factor(year(date))) %>% 
+    group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
   .id="variable") %>% ungroup
 
 timings %>% mutate(range=paste(begin,end,sep=" - "), .keep="unused") %>% 
@@ -796,7 +822,7 @@ traitnames <- set_names(c(
   "Nectar production", "Nectar concentration", "Nectar sucrose", "Inflorescence height", 
   "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Flower number", 
   "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower",
-  "Specific leaf area", "Trichome density", "Water content", 
+  "Specific leaf area", "Trichome density", "Leaf water content", 
   "Photosynthetic rate", "Stomatal conductance", "Intrinsic water-use efficiency"), alltraits)
 
 traitnames.units <- set_names(c(
@@ -805,7 +831,7 @@ traitnames.units <- set_names(c(
   "Inflorescence height (cm)", 
   "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Flower number", 
   "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower",
-  "Specific leaf area (cm\U00B2 g\U207B\U00B9)", "Trichome density (cm\U207B\U00B2)", "Water content", 
+  "Specific leaf area (cm\U00B2 g\U207B\U00B9)", "Trichome density (cm\U207B\U00B2)", "Leaf water content (g H\U2082O g\U207B\U00B9)", 
   "Photosynthetic rate (\U00B5mol CO\U2082 m\U207B\U00B2 s\U207B\U00B9)", 
   "Stomatal conductance (mol H\U2082O m\U207B\U00B2 s\U207B\U00B9)", 
   "Intrinsic water-use efficiency (\U00B5mol CO\U2082 mol\U207B\U00B9 H\U2082O)"), alltraits)
