@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-05-06" />
+<meta name="date" content="2021-05-11" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-05-06</h4>
+<h4 class="date">2021-05-11</h4>
 
 </div>
 
@@ -1434,8 +1434,8 @@ with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_sta
   scale_fill_manual(values=status_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;Proportion&quot;, fill=&quot;Status&quot;)</code></pre>
 <p><img src="images/inventory-1.png" width="672" /></p>
 </div>
-<div id="status-transitions-vs.-treatment" class="section level2">
-<h2>Status transitions vs. treatment</h2>
+<div id="fitness-vs.-treatment" class="section level2">
+<h2>Fitness vs. treatment</h2>
 <p>What did plants of a given status in one year look like in the next?</p>
 <pre class="r"><code>with(cen.status, table(`2018`=paste(status_18), `2019`=paste(status_19)))</code></pre>
 <pre><code>            2019
@@ -1448,7 +1448,7 @@ with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_sta
 ggplot(aes(x=water, fill=status_19)) + facet_wrap(status_18 ~ snow, labeller=labeller(.cols=label_both)) +  
   labs(y=&quot;2019 Status&quot;, fill=&quot;2019 Status&quot;, x=&quot;Precipitation&quot;) +
   geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + theme_minimal()</code></pre>
-<p><img src="images/transitions-1.png" width="672" /></p>
+<p><img src="images/transitions-1.png" width="336" /></p>
 <pre class="r"><code>with(cen.status, table(`2019`=paste(status_19), `2020`=paste(status_20)))</code></pre>
 <pre><code>            2020
 2019         dead_nf flowering no_record tagnf vegetative
@@ -1461,290 +1461,128 @@ ggplot(aes(x=water, fill=status_19)) + facet_wrap(status_18 ~ snow, labeller=lab
 ggplot(aes(x=water, fill=status_20)) + facet_wrap(status_19 ~ snow, labeller=labeller(.cols=label_both)) +  
   labs(y=&quot;2020 Status&quot;, fill=&quot;2020 Status&quot;, x=&quot;Precipitation&quot;) +
   geom_bar(position=&quot;fill&quot;) + scale_fill_manual(values=status_pal) + theme_minimal()</code></pre>
-<p><img src="images/transitions-2.png" width="672" /></p>
+<p><img src="images/transitions-2.png" width="336" /></p>
 <pre class="r"><code>#Model effect of treatments on survival and flowering of vegetative plants - both years combined
 cen.status.fitness &lt;- cen.status.long %&gt;% filter(status==&quot;vegetative&quot;, census %in% c(&quot;2018&quot;,&quot;2019&quot;)) %&gt;%
   full_join(cen.RGR.long %&gt;% drop_na(RGR) %&gt;% filter(census!=&quot;18r2&quot;) %&gt;% select(-census)) %&gt;% left_join(treatments) %&gt;% left_join(sm.subplotyear)
 
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-(survived.mod &lt;- glmmTMB(survived ~ year * water * snow + (1|snow:plot) + (1|snow:plotid), data=cen.status.fitness, family=binomial))</code></pre>
-<pre><code>Formula:          
-survived ~ year * water * snow + (1 | snow:plot) + (1 | snow:plotid)
-Data: cen.status.fitness
-     AIC      BIC   logLik df.resid 
-  1505.4   1579.3   -738.7     1437 
-Random-effects (co)variances:
+fitness.mod &lt;- map(set_names(fitnesstraits), 
+                    ~ glmmTMB(cen.status.fitness[[.x]] ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data=cen.status.fitness, 
+                              family=ifelse(.x ==&quot;RGR&quot;, &quot;gaussian&quot;, &quot;binomial&quot;))) 
 
-Conditional model:
- Groups      Name        Std.Dev.
- snow:plot   (Intercept) 6.86e-05
- snow:plotid (Intercept) 4.85e-01
-
-Number of obs: 1451 / Conditional model: snow:plot, 7; snow:plotid, 28
-
-Fixed Effects:
-
-Conditional model:
-       (Intercept)               year1              water1              water2  
-            1.3562              0.1771              0.1471             -0.1227  
-             snow1        year1:water1        year1:water2         year1:snow1  
-           -0.0803             -0.1235             -0.0738              0.0830  
-      water1:snow1        water2:snow1  year1:water1:snow1  year1:water2:snow1  
-           -0.1466             -0.0583             -0.3768             -0.0370  </code></pre>
-<pre class="r"><code>car::Anova(survived.mod, type=3) %&gt;% kable()</code></pre>
+fitness.mod.coefs &lt;- map_dfr(fitness.mod, tidy, .id=&quot;trait&quot;)
+fitness.mod.tests &lt;- map(fitness.mod, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+fitness.mod.emm &lt;- map_dfr(fitness.mod, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)), .id = &quot;trait&quot;) %&gt;% 
+  mutate(uSE = ifelse(trait==&quot;RGR&quot;, emmean+SE, plogis(emmean+SE)), 
+         lSE = ifelse(trait==&quot;RGR&quot;, emmean-SE, plogis(emmean-SE)), 
+         emmean = ifelse(trait==&quot;RGR&quot;, emmean, plogis(emmean)),
+         trait = fct_relevel(trait, fitnesstraits)) 
+Anova_table(fitness.mod.tests) %&gt;% kable()</code></pre>
 <table>
+<colgroup>
+<col width="10%" />
+<col width="13%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="11%" />
+<col width="12%" />
+<col width="12%" />
+<col width="17%" />
+</colgroup>
 <thead>
 <tr class="header">
-<th align="left"></th>
-<th align="right">Chisq</th>
-<th align="right">Df</th>
-<th align="right">Pr(&gt;Chisq)</th>
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">year</th>
+<th align="right">snow</th>
+<th align="right">water</th>
+<th align="right">year:snow</th>
+<th align="right">year:water</th>
+<th align="right">snow:water</th>
+<th align="right">year:snow:water</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">(Intercept)</td>
-<td align="right">109.3922</td>
-<td align="right">1</td>
+<td align="left">flowered</td>
+<td align="right">0</td>
 <td align="right">0.0000</td>
-</tr>
-<tr class="even">
-<td align="left">year</td>
-<td align="right">4.6777</td>
-<td align="right">1</td>
-<td align="right">0.0306</td>
-</tr>
-<tr class="odd">
-<td align="left">water</td>
-<td align="right">0.8387</td>
-<td align="right">2</td>
-<td align="right">0.6575</td>
-</tr>
-<tr class="even">
-<td align="left">snow</td>
-<td align="right">0.3903</td>
-<td align="right">1</td>
-<td align="right">0.5322</td>
-</tr>
-<tr class="odd">
-<td align="left">year:water</td>
-<td align="right">2.3772</td>
-<td align="right">2</td>
-<td align="right">0.3046</td>
-</tr>
-<tr class="even">
-<td align="left">year:snow</td>
-<td align="right">1.0321</td>
-<td align="right">1</td>
-<td align="right">0.3097</td>
-</tr>
-<tr class="odd">
-<td align="left">water:snow</td>
-<td align="right">1.1406</td>
-<td align="right">2</td>
-<td align="right">0.5654</td>
-</tr>
-<tr class="even">
-<td align="left">year:water:snow</td>
-<td align="right">12.1763</td>
-<td align="right">2</td>
-<td align="right">0.0023</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>emmeans(survived.mod, ~ year * water * snow) %&gt;% as_tibble %&gt;% 
-  mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %&gt;% 
-  ggplot(aes(x=water, color=snow, y=prob))+ facet_wrap(vars(year))+
-  geom_pointrange(aes(ymin=lSE, ymax=uSE), position=position_dodge2(0.9)) + 
-  labs(x=&quot;Precipitation&quot;, y=&quot;Survival to next year&quot;, color=&quot;Snowmelt&quot;)+
-  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()</code></pre>
-<p><img src="images/transitions-3.png" width="672" /></p>
-<pre class="r"><code>(flowered.mod &lt;- glmmTMB(flowered ~ year * water * snow + (1|snow:plot) + (1|snow:plotid), data=cen.status.fitness, family=binomial))</code></pre>
-<pre><code>Formula:          
-flowered ~ year * water * snow + (1 | snow:plot) + (1 | snow:plotid)
-Data: cen.status.fitness
-     AIC      BIC   logLik df.resid 
-  1621.1   1695.0   -796.6     1437 
-Random-effects (co)variances:
-
-Conditional model:
- Groups      Name        Std.Dev.
- snow:plot   (Intercept) 0.348   
- snow:plotid (Intercept) 0.274   
-
-Number of obs: 1451 / Conditional model: snow:plot, 7; snow:plotid, 28
-
-Fixed Effects:
-
-Conditional model:
-       (Intercept)               year1              water1              water2  
-           -0.8196             -0.4777              0.2612             -0.3166  
-             snow1        year1:water1        year1:water2         year1:snow1  
-            0.0134             -0.1221              0.0441              0.0979  
-      water1:snow1        water2:snow1  year1:water1:snow1  year1:water2:snow1  
-           -0.0858              0.1040             -0.2203              0.0942  </code></pre>
-<pre class="r"><code>car::Anova(flowered.mod, type=3) %&gt;% kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left"></th>
-<th align="right">Chisq</th>
-<th align="right">Df</th>
-<th align="right">Pr(&gt;Chisq)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">(Intercept)</td>
-<td align="right">25.5824</td>
-<td align="right">1</td>
-<td align="right">0.0000</td>
-</tr>
-<tr class="even">
-<td align="left">year</td>
-<td align="right">41.1963</td>
-<td align="right">1</td>
-<td align="right">0.0000</td>
-</tr>
-<tr class="odd">
-<td align="left">water</td>
-<td align="right">8.3136</td>
-<td align="right">2</td>
-<td align="right">0.0157</td>
-</tr>
-<tr class="even">
-<td align="left">snow</td>
-<td align="right">0.0068</td>
-<td align="right">1</td>
 <td align="right">0.9341</td>
-</tr>
-<tr class="odd">
-<td align="left">year:water</td>
-<td align="right">1.3607</td>
-<td align="right">2</td>
-<td align="right">0.5064</td>
-</tr>
-<tr class="even">
-<td align="left">year:snow</td>
-<td align="right">1.7514</td>
-<td align="right">1</td>
+<td align="right">0.0157</td>
 <td align="right">0.1857</td>
-</tr>
-<tr class="odd">
-<td align="left">water:snow</td>
-<td align="right">0.8825</td>
-<td align="right">2</td>
+<td align="right">0.5064</td>
 <td align="right">0.6432</td>
-</tr>
-<tr class="even">
-<td align="left">year:water:snow</td>
-<td align="right">4.5510</td>
-<td align="right">2</td>
 <td align="right">0.1027</td>
 </tr>
-</tbody>
-</table>
-<pre class="r"><code>emmeans(flowered.mod, ~ year * water * snow) %&gt;% as_tibble %&gt;% 
-  mutate(prob=plogis(emmean), uSE = plogis(emmean+SE), lSE = plogis(emmean-SE)) %&gt;% 
-  ggplot(aes(x=water, color=snow, y=prob))+ facet_wrap(vars(year))+
-  geom_pointrange(aes(ymin=lSE, ymax=uSE), position=position_dodge2(0.9)) + 
-  labs(x=&quot;Precipitation&quot;, y=&quot;Flowering the next year&quot;, color=&quot;Snowmelt&quot;)+
-  scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=snow_pal) + theme_minimal()</code></pre>
-<p><img src="images/transitions-4.png" width="672" /></p>
-<pre class="r"><code>(RGR.mod &lt;- glmmTMB(RGR ~ year * water * snow + (1|snow:plot) + (1|snow:plotid), data=cen.status.fitness))</code></pre>
-<pre><code>Formula:          
-RGR ~ year * water * snow + (1 | snow:plot) + (1 | snow:plotid)
-Data: cen.status.fitness
-     AIC      BIC   logLik df.resid 
-  1746.8   1810.5   -858.4      501 
-Random-effects (co)variances:
-
-Conditional model:
- Groups      Name        Std.Dev.
- snow:plot   (Intercept) 0.000494
- snow:plotid (Intercept) 0.482309
- Residual                1.234545
-
-Number of obs: 516 / Conditional model: snow:plot, 7; snow:plotid, 28
-
-Dispersion estimate for gaussian family (sigma^2): 1.52 
-
-Fixed Effects:
-
-Conditional model:
-       (Intercept)               year1              water1              water2  
-           0.55993             0.78182             0.40334            -0.29814  
-             snow1        year1:water1        year1:water2         year1:snow1  
-          -0.31170             0.75936            -0.31169             0.00643  
-      water1:snow1        water2:snow1  year1:water1:snow1  year1:water2:snow1  
-          -0.19131             0.05559             0.36196            -0.22491  </code></pre>
-<pre class="r"><code>car::Anova(RGR.mod, type=3) %&gt;% kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left"></th>
-<th align="right">Chisq</th>
-<th align="right">Df</th>
-<th align="right">Pr(&gt;Chisq)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">(Intercept)</td>
-<td align="right">19.8341</td>
-<td align="right">1</td>
-<td align="right">0.0000</td>
-</tr>
 <tr class="even">
-<td align="left">year</td>
-<td align="right">99.5666</td>
-<td align="right">1</td>
-<td align="right">0.0000</td>
+<td align="left">survived</td>
+<td align="right">0</td>
+<td align="right">0.0306</td>
+<td align="right">0.5322</td>
+<td align="right">0.6575</td>
+<td align="right">0.3097</td>
+<td align="right">0.3046</td>
+<td align="right">0.5654</td>
+<td align="right">0.0023</td>
 </tr>
 <tr class="odd">
-<td align="left">water</td>
-<td align="right">6.0114</td>
-<td align="right">2</td>
-<td align="right">0.0495</td>
-</tr>
-<tr class="even">
-<td align="left">snow</td>
-<td align="right">6.1618</td>
-<td align="right">1</td>
+<td align="left">RGR</td>
+<td align="right">0</td>
+<td align="right">0.0000</td>
 <td align="right">0.0131</td>
-</tr>
-<tr class="odd">
-<td align="left">year:water</td>
-<td align="right">45.2862</td>
-<td align="right">2</td>
-<td align="right">0.0000</td>
-</tr>
-<tr class="even">
-<td align="left">year:snow</td>
-<td align="right">0.0067</td>
-<td align="right">1</td>
+<td align="right">0.0495</td>
 <td align="right">0.9346</td>
-</tr>
-<tr class="odd">
-<td align="left">water:snow</td>
-<td align="right">1.0814</td>
-<td align="right">2</td>
+<td align="right">0.0000</td>
 <td align="right">0.5823</td>
-</tr>
-<tr class="even">
-<td align="left">year:water:snow</td>
-<td align="right">12.0279</td>
-<td align="right">2</td>
 <td align="right">0.0024</td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>emmeans(RGR.mod, ~ year * water * snow) %&gt;% as_tibble %&gt;% 
-  ggplot(aes(x=water, color=snow, y=emmean))+ facet_wrap(vars(year))+ geom_hline(yintercept=0)+
-  geom_pointrange(aes(ymin=emmean-SE, ymax=emmean+SE), position=position_dodge2(0.9)) + 
-  labs(x=&quot;Precipitation&quot;, y=&quot;RGR (year\U207B\U00B9)&quot;, color=&quot;Snowmelt&quot;) +
-  scale_color_manual(values=snow_pal) + theme_minimal()</code></pre>
-<p><img src="images/transitions-5.png" width="672" /></p>
+<pre class="r"><code>re_table(fitness.mod.coefs) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="right">snow:plot</th>
+<th align="right">snow:plotid</th>
+<th align="right">Residual</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">flowered</td>
+<td align="right">0.3481</td>
+<td align="right">0.2739</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">survived</td>
+<td align="right">0.0001</td>
+<td align="right">0.4848</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">RGR</td>
+<td align="right">0.0005</td>
+<td align="right">0.4823</td>
+<td align="right">1.234</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>ggplot(fitness.mod.emm, aes(x=water, color=snow, y=emmean)) + 
+  facet_grid(trait ~ year, scales=&quot;free_y&quot;, labeller = as_labeller(c(fitnessnames, set_names(2018:2019))), switch=&quot;y&quot;)+
+  geom_hline(data=data.frame(trait = fitnesstraits, plot=c(NA,NA,&quot;yes&quot;)), aes(linetype=plot, yintercept=0), color=&quot;grey&quot;)+ guides(linetype=F)+
+  geom_linerange(aes(ymin=lSE, ymax=uSE), position=position_dodge(width=0.8), size=1, show.legend=F) +
+  geom_point(position=position_dodge(width=0.8), shape=&quot;-&quot;, size=16) + 
+  labs(x=&quot;Precipitation&quot;, color=&quot;Snowmelt&quot;) + scale_y_continuous(position=&quot;right&quot;)  + scale_x_discrete(guide=guide_axis(angle=90))+ 
+  scale_color_manual(values=c(&quot;grey&quot;,&quot;black&quot;), guide=guide_legend(override.aes = list(shape=15, size=5))) + 
+  theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
+                          axis.title.y= element_blank(),
+                          panel.border = element_rect(fill=NA, colour = &quot;black&quot;),
+                          panel.spacing=unit(0, &quot;pt&quot;), plot.margin = margin(0,0,0,0, &quot;pt&quot;), legend.position = &quot;top&quot;) </code></pre>
+<p><img src="images/transitions-3.png" width="336" /></p>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 
 (survived.mod.sm &lt;- glmmTMB(survived ~ year * VWC + (1|plot) + (1|plotid), data=cen.status.fitness, family=binomial))</code></pre>
@@ -1870,8 +1708,8 @@ Conditional model:
   scale_y_continuous(limits=c(0,1)) + scale_color_manual(values=year_pal) + theme_minimal()</code></pre>
 <p><img src="images/transitions_sm-2.png" width="672" /></p>
 </div>
-<div id="survival-and-flowering-vs.-vegetative-plant-size" class="section level2">
-<h2>Survival and flowering vs. vegetative plant size</h2>
+<div id="survival-and-flowering-vs.-size" class="section level2">
+<h2>Survival and flowering vs. size</h2>
 <pre class="r"><code>ggplot(filter(cen, status_19 %in% status_ok, status_18 == &quot;vegetative&quot;), aes(x=r1_longest_18, fill=status_19)) +
   facet_wrap(vars(status_19), ncol=1) + labs(x=&quot;2018 Rosette 1 Longest Leaf (mm)&quot;, fill=&quot;2019 status&quot;) +
   geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 85))</code></pre>
@@ -1888,6 +1726,74 @@ Conditional model:
   facet_wrap(vars(status_20), ncol=1) + labs(x=&quot;2019 Rosette 1 # Leaves&quot;, fill=&quot;2020 status&quot;) +
   geom_density() + scale_fill_manual(values=status_pal) + coord_cartesian(xlim=c(0, 100))</code></pre>
 <p><img src="images/surv_size-4.png" width="672" /></p>
+<pre class="r"><code>cen.size.fitness &lt;- cen.size  %&gt;% mutate(census=paste0(&quot;20&quot;,census)) %&gt;% left_join(cen.status.long)
+  
+cen.size.fitness %&gt;%  select(year, census, size, flowered, survived, water, snow) %&gt;% filter(census !=&quot;2020&quot;) %&gt;% 
+  pivot_longer(c(flowered, survived), names_to=&quot;trait&quot;, values_to=&quot;fitness&quot;) %&gt;% 
+  ggplot(aes(x=log10(size), y=fitness, color=water)) + facet_grid(trait ~ census, switch=&quot;y&quot;, 
+                                                                labeller = as_labeller(c(fitnessnames, set_names(unique(cen.size.fitness$census))))) +
+  geom_point(shape=&quot;|&quot;, show.legend=F) + geom_smooth(method=&quot;glm&quot;, method.args=list(family=&quot;binomial&quot;), se=F) +
+  scale_color_manual(values=water_pal) + scale_y_continuous(position=&quot;right&quot;) + scale_x_continuous(labels=c(1:3,&quot;&quot;)) +
+  labs(color=&quot;Precipitation&quot;, x=expression(log[10]~Rosette~size)) + 
+  theme_minimal() +  theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
+                          axis.title.y= element_blank(),
+                          panel.border = element_rect(fill=NA, colour = &quot;black&quot;),
+                          panel.spacing=unit(0, &quot;pt&quot;), plot.margin = margin(0,0,0,0, &quot;pt&quot;), legend.position = &quot;top&quot;) </code></pre>
+<p><img src="images/surv_size-5.png" width="672" /></p>
+<pre class="r"><code>fitness.size.mod &lt;- map(set_names(fitnesstraits[1:2]), 
+                    ~ glmmTMB(cen.size.fitness[[.x]] ~ census * size * water + (1|plot) + (1|plotid), data=cen.size.fitness, family=&quot;binomial&quot;)) 
+fitness.size.mod.tests &lt;- map(fitness.size.mod, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
+Anova_table(fitness.size.mod.tests) %&gt;% kable()</code></pre>
+<table>
+<colgroup>
+<col width="9%" />
+<col width="12%" />
+<col width="7%" />
+<col width="6%" />
+<col width="7%" />
+<col width="12%" />
+<col width="13%" />
+<col width="11%" />
+<col width="18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">census</th>
+<th align="right">size</th>
+<th align="right">water</th>
+<th align="right">census:size</th>
+<th align="right">census:water</th>
+<th align="right">size:water</th>
+<th align="right">census:size:water</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">flowered</td>
+<td align="right">0</td>
+<td align="right">0.0000</td>
+<td align="right">1e-04</td>
+<td align="right">0.5605</td>
+<td align="right">0.0680</td>
+<td align="right">0.9216</td>
+<td align="right">0.6218</td>
+<td align="right">0.5675</td>
+</tr>
+<tr class="even">
+<td align="left">survived</td>
+<td align="right">0</td>
+<td align="right">0.4248</td>
+<td align="right">1e-04</td>
+<td align="right">0.8830</td>
+<td align="right">0.0001</td>
+<td align="right">0.8818</td>
+<td align="right">0.4121</td>
+<td align="right">0.0960</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="plant-growth-vs.-treatments" class="section level2">
 <h2>Plant growth vs. treatments</h2>
@@ -1949,6 +1855,13 @@ Conditional model:
   scale_color_viridis_c() + coord_fixed() + scale_x_continuous(breaks=-6:6) + scale_y_continuous(breaks=-6:6) +
   labs(x=&quot;RGR from 2018 to 2019&quot;, y= &quot;RGR from 2019 to 2020&quot;, color=&quot;ln size 2019&quot;)</code></pre>
 <p><img src="images/sizemetric-3.png" width="672" /></p>
+</div>
+<div id="traits-vs.-size" class="section level2">
+<h2>Traits vs. size</h2>
+<pre class="r"><code>bind_rows(lt, pt) %&gt;% select(size, all_of(c(leaftraits, phystraits)), water) %&gt;% pivot_longer(c(leaftraits, phystraits)) %&gt;% 
+  ggplot(aes(x=log10(size), y=value, color=water)) + facet_wrap(vars(name), scales=&quot;free_y&quot;)  + geom_point(size=0.5) + geom_smooth(se=F) + 
+  ylab(&quot;&quot;) + scale_color_manual(values=water_pal) + theme_minimal() </code></pre>
+<p><img src="images/traits_size-1.png" width="672" /></p>
 </div>
 </div>
 <div id="leaf-traits" class="section level1">
@@ -2134,6 +2047,26 @@ lt %&gt;% nest(data=c(-year.round)) %&gt;%   mutate(fit = map(data, ~ lmodel2(lo
 1 a      0.00160  0.000223      7.17 2.37e-10
 2 b      1.41     0.103        13.7  2.17e-23</code></pre>
 <pre class="r"><code># a = 0.00160 +- 0.00022, b = 1.41 +- 0.10</code></pre>
+</div>
+<div id="length-to-area" class="section level3">
+<h3>Length to area</h3>
+<pre class="r"><code>ggplot(lt, aes(leaf_length_cm, leaf_area_cm2)) + 
+  geom_point(size=0.8) + geom_smooth(method = &#39;nls&#39;, formula = &#39;y~a*x^b&#39;, se=F, method.args = list(start= c(a = 0.001,b=1))) + #NLS, weights=1
+  xlim(c(0,NA)) + theme_minimal()</code></pre>
+<p><img src="images/leaf_scaling_length_area-1.png" width="672" /></p>
+<pre class="r"><code>nls(leaf_area_cm2 ~ a * leaf_length_cm ^ b, start=list(a=0.001, b=1), data = lt) %&gt;% tidy</code></pre>
+<pre><code># A tibble: 2 x 5
+  term  estimate std.error statistic  p.value
+  &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+1 a        0.318    0.0313      10.1 2.11e-16
+2 b        1.13     0.0747      15.1 4.28e-26</code></pre>
+<pre class="r"><code># a = 0.138 +- 0.031, b = 1.13 +- 0.07
+
+lt %&gt;% left_join(cen.size.long %&gt;% filter(variable==&quot;longest&quot;, rosette==&quot;r1&quot;, census != &quot;18r2&quot;) %&gt;% 
+                   mutate(plotid=str_sub(plantid, 1,2), year=paste0(&quot;20&quot;,census)) %&gt;% rename(longest=&quot;value&quot;) %&gt;% select(-census)) %&gt;% 
+  ggplot(aes(x=longest/10, y=(leaf_area_cm2/.318)^(1/1.13))) + geom_abline(slope=1, intercept=0) + geom_smooth() + geom_point() +
+  labs(x=&quot;Longest leaf on rosette #1 (cm)&quot;, y=&quot;Estimated sampled leaf length (cm) from leaf area&quot;) + coord_fixed() + theme_minimal()</code></pre>
+<p><img src="images/leaf_scaling_length_area-2.png" width="672" /></p>
 </div>
 </div>
 </div>
@@ -5323,7 +5256,7 @@ step_selection_mod &lt;- function(trait, response, treatment, set, test_year = T
   return(mod)
 }
 
-selection.combos &lt;- expand.grid(list(response = c(&quot;survived&quot;,&quot;flowered&quot;,&quot;RGR&quot;), treatment=c(&quot;water&quot;,&quot;snow&quot;), set = c(&quot;lt&quot;, &quot;pt&quot;))) %&gt;% as_tibble() 
+selection.combos &lt;- expand.grid(list(response = fitnesstraits, treatment=c(&quot;water&quot;,&quot;snow&quot;), set = c(&quot;lt&quot;, &quot;pt&quot;))) %&gt;% as_tibble() 
 mod.selection &lt;- selection.combos  %&gt;% 
   full_join(tibble(trait=c(leaftraits, phystraits), 
                    set = c(rep(&quot;lt&quot;, length(leaftraits)), rep(&quot;pt&quot;, length(phystraits))))) %&gt;% 
@@ -6063,10 +5996,10 @@ plot_selection_facets &lt;- function(response, treatment, set) {
   
   p &lt;- ggplot(trait.data, aes_string(y=response, x=&quot;value&quot;, color=treatment, linetype=&quot;year&quot;)) + 
     facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller = as_labeller(traitnames.units), strip.position = &quot;bottom&quot;)+
-    geom_point() +
+    geom_point(shape=ifelse(response==&quot;RGR&quot;, 1,&quot;|&quot;)) +
     scale_color_manual(values=c(water_pal, snow_pal)) + theme(legend.position=&quot;top&quot;) +
     labs(linetype=&quot;Year&quot;,x=&quot;&quot;,color=c(water=&quot;Precipitation&quot;,snow=&quot;Snowmelt&quot;)[treatment], 
-         y=set_names( c(&quot;Flowering the next year&quot;, &quot;Survival to the next year&quot;, &quot;RGR (year\U207B\U00B9)&quot;),c(&quot;flowered&quot;, &quot;survived&quot;, &quot;RGR&quot;))[response]) +
+         y=fitnessnames[response]) +
     theme_minimal() + theme(text=element_text(color=&quot;black&quot;), axis.text = element_text(color=&quot;black&quot;),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;), 
                             panel.spacing=unit(0, &quot;pt&quot;), plot.margin = margin(0,0,0,0, &quot;pt&quot;), 
@@ -6100,7 +6033,7 @@ selection_mod_abs &lt;- function(trait, response, set) {
   glmmTMB(formula(paste(response, &quot;~ trait * sun_date + trait * precip_est_mm + (1|plot)&quot;)), data=t.plantyr, family=family)
 }
 
-mod.selection.abs &lt;- expand.grid(list(response = c(&quot;survived&quot;,&quot;flowered&quot;,&quot;RGR&quot;), set = c(&quot;lt&quot;, &quot;pt&quot;))) %&gt;% as_tibble() %&gt;% 
+mod.selection.abs &lt;- expand.grid(list(response = fitnesstraits, set = c(&quot;lt&quot;, &quot;pt&quot;))) %&gt;% as_tibble() %&gt;% 
   full_join(tibble(trait=c(leaftraits, phystraits), 
                    set = c(rep(&quot;lt&quot;, length(leaftraits)), rep(&quot;pt&quot;, length(phystraits))))) %&gt;% 
   mutate(model = pmap(., selection_mod_abs),
@@ -6111,85 +6044,6 @@ mod.selection.abs  %&gt;% group_by(response) %&gt;%
   group_walk(function(.x,.y) {cat(paste(&quot;Effect of trait on whether a plant&quot;,ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
                                         &quot;under different absolute snowmelt / summer precip conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable() %&gt;% print})</code></pre>
-<p>Effect of trait on whether a plant survived under different absolute snowmelt / summer precip conditions</p>
-<table style="width:100%;">
-<colgroup>
-<col width="18%" />
-<col width="12%" />
-<col width="7%" />
-<col width="9%" />
-<col width="14%" />
-<col width="15%" />
-<col width="21%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">Trait</th>
-<th align="right">(Intercept)</th>
-<th align="right">trait</th>
-<th align="right">sun_date</th>
-<th align="right">precip_est_mm</th>
-<th align="right">trait:sun_date</th>
-<th align="right">trait:precip_est_mm</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="right">0.0000</td>
-<td align="right">0.0000</td>
-<td align="right">0.0000</td>
-<td align="right">1.0000</td>
-<td align="right">1.000</td>
-<td align="right">1.0000</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">0.5401</td>
-<td align="right">0.6478</td>
-<td align="right">0.7128</td>
-<td align="right">0.1026</td>
-<td align="right">0.914</td>
-<td align="right">0.0766</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-</tr>
-</tbody>
-</table>
 <p>Effect of trait on whether a plant flowered under different absolute snowmelt / summer precip conditions</p>
 <table style="width:100%;">
 <colgroup>
@@ -6266,6 +6120,85 @@ mod.selection.abs  %&gt;% group_by(response) %&gt;%
 <td align="right">1.0000</td>
 <td align="right">1.0000</td>
 <td align="right">1.0000</td>
+</tr>
+</tbody>
+</table>
+<p>Effect of trait on whether a plant survived under different absolute snowmelt / summer precip conditions</p>
+<table style="width:100%;">
+<colgroup>
+<col width="18%" />
+<col width="12%" />
+<col width="7%" />
+<col width="9%" />
+<col width="14%" />
+<col width="15%" />
+<col width="21%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">trait</th>
+<th align="right">sun_date</th>
+<th align="right">precip_est_mm</th>
+<th align="right">trait:sun_date</th>
+<th align="right">trait:precip_est_mm</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0.0000</td>
+<td align="right">0.0000</td>
+<td align="right">0.0000</td>
+<td align="right">1.0000</td>
+<td align="right">1.000</td>
+<td align="right">1.0000</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">0.5401</td>
+<td align="right">0.6478</td>
+<td align="right">0.7128</td>
+<td align="right">0.1026</td>
+<td align="right">0.914</td>
+<td align="right">0.0766</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
 </tr>
 </tbody>
 </table>
@@ -6362,7 +6295,7 @@ selection_mod_sm &lt;- function(trait, response, set, test_year=TRUE) {
   else           glmmTMB(formula(paste(response, &quot;~ trait *        VWC + (1|plot)&quot;)), data=t.plantyr, family=family)
 }
 
-mod.selection.sm &lt;- expand.grid(list(response = c(&quot;survived&quot;,&quot;flowered&quot;,&quot;RGR&quot;), set = c(&quot;lt&quot;, &quot;pt&quot;))) %&gt;% as_tibble() %&gt;% 
+mod.selection.sm &lt;- expand.grid(list(response = fitnesstraits, set = c(&quot;lt&quot;, &quot;pt&quot;))) %&gt;% as_tibble() %&gt;% 
   full_join(tibble(trait=c(leaftraits, phystraits), 
                    set = c(rep(&quot;lt&quot;, length(leaftraits)), rep(&quot;pt&quot;, length(phystraits))))) %&gt;% 
   mutate(test_year=!(trait %in% c(&quot;sla&quot;, &quot;water_content&quot;))) %&gt;% 
@@ -6374,90 +6307,6 @@ mod.selection.sm  %&gt;% group_by(response) %&gt;%
   group_walk(function(.x,.y) {cat(paste(&quot;Effect of trait on whether a plant&quot;,ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
                                         &quot;under different VWC conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable() %&gt;% print})</code></pre>
-<p>Effect of trait on whether a plant survived under different VWC conditions</p>
-<table>
-<thead>
-<tr class="header">
-<th align="left">Trait</th>
-<th align="right">(Intercept)</th>
-<th align="right">trait</th>
-<th align="right">VWC</th>
-<th align="right">trait:VWC</th>
-<th align="right">year</th>
-<th align="right">trait:year</th>
-<th align="right">year:VWC</th>
-<th align="right">trait:year:VWC</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="right">0.9805</td>
-<td align="right">0.9557</td>
-<td align="right">0.7660</td>
-<td align="right">0.8249</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">0.7948</td>
-<td align="right">0.9667</td>
-<td align="right">0.6935</td>
-<td align="right">0.8753</td>
-<td align="right">0.5139</td>
-<td align="right">0.6914</td>
-<td align="right">0.5762</td>
-<td align="right">0.6436</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NaN</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">0.0157</td>
-<td align="right">0.8770</td>
-<td align="right">0.7858</td>
-<td align="right">0.8871</td>
-<td align="right">0.7154</td>
-<td align="right">0.7738</td>
-<td align="right">0.6769</td>
-<td align="right">0.7753</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">0.0007</td>
-<td align="right">0.3316</td>
-<td align="right">0.0879</td>
-<td align="right">0.1394</td>
-<td align="right">0.9714</td>
-<td align="right">0.8252</td>
-<td align="right">0.6373</td>
-<td align="right">0.5962</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="right">0.6279</td>
-<td align="right">0.2558</td>
-<td align="right">0.1760</td>
-<td align="right">0.1216</td>
-<td align="right">0.2582</td>
-<td align="right">0.5001</td>
-<td align="right">0.5106</td>
-<td align="right">0.7979</td>
-</tr>
-</tbody>
-</table>
 <p>Effect of trait on whether a plant flowered under different VWC conditions</p>
 <table>
 <thead>
@@ -6539,6 +6388,90 @@ mod.selection.sm  %&gt;% group_by(response) %&gt;%
 <td align="right">0.8239</td>
 <td align="right">0.2038</td>
 <td align="right">0.2468</td>
+</tr>
+</tbody>
+</table>
+<p>Effect of trait on whether a plant survived under different VWC conditions</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">trait</th>
+<th align="right">VWC</th>
+<th align="right">trait:VWC</th>
+<th align="right">year</th>
+<th align="right">trait:year</th>
+<th align="right">year:VWC</th>
+<th align="right">trait:year:VWC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0.9805</td>
+<td align="right">0.9557</td>
+<td align="right">0.7660</td>
+<td align="right">0.8249</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">0.7948</td>
+<td align="right">0.9667</td>
+<td align="right">0.6935</td>
+<td align="right">0.8753</td>
+<td align="right">0.5139</td>
+<td align="right">0.6914</td>
+<td align="right">0.5762</td>
+<td align="right">0.6436</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NaN</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">0.0157</td>
+<td align="right">0.8770</td>
+<td align="right">0.7858</td>
+<td align="right">0.8871</td>
+<td align="right">0.7154</td>
+<td align="right">0.7738</td>
+<td align="right">0.6769</td>
+<td align="right">0.7753</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">0.0007</td>
+<td align="right">0.3316</td>
+<td align="right">0.0879</td>
+<td align="right">0.1394</td>
+<td align="right">0.9714</td>
+<td align="right">0.8252</td>
+<td align="right">0.6373</td>
+<td align="right">0.5962</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">0.6279</td>
+<td align="right">0.2558</td>
+<td align="right">0.1760</td>
+<td align="right">0.1216</td>
+<td align="right">0.2582</td>
+<td align="right">0.5001</td>
+<td align="right">0.5106</td>
+<td align="right">0.7979</td>
 </tr>
 </tbody>
 </table>
@@ -6644,9 +6577,8 @@ plot_abs(mod.abs, mnps.subplot, floraltraits[1:6]) + #Morphological traits - sub
     scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
 ggsave(filename=&quot;../snow_precip_mt.png&quot;, width=7, height=4)</code></pre>
 </div>
-</div>
-<div id="rgr-selection" class="section level1">
-<h1>RGR selection</h1>
+<div id="rgr-selection-without-treaments" class="section level2">
+<h2>RGR selection without treaments</h2>
 <pre class="r"><code>lt.plantyr %&gt;% left_join(cen.RGR.long) %&gt;% select(all_of(c(leaftraits, &quot;RGR&quot;)), year) %&gt;% 
   pivot_longer(all_of(leaftraits), names_to=&quot;trait&quot;) %&gt;% 
   ggplot(aes(x=value, y=RGR, color=year.round)) + facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller=as_labeller(traitnames)) + 
@@ -6665,103 +6597,110 @@ ggsave(filename=&quot;../snow_precip_mt.png&quot;, width=7, height=4)</code></pr
 map(set_names(leaftraits), 
                    ~ lm(RGR_rel ~ trait.z, 
                          data=lt.plantyr.r2 %&gt;% ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = lt.plantyr.r2[[.x]] / alltraits.sd[[.x]]) %&gt;% 
-                           group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm=T), year=factor(year))))</code></pre>
-<pre><code>$sla
-
-Call:
-lm(formula = RGR_rel ~ trait.z, data = lt.plantyr.r2 %&gt;% ungroup %&gt;% 
-    left_join(cen.RGR.long) %&gt;% mutate(trait.z = lt.plantyr.r2[[.x]]/alltraits.sd[[.x]]) %&gt;% 
-    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
-    year = factor(year)))
-
-Coefficients:
-(Intercept)      trait.z  
-     -0.786        0.619  
-
-
-$trichome_density
-
-Call:
-lm(formula = RGR_rel ~ trait.z, data = lt.plantyr.r2 %&gt;% ungroup %&gt;% 
-    left_join(cen.RGR.long) %&gt;% mutate(trait.z = lt.plantyr.r2[[.x]]/alltraits.sd[[.x]]) %&gt;% 
-    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
-    year = factor(year)))
-
-Coefficients:
-(Intercept)      trait.z  
-     1.0902      -0.0651  
-
-
-$water_content
-
-Call:
-lm(formula = RGR_rel ~ trait.z, data = lt.plantyr.r2 %&gt;% ungroup %&gt;% 
-    left_join(cen.RGR.long) %&gt;% mutate(trait.z = lt.plantyr.r2[[.x]]/alltraits.sd[[.x]]) %&gt;% 
-    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
-    year = factor(year)))
-
-Coefficients:
-(Intercept)      trait.z  
-     -6.408        0.882  </code></pre>
+                           group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm=T), year=factor(year)))) %&gt;% 
+  map(car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;) %&gt;% Anova_table() %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">trait.z</th>
+<th align="right">Residuals</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0.7359</td>
+<td align="right">0.4420</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">0.0371</td>
+<td align="right">0.8454</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">0.0672</td>
+<td align="right">0.0351</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>map(set_names(phystraits), 
                    ~ lm(RGR_rel ~ trait.z * year * water, 
                          data=pt.plantyr %&gt;% ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = pt.plantyr[[.x]] / alltraits.sd[[.x]]) %&gt;% 
-                           group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm=T), year=factor(year))))</code></pre>
-<pre><code>$photosynthesis
-
-Call:
-lm(formula = RGR_rel ~ trait.z * year * water, data = pt.plantyr %&gt;% 
-    ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = pt.plantyr[[.x]]/alltraits.sd[[.x]]) %&gt;% 
-    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
-    year = factor(year)))
-
-Coefficients:
-         (Intercept)               trait.z                 year1  
-               -9.28                  7.89                 10.21  
-              water1                water2         trait.z:year1  
-               10.03                  5.22                 -7.65  
-      trait.z:water1        trait.z:water2          year1:water1  
-                3.91                 -4.15                 -7.77  
-        year1:water2  trait.z:year1:water1  trait.z:year1:water2  
-               -5.89                 -4.43                  4.02  
-
-
-$conductance
-
-Call:
-lm(formula = RGR_rel ~ trait.z * year * water, data = pt.plantyr %&gt;% 
-    ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = pt.plantyr[[.x]]/alltraits.sd[[.x]]) %&gt;% 
-    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
-    year = factor(year)))
-
-Coefficients:
-         (Intercept)               trait.z                 year1  
-               24.57                -16.42                -23.50  
-              water1                water2         trait.z:year1  
-               25.28                -22.72                 16.72  
-      trait.z:water1        trait.z:water2          year1:water1  
-               -8.88                 16.63                -23.16  
-        year1:water2  trait.z:year1:water1  trait.z:year1:water2  
-               21.98                  8.30                -16.87  
-
-
-$WUE
-
-Call:
-lm(formula = RGR_rel ~ trait.z * year * water, data = pt.plantyr %&gt;% 
-    ungroup %&gt;% left_join(cen.RGR.long) %&gt;% mutate(trait.z = pt.plantyr[[.x]]/alltraits.sd[[.x]]) %&gt;% 
-    group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm = T), 
-    year = factor(year)))
-
-Coefficients:
-         (Intercept)               trait.z                 year1  
-              -2.305                 1.975                 2.908  
-              water1                water2         trait.z:year1  
-               1.219                18.802                -1.716  
-      trait.z:water1        trait.z:water2          year1:water1  
-              12.302               -18.310                 0.392  
-        year1:water2  trait.z:year1:water1  trait.z:year1:water2  
-             -19.037               -12.192                18.060  </code></pre>
+                           group_by(year) %&gt;% mutate(RGR_rel = RGR/mean(RGR, na.rm=T), year=factor(year)))) %&gt;% 
+  map(car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;) %&gt;% Anova_table() %&gt;% kable()</code></pre>
+<table style="width:100%;">
+<colgroup>
+<col width="12%" />
+<col width="10%" />
+<col width="6%" />
+<col width="6%" />
+<col width="6%" />
+<col width="11%" />
+<col width="12%" />
+<col width="9%" />
+<col width="16%" />
+<col width="8%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">trait.z</th>
+<th align="right">year</th>
+<th align="right">water</th>
+<th align="right">trait.z:year</th>
+<th align="right">trait.z:water</th>
+<th align="right">year:water</th>
+<th align="right">trait.z:year:water</th>
+<th align="right">Residuals</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">photosynthesis</td>
+<td align="right">0.4280</td>
+<td align="right">0.2609</td>
+<td align="right">0.3831</td>
+<td align="right">0.7374</td>
+<td align="right">0.2754</td>
+<td align="right">0.8118</td>
+<td align="right">0.7840</td>
+<td align="right">0.8006</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">conductance</td>
+<td align="right">0.0382</td>
+<td align="right">0.0962</td>
+<td align="right">0.0472</td>
+<td align="right">0.1957</td>
+<td align="right">0.0904</td>
+<td align="right">0.2745</td>
+<td align="right">0.2273</td>
+<td align="right">0.2697</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">WUE</td>
+<td align="right">0.8263</td>
+<td align="right">0.7760</td>
+<td align="right">0.7820</td>
+<td align="right">0.3440</td>
+<td align="right">0.8047</td>
+<td align="right">0.1633</td>
+<td align="right">0.3499</td>
+<td align="right">0.1705</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 <div id="phenology" class="section level1">
 <h1>Phenology</h1>

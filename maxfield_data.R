@@ -363,13 +363,14 @@ cen.status.long <- cen.status %>% select(!starts_with("transition|flowering|aliv
 cen.size.long <- cen %>% select(plantid|starts_with("n_rosettes")|contains(c("longest","leaves"))) %>% 
   pivot_longer(-plantid) %>% separate(name, into=c("rosette","variable","census")) %>% drop_na(value)
 
-cen.size <- cen.size.long %>% filter(rosette != "n") %>% pivot_wider(names_from=variable) %>% 
+cen.size.sum <- cen.size.long %>% filter(rosette != "n") %>% pivot_wider(names_from=variable) %>% 
   mutate(size = longest * leaves) %>% #Campbell and Wendlandt 2013 "size" definition - maybe proportional to total leaf length
   group_by(plantid, census) %>% summarize(size=sum(size, na.rm=T)) %>% #sum sizes of all rosettes, not equal to Campbell 1997 = mean(longest) * sum(leaves)
-  mutate(year = paste0("20",str_remove(census,"r2")), plotid = str_sub(plantid, 1,2)) %>% 
-  left_join(treatments)
+  mutate(year = paste0("20",str_remove(census,"r2")), plotid = str_sub(plantid, 1,2))
+cen.size.sum.no18r2 <- cen.size.sum %>% filter(census !="18r2") %>% select(-census)
+cen.size <- cen.size.sum %>% left_join(treatments)
 
-cen.RGR <- cen.size %>% select(plantid, plotid, census, size) %>%
+cen.RGR <- cen.size.sum %>% select(-year) %>%
   pivot_wider(names_from="census", names_prefix="size", values_from="size") %>% 
   mutate(RGR_18r2 = 1.41*log(size18r2/size18)/(63/365), RGR_19=1.41*log(size19/size18)/(373/365), RGR_20=1.41*log(size20/size19)/(363/365))
 # scaling between dry mass and leaf length follows a power law with exponent 1.41 (see NLS in maxfield_JP_analyses.Rmd/leaf_scaling_length)
@@ -462,7 +463,7 @@ lt <- map_dfr(sheet_names(lt_sheets), ~ read_sheet(lt_sheets, sheet=.x)) %>%
          water_content = (wet_weight_g-dry_weight_g)/wet_weight_g) %>% 
   rename(date = date_collected) %>% 
   group_by(year) %>% group_split() %>% map2_dfr(paste0("leaf",18:20), fix_dataset) %>% 
-  left_join(treatments) %>% left_join(sm.subplotyear) %>% left_join(cen.RGR.long) %>% 
+  left_join(treatments) %>% left_join(sm.subplotyear) %>% left_join(cen.RGR.long) %>% left_join(cen.size.sum.no18r2) %>% #TODO use 18r2 size with round 2 lt?
   mutate_if(is.character, as.factor) 
 
 #drop traits that use irregular dry weights in 2019 round 2
@@ -564,7 +565,7 @@ pt.sm <- pt.raw %>%
 pt <- pt.raw %>% left_join(pt.sm %>% select(plantid, date, duplicate, date.sm, date_diff, VWC.sm)) %>%
   rename(VWC.plant = VWC) %>% 
   group_by(year) %>% group_split() %>% map2_dfr(paste0("licor",18:20), fix_dataset) %>% 
-  left_join(treatments) %>% left_join(sm.subplotyear) %>% left_join(cen.RGR.long) %>% 
+  left_join(treatments) %>% left_join(sm.subplotyear) %>% left_join(cen.RGR.long) %>% left_join(cen.size.sum.no18r2) %>% 
   rename(VWC.sm.year = VWC)
 
 # TODO does not lump leaves from the same plant measured in multiple rounds
@@ -816,6 +817,8 @@ seedtraits <- traits[10:16]
 leaftraits <- c("sla","trichome_density","water_content")
 phystraits <- c("photosynthesis", "conductance", "WUE")
 alltraits <- c(traits, leaftraits, phystraits)
+fitnesstraits <- c("flowered", "survived", "RGR")
+fitnessnames <- set_names(c("Flowering", "Survival", "RGR (year\U207B\U00B9)"), fitnesstraits)
 
 traitnames <- set_names(c(
   "Corolla length", "Style length", "Corolla width", "Sepal width", 
