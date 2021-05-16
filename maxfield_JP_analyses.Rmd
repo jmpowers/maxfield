@@ -512,8 +512,9 @@ cen.size.fitness <- cen.size  %>% mutate(census=paste0("20",census)) %>% left_jo
   
 cen.size.fitness %>%  select(year, census, size, flowered, survived, water, snow) %>% filter(census !="2020") %>% 
   pivot_longer(c(flowered, survived), names_to="trait", values_to="fitness") %>% 
-  ggplot(aes(x=log10(size), y=fitness, color=water)) + facet_grid(trait ~ census, switch="y", 
-                                                                labeller = as_labeller(c(fitnessnames, set_names(unique(cen.size.fitness$census))))) +
+  ggplot(aes(x=log10(size), y=fitness, color=water)) + 
+  facet_grid(trait ~ census, switch="y", 
+             labeller = as_labeller(c(fitnessnames, c(`2018`="2018 early",`2018r2`="2018 late",`2019`="2019 early")))) +
   geom_point(shape="|", show.legend=F) + geom_smooth(method="glm", method.args=list(family="binomial"), se=F) +
   scale_color_manual(values=water_pal) + scale_y_continuous(position="right") + scale_x_continuous(labels=c(1:3,"")) +
   labs(color="Precipitation", x=expression(log[10]~Rosette~size)) + 
@@ -1572,7 +1573,6 @@ plot_selection_facets <- function(response, treatment, set) {
   
   p <- ggplot(trait.data, aes_string(y=response, x="value", color=treatment, linetype="year")) + 
     facet_wrap(vars(trait), scales="free_x", labeller = as_labeller(traitnames.units), strip.position = "bottom")+
-    geom_point(shape=ifelse(response=="RGR", 1,"|")) +
     scale_color_manual(values=c(water_pal, snow_pal)) + theme(legend.position="top") +
     labs(linetype="Year",x="",color=c(water="Precipitation",snow="Snowmelt")[treatment], 
          y=fitnessnames[response]) +
@@ -1584,9 +1584,9 @@ plot_selection_facets <- function(response, treatment, set) {
     p  <- p + guides(linetype=F, color=F)
   }
   if(response =="RGR") {
-    p <-  p +  geom_smooth(se=F, method="lm")
+    p <-  p + geom_point(aes(shape=year)) + geom_smooth(se=F, method="lm")
   }  else { 
-    p <-  p + geom_smooth(se=F, method="glm", method.args = list(family=binomial))
+    p <-  p + geom_point(shape="|") + geom_smooth(se=F, method="glm", method.args = list(family=binomial))
   }
   return(p)
 }

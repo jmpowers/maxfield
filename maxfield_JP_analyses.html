@@ -1730,8 +1730,9 @@ Conditional model:
   
 cen.size.fitness %&gt;%  select(year, census, size, flowered, survived, water, snow) %&gt;% filter(census !=&quot;2020&quot;) %&gt;% 
   pivot_longer(c(flowered, survived), names_to=&quot;trait&quot;, values_to=&quot;fitness&quot;) %&gt;% 
-  ggplot(aes(x=log10(size), y=fitness, color=water)) + facet_grid(trait ~ census, switch=&quot;y&quot;, 
-                                                                labeller = as_labeller(c(fitnessnames, set_names(unique(cen.size.fitness$census))))) +
+  ggplot(aes(x=log10(size), y=fitness, color=water)) + 
+  facet_grid(trait ~ census, switch=&quot;y&quot;, 
+             labeller = as_labeller(c(fitnessnames, c(`2018`=&quot;2018 early&quot;,`2018r2`=&quot;2018 late&quot;,`2019`=&quot;2019 early&quot;)))) +
   geom_point(shape=&quot;|&quot;, show.legend=F) + geom_smooth(method=&quot;glm&quot;, method.args=list(family=&quot;binomial&quot;), se=F) +
   scale_color_manual(values=water_pal) + scale_y_continuous(position=&quot;right&quot;) + scale_x_continuous(labels=c(1:3,&quot;&quot;)) +
   labs(color=&quot;Precipitation&quot;, x=expression(log[10]~Rosette~size)) + 
@@ -5996,7 +5997,6 @@ plot_selection_facets &lt;- function(response, treatment, set) {
   
   p &lt;- ggplot(trait.data, aes_string(y=response, x=&quot;value&quot;, color=treatment, linetype=&quot;year&quot;)) + 
     facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller = as_labeller(traitnames.units), strip.position = &quot;bottom&quot;)+
-    geom_point(shape=ifelse(response==&quot;RGR&quot;, 1,&quot;|&quot;)) +
     scale_color_manual(values=c(water_pal, snow_pal)) + theme(legend.position=&quot;top&quot;) +
     labs(linetype=&quot;Year&quot;,x=&quot;&quot;,color=c(water=&quot;Precipitation&quot;,snow=&quot;Snowmelt&quot;)[treatment], 
          y=fitnessnames[response]) +
@@ -6008,9 +6008,9 @@ plot_selection_facets &lt;- function(response, treatment, set) {
     p  &lt;- p + guides(linetype=F, color=F)
   }
   if(response ==&quot;RGR&quot;) {
-    p &lt;-  p +  geom_smooth(se=F, method=&quot;lm&quot;)
+    p &lt;-  p + geom_point(aes(shape=year)) + geom_smooth(se=F, method=&quot;lm&quot;)
   }  else { 
-    p &lt;-  p + geom_smooth(se=F, method=&quot;glm&quot;, method.args = list(family=binomial))
+    p &lt;-  p + geom_point(shape=&quot;|&quot;) + geom_smooth(se=F, method=&quot;glm&quot;, method.args = list(family=binomial))
   }
   return(p)
 }
