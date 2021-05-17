@@ -733,7 +733,7 @@ These conductance entries were blank, filled from WUE. There is another entry wi
 
 ## Leaf and physiology trait correlations
 
-The leaf traits were collected in two rounds (early/late), and the physiology traits on multiple date late in the summer. The physiology traits are matched to both leaf trait rounds (doubled). To show a color for the physiology traits without matches to the leaf traits, they are set as round 2 after merging - so ignore the boxplots of physiology traits against year.round.
+The leaf traits were collected in two rounds (early/late), and the physiology traits on multiple dates late in the summer. The physiology traits are matched to both leaf trait rounds (doubled). To show a color for the physiology traits without matches to the leaf traits, they are set as round 2 after merging - so ignore the boxplots of physiology traits against year.round.
 
 ```{r lt_pt_corr, fig.height=11, fig.width=11}
 plt <- full_join(pt %>% select(year, date, plantid, conductance, WUE, photosynthesis),
@@ -743,6 +743,11 @@ plt %>% mutate(year.round = ifelse(is.na(year.round), paste0(year, ".2"), as.cha
   select(-c(year, date, plantid)) %>% 
   ggpairs(mapping=aes(color=year.round)) + 
   scale_color_manual(values=year.round_pal)  + scale_fill_manual(values=year.round_pal)
+
+plt %>% pivot_longer(c(conductance, photosynthesis, WUE)) %>% 
+ggplot(aes(x=water_content, y=value, color=factor(date), shape=year)) + 
+  geom_point() + labs(color="licor date") + facet_wrap(vars(name), scales="free_y") + 
+  scale_color_manual(values=licor_date_pal, na.value="black") + theme_dark() + geom_smooth(se=F, method="lm")
 ```
 
 # Floral traits

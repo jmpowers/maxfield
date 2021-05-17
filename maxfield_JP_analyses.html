@@ -2142,7 +2142,7 @@ licor %&gt;% pivot_longer(Photo:StableF) %&gt;% mutate(index=row_number()) %&gt;
 <p>These conductance entries were blank, filled from WUE. There is another entry with conductance = 1.23 that was not blanked.</p>
 <div id="leaf-and-physiology-trait-correlations" class="section level2">
 <h2>Leaf and physiology trait correlations</h2>
-<p>The leaf traits were collected in two rounds (early/late), and the physiology traits on multiple date late in the summer. The physiology traits are matched to both leaf trait rounds (doubled). To show a color for the physiology traits without matches to the leaf traits, they are set as round 2 after merging - so ignore the boxplots of physiology traits against year.round.</p>
+<p>The leaf traits were collected in two rounds (early/late), and the physiology traits on multiple dates late in the summer. The physiology traits are matched to both leaf trait rounds (doubled). To show a color for the physiology traits without matches to the leaf traits, they are set as round 2 after merging - so ignore the boxplots of physiology traits against year.round.</p>
 <pre class="r"><code>plt &lt;- full_join(pt %&gt;% select(year, date, plantid, conductance, WUE, photosynthesis),
           lt %&gt;% select(year, year.round, plantid, sla, water_content, trichome_density))
 
@@ -2151,6 +2151,11 @@ plt %&gt;% mutate(year.round = ifelse(is.na(year.round), paste0(year, &quot;.2&q
   ggpairs(mapping=aes(color=year.round)) + 
   scale_color_manual(values=year.round_pal)  + scale_fill_manual(values=year.round_pal)</code></pre>
 <p><img src="images/lt_pt_corr-1.png" width="1056" /></p>
+<pre class="r"><code>plt %&gt;% pivot_longer(c(conductance, photosynthesis, WUE)) %&gt;% 
+ggplot(aes(x=water_content, y=value, color=factor(date), shape=year)) + 
+  geom_point() + labs(color=&quot;licor date&quot;) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  scale_color_manual(values=licor_date_pal, na.value=&quot;black&quot;) + theme_dark() + geom_smooth(se=F, method=&quot;lm&quot;)</code></pre>
+<p><img src="images/lt_pt_corr-2.png" width="1056" /></p>
 </div>
 </div>
 <div id="floral-traits" class="section level1">
