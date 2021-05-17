@@ -11,11 +11,11 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-05-11" />
+<meta name="date" content="2021-05-16" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
-<script src="libs/header-attrs-2.7/header-attrs.js"></script>
+<script src="libs/header-attrs-2.8/header-attrs.js"></script>
 <script src="libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -231,12 +231,12 @@ div.tocify {
 
 <!-- setup 3col/9col grid for toc_float and main content  -->
 <div class="row">
-<div class="col-sm-12 col-md-4 col-lg-3">
+<div class="col-xs-12 col-sm-4 col-md-3">
 <div id="TOC" class="tocify">
 </div>
 </div>
 
-<div class="toc-content col-sm-12 col-md-8 col-lg-9">
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
 
 
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-05-11</h4>
+<h4 class="date">2021-05-16</h4>
 
 </div>
 
@@ -2140,6 +2140,18 @@ licor %&gt;% pivot_longer(Photo:StableF) %&gt;% mutate(index=row_number()) %&gt;
 </tbody>
 </table>
 <p>These conductance entries were blank, filled from WUE. There is another entry with conductance = 1.23 that was not blanked.</p>
+<div id="leaf-and-physiology-trait-correlations" class="section level2">
+<h2>Leaf and physiology trait correlations</h2>
+<p>The leaf traits were collected in two rounds (early/late), and the physiology traits on multiple date late in the summer. The physiology traits are matched to both leaf trait rounds (doubled). To show a color for the physiology traits without matches to the leaf traits, they are set as round 2 after merging - so ignore the boxplots of physiology traits against year.round.</p>
+<pre class="r"><code>plt &lt;- full_join(pt %&gt;% select(year, date, plantid, conductance, WUE, photosynthesis),
+          lt %&gt;% select(year, year.round, plantid, sla, water_content, trichome_density))
+
+plt %&gt;% mutate(year.round = ifelse(is.na(year.round), paste0(year, &quot;.2&quot;), as.character(year.round))) %&gt;% 
+  select(-c(year, date, plantid)) %&gt;% 
+  ggpairs(mapping=aes(color=year.round)) + 
+  scale_color_manual(values=year.round_pal)  + scale_fill_manual(values=year.round_pal)</code></pre>
+<p><img src="images/lt_pt_corr-1.png" width="1056" /></p>
+</div>
 </div>
 <div id="floral-traits" class="section level1">
 <h1>Floral traits</h1>
