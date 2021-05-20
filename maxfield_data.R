@@ -1,10 +1,6 @@
 # Load in all the Maxfield Meadow Ipomopsis data
 # Includes treatments, loggers, census, phenology, floral and leaf traits, and seeds
 
-# TODO write metadata  to /metadata for the final data files
-# TODO add the following datasets:
-#       + floral volatiles 2018, 2019
-
 # setup -------------------------------------------------------------------
 
 library(tidyverse)
@@ -624,12 +620,14 @@ mt.subplot <- mt.plantyr %>%
 
 # floralvolatiles ---------------------------------------------------------------
 
-vt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Volatiles"), sheet="2020") %>% 
-  mutate(plotid = paste0(plot, subplot), plant = as.character(plant),
-         plot = as.character(plot),
-         plantid = paste0(plotid, plant),
+vt_sheets <- filter(datasheets, name=="2020 Maxfield Floral Volatiles")
+vt <- map_dfr(sheet_names(vt_sheets), ~ read_sheet(vt_sheets, sheet=.x)) %>% 
+  mutate(plotid = paste0(plot, subplot), plot = as.character(plot), plant=as.character(plant),
+         type = ifelse(plant == "air", "air", "floral"), plant = na_if(plant, "air"),
+         plantid = ifelse(is.na(plant), NA, paste0(plotid, plant)),
          year=factor(year(date))) %>% 
-  group_by(year) %>% group_split() %>% map2_dfr(paste0("volatiles",18:20), fix_dataset) %>% 
+  #TODO get fix_dataset working here
+  #group_by(year) %>% group_split() %>% map2_dfr(paste0("volatiles",18:20), fix_dataset) %>% 
   left_join(treatments) %>%
   mutate_if(is.character, as.factor)
 
