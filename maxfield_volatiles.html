@@ -273,7 +273,7 @@ library(viridis)
 library(ggvegan)
 
 library(knitr)
-knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, fig.path = &quot;images_volatiles/&quot;)
+knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, fig.path = &quot;images_volatiles/&quot;, fig.height=8, fig.width=8)
 options(digits=4) # for kables
 
 load(&quot;data/maxfield_data.rda&quot;)</code></pre>
@@ -328,7 +328,548 @@ year   Addition Control Reduction
 <pre class="r"><code>ggplot(vt %&gt;% drop_na(water), aes(x=factor(date), y=VWC, color=water)) + facet_wrap(vars(year), ncol = 1, scales=&quot;free_x&quot;) +
   geom_boxplot() + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle=90)) + 
   labs(x=&quot;Date&quot;, y=&quot;Soil moisture (%VWC)&quot;, color=&quot;Precipitation&quot;)</code></pre>
-<p><img src="images_volatiles/sm-1.png" width="576" /></p>
+<p><img src="images_volatiles/sm-1.png" width="768" /></p>
+</div>
+<div id="multivariate-analyses" class="section level1">
+<h1>Multivariate analyses</h1>
+<p>Original code and filtered volatiles from “multivariate voc maxfield.R”</p>
+<pre class="r"><code>scents.dat &lt;- read.table(&quot;data/volatiles/Max.2018.2019_combined_USE_NOV08plantsreduced.tsv&quot;, header = T, row.names = 1)
+planttype.dat&lt;- read.csv(&quot;data/volatiles/Max.2018.2019_combined_USE_NOV08plantsclasses.csv&quot;, na.strings=&quot;.&quot;)
+
+#Drop samples with no volatiles
+planttype.dat &lt;- planttype.dat[rowSums(scents.dat) &gt; 0,]
+scents.dat &lt;- scents.dat[rowSums(scents.dat) &gt; 0,]
+
+#One row is missing plant data
+scents.dat &lt;- scents.dat[!is.na(planttype.dat$precip),]
+planttype.dat &lt;- planttype.dat[!is.na(planttype.dat$precip),]
+
+#consolidate mock rainouts and controls
+planttype.dat$water &lt;- factor(recode(planttype.dat$precip, mockrainout=&quot;Control&quot;, Control=&quot;Control&quot;, addH20 = &quot;Addition&quot;, rainout = &quot;Reduction&quot;))
+planttype.dat$year &lt;- as.factor(planttype.dat$year)</code></pre>
+<div id="barplot" class="section level2">
+<h2>Barplot</h2>
+<pre class="r"><code>set.seed(5)
+chemcols &lt;- sample(rainbow(ncol(scents.dat)))
+scents.dat.sorted &lt;- scents.dat[order(rowSums(scents.dat)),]
+planttype.dat.sorted &lt;- planttype.dat[order(rowSums(scents.dat)),]
+
+barplot(t(as.matrix(scents.dat.sorted[planttype.dat.sorted$year==&quot;2018&quot;,])), col=chemcols, main=&quot;2018&quot;)
+legend(&quot;topleft&quot;, rev(colnames(scents.dat)[colSums(scents.dat)&gt;100]), fill=rev(chemcols[colSums(scents.dat)&gt;100]))</code></pre>
+<p><img src="images_volatiles/barplot-1.png" width="768" /></p>
+<pre class="r"><code>barplot(t(as.matrix(scents.dat.sorted[planttype.dat.sorted$year==&quot;2019&quot;,])), col=chemcols, main=&quot;2019&quot;)
+legend(&quot;topleft&quot;, rev(colnames(scents.dat)[colSums(scents.dat)&gt;100]), fill=rev(chemcols[colSums(scents.dat)&gt;100]))</code></pre>
+<p><img src="images_volatiles/barplot-2.png" width="768" /></p>
+</div>
+<div id="heatmap" class="section level2">
+<h2>Heatmap</h2>
+<pre class="r"><code>library(viridis)
+heatmap(as.matrix(t(scents.dat))^(1/4), scale=&quot;none&quot;, col=mako(512), ColSideColors=as.character(planttype.dat$year), main=&quot;2018 (red) and 2019 (green)&quot;)</code></pre>
+<p><img src="images_volatiles/heatmap-1.png" width="768" /></p>
+<pre class="r"><code>heatmap(as.matrix(t(scents.dat[planttype.dat$year==&quot;2018&quot;,]))^(1/4), scale=&quot;none&quot;, col=mako(512), ColSideColors=as.character(planttype.dat$year[planttype.dat$year==&quot;2018&quot;]), main=&quot;2018&quot;)</code></pre>
+<p><img src="images_volatiles/heatmap-2.png" width="768" /></p>
+<pre class="r"><code>heatmap(as.matrix(t(scents.dat[planttype.dat$year==&quot;2019&quot;,]))^(1/4), scale=&quot;none&quot;, col=mako(512), ColSideColors=as.character(planttype.dat$year[planttype.dat$year==&quot;2019&quot;]), main=&quot;2019&quot;)</code></pre>
+<p><img src="images_volatiles/heatmap-3.png" width="768" /></p>
+</div>
+<div id="boxplots" class="section level2">
+<h2>Boxplots</h2>
+<pre class="r"><code>scents.dat.cut &lt;- scents.dat[,colSums(decostand(scents.dat, &quot;pa&quot;))&gt; 20]
+cbind(planttype.dat, scents.dat.cut) %&gt;%  pivot_longer(-all_of(colnames(planttype.dat))) %&gt;% 
+  #mutate(name = fct_reorder(name, colSums(scents.dat.cut))) %&gt;% 
+  ggplot(aes(x = year, color = water, y = value)) + geom_boxplot() + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  scale_y_sqrt() + scale_color_manual(values=water_pal) + labs(x=&quot;Year&quot;, y =&quot;Emissions (ng/hr)&quot;) + guides(color=F)</code></pre>
+<p><img src="images_volatiles/boxplots-1.png" width="960" /></p>
+</div>
+<div id="ordinations" class="section level2">
+<h2>Ordinations</h2>
+<div id="absolute-amounts" class="section level3">
+<h3>Absolute amounts</h3>
+<pre class="r"><code>#Nmds 
+(scents.mds &lt;- metaMDS(sqrt(scents.dat), autotransform=FALSE)) #had noshare = FALSE</code></pre>
+<pre><code>Run 0 stress 0.2201 
+Run 1 stress 0.2308 
+Run 2 stress 0.231 
+Run 3 stress 0.2263 
+Run 4 stress 0.2266 
+Run 5 stress 0.2288 
+Run 6 stress 0.2255 
+Run 7 stress 0.2268 
+Run 8 stress 0.2238 
+Run 9 stress 0.2319 
+Run 10 stress 0.2244 
+Run 11 stress 0.2183 
+... New best solution
+... Procrustes: rmse 0.02837  max resid 0.2654 
+Run 12 stress 0.2268 
+Run 13 stress 0.222 
+Run 14 stress 0.2233 
+Run 15 stress 0.2219 
+Run 16 stress 0.2282 
+Run 17 stress 0.2271 
+Run 18 stress 0.2299 
+Run 19 stress 0.227 
+Run 20 stress 0.2245 
+*** No convergence -- monoMDS stopping criteria:
+     6: no. of iterations &gt;= maxit
+    14: stress ratio &gt; sratmax</code></pre>
+<pre><code>
+Call:
+metaMDS(comm = sqrt(scents.dat), autotransform = FALSE) 
+
+global Multidimensional Scaling using monoMDS
+
+Data:     sqrt(scents.dat) 
+Distance: bray 
+
+Dimensions: 2 
+Stress:     0.2183 
+Stress type 1, weak ties
+No convergent solutions - best solution after 20 tries
+Scaling: centring, PC rotation, halfchange scaling 
+Species: expanded scores based on &#39;sqrt(scents.dat)&#39; </code></pre>
+<pre class="r"><code>plot(scents.mds,type=&quot;t&quot;,display=c(&quot;species&quot;))</code></pre>
+<p><img src="images_volatiles/hmb_ords-1.png" width="768" /></p>
+<pre class="r"><code>plot(scents.mds,type=&quot;t&quot;,display=c(&quot;sites&quot;))</code></pre>
+<p><img src="images_volatiles/hmb_ords-2.png" width="768" /></p>
+<pre class="r"><code>#PerMANOVA using adonis function in vegan package
+(scents.permanova &lt;- adonis(sqrt(scents.dat) ~ water * year, planttype.dat))</code></pre>
+<pre><code>
+Call:
+adonis(formula = sqrt(scents.dat) ~ water * year, data = planttype.dat) 
+
+Permutation: free
+Number of permutations: 999
+
+Terms added sequentially (first to last)
+
+            Df SumsOfSqs MeanSqs F.Model    R2 Pr(&gt;F)    
+water        2       0.6    0.32     1.6 0.011  0.059 .  
+year         1       7.3    7.35    36.8 0.127  0.001 ***
+water:year   2       0.3    0.17     0.9 0.006  0.611    
+Residuals  247      49.3    0.20         0.856           
+Total      252      57.7                 1.000           
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>#Canonical analysis of principal coordinates (CAP) allows for other distance measures
+(scents.cap &lt;-capscale(sqrt(scents.dat) ~ year * water, planttype.dat, dist=&quot;bray&quot;))</code></pre>
+<pre><code>Call: capscale(formula = sqrt(scents.dat) ~ year * water, data =
+planttype.dat, distance = &quot;bray&quot;)
+
+              Inertia Proportion Rank
+Total          57.652      1.000     
+Constrained     8.624      0.150    5
+Unconstrained  66.945      1.161   80
+Imaginary     -17.917     -0.311  172
+Inertia is squared Bray distance 
+Species scores projected from &#39;sqrt&#39; &#39;scents.dat&#39; 
+
+Eigenvalues for constrained axes:
+CAP1 CAP2 CAP3 CAP4 CAP5 
+7.59 0.40 0.32 0.19 0.13 
+
+Eigenvalues for unconstrained axes:
+ MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
+10.47  5.35  5.07  4.26  3.55  3.37  2.99  2.75 
+(Showing 8 of 80 unconstrained eigenvalues)</code></pre>
+<pre class="r"><code>anova(scents.cap, by=&quot;term&quot;)</code></pre>
+<pre><code>Permutation test for capscale under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+Model: capscale(formula = sqrt(scents.dat) ~ year * water, data = planttype.dat, distance = &quot;bray&quot;)
+            Df SumOfSqs     F Pr(&gt;F)    
+year         1      7.5 27.55  0.001 ***
+water        2      0.7  1.25  0.149    
+year:water   2      0.5  0.89  0.651    
+Residual   247     66.9                 
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>scents.cap &lt;-capscale(sqrt(scents.dat) ~ year + water, planttype.dat, dist=&quot;bray&quot;)
+plot(scents.cap, type=&quot;n&quot;, xlim=c(-2,2))
+points(scents.cap, display = &quot;sites&quot;, col=water_pal[planttype.dat$water], pch=as.integer(planttype.dat$year))
+text(scents.cap, display=&quot;cn&quot;, labels=c(&quot;2018&quot;,&quot;2019&quot;, names(water_pal)), col=c(&quot;black&quot;,&quot;black&quot;,water_pal), font=2)</code></pre>
+<p><img src="images_volatiles/hmb_ords-3.png" width="768" /></p>
+<pre class="r"><code>plot(scents.cap, type=&quot;n&quot;, xlim=c(-1,3), ylim=c(-0.5,0.5))
+text(scents.cap, display=&quot;sp&quot;, cex=0.7)</code></pre>
+<p><img src="images_volatiles/hmb_ords-4.png" width="768" /></p>
+</div>
+<div id="relative-amounts" class="section level3">
+<h3>Relative amounts</h3>
+<pre class="r"><code>#Nmds 
+(scents.mds &lt;- metaMDS(decostand(scents.dat, &quot;hellinger&quot;), autotransform=FALSE)) #had noshare = FALSE</code></pre>
+<pre><code>Run 0 stress 0.2511 
+Run 1 stress 0.2543 
+Run 2 stress 0.264 
+Run 3 stress 0.2527 
+Run 4 stress 0.2512 
+... Procrustes: rmse 0.01737  max resid 0.1768 
+Run 5 stress 0.2503 
+... New best solution
+... Procrustes: rmse 0.04105  max resid 0.3175 
+Run 6 stress 0.2654 
+Run 7 stress 0.2533 
+Run 8 stress 0.2525 
+Run 9 stress 0.2512 
+Run 10 stress 0.2513 
+Run 11 stress 0.2522 
+Run 12 stress 0.264 
+Run 13 stress 0.2589 
+Run 14 stress 0.2514 
+Run 15 stress 0.2622 
+Run 16 stress 0.2512 
+Run 17 stress 0.2515 
+Run 18 stress 0.2522 
+Run 19 stress 0.2533 
+Run 20 stress 0.2517 
+*** No convergence -- monoMDS stopping criteria:
+    18: no. of iterations &gt;= maxit
+     2: stress ratio &gt; sratmax</code></pre>
+<pre><code>
+Call:
+metaMDS(comm = decostand(scents.dat, &quot;hellinger&quot;), autotransform = FALSE) 
+
+global Multidimensional Scaling using monoMDS
+
+Data:     decostand(scents.dat, &quot;hellinger&quot;) 
+Distance: bray 
+
+Dimensions: 2 
+Stress:     0.2503 
+Stress type 1, weak ties
+No convergent solutions - best solution after 20 tries
+Scaling: centring, PC rotation, halfchange scaling 
+Species: expanded scores based on &#39;decostand(scents.dat, &quot;hellinger&quot;)&#39; </code></pre>
+<pre class="r"><code>plot(scents.mds,type=&quot;t&quot;,display=c(&quot;species&quot;))</code></pre>
+<p><img src="images_volatiles/hmb_ords_rel-1.png" width="768" /></p>
+<pre class="r"><code>plot(scents.mds,type=&quot;t&quot;,display=c(&quot;sites&quot;))</code></pre>
+<p><img src="images_volatiles/hmb_ords_rel-2.png" width="768" /></p>
+<pre class="r"><code>#PerMANOVA using adonis function in vegan package
+(scents.permanova &lt;- adonis(decostand(scents.dat, &quot;hellinger&quot;) ~ water * year, planttype.dat))</code></pre>
+<pre><code>
+Call:
+adonis(formula = decostand(scents.dat, &quot;hellinger&quot;) ~ water *      year, data = planttype.dat) 
+
+Permutation: free
+Number of permutations: 999
+
+Terms added sequentially (first to last)
+
+            Df SumsOfSqs MeanSqs F.Model    R2 Pr(&gt;F)    
+water        2       0.6    0.29    1.78 0.013  0.024 *  
+year         1       4.0    3.96   24.46 0.088  0.001 ***
+water:year   2       0.3    0.17    1.08 0.008  0.362    
+Residuals  247      40.0    0.16         0.891           
+Total      252      44.9                 1.000           
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>#Canonical analysis of principal coordinates (CAP) allows for other distance measures
+(scents.cap &lt;-capscale(sqrt(scents.dat) ~ year * water, planttype.dat, dist=&quot;bray&quot;))</code></pre>
+<pre><code>Call: capscale(formula = sqrt(scents.dat) ~ year * water, data =
+planttype.dat, distance = &quot;bray&quot;)
+
+              Inertia Proportion Rank
+Total          57.652      1.000     
+Constrained     8.624      0.150    5
+Unconstrained  66.945      1.161   80
+Imaginary     -17.917     -0.311  172
+Inertia is squared Bray distance 
+Species scores projected from &#39;sqrt&#39; &#39;scents.dat&#39; 
+
+Eigenvalues for constrained axes:
+CAP1 CAP2 CAP3 CAP4 CAP5 
+7.59 0.40 0.32 0.19 0.13 
+
+Eigenvalues for unconstrained axes:
+ MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
+10.47  5.35  5.07  4.26  3.55  3.37  2.99  2.75 
+(Showing 8 of 80 unconstrained eigenvalues)</code></pre>
+<pre class="r"><code>anova(scents.cap, by=&quot;term&quot;)</code></pre>
+<pre><code>Permutation test for capscale under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+Model: capscale(formula = sqrt(scents.dat) ~ year * water, data = planttype.dat, distance = &quot;bray&quot;)
+            Df SumOfSqs     F Pr(&gt;F)    
+year         1      7.5 27.55  0.001 ***
+water        2      0.7  1.25  0.142    
+year:water   2      0.5  0.89  0.601    
+Residual   247     66.9                 
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>scents.cap &lt;-capscale(decostand(scents.dat, &quot;hellinger&quot;) ~ year + water, planttype.dat, dist=&quot;bray&quot;)
+plot(scents.cap, type=&quot;n&quot;, xlim=c(-2,2))
+points(scents.cap, display = &quot;sites&quot;, col=water_pal[planttype.dat$water], pch=as.integer(planttype.dat$year))
+text(scents.cap, display=&quot;cn&quot;, labels=c(&quot;2018&quot;,&quot;2019&quot;, names(water_pal)), col=c(&quot;black&quot;,&quot;black&quot;,water_pal), font=2)</code></pre>
+<p><img src="images_volatiles/hmb_ords_rel-3.png" width="768" /></p>
+<pre class="r"><code>plot(scents.cap, type=&quot;n&quot;, xlim=c(-1.5,1.5), ylim=c(-0.5,0.5))
+text(scents.cap, display=&quot;sp&quot;, cex=0.7)</code></pre>
+<p><img src="images_volatiles/hmb_ords_rel-4.png" width="768" /></p>
+</div>
+</div>
+</div>
+<div id="analysis" class="section level1">
+<h1>Analysis</h1>
+<p>Code from applying_standards_2019-NOV18.R</p>
+<div id="load-data" class="section level2">
+<h2>Load data</h2>
+<pre class="r"><code>library(reshape2)
+
+maxcomp &lt;- read.table(&quot;data/volatiles/Max.2018.2019_combined_USE_NOV08plantsreduced.tsv&quot;,T,&quot;\t&quot;,stringsAsFactors=F)
+
+# don&#39;t need to remove air samples because they are already removed
+#maxcomp &lt;- as.data.frame(t(compounds4[grep(&quot;Air_&quot;,row.names(compounds4),invert=T),]))
+
+# convert all numbers to numeric: There are a lot of NAs
+maxcomp[,-1] &lt;- data.frame(apply(maxcomp[,-1],2,as.numeric))
+
+names(maxcomp)[1] &lt;- &quot;sample&quot;
+
+# make long-format:
+maxcomp2 &lt;- reshape2::melt(maxcomp, variable.name = &quot;sample&quot;, value.name = &quot;amount&quot;)
+names(maxcomp2)[2] &lt;- &quot;chem_name&quot;
+
+####now trying to do some data exploration with volatiles####
+
+#import sites 
+sites&lt;-read.table(&quot;data/volatiles/maxfield.sitematch.NOV08.tsv&quot;,T,&quot;\t&quot;)
+
+# melt for analysis and plotting:
+maxcomp3 &lt;- merge(maxcomp2, sites, by = &#39;sample&#39;, sort = F)
+
+#write.table(maxcomp3, file = &quot;maxcomp3_2019-NOV17.csv&quot;, col.names = TRUE, row.names = T, sep = &quot;,&quot;)
+
+## remove offending compounds:i.e the one that I cannot find &quot;what&quot; it is. 
+# maxcomp3 &lt;- dplyr::filter(maxcomp3, chem_name != &quot;2-Trimethylsilyl-oxy-2-4-trimethylsilyl-oxy-phenyl-ethanamine&quot;)
+
+# log transform amount:
+maxcomp3$log_amount &lt;- sapply(maxcomp3$amount, function(x) log(x+0.01, 10) + 2)</code></pre>
+</div>
+<div id="histograms" class="section level2">
+<h2>Histograms</h2>
+<pre class="r"><code># let&#39;s plot some histograms:
+# first: raw data prior to transformation
+# assign facet to data groups above zero:
+ggplot(maxcomp3[maxcomp3$amount &gt; 0, ], aes(x = amount)) + 
+  geom_histogram(bins = 100) +
+  theme_bw() +
+  xlab(&quot;untransformed data (zeros not shown)&quot;)</code></pre>
+<p><img src="images_volatiles/histograms-1.png" width="768" /></p>
+<pre class="r"><code>ggplot(maxcomp3[maxcomp3$log_amount &gt; 0, ], aes(x = log_amount)) + 
+  geom_histogram(bins = 100) +
+  theme_bw() +
+  xlab(&quot;log-transformed data&quot;)</code></pre>
+<p><img src="images_volatiles/histograms-2.png" width="768" /></p>
+<pre class="r"><code># save raw plots together:
+#library(cowplot)
+#plot_grid(raw_1,raw_2) %&gt;% ggsave(filename = &quot;raw_plots_v1.pdf&quot;, width = 6.5, height = 3.25)</code></pre>
+</div>
+<div id="clean-data" class="section level2">
+<h2>Clean data</h2>
+<pre class="r"><code># re-casting, using log scale for amount as value var:
+maxcomp4 &lt;- dcast(maxcomp3, precip + sample + snow.removal + plot_ID ~ chem_name, value.var=&quot;log_amount&quot;, fun.aggregate = function(x) log(sum(10^(x - 2)), 10) + 2)
+
+#write.table(maxcomp3, file = &quot;maxcomp_3.csv&quot;, col.names = TRUE, row.names = T, sep = &quot;,&quot;)
+
+# define vector of compound_names
+compound_names &lt;- paste0(levels(maxcomp3$chem_name))
+
+# find rows whose compounds sum to zero:
+maxcomp4$compound_sum &lt;- rowSums(maxcomp4[,names(maxcomp4) %in% compound_names])
+
+samples_without_data &lt;- paste0(maxcomp4$sample[maxcomp4$compound_sum==0])
+maxcomp4 &lt;- droplevels(maxcomp4[!maxcomp4$sample %in% samples_without_data, ])
+
+# generate composite treatment by combining control conditions:
+maxcomp4$treatment[grepl(&#39;add &#39;, maxcomp4$precip)] &lt;- &#39;add_H2O&#39;
+maxcomp4$treatment[grepl(&#39;rainout&#39;, maxcomp4$precip)] &lt;- &#39;rainout&#39;
+maxcomp4$treatment[grepl(&#39;mock&#39;, maxcomp4$precip)] &lt;- &#39;Control&#39;
+maxcomp4$treatment[grepl(&#39;Control&#39;, maxcomp4$precip)] &lt;- &#39;Control&#39;
+
+maxcomp4$year[grepl(&#39;2018&#39;, maxcomp4$sample)] &lt;- &#39;2018&#39;
+maxcomp4$year[grepl(&#39;2019&#39;, maxcomp4$sample)] &lt;- &#39;2019&#39;
+
+# generate response matrix for all, 2018, and 2019:
+
+Y18 &lt;- as.matrix(maxcomp4 %&gt;% dplyr::filter(year == &#39;2018&#39;) %&gt;% dplyr::select(compound_names))
+Y19 &lt;- as.matrix(maxcomp4 %&gt;% dplyr::filter(year == &#39;2019&#39;) %&gt;% dplyr::select(compound_names))
+YAA &lt;- as.matrix(maxcomp4 %&gt;% dplyr::select(compound_names))
+
+if (!dim(YAA)[1] == (dim(Y18)[1] + dim(Y19)[1])) {
+  # scream
+}
+
+# now remove compounds with zero abundances within Y18 and Y19
+Y18 &lt;- Y18[, colSums(Y18) &gt; 0]
+Y19 &lt;- Y19[, colSums(Y19) &gt; 0]
+
+maxcomp4$treatment &lt;- factor(maxcomp4$treatment)</code></pre>
+</div>
+<div id="manova" class="section level2">
+<h2>MANOVA</h2>
+<div id="precipitation" class="section level3">
+<h3>Precipitation</h3>
+<pre class="r"><code># MANOVA on treatment
+manova.scents.18 &lt;- manova(Y18 ~ maxcomp4$treatment[maxcomp4$year == &#39;2018&#39;])
+manova.scents.19 &lt;- manova(Y19 ~ maxcomp4$treatment[maxcomp4$year == &#39;2019&#39;])
+manova.scents.YA &lt;- manova(YAA ~ maxcomp4$treatment)
+
+# combined year analysis
+summary(manova.scents.YA, test = &quot;Wilks&quot;)</code></pre>
+<pre><code>                    Df Wilks approx F num Df den Df Pr(&gt;F)
+maxcomp4$treatment   2 0.726     1.04     72    430    0.4
+Residuals          250                                    </code></pre>
+<pre class="r"><code># Df  Wilks approx F num Df den Df Pr(&gt;F)
+# maxcomp4$treatment   2 0.7257   1.0384     72    430 0.4002
+# Residuals          250  
+
+# 2018 alone
+# combined year analysis
+summary(manova.scents.18, test = &quot;Wilks&quot;)</code></pre>
+<pre><code>                                             Df Wilks approx F num Df den Df
+maxcomp4$treatment[maxcomp4$year == &quot;2018&quot;]   2 0.637    0.929     60    220
+Residuals                                   139                             
+                                            Pr(&gt;F)
+maxcomp4$treatment[maxcomp4$year == &quot;2018&quot;]   0.62
+Residuals                                         </code></pre>
+<pre class="r"><code># Df   Wilks approx F num Df den Df Pr(&gt;F)
+# maxcomp4$treatment[maxcomp4$year == &quot;2018&quot;]   2 0.63655  0.92906     60    220 0.6235
+# Residuals                                   139 
+
+# 2019 alone
+# combined year analysis
+summary(manova.scents.19, test = &quot;Wilks&quot;)</code></pre>
+<pre><code>                                             Df Wilks approx F num Df den Df
+maxcomp4$treatment[maxcomp4$year == &quot;2019&quot;]   2 0.492     1.07     62    156
+Residuals                                   108                             
+                                            Pr(&gt;F)
+maxcomp4$treatment[maxcomp4$year == &quot;2019&quot;]   0.36
+Residuals                                         </code></pre>
+<pre class="r"><code># Df   Wilks approx F num Df den Df Pr(&gt;F)
+# maxcomp4$treatment[maxcomp4$year == &quot;2019&quot;]   2 0.49212   1.0706     62    156 0.3622
+# Residuals                                   108  </code></pre>
+</div>
+<div id="snowmelt" class="section level3">
+<h3>Snowmelt</h3>
+<pre class="r"><code>## SNOW MELT
+# combined year analysis
+# MANOVA on treatment
+manova.snowremoval.18 &lt;- manova(Y18 ~ maxcomp4$snow.removal[maxcomp4$year == &#39;2018&#39;])
+manova.snowremoval.19 &lt;- manova(Y19 ~ maxcomp4$snow.removal[maxcomp4$year == &#39;2019&#39;])
+manova.snowremoval.YA &lt;- manova(YAA ~ maxcomp4$snow.removal)
+
+summary(manova.snowremoval.YA, test = &quot;Wilks&quot;)</code></pre>
+<pre><code>                       Df Wilks approx F num Df den Df Pr(&gt;F)
+maxcomp4$snow.removal   1 0.856     1.01     36    216   0.46
+Residuals             251                                    </code></pre>
+<pre class="r"><code># Df   Wilks approx F num Df den Df Pr(&gt;F)
+# maxcomp4$snow.removal   1 0.85602   1.0091     36    216 0.4616
+# Residuals             251    
+
+summary(manova.snowremoval.18, test = &quot;Wilks&quot;)</code></pre>
+<pre><code>                                                Df Wilks approx F num Df den Df
+maxcomp4$snow.removal[maxcomp4$year == &quot;2018&quot;]   1 0.738     1.31     30    111
+Residuals                                      140                             
+                                               Pr(&gt;F)
+maxcomp4$snow.removal[maxcomp4$year == &quot;2018&quot;]   0.15
+Residuals                                            </code></pre>
+<pre class="r"><code># Df   Wilks approx F num Df den Df Pr(&gt;F)
+# maxcomp4$snow.removal[maxcomp4$year == &quot;2018&quot;]   1 0.73786   1.3145     30    111 0.1549
+# Residuals                                      140 
+
+summary(manova.snowremoval.19, test = &quot;Wilks&quot;)</code></pre>
+<pre><code>                                                Df Wilks approx F num Df den Df
+maxcomp4$snow.removal[maxcomp4$year == &quot;2019&quot;]   1 0.694     1.12     31     79
+Residuals                                      109                             
+                                               Pr(&gt;F)
+maxcomp4$snow.removal[maxcomp4$year == &quot;2019&quot;]   0.33
+Residuals                                            </code></pre>
+<pre class="r"><code># Df   Wilks approx F num Df den Df Pr(&gt;F)
+# maxcomp4$snow.removal[maxcomp4$year == &quot;2019&quot;]   1 0.69374    1.125     31     79 0.3307
+# Residuals      </code></pre>
+</div>
+</div>
+<div id="candisc" class="section level2">
+<h2>CANDISC</h2>
+<div id="precipitation-1" class="section level3">
+<h3>Precipitation</h3>
+<pre class="r"><code>library(candisc)
+scents.can.YA &lt;- candisc(manova.scents.YA, data = maxcomp4, scores = TRUE)
+scents.can.18 &lt;- candisc(manova.scents.18, data = maxcomp4[maxcomp4$year == &#39;2018&#39;, ], scores = TRUE)
+scents.can.19 &lt;- candisc(manova.scents.19, data = maxcomp4[maxcomp4$year == &#39;2019&#39;, ], scores = TRUE)
+
+#pdf(file = &quot;canda_v1_2019-NOV-19_YA.pdf&quot;,width=8,height=4)
+#par(mfrow=c(1,2))
+plot(scents.can.YA, col=c(&quot;white&quot;,&quot;white&quot;,&quot;white&quot;), conf = 0.95,lwd=0.5,var.cex=0.7,
+           cex.axis=0.75,var.col=&quot;gray40&quot;,bty=&quot;n&quot;,alpha=0.5)</code></pre>
+<p><img src="images_volatiles/candisc-1.png" width="768" /></p>
+<pre class="r"><code>plot(scents.can.YA, col=c(&quot;gray60&quot;,&quot;darkorange2&quot;,&quot;dodgerblue&quot;), pch=c(19,19,19), conf = 0.95,
+           var.labels = NULL, var.lwd=0,var.col = NULL,
+           cex.axis=0.75,bty=&quot;n&quot;)</code></pre>
+<p><img src="images_volatiles/candisc-2.png" width="768" /></p>
+<pre class="r"><code>#dev.off()
+
+print(&quot;2018&quot;)</code></pre>
+<pre><code>[1] &quot;2018&quot;</code></pre>
+<pre class="r"><code># pdf(file = &quot;canda_v1_2019-NOV-19_2018.pdf&quot;,width=8,height=4)
+# par(mfrow=c(1,2))
+plot(scents.can.18, col=c(&quot;white&quot;,&quot;white&quot;,&quot;white&quot;), conf = 0.95,lwd=0.5,var.cex=0.7,
+            cex.axis=0.75,var.col=&quot;gray40&quot;,bty=&quot;n&quot;,alpha=0.5)</code></pre>
+<p><img src="images_volatiles/candisc-3.png" width="768" /></p>
+<pre class="r"><code>plot(scents.can.18, col=c(&quot;gray60&quot;,&quot;darkorange2&quot;,&quot;dodgerblue&quot;), pch=c(19,19,19), conf = 0.95,
+            var.labels = NULL, var.lwd=0,var.col = NULL,
+            cex.axis=0.75,bty=&quot;n&quot;)</code></pre>
+<p><img src="images_volatiles/candisc-4.png" width="768" /></p>
+<pre class="r"><code># dev.off()
+# 
+print(&quot;2019&quot;)</code></pre>
+<pre><code>[1] &quot;2019&quot;</code></pre>
+<pre class="r"><code># pdf(file = &quot;canda_v1_2019-NOV-19_2019.pdf&quot;,width=8,height=4)
+# par(mfrow=c(1,2))
+plot(scents.can.19, col=c(&quot;white&quot;,&quot;white&quot;,&quot;white&quot;), conf = 0.95,lwd=0.5,var.cex=0.7,
+           cex.axis=0.75,var.col=&quot;gray40&quot;,bty=&quot;n&quot;,alpha=0.5)</code></pre>
+<p><img src="images_volatiles/candisc-5.png" width="768" /></p>
+<pre class="r"><code>plot(scents.can.19, col=c(&quot;gray60&quot;,&quot;darkorange2&quot;,&quot;dodgerblue&quot;), pch=c(19,19,19), conf = 0.95,
+           var.labels = NULL, var.lwd=0,var.col = NULL,
+            cex.axis=0.75,bty=&quot;n&quot;)</code></pre>
+<p><img src="images_volatiles/candisc-6.png" width="768" /></p>
+<pre class="r"><code># dev.off()</code></pre>
+<pre class="r"><code>library(gplots)
+library(RColorBrewer) 
+
+# define colors:
+cols &lt;- c(&quot;gray60&quot;,&quot;darkorange2&quot;,&quot;dodgerblue&quot;)[as.numeric(maxcomp4$treatment)]
+hmcol &lt;- colorRampPalette(brewer.pal(9, &quot;GnBu&quot;))(100)
+hclustfun &lt;- function(X) hclust(X,method=&quot;median&quot;)
+
+heatmap.2(t(scents.dat), labCol=maxcomp4$treatment,
+          trace=&quot;none&quot;, 
+          ColSideColors=cols, 
+          col=hmcol,
+          distfun = dist,
+          hclustfun = hclust)</code></pre>
+</div>
+</div>
+<div id="candisc-scores" class="section level2">
+<h2>CANDISC scores</h2>
+<pre class="r"><code>#scents.can1 &lt;- candisc(manova.scents1, data = maxcomp4, scores = TRUE)
+#scents.can
+#scents.can1
+
+#Scores are the standardized response variables times the raw canonical coefficients
+#coef(scents.can.YA, type=&quot;raw&quot;)
+#scents.can[&quot;scores&quot;]
+
+coef_test &lt;- cbind(coef(scents.can.YA, type=&quot;raw&quot;),
+                   coef(scents.can.YA, type=&quot;structure&quot;))
+
+# correlation between raw and structure coefficients from scents.can
+plot(coef_test[,1],coef_test[,3])</code></pre>
+<p><img src="images_volatiles/candisc2-1.png" width="768" /></p>
+<pre class="r"><code>plot(coef_test[,2],coef_test[,4])</code></pre>
+<p><img src="images_volatiles/candisc2-2.png" width="768" /></p>
+</div>
 </div>
 
 
