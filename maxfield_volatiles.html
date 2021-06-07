@@ -387,31 +387,31 @@ cbind(planttype.dat, scents.dat.cut) %&gt;%  pivot_longer(-all_of(colnames(plant
 <pre class="r"><code>#Nmds 
 (scents.mds &lt;- metaMDS(sqrt(scents.dat), autotransform=FALSE)) #had noshare = FALSE</code></pre>
 <pre><code>Run 0 stress 0.2201 
-Run 1 stress 0.2308 
-Run 2 stress 0.231 
-Run 3 stress 0.2263 
-Run 4 stress 0.2266 
-Run 5 stress 0.2288 
-Run 6 stress 0.2255 
-Run 7 stress 0.2268 
-Run 8 stress 0.2238 
-Run 9 stress 0.2319 
-Run 10 stress 0.2244 
-Run 11 stress 0.2183 
+Run 1 stress 0.2183 
 ... New best solution
-... Procrustes: rmse 0.02837  max resid 0.2654 
-Run 12 stress 0.2268 
-Run 13 stress 0.222 
-Run 14 stress 0.2233 
-Run 15 stress 0.2219 
-Run 16 stress 0.2282 
-Run 17 stress 0.2271 
-Run 18 stress 0.2299 
-Run 19 stress 0.227 
-Run 20 stress 0.2245 
+... Procrustes: rmse 0.04811  max resid 0.2905 
+Run 2 stress 0.2214 
+Run 3 stress 0.2216 
+Run 4 stress 0.2242 
+Run 5 stress 0.2272 
+Run 6 stress 0.2259 
+Run 7 stress 0.2242 
+Run 8 stress 0.2263 
+Run 9 stress 0.2295 
+Run 10 stress 0.2316 
+Run 11 stress 0.2269 
+Run 12 stress 0.225 
+Run 13 stress 0.2214 
+Run 14 stress 0.2241 
+Run 15 stress 0.2191 
+Run 16 stress 0.2263 
+Run 17 stress 0.2285 
+Run 18 stress 0.2224 
+Run 19 stress 0.2244 
+Run 20 stress 0.2251 
 *** No convergence -- monoMDS stopping criteria:
-     6: no. of iterations &gt;= maxit
-    14: stress ratio &gt; sratmax</code></pre>
+     5: no. of iterations &gt;= maxit
+    15: stress ratio &gt; sratmax</code></pre>
 <pre><code>
 Call:
 metaMDS(comm = sqrt(scents.dat), autotransform = FALSE) 
@@ -443,9 +443,9 @@ Number of permutations: 999
 Terms added sequentially (first to last)
 
             Df SumsOfSqs MeanSqs F.Model    R2 Pr(&gt;F)    
-water        2       0.6    0.32     1.6 0.011  0.059 .  
+water        2       0.6    0.32     1.6 0.011  0.071 .  
 year         1       7.3    7.35    36.8 0.127  0.001 ***
-water:year   2       0.3    0.17     0.9 0.006  0.611    
+water:year   2       0.3    0.17     0.9 0.006  0.641    
 Residuals  247      49.3    0.20         0.856           
 Total      252      57.7                 1.000           
 ---
@@ -480,8 +480,8 @@ Number of permutations: 999
 Model: capscale(formula = sqrt(scents.dat) ~ year * water, data = planttype.dat, distance = &quot;bray&quot;)
             Df SumOfSqs     F Pr(&gt;F)    
 year         1      7.5 27.55  0.001 ***
-water        2      0.7  1.25  0.149    
-year:water   2      0.5  0.89  0.651    
+water        2      0.7  1.25  0.158    
+year:water   2      0.5  0.89  0.634    
 Residual   247     66.9                 
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
@@ -499,32 +499,36 @@ text(scents.cap, display=&quot;sp&quot;, cex=0.7)</code></pre>
 <pre class="r"><code>#Nmds 
 (scents.mds &lt;- metaMDS(decostand(scents.dat, &quot;hellinger&quot;), autotransform=FALSE)) #had noshare = FALSE</code></pre>
 <pre><code>Run 0 stress 0.2511 
-Run 1 stress 0.2543 
-Run 2 stress 0.264 
-Run 3 stress 0.2527 
-Run 4 stress 0.2512 
-... Procrustes: rmse 0.01737  max resid 0.1768 
-Run 5 stress 0.2503 
+Run 1 stress 0.2507 
 ... New best solution
-... Procrustes: rmse 0.04105  max resid 0.3175 
-Run 6 stress 0.2654 
-Run 7 stress 0.2533 
-Run 8 stress 0.2525 
-Run 9 stress 0.2512 
-Run 10 stress 0.2513 
-Run 11 stress 0.2522 
-Run 12 stress 0.264 
-Run 13 stress 0.2589 
-Run 14 stress 0.2514 
-Run 15 stress 0.2622 
-Run 16 stress 0.2512 
-Run 17 stress 0.2515 
-Run 18 stress 0.2522 
+... Procrustes: rmse 0.04548  max resid 0.3339 
+Run 2 stress 0.2518 
+Run 3 stress 0.2512 
+... Procrustes: rmse 0.04375  max resid 0.3252 
+Run 4 stress 0.2515 
+Run 5 stress 0.2515 
+Run 6 stress 0.252 
+Run 7 stress 0.2511 
+... Procrustes: rmse 0.04467  max resid 0.3302 
+Run 8 stress 0.2533 
+Run 9 stress 0.2515 
+Run 10 stress 0.2525 
+Run 11 stress 0.2546 
+Run 12 stress 0.2514 
+Run 13 stress 0.2511 
+... Procrustes: rmse 0.005982  max resid 0.07618 
+Run 14 stress 0.2501 
+... New best solution
+... Procrustes: rmse 0.007662  max resid 0.1051 
+Run 15 stress 0.2515 
+Run 16 stress 0.2514 
+Run 17 stress 0.2512 
+Run 18 stress 0.2514 
 Run 19 stress 0.2533 
-Run 20 stress 0.2517 
+Run 20 stress 0.2536 
 *** No convergence -- monoMDS stopping criteria:
-    18: no. of iterations &gt;= maxit
-     2: stress ratio &gt; sratmax</code></pre>
+    10: no. of iterations &gt;= maxit
+    10: stress ratio &gt; sratmax</code></pre>
 <pre><code>
 Call:
 metaMDS(comm = decostand(scents.dat, &quot;hellinger&quot;), autotransform = FALSE) 
@@ -535,7 +539,7 @@ Data:     decostand(scents.dat, &quot;hellinger&quot;)
 Distance: bray 
 
 Dimensions: 2 
-Stress:     0.2503 
+Stress:     0.2501 
 Stress type 1, weak ties
 No convergent solutions - best solution after 20 tries
 Scaling: centring, PC rotation, halfchange scaling 
@@ -556,9 +560,9 @@ Number of permutations: 999
 Terms added sequentially (first to last)
 
             Df SumsOfSqs MeanSqs F.Model    R2 Pr(&gt;F)    
-water        2       0.6    0.29    1.78 0.013  0.024 *  
+water        2       0.6    0.29    1.78 0.013  0.028 *  
 year         1       4.0    3.96   24.46 0.088  0.001 ***
-water:year   2       0.3    0.17    1.08 0.008  0.362    
+water:year   2       0.3    0.17    1.08 0.008  0.377    
 Residuals  247      40.0    0.16         0.891           
 Total      252      44.9                 1.000           
 ---
@@ -593,8 +597,8 @@ Number of permutations: 999
 Model: capscale(formula = sqrt(scents.dat) ~ year * water, data = planttype.dat, distance = &quot;bray&quot;)
             Df SumOfSqs     F Pr(&gt;F)    
 year         1      7.5 27.55  0.001 ***
-water        2      0.7  1.25  0.142    
-year:water   2      0.5  0.89  0.601    
+water        2      0.7  1.25  0.153    
+year:water   2      0.5  0.89  0.616    
 Residual   247     66.9                 
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>

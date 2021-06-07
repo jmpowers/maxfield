@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-05-16" />
+<meta name="date" content="2021-05-26" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-05-16</h4>
+<h4 class="date">2021-05-26</h4>
 
 </div>
 
@@ -2263,6 +2263,59 @@ VWC:year  1.396   0.698     2   423    0.81   0.45</code></pre>
 
 Degrees-of-freedom method: kenward-roger 
 Confidence level used: 0.95 </code></pre>
+<div id="selection-gradients" class="section level3">
+<h3>Selection gradients</h3>
+<p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong et al. 2018</a> for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.</p>
+<ul>
+<li>PCA can’t handle missing values so they are removed, but this biases the data and reduces sample size - multiple imputation?</li>
+</ul>
+<pre class="r"><code>calculate_beta &lt;- function(E, slopes) {
+  data.frame(B = E %*% slopes$A,
+             SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %&gt;% rownames_to_column(&quot;trait&quot;)
+}
+plot_beta &lt;- function(beta) {
+  beta %&gt;% mutate(trait = fct_reorder(trait, B)) %&gt;% 
+    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
+    geom_vline(xintercept=0)+ geom_pointrange() + 
+    labs(x = &quot;Selection gradient (beta) estimated from gradients on PCs&quot;, y = &quot;Trait&quot;)
+}
+
+morphtraits &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;sepal_width&quot;,&quot;nectar_24_h_ul&quot;, &quot;nectar_conc&quot;)
+
+mnps.plantyr.std &lt;- mnps.plantyr %&gt;% select(all_of(morphtraits),seeds_est, any_of(names(treatments))) %&gt;% 
+  mutate(across(all_of(morphtraits), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% 
+  group_by(year) %&gt;% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T), .keep=&quot;unused&quot;) %&gt;% ungroup %&gt;% 
+  drop_na(all_of(morphtraits)) 
+
+# Run PCA on traits
+mnps.PCA &lt;- mnps.plantyr.std %&gt;% select(morphtraits) %&gt;% prcomp() 
+summary(mnps.PCA) # PCs 1 - 6 explain 95% of the variation</code></pre>
+<pre><code>Importance of components:
+                         PC1   PC2   PC3   PC4   PC5    PC6    PC7   PC8
+Standard deviation     1.439 1.013 0.920 0.836 0.765 0.6497 0.3269 0.253
+Proportion of Variance 0.356 0.176 0.145 0.120 0.101 0.0725 0.0184 0.011
+Cumulative Proportion  0.356 0.532 0.678 0.798 0.898 0.9707 0.9890 1.000</code></pre>
+<pre class="r"><code>mnps.PCA.E &lt;- mnps.PCA$rotation[,1:5]
+mnps.plantyr.std.PCA &lt;- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
+
+# Regress relative fitness on PCs
+mnps.PCA.regression &lt;- lm(seeds_rel ~ PC1 + PC2 + PC3 + PC4 + PC5, data = mnps.plantyr.std.PCA)
+mnps.PCA.slopes &lt;- tidy(mnps.PCA.regression) %&gt;% filter(term != &quot;(Intercept)&quot;) %&gt;% rename(A=estimate, SE=std.error)
+
+# Convert selection gradients on PCs to gradients on traits
+(mnps.beta &lt;- calculate_beta(mnps.PCA.E, mnps.PCA.slopes))</code></pre>
+<pre><code>           trait         B      SE
+1 corolla_length  0.005520 0.02627
+2  corolla_width  0.075010 0.07213
+3   style_length  0.010500 0.02344
+4     anther_max  0.010101 0.02719
+5     anther_min  0.001422 0.02621
+6    sepal_width  0.005137 0.06704
+7 nectar_24_h_ul -0.010488 0.07145
+8    nectar_conc -0.024116 0.07489</code></pre>
+<pre class="r"><code>plot_beta(mnps.beta)</code></pre>
+<p><img src="images/gradients-1.png" width="672" /></p>
+</div>
 </div>
 </div>
 <div id="plasticity-models" class="section level1">

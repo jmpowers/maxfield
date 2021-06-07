@@ -597,6 +597,13 @@ bind_rows(lt, pt) %>% select(size, all_of(c(leaftraits, phystraits)), water) %>%
   ylab("") + scale_color_manual(values=water_pal) + theme_minimal() 
 ```
 
+## Print a census
+
+```{r print_census}
+cen %>% select(plotid, plantid, transition_fixed_18, n_rosettes_20, r1_leaves_20, r1_longest_20, starts_with("check"), starts_with("other_notes")) %>% write_tsv("data/census_print.tsv")
+```
+
+
 # Leaf traits
 
 ```{r checkleaftraits, fig.height=8, fig.width=6}
@@ -837,6 +844,46 @@ seeds.mod.sm <- lmer(seeds_rel ~ VWC * year + (1|plotid),
                      data=mnps.plantyr %>% group_by(year) %>% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T)))
 anova(seeds.mod.sm, ddf="Ken")
 emtrends(seeds.mod.sm, ~year, var="VWC")
+```
+
+### Selection gradients
+
+Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.
+
+* PCA can't handle missing values so they are removed, but this biases the data and reduces sample size - multiple imputation?
+
+```{r gradients}
+calculate_beta <- function(E, slopes) {
+  data.frame(B = E %*% slopes$A,
+             SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %>% rownames_to_column("trait")
+}
+plot_beta <- function(beta) {
+  beta %>% mutate(trait = fct_reorder(trait, B)) %>% 
+    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
+    geom_vline(xintercept=0)+ geom_pointrange() + 
+    labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait")
+}
+
+morphtraits <- c("corolla_length", "corolla_width","style_length","anther_max","anther_min","sepal_width","nectar_24_h_ul", "nectar_conc")
+
+mnps.plantyr.std <- mnps.plantyr %>% select(all_of(morphtraits),seeds_est, any_of(names(treatments))) %>% 
+  mutate(across(all_of(morphtraits), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% 
+  group_by(year) %>% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T), .keep="unused") %>% ungroup %>% 
+  drop_na(all_of(morphtraits)) 
+
+# Run PCA on traits
+mnps.PCA <- mnps.plantyr.std %>% select(morphtraits) %>% prcomp() 
+summary(mnps.PCA) # PCs 1 - 6 explain 95% of the variation
+mnps.PCA.E <- mnps.PCA$rotation[,1:5]
+mnps.plantyr.std.PCA <- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
+
+# Regress relative fitness on PCs
+mnps.PCA.regression <- lm(seeds_rel ~ PC1 + PC2 + PC3 + PC4 + PC5, data = mnps.plantyr.std.PCA)
+mnps.PCA.slopes <- tidy(mnps.PCA.regression) %>% filter(term != "(Intercept)") %>% rename(A=estimate, SE=std.error)
+
+# Convert selection gradients on PCs to gradients on traits
+(mnps.beta <- calculate_beta(mnps.PCA.E, mnps.PCA.slopes))
+plot_beta(mnps.beta)
 ```
 
 
