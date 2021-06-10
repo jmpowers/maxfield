@@ -286,49 +286,38 @@ glht(WUE.mod, linfct = mcp(water4 = c("Control - `Mock rainout` = 0"))) %>% summ
 
 This is a split-plot analysis, based on the original experimental design. The models use:
 
-* *mnps.subplot*, the 24 * 3 subplot means within each year
+* *mnps.plantyr*, the plant means within each year
 * *snow*, the snowmelt treatment (except for plot 2 in 2019)
 * *water4*, the water treatments with mock rainouts and controls not combined
 * *plot* as a random effect (subplots vary within this larger unit)
+* *plotid* as a random effect (plants vary within this larger unit)
 
 The models are specified as:
 
-    lmer(trait ~ year * snow * water4 + (1|plot), data = mnps.subplot)
+    lmer(trait ~ year * snow * water4 + (1|snow:plot) + (1|snow:plotid), data = mnps.plantyr)
 
-* The models for nectar volume and total sugar are singular (variance at plot level near 0)
-* Removing the interactions with year does not make those two models not singular
-* The model fits are mostly singular when a random effect of *plotid* (subplot) is added for repeated measures among years
+```{r splitplot}
+lt.subplot.r2 <- lt.subplotround %>% filter(round=="2") 
+lt.plantyr.r2 <- lt.plantyr %>% filter(round=="2")
 
-```{r morphology_split}
 options(contrasts = c("contr.sum", "contr.poly"))
+mod.split <- c(map(set_names(traits), 
+                   ~ lmer(mnps.plantyr[[.x]]  ~ year * snow * water4 + (1|snow:plot) + (1|snow:plotid),
+                          data=mnps.plantyr)),
+               map(set_names(leaftraits), 
+                   ~ lmer(lt.plantyr.r2[[.x]] ~ year * snow * water4 + (1|snow:plot) + (1|snow:plotid),
+                          data=lt.plantyr.r2)),
+               map(set_names(phystraits), 
+                   ~ lmer(pt.plantyr[[.x]]    ~ year * snow * water4 + (1|snow:plot) + (1|snow:plotid) + (1|round),
+                          data=pt.plantyr)))
 
-mt.mod <- mt.mod.glht <- mt.mod.test <- mod.emm <- mod.emm.snow <- mt.mod.plot <- list()
-for(tr in traits) {
-  mt.mod[[tr]] <- lmer(mnps.subplot[[tr]] ~ year * snow * water4 + (1|plot), data=mnps.subplot)
-  mt.mod.test[[tr]] <- anova(mt.mod[[tr]])
-  mod.emm[[tr]] <- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ year + snow * water4))
-  mod.emm.snow[[tr]] <- summary(emmeans(ref_grid(mt.mod[[tr]]), ~ snow))
-  mt.mod.glht[[tr]] <- glht(mt.mod[[tr]],  linfct = mcp(water4 = c("Control - `Mock rainout` = 0")))
-  
-  # mt.mod.plot[[tr]] <- 
-  #   ggplot(mod.emm[[tr]] %>% mutate(year=factor(year, levels=2018:2020)), aes(x=water4, color=snow, y = emmean)) + facet_wrap(vars(year), nrow=1) +
-  #       labs(x="Precipitation", y=traitnames[[tr]], color="Snowmelt") +
-  #       geom_point(data=mnps.subplot, aes_string(x="water4", color="snow", y = tr), inherit.aes = F, position=position_dodge(0.7)) + 
-  #       geom_point(position=position_dodge(0.7), size=4, shape=0) + 
-  #       geom_linerange(aes(ymin=emmean-SE, ymax=emmean+SE), position=position_dodge2(0.7)) +
-  #       guides(x=guide_axis(angle = 90)) + scale_color_manual(values=snow_pal)
-  # print(mt.mod.plot[[tr]])
-  #cat(paste(tr,"\n"))
-  #print(mt.mod.test[[tr]])
-}
-
-mt.mod.tests <- map_dfr(mt.mod.test, tidy, .id="trait")
-mt.mod.tests %>%  print_anova_table(mt.mod)
-
-map_dfr(mt.mod.glht, ~ tibble(Control_minus_MockRainout = coef(.x), p=summary(.x)$test$pvalues), .id="trait") %>% kable(digits=3)
-
-summary(emmeans(ref_grid(mt.mod[["nectar_24_h_ul"]]), ~ water4)) #nectar volume differed between mock rainot and control
+mod.split.coefs <- map_dfr(mod.split, tidy, .id="trait")
+mod.split.tests <- map(mod.split, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
+mod.split.emm <- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water4)), .id = "trait")
+anova_table(mod.split.tests, mod.split) %>% kable()
+re_table(mod.split.coefs) %>% kable()
 ```
+
 
 ```{r multi_splitplot, fig.width=9, fig.height=11}
 traits.include <- traits[c(1:4,8,5:7,13)]

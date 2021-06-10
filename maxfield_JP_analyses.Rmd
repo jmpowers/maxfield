@@ -70,6 +70,7 @@ re_table <- function(coefs) {
   coefs %>% filter(effect=="ran_pars") %>% select(trait, group, estimate) %>% pivot_wider(names_from=group, values_from=estimate)
 }
 select <- dplyr::select
+snow_pal_grey <- c("grey50","black")
 ```
 
 ```{r map, fig.height=4, fig.width=6.5}
@@ -91,7 +92,7 @@ subplot_offset <- size_meter * 1.5
 ggplot(treatments_map %>% mutate(snow=fct_relevel(snow, "Normal"))) + coord_fixed(clip="off")+
   geom_tile(aes(x=plot_x, y=plot_y, fill=snow), 
             width=7*size_meter, height=7*size_meter, color="black", size=0.5) +
-  scale_fill_manual("Snowmelt", values=c("grey","black"))+
+  scale_fill_manual("Snowmelt", values=snow_pal_grey)+
   #new_scale_fill()+
   #scale_fill_grey("Precipitation", start=1, end=0.2) +
   geom_tile_pattern(aes(x=plot_x+subplot_x*subplot_offset, y=plot_y+subplot_y*subplot_offset, pattern_angle=water4), 
@@ -129,6 +130,16 @@ ggplot(hobo %>% filter(hour(time)%in%5:17 &
        x="Light intensity (lux)", y="Temperature (C)", color="Hour") +
   theme_dark() + theme(panel.grid.minor.x=element_blank())
 
+ggplot(hobo %>% filter((year!="2019"&yday(time) %in% 110:130 | 
+                        year=="2019"&yday(time) %in% 145:160)) %>% 
+         mutate(date=date(time)) %>% group_by(year, date, plot) %>% summarize(intensity=max(intensity), temp=max(temp)), 
+       aes(x=intensity, y=temp, color=plot)) +   geom_path(aes(group=paste(plot,year))) + geom_point() + geom_rug() +
+  scale_x_log10(labels=function(x) format(x, scientific=F, big.mark=","), limits=c(10,1e6), breaks=10^(0:6)) +
+  geom_vline(xintercept = melt_threshold_sun) + 
+  geom_hline(yintercept=melt_threshold_warm)+ geom_hline(yintercept=-melt_threshold_warm) +
+  labs(title="Temperature and light thresholds for snow melt", subtitle = "During melt weeks",
+       x="Max light intensity (lux)", y="Max temperature (C)", color="Plot") 
+
 ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=temp, color=plot)) + 
   facet_wrap(vars(year), scales="free_x", ncol=1) + 
   geom_hline(yintercept=melt_threshold_warm) + geom_hline(yintercept=-melt_threshold_warm) +geom_line() +
@@ -136,6 +147,20 @@ ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=temp, color=plot)) +
     #geom_line(data=daily_CORBIL %>% filter(year!="2017", month(date)%in%4:6), aes(x=as.POSIXct(date), y=av_temp_2m_C), inherit.aes = F, color=brewer.pal(3, "Oranges")[3]) +
   labs(x="Date",y="Temperature (C)", color="Plot")
   
+ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=intensity, color=plot)) + 
+  facet_wrap(vars(year), scales="free_x", ncol=1) + 
+  geom_line() + geom_hline(yintercept=melt_threshold_sun) +
+  geom_point(data=meltdates, aes(x=sun_time, y=-2e4, color=plot), size=1) +
+  labs(x="Date",y="Light intensity (lux)", color="Plot")
+
+ggplot(hobo %>%  filter(year!="2019"&yday(time) %in% 110:130 | 
+                        year=="2019"&yday(time) %in% 145:160) %>%  
+         mutate(date=date(time)) %>% group_by(year, date, plot) %>% summarize(intensity=max(intensity)), 
+       aes(x=date, y=intensity, color=plot)) + 
+    facet_wrap(vars(year), scales="free_x", ncol=1) + 
+  geom_line() + geom_point()+ geom_hline(yintercept=melt_threshold_sun) + geom_rug(sides="right") + 
+  labs(x="Date",y="Max light intensity (lux)", color="Plot") + scale_y_log10()
+
 ggplot(hobo %>% filter(month(time)%in%4:6), aes(x=time, y=intensity, color=plot)) + 
   facet_wrap(vars(year), scales="free_x", ncol=1) + 
   geom_line() + geom_hline(yintercept=melt_threshold_sun) +
@@ -384,7 +409,8 @@ bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits
   t %>% as.data.frame %>% rownames_to_column("trait") %>% as_tibble %>% 
   mutate(n_per_plant_year_round = n_measurements / plant_year_round,
          n_per_plant_year = n_measurements / plant_year,
-         n_per_plant = n_measurements/ plant) %>% kable(digits=2)
+         n_per_plant = n_measurements/ plant,
+         plant_per_subplot_per_year = plant_year / 24 / 3) %>% kable(digits=2)
 
 #How many plants flowered twice?
 with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))
@@ -466,7 +492,7 @@ ggplot(fitness.mod.emm, aes(x=water, color=snow, y=emmean)) +
   geom_linerange(aes(ymin=lSE, ymax=uSE), position=position_dodge(width=0.8), size=1, show.legend=F) +
   geom_point(position=position_dodge(width=0.8), shape="-", size=16) + 
   labs(x="Precipitation", color="Snowmelt") + scale_y_continuous(position="right")  + scale_x_discrete(guide=guide_axis(angle=90))+ 
-  scale_color_manual(values=c("grey","black"), guide=guide_legend(override.aes = list(shape=15, size=5))) + 
+  scale_color_manual(values=snow_pal_grey, guide=guide_legend(override.aes = list(shape=15, size=5))) + 
   theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                           axis.title.y= element_blank(),
                           panel.border = element_rect(fill=NA, colour = "black"),
@@ -948,9 +974,10 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
     labs(x="Precipitation", y="Standardized trait", color="Snowmelt") + 
     scale_y_continuous(position="right") + scale_x_discrete(guide=guide_axis(angle=90)) + 
     #coord_fixed() + #maintains y scale across plots if figure width is constant
-    scale_color_manual(values=c("grey","black"), guide=guide_legend(override.aes = list(shape=15, size=ifelse(plot.emm,5,1)))) + 
+    scale_color_manual(values=snow_pal_grey, guide=guide_legend(override.aes = list(shape=15, size=ifelse(plot.emm,5,1)))) + 
     theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                             axis.title.y= element_blank(),
+                            panel.grid.major.x = element_blank(), panel.grid.minor.x=element_blank(), panel.grid.minor.y = element_blank(),
                             panel.border = element_rect(fill=NA, colour = "black"), 
                             panel.spacing=unit(0, "pt"), plot.margin = margin(0,0,0,0, "pt"), legend.position = "top") +
     switch(facets, 
