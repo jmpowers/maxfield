@@ -182,19 +182,25 @@ meltdates %>% ggplot(aes(x=melt_offset, fill=snow)) + geom_dotplot(method="histo
 
 ## Snowmelt timing
 
-```{r groundcover, fig.height=4, fig.width=6.5}
-groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% 
+```{r groundcover, fig.height=5, fig.width=7.5}
+groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% select(-first_snow_day) %>% 
   pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>% drop_na(day) %>% select(-starts_with("first")) %>% 
   mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %>% 
   ggplot(aes(x=year, y=day, color=threshold)) +  
   annotate("rect", xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill="lightblue")+
-  geom_line(aes(group=year), size=2)+ geom_smooth( method="lm", se=F) +geom_point() +
-  scale_x_continuous(minor_breaks = 1976:2020, position = "top") + scale_y_continuous(n.breaks=10)+
-  scale_color_grey(labels=function(x) str_to_sentence(str_replace_all(x, "_", " ")), start=0, end=0.85) +
-  labs(x="Year", y="Day of year", color="Threshold") + theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),  panel.border = element_rect(fill=NA, colour = "black"))
+  geom_line(aes(group=year), size=1.5)+ geom_smooth(method="lm", se=F) +
+  geom_point(aes(shape=source)) + scale_shape_manual("Source",values=c(19,17), labels=c("Observed", "Inferred from peak runoff")) +
+  scale_x_continuous(breaks=seq(1940,2020, by=10), minor_breaks = scales::pretty_breaks(n = 100), position = "top") + scale_y_continuous(n.breaks=10)+
+  scale_color_grey(labels=c(paste(c(0,50,100),"cm")), start=0, end=0.85) +#function(x) str_to_sentence(str_replace_all(x, "_", " "))
+  labs(x="Year", y="Day of year", color="First day snowpack below") + theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),  panel.border = element_rect(fill=NA, colour = "black"))
 
+meltdate.mod <- lm(first_0_cm_day ~ year, data=groundcover)
+summary(meltdate.mod)
+early.melt_offset <- treatments %>% filter(snow=="Early") %>% pull(melt_offset)
 cat("SD of first bare ground =", round(sd(groundcover$first_0_cm_day),1),"days over",range(groundcover$year))
-summary(lm(first_0_cm_day ~ year, data=groundcover))
+cat("Snowmelt is advancing",-10*tidy(meltdate.mod)$estimate[2],"+-",10*tidy(meltdate.mod)$std.error[2], "days per decade")
+cat("Early snow treatments melted", -round(mean(early.melt_offset),1), "+-", round(sd(early.melt_offset),1), "days earlier (mean +- SD)")
+cat("Equivalent to", mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], "+-", (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), "years of future warming")#propagate error from SD of treatment advance and SE of regression
 
 treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
   geom_point(data=groundcover, aes(x=first_0_cm_day, color="Control", shape="1990-2017"), fill="white", size=2) +
@@ -626,7 +632,18 @@ bind_rows(lt, pt) %>% select(size, all_of(c(leaftraits, phystraits)), water) %>%
 ## Print a census
 
 ```{r print_census}
-cen %>% select(plotid, plantid, transition_fixed_18, n_rosettes_20, r1_leaves_20, r1_longest_20, starts_with("check"), starts_with("other_notes")) %>% write_tsv("data/census_print.tsv")
+cen %>% select(plantid, starts_with("transition_fixed"), n_rosettes_20, r1_leaves_20, r1_longest_20, starts_with("check"), starts_with("other_notes")) %>%
+  mutate(across(everything(), as.character)) %>% 
+  arrange(plantid) %>% 
+  mutate(cen181920 = ifelse(is.na(transition_fixed_20),ifelse(is.na(transition_fixed_19),transition_fixed_18,transition_fixed_19),transition_fixed_20)) %>% 
+  select(-starts_with("transition_fixed")) %>% 
+  mutate(across(everything(), replace_na, "")) %>% 
+  mutate(cen181920 = str_replace_all(cen181920," > ", "|") %>% 
+           str_replace_all("vegetative"," V ") %>% str_replace_all("flowering"," F ") %>% 
+           str_replace_all("dead_nf","DNF") %>% str_replace_all("tagnf","TNF") %>% str_replace_all("no_record","NA "), 
+         size20 = paste(n_rosettes_20, r1_leaves_20, r1_longest_20, sep=","),
+         notes1818r2_19_20chk1920 = paste0(other_notes_18, ",", other_notes_18r2, "|", other_notes_19, "|", other_notes_20, ",", check_19_20_20), .keep="unused") %>% 
+  write_tsv("data/census_print.tsv")
 ```
 
 
@@ -1202,13 +1219,14 @@ mod.abs <- c(map(set_names(traits),
 mod.abs.coefs <- map_dfr(mod.abs, tidy, .id="trait")
 mod.abs.tests <- map(mod.abs, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 anova_table(mod.abs.tests, mod.abs) %>% kable()
+mod.abs.coefs %>% filter(effect=="fixed", term!="(Intercept)") %>% pivot_wider(id_cols=trait, names_from=term, values_from=c("estimate","std.error")) %>% kable()
 re_table(mod.abs.coefs) %>% kable()
 ```
 
 ### Plots
 
 ```{r multi_meltdate, fig.width=6, fig.height=10}
-plot_abs <- function(mod, data, traits.plot, facets = "trait") {
+plot_abs <- function(mod, data, traits.plot, tests=NULL, facets = "trait") {
   data.long <- data %>% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm) %>% 
     pivot_longer(all_of(traits.plot), names_to="trait") %>% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal"),
@@ -1226,6 +1244,12 @@ plot_abs <- function(mod, data, traits.plot, facets = "trait") {
            emmean = (emmean - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)])
   
   traitnames.multiline <- ifelse(nchar(traitnames) > 30, str_replace(traitnames, fixed("("),"\n("), traitnames)
+  if(!is.null(tests)) {
+    tests.sig <- tests %>% filter(p.value < 0.05) %>% 
+          mutate(term.abbr = str_replace_all(term, c(sun_date="Sn", precip_est_mm="Pr",`:`="\U00D7"))) %>% 
+          group_by(trait) %>% summarize(terms.sig = paste0("(",paste(term.abbr, collapse=", "),")")) %>% deframe
+    traitnames.multiline[] <- paste(traitnames.multiline, replace_na(tests.sig[alltraits], ""))
+  }
   
   abs_plot <- ggplot(emm.grid, aes(x=sun_date, y=emmean, color=precip_est_mm, group=precip_est_mm)) + 
     geom_point(data = data.long, aes(y=value, shape=year), size=2) + geom_line() + 
@@ -1247,7 +1271,7 @@ plot_abs <- function(mod, data, traits.plot, facets = "trait") {
 }
 
 # plot_abs(mt.mod.abs, mnps, floraltraits) #Morphological traits - raw data
-plot_abs(mod.abs, mnps.subplot, floraltraits) + #Morphological traits - subplot means
+plot_abs(mod.abs, mnps.subplot, floraltraits, mod.abs.tests) + #Morphological traits - subplot means
   scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
 ggsave("images/multi_meltdate-1.eps", height=10, width=6, device=cairo_ps)
 
@@ -1447,8 +1471,8 @@ mod.sm.emm %>% #filter(trait %in% floraltraits) %>%
 
 ```
 
-```{r multi_sm, fig.width=10, fig.height=6}
-plot_sm <- function(mod, data, traits.plot) {
+```{r multi_sm, fig.width=6, fig.height=10}
+plot_sm <- function(mod, data, traits.plot, tests=NULL) {
   data.long <- data %>% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm, VWC) %>% 
     pivot_longer(all_of(traits.plot), names_to="trait") %>% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, "Normal"),
@@ -1464,6 +1488,13 @@ plot_sm <- function(mod, data, traits.plot) {
     group_by(year) %>% filter(VWC >= VWC.min-0.1, VWC <= VWC.max+0.1)
   
   traitnames.multiline <- ifelse(nchar(traitnames) > 30, str_replace(traitnames, fixed("("),"\n("), traitnames)
+  if(!is.null(tests)) {
+    tests.sig <- tests %>% filter(p.value < 0.05) %>% 
+          mutate(term.abbr = str_replace_all(term, c(year="Yr", VWC="SM",`:`="\U00D7"))) %>% 
+          group_by(trait) %>% summarize(terms.sig = paste0("(",paste(term.abbr, collapse=", "),")")) %>% deframe
+    print(tests.sig[traits.plot])
+    traitnames.multiline[] <- paste(traitnames.multiline, replace_na(tests.sig[alltraits], ""))
+  }
   
   sm_plot <- ggplot(emm.grid, aes(x=VWC, y=emmean, color=year, group=year)) + 
     facet_wrap(vars(trait), scales="fixed", dir="v", ncol=ifelse(length(traits.plot)>3,2,4), labeller = as_labeller(traitnames.multiline))+
@@ -1476,7 +1507,7 @@ plot_sm <- function(mod, data, traits.plot) {
   return(sm_plot)
 }
 
-plot_sm(mod.sm, mnps.plantyr, floraltraits) + 
+plot_sm(mod.sm, mnps.plantyr, floraltraits, mod.sm.tests) + 
   scale_y_continuous(limits=c(-4.3,5)) + xlab("Summer mean of soil moisture in subplot (%VWC)")
 ggsave("images/multi_sm-1.eps", height=10, width=6, device=cairo_ps)
 ```

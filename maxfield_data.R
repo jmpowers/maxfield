@@ -86,8 +86,9 @@ snowcloth <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & 
   mutate(plots = as.character(plots), date = force_tz(date, "America/Denver")+hours(12), year=factor(year)) %>% 
   bind_rows(normal_meltdate)
 
-groundcover <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="groundcover") %>% 
-  mutate(across(starts_with("first"), list(day=yday)), year=year(first_0_cm))
+groundcover <- bind_rows(billy=read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="groundcover") %>% 
+  mutate(across(starts_with("first"), list(day=yday)), year=year(first_0_cm)),
+  streamflow=read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="streamflow"), .id="source")
 
 waterdates <- read_sheet(filter(datasheets, name=="2020 Maxfield Soil Moisture & Snow"), sheet="water_dates")
 # weather -----------------------------------------------------------------
@@ -303,6 +304,13 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          plotid = paste0(plot, subplot)) %>% 
   fix_dataset("census20") %>% left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
+
+cen21 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2021") %>% 
+  mutate(plot = factor(str_sub(plantid,1,1)), subplot = factor(str_sub(plantid,2,2)),
+         plotid = factor(paste0(plot, subplot)), plant = str_sub(plantid, 3, -1),
+         year=factor(year(date))) %>% left_join(treatments_map) %>% #TODO get 2021 meltdates for treatments
+  mutate_if(is.character, as.factor)
+#with(cen21 %>% filter(water=="Control") %>% mutate(plotid = fct_drop(plotid)), table(plotid, status)) 
 
 # duplicates --------------------------------------------------------------
 # When there is more than one record for a plant tag in the census, which duplicate should be kept? 
@@ -853,6 +861,7 @@ save.image("data/maxfield_data.rda")
 alldata <- list("treatments"=treatments,
                 "meltdates"=meltdates,
                 "soil_moisture"=sm,
+                "groundcover"=groundcover,
                 "census_2018"=cen18,
                 "census_2019"=cen19,
                 "census_2020"=cen20,

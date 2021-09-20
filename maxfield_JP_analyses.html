@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-06-10" />
+<meta name="date" content="2021-09-17" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-06-10</h4>
+<h4 class="date">2021-09-17</h4>
 
 </div>
 
@@ -423,37 +423,52 @@ ggplot(treatments_map %&gt;% mutate(snow=fct_relevel(snow, &quot;Normal&quot;)))
 <p><img src="images/hobo-9.png" width="672" /></p>
 <div id="snowmelt-timing" class="section level2">
 <h2>Snowmelt timing</h2>
-<pre class="r"><code>groundcover %&gt;% mutate(first_snow_day=first_snow_day-365) %&gt;% 
+<pre class="r"><code>groundcover %&gt;% mutate(first_snow_day=first_snow_day-365) %&gt;% select(-first_snow_day) %&gt;% 
   pivot_longer(ends_with(&quot;day&quot;), names_to=&quot;threshold&quot;, values_to=&quot;day&quot;) %&gt;% drop_na(day) %&gt;% select(-starts_with(&quot;first&quot;)) %&gt;% 
   mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %&gt;% 
   ggplot(aes(x=year, y=day, color=threshold)) +  
   annotate(&quot;rect&quot;, xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill=&quot;lightblue&quot;)+
-  geom_line(aes(group=year), size=2)+ geom_smooth( method=&quot;lm&quot;, se=F) +geom_point() +
-  scale_x_continuous(minor_breaks = 1976:2020, position = &quot;top&quot;) + scale_y_continuous(n.breaks=10)+
-  scale_color_grey(labels=function(x) str_to_sentence(str_replace_all(x, &quot;_&quot;, &quot; &quot;)), start=0, end=0.85) +
-  labs(x=&quot;Year&quot;, y=&quot;Day of year&quot;, color=&quot;Threshold&quot;) + theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),  panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
-<p><img src="images/groundcover-1.png" width="624" /></p>
-<pre class="r"><code>cat(&quot;SD of first bare ground =&quot;, round(sd(groundcover$first_0_cm_day),1),&quot;days over&quot;,range(groundcover$year))</code></pre>
-<pre><code>SD of first bare ground = 13.5 days over 1976 2020</code></pre>
-<pre class="r"><code>summary(lm(first_0_cm_day ~ year, data=groundcover))</code></pre>
+  geom_line(aes(group=year), size=1.5)+ geom_smooth(method=&quot;lm&quot;, se=F) +
+  geom_point(aes(shape=source)) + scale_shape_manual(&quot;Source&quot;,values=c(19,17), labels=c(&quot;Observed&quot;, &quot;Inferred from peak runoff&quot;)) +
+  scale_x_continuous(breaks=seq(1940,2020, by=10), minor_breaks = scales::pretty_breaks(n = 100), position = &quot;top&quot;) + scale_y_continuous(n.breaks=10)+
+  scale_color_grey(labels=c(paste(c(0,50,100),&quot;cm&quot;)), start=0, end=0.85) +#function(x) str_to_sentence(str_replace_all(x, &quot;_&quot;, &quot; &quot;))
+  labs(x=&quot;Year&quot;, y=&quot;Day of year&quot;, color=&quot;First day snowpack below&quot;) + theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),  panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
+<p><img src="images/groundcover-1.png" width="720" /></p>
+<pre class="r"><code>meltdate.mod &lt;- lm(first_0_cm_day ~ year, data=groundcover)
+summary(meltdate.mod)</code></pre>
 <pre><code>
 Call:
 lm(formula = first_0_cm_day ~ year, data = groundcover)
 
 Residuals:
     Min      1Q  Median      3Q     Max 
--28.016  -9.065   0.378   8.403  29.750 
+-26.090  -8.017   0.051   7.499  30.360 
 
 Coefficients:
-            Estimate Std. Error t value Pr(&gt;|t|)  
-(Intercept)  557.649    305.467    1.83    0.075 .
-year          -0.209      0.153   -1.37    0.178  
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) 411.2126    97.0568    4.24  5.7e-05 ***
+year         -0.1361     0.0491   -2.77   0.0068 ** 
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 
-Residual standard error: 13.3 on 43 degrees of freedom
-Multiple R-squared:  0.0417,    Adjusted R-squared:  0.0195 
-F-statistic: 1.87 on 1 and 43 DF,  p-value: 0.178</code></pre>
+Residual standard error: 11.5 on 85 degrees of freedom
+Multiple R-squared:  0.083, Adjusted R-squared:  0.0723 
+F-statistic:  7.7 on 1 and 85 DF,  p-value: 0.0068</code></pre>
+<pre class="r"><code>tidy(meltdate.mod)</code></pre>
+<pre><code># A tibble: 2 x 5
+  term        estimate std.error statistic   p.value
+  &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+1 (Intercept)  411.      97.1         4.24 0.0000572
+2 year          -0.136    0.0491     -2.77 0.00680  </code></pre>
+<pre class="r"><code>early.melt_offset &lt;- treatments %&gt;% filter(snow==&quot;Early&quot;) %&gt;% pull(melt_offset)
+cat(&quot;SD of first bare ground =&quot;, round(sd(groundcover$first_0_cm_day),1),&quot;days over&quot;,range(groundcover$year))</code></pre>
+<pre><code>SD of first bare ground = 11.9 days over 1935 2021</code></pre>
+<pre class="r"><code>cat(&quot;Snowmelt is advancing&quot;,-10*tidy(meltdate.mod)$estimate[2],&quot;+-&quot;,10*tidy(meltdate.mod)$std.error[2], &quot;days per decade&quot;)</code></pre>
+<pre><code>Snowmelt is advancing 1.361 +- 0.4906 days per decade</code></pre>
+<pre class="r"><code>cat(&quot;Early snow treatments melted&quot;, -round(mean(early.melt_offset),1), &quot;+-&quot;, round(sd(early.melt_offset),1), &quot;days earlier (mean +- SD)&quot;)</code></pre>
+<pre><code>Early snow treatments melted 5.7 +- 2.2 days earlier (mean +- SD)</code></pre>
+<pre class="r"><code>cat(&quot;Equivalent to&quot;, mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], &quot;+-&quot;, (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), &quot;years of future warming&quot;)#propagate error from SD of treatment advance and SE of regression</code></pre>
+<pre><code>Equivalent to 41.78 +- 22.12 years of future warming</code></pre>
 <pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
   geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;), fill=&quot;white&quot;, size=2) +
   scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ 
@@ -461,7 +476,7 @@ F-statistic: 1.87 on 1 and 43 DF,  p-value: 0.178</code></pre>
   labs(y=&quot;Summer precipiation (mm)&quot;, x=&quot;Snowmelt date&quot;, color=&quot;Precipitation&quot;, shape=&quot;Year&quot;) + 
   theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
-<p><img src="images/groundcover-2.png" width="624" /></p>
+<p><img src="images/groundcover-2.png" width="720" /></p>
 <pre class="r"><code>ggsave(&quot;images/groundcover-2.eps&quot;, height=4, width=6.5, device=cairo_ps)</code></pre>
 </div>
 </div>
@@ -1916,7 +1931,18 @@ Anova_table(fitness.size.mod.tests) %&gt;% kable()</code></pre>
 </div>
 <div id="print-a-census" class="section level2">
 <h2>Print a census</h2>
-<pre class="r"><code>cen %&gt;% select(plotid, plantid, transition_fixed_18, n_rosettes_20, r1_leaves_20, r1_longest_20, starts_with(&quot;check&quot;), starts_with(&quot;other_notes&quot;)) %&gt;% write_tsv(&quot;data/census_print.tsv&quot;)</code></pre>
+<pre class="r"><code>cen %&gt;% select(plantid, starts_with(&quot;transition_fixed&quot;), n_rosettes_20, r1_leaves_20, r1_longest_20, starts_with(&quot;check&quot;), starts_with(&quot;other_notes&quot;)) %&gt;%
+  mutate(across(everything(), as.character)) %&gt;% 
+  arrange(plantid) %&gt;% 
+  mutate(cen181920 = ifelse(is.na(transition_fixed_20),ifelse(is.na(transition_fixed_19),transition_fixed_18,transition_fixed_19),transition_fixed_20)) %&gt;% 
+  select(-starts_with(&quot;transition_fixed&quot;)) %&gt;% 
+  mutate(across(everything(), replace_na, &quot;&quot;)) %&gt;% 
+  mutate(cen181920 = str_replace_all(cen181920,&quot; &gt; &quot;, &quot;|&quot;) %&gt;% 
+           str_replace_all(&quot;vegetative&quot;,&quot; V &quot;) %&gt;% str_replace_all(&quot;flowering&quot;,&quot; F &quot;) %&gt;% 
+           str_replace_all(&quot;dead_nf&quot;,&quot;DNF&quot;) %&gt;% str_replace_all(&quot;tagnf&quot;,&quot;TNF&quot;) %&gt;% str_replace_all(&quot;no_record&quot;,&quot;NA &quot;), 
+         size20 = paste(n_rosettes_20, r1_leaves_20, r1_longest_20, sep=&quot;,&quot;),
+         notes1818r2_19_20chk1920 = paste0(other_notes_18, &quot;,&quot;, other_notes_18r2, &quot;|&quot;, other_notes_19, &quot;|&quot;, other_notes_20, &quot;,&quot;, check_19_20_20), .keep=&quot;unused&quot;) %&gt;% 
+  write_tsv(&quot;data/census_print.tsv&quot;)</code></pre>
 </div>
 </div>
 <div id="leaf-traits" class="section level1">
@@ -3773,6 +3799,229 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>mod.abs.coefs %&gt;% filter(effect==&quot;fixed&quot;, term!=&quot;(Intercept)&quot;) %&gt;% pivot_wider(id_cols=trait, names_from=term, values_from=c(&quot;estimate&quot;,&quot;std.error&quot;)) %&gt;% kable()</code></pre>
+<table>
+<colgroup>
+<col width="12%" />
+<col width="10%" />
+<col width="13%" />
+<col width="18%" />
+<col width="11%" />
+<col width="14%" />
+<col width="19%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="right">estimate_sun_date</th>
+<th align="right">estimate_precip_est_mm</th>
+<th align="right">estimate_sun_date:precip_est_mm</th>
+<th align="right">std.error_sun_date</th>
+<th align="right">std.error_precip_est_mm</th>
+<th align="right">std.error_sun_date:precip_est_mm</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">corolla_length</td>
+<td align="right">0.0777</td>
+<td align="right">0.0797</td>
+<td align="right">-0.0004</td>
+<td align="right">0.0144</td>
+<td align="right">0.0205</td>
+<td align="right">0.0002</td>
+</tr>
+<tr class="even">
+<td align="left">style_length</td>
+<td align="right">0.0795</td>
+<td align="right">0.0415</td>
+<td align="right">-0.0002</td>
+<td align="right">0.0145</td>
+<td align="right">0.0206</td>
+<td align="right">0.0002</td>
+</tr>
+<tr class="odd">
+<td align="left">corolla_width</td>
+<td align="right">0.0122</td>
+<td align="right">0.0092</td>
+<td align="right">0.0000</td>
+<td align="right">0.0022</td>
+<td align="right">0.0031</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">sepal_width</td>
+<td align="right">0.0048</td>
+<td align="right">0.0089</td>
+<td align="right">-0.0001</td>
+<td align="right">0.0019</td>
+<td align="right">0.0025</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_24_h_ul</td>
+<td align="right">0.0159</td>
+<td align="right">0.0089</td>
+<td align="right">0.0000</td>
+<td align="right">0.0059</td>
+<td align="right">0.0084</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="even">
+<td align="left">nectar_conc</td>
+<td align="right">-0.2102</td>
+<td align="right">-0.0827</td>
+<td align="right">0.0004</td>
+<td align="right">0.0300</td>
+<td align="right">0.0419</td>
+<td align="right">0.0003</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_sugar_24_h_mg</td>
+<td align="right">-0.0007</td>
+<td align="right">0.0024</td>
+<td align="right">0.0000</td>
+<td align="right">0.0018</td>
+<td align="right">0.0025</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">height_cm</td>
+<td align="right">0.2992</td>
+<td align="right">0.0201</td>
+<td align="right">-0.0002</td>
+<td align="right">0.0430</td>
+<td align="right">0.0599</td>
+<td align="right">0.0005</td>
+</tr>
+<tr class="odd">
+<td align="left">open</td>
+<td align="right">0.1503</td>
+<td align="right">0.0359</td>
+<td align="right">-0.0003</td>
+<td align="right">0.0145</td>
+<td align="right">0.0203</td>
+<td align="right">0.0002</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_fruit</td>
+<td align="right">0.0499</td>
+<td align="right">0.0022</td>
+<td align="right">0.0000</td>
+<td align="right">0.0184</td>
+<td align="right">0.0260</td>
+<td align="right">0.0002</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_est</td>
+<td align="right">1.7671</td>
+<td align="right">0.1607</td>
+<td align="right">-0.0015</td>
+<td align="right">0.5816</td>
+<td align="right">0.8262</td>
+<td align="right">0.0064</td>
+</tr>
+<tr class="even">
+<td align="left">fruits_nonaborted</td>
+<td align="right">0.2736</td>
+<td align="right">0.0671</td>
+<td align="right">-0.0002</td>
+<td align="right">0.1295</td>
+<td align="right">0.1841</td>
+<td align="right">0.0015</td>
+</tr>
+<tr class="odd">
+<td align="left">flowers_est</td>
+<td align="right">0.0867</td>
+<td align="right">0.1090</td>
+<td align="right">-0.0007</td>
+<td align="right">0.1663</td>
+<td align="right">0.2367</td>
+<td align="right">0.0019</td>
+</tr>
+<tr class="even">
+<td align="left">prop_infested</td>
+<td align="right">0.0023</td>
+<td align="right">0.0012</td>
+<td align="right">0.0000</td>
+<td align="right">0.0012</td>
+<td align="right">0.0017</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_aborted</td>
+<td align="right">-0.0042</td>
+<td align="right">-0.0019</td>
+<td align="right">0.0000</td>
+<td align="right">0.0014</td>
+<td align="right">0.0020</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_flower</td>
+<td align="right">0.0328</td>
+<td align="right">0.0076</td>
+<td align="right">-0.0001</td>
+<td align="right">0.0092</td>
+<td align="right">0.0130</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">6.6467</td>
+<td align="right">-0.7503</td>
+<td align="right">0.0067</td>
+<td align="right">0.9560</td>
+<td align="right">1.0007</td>
+<td align="right">0.0084</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">-1.3730</td>
+<td align="right">-1.7834</td>
+<td align="right">0.0090</td>
+<td align="right">0.4267</td>
+<td align="right">0.6503</td>
+<td align="right">0.0051</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">-0.0001</td>
+<td align="right">0.0024</td>
+<td align="right">0.0000</td>
+<td align="right">0.0018</td>
+<td align="right">0.0020</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">0.2752</td>
+<td align="right">0.1949</td>
+<td align="right">-0.0013</td>
+<td align="right">0.0927</td>
+<td align="right">0.1165</td>
+<td align="right">0.0009</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">0.0072</td>
+<td align="right">0.0040</td>
+<td align="right">0.0000</td>
+<td align="right">0.0017</td>
+<td align="right">0.0017</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">-1.7948</td>
+<td align="right">-1.1076</td>
+<td align="right">0.0063</td>
+<td align="right">0.5112</td>
+<td align="right">0.4252</td>
+<td align="right">0.0033</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>re_table(mod.abs.coefs) %&gt;% kable()</code></pre>
 <table>
 <thead>
@@ -3944,7 +4193,7 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </div>
 <div id="plots-1" class="section level3">
 <h3>Plots</h3>
-<pre class="r"><code>plot_abs &lt;- function(mod, data, traits.plot, facets = &quot;trait&quot;) {
+<pre class="r"><code>plot_abs &lt;- function(mod, data, traits.plot, tests=NULL, facets = &quot;trait&quot;) {
   data.long &lt;- data %&gt;% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm) %&gt;% 
     pivot_longer(all_of(traits.plot), names_to=&quot;trait&quot;) %&gt;% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, &quot;Normal&quot;),
@@ -3962,6 +4211,12 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
            emmean = (emmean - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)])
   
   traitnames.multiline &lt;- ifelse(nchar(traitnames) &gt; 30, str_replace(traitnames, fixed(&quot;(&quot;),&quot;\n(&quot;), traitnames)
+  if(!is.null(tests)) {
+    tests.sig &lt;- tests %&gt;% filter(p.value &lt; 0.05) %&gt;% 
+          mutate(term.abbr = str_replace_all(term, c(sun_date=&quot;Sn&quot;, precip_est_mm=&quot;Pr&quot;,`:`=&quot;\U00D7&quot;))) %&gt;% 
+          group_by(trait) %&gt;% summarize(terms.sig = paste0(&quot;(&quot;,paste(term.abbr, collapse=&quot;, &quot;),&quot;)&quot;)) %&gt;% deframe
+    traitnames.multiline[] &lt;- paste(traitnames.multiline, replace_na(tests.sig[alltraits], &quot;&quot;))
+  }
   
   abs_plot &lt;- ggplot(emm.grid, aes(x=sun_date, y=emmean, color=precip_est_mm, group=precip_est_mm)) + 
     geom_point(data = data.long, aes(y=value, shape=year), size=2) + geom_line() + 
@@ -3983,7 +4238,7 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 }
 
 # plot_abs(mt.mod.abs, mnps, floraltraits) #Morphological traits - raw data
-plot_abs(mod.abs, mnps.subplot, floraltraits) + #Morphological traits - subplot means
+plot_abs(mod.abs, mnps.subplot, floraltraits, mod.abs.tests) + #Morphological traits - subplot means
   scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))</code></pre>
 <p><img src="images/multi_meltdate-1.png" width="576" /></p>
 <pre class="r"><code>ggsave(&quot;images/multi_meltdate-1.eps&quot;, height=10, width=6, device=cairo_ps)
@@ -5016,7 +5271,7 @@ mod.sm.emm %&gt;% #filter(trait %in% floraltraits) %&gt;%
   labs(y=&quot;Slope of standardized trait vs. mean annual soil moisture&quot;, x=&quot;Trait&quot;, color=&quot;Year&quot;) +
   theme_classic() + scale_x_discrete(labels = traitnames) + coord_flip() + scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images/emm_sm-1.png" width="768" /></p>
-<pre class="r"><code>plot_sm &lt;- function(mod, data, traits.plot) {
+<pre class="r"><code>plot_sm &lt;- function(mod, data, traits.plot, tests=NULL) {
   data.long &lt;- data %&gt;% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm, VWC) %&gt;% 
     pivot_longer(all_of(traits.plot), names_to=&quot;trait&quot;) %&gt;% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, &quot;Normal&quot;),
@@ -5032,6 +5287,13 @@ mod.sm.emm %&gt;% #filter(trait %in% floraltraits) %&gt;%
     group_by(year) %&gt;% filter(VWC &gt;= VWC.min-0.1, VWC &lt;= VWC.max+0.1)
   
   traitnames.multiline &lt;- ifelse(nchar(traitnames) &gt; 30, str_replace(traitnames, fixed(&quot;(&quot;),&quot;\n(&quot;), traitnames)
+  if(!is.null(tests)) {
+    tests.sig &lt;- tests %&gt;% filter(p.value &lt; 0.05) %&gt;% 
+          mutate(term.abbr = str_replace_all(term, c(year=&quot;Yr&quot;, VWC=&quot;SM&quot;,`:`=&quot;\U00D7&quot;))) %&gt;% 
+          group_by(trait) %&gt;% summarize(terms.sig = paste0(&quot;(&quot;,paste(term.abbr, collapse=&quot;, &quot;),&quot;)&quot;)) %&gt;% deframe
+    print(tests.sig[traits.plot])
+    traitnames.multiline[] &lt;- paste(traitnames.multiline, replace_na(tests.sig[alltraits], &quot;&quot;))
+  }
   
   sm_plot &lt;- ggplot(emm.grid, aes(x=VWC, y=emmean, color=year, group=year)) + 
     facet_wrap(vars(trait), scales=&quot;fixed&quot;, dir=&quot;v&quot;, ncol=ifelse(length(traits.plot)&gt;3,2,4), labeller = as_labeller(traitnames.multiline))+
@@ -5044,9 +5306,13 @@ mod.sm.emm %&gt;% #filter(trait %in% floraltraits) %&gt;%
   return(sm_plot)
 }
 
-plot_sm(mod.sm, mnps.plantyr, floraltraits) + 
+plot_sm(mod.sm, mnps.plantyr, floraltraits, mod.sm.tests) + 
   scale_y_continuous(limits=c(-4.3,5)) + xlab(&quot;Summer mean of soil moisture in subplot (%VWC)&quot;)</code></pre>
-<p><img src="images/multi_sm-1.png" width="960" /></p>
+<pre><code>   corolla_length      style_length     corolla_width       sepal_width 
+       &quot;(Yr, SM)&quot;            &quot;(SM)&quot; &quot;(Yr, SM, Yr×SM)&quot; &quot;(Yr, SM, Yr×SM)&quot; 
+   nectar_24_h_ul       nectar_conc              &lt;NA&gt;              &lt;NA&gt; 
+           &quot;(SM)&quot;        &quot;(Yr, SM)&quot;                NA                NA </code></pre>
+<p><img src="images/multi_sm-1.png" width="576" /></p>
 <pre class="r"><code>ggsave(&quot;images/multi_sm-1.eps&quot;, height=10, width=6, device=cairo_ps)</code></pre>
 <pre class="r"><code>plot_sm(mod.sm, lt.plantyr.r2, leaftraits) + xlab(&quot;Summer mean of soil moisture in subplot (%VWC)&quot;)</code></pre>
 <p><img src="images/multi_sm_ltpt-1.png" width="768" /></p>
