@@ -51,19 +51,81 @@ options(contrasts = c("contr.sum", "contr.poly")) #needed for Type III SS
 anova_table <- function(df, mod) { #for lmer models and lmerTest::anova
   df %>% select(trait, term, p.value) %>% 
     pivot_wider(names_from=term, values_from=p.value) %>% 
-    mutate(R2m = map_dbl(mod, ~ MuMIn::r.squaredGLMM(.x)[[1,"R2m"]]),
-           singular = map_lgl(mod, isSingular))
-}
-Anova_table <- function(df) { #for glmmTMB models and car::Anova
-  df %>% select(Trait=trait, term, p.value) %>% 
-    pivot_wider(names_from=term, values_from=p.value,names_repair="unique")
-}
-re_table <- function(coefs) {
-  coefs %>% filter(effect=="ran_pars") %>% select(trait, group, estimate) %>% pivot_wider(names_from=group, values_from=estimate)
+    mutate(R2m = map_dbl(mod, ~ MuMIn::r.squaredGLMM(.x)[[1,"R2m"]]))
 }
 select <- dplyr::select
 snow_pal_grey <- c("grey50","black")
 ```
+
+# Metadata
+
+```{r writeout}
+alldata <- list("snowmelt"=groundcover %>% select(source, year, contains("cm_day"), precip_est_mm),
+                "treatments"=treatments %>% select(year, plotid, water, water4, snow, sun_date,precip_est_mm),
+                "soil_moisture"=sm.subplotyear %>% select(year, plotid, VWC),
+                "traits"=mnps.plantyr %>% select(year, plotid, plant, any_of(floraltraits)) %>% 
+                  arrange(year, plotid) %>% drop_na(plant) %>% filter(plant!="NA"))
+
+purrr::walk(names(alldata), ~write_tsv(alldata[[.]], paste0("data_cut/",., ".tsv"), na=""))
+```
+
+The following four datasets are available in tab-delimited (TSV) format under the 'data' folder.
+
+## Snowmelt
+
+:Records of observed or inferred snowmelt timing from 1935 - 2021 in Gothic, CO, USA.
+
+|Column|Description|
+|:- |:------ |
+|source|data source (billy: [billy barr’s plot observations](http://www.gothicwx.org/ground-cover.html) in Gothic, CO; 	streamflow: estimates from amount of peak runoff in the East River 	reported in [Anderson et al. 2012 *Plant 	Physiology*](https://doi.org/10.1104/pp.112.206219))|
+|year|year|
+|first_100_cm_day|day of the year the the snowpack first dropped below 100 cm|
+|first_50_cm_day|day of the year the the snowpack first dropped below 50 cm|
+|first_0_cm_day|day of the year the the snowpack first melted completely (snowmelt 	date)|
+|precip_est_mm|summer precipitation from snowmelt date to day 214 (see Methods S1)|
+
+## Treatments
+
+:The precipitation and snowmelt treatments in the split-plot design, with snowmelt dates for each plot and precipitation totals for each subplot.
+
+|Column|Description|
+|:- |:------ |
+|year|year|
+|plotid|plot number and subplot letter|
+|water|precipitation treatment, with mock rainouts combined with controls|
+|water4|precipitation treatment, with mock rainouts separate from controls|
+|snow|snowmelt treatment (in 2019, plot 2 was covered but coded as normal)|
+|sun_date|snowmelt date in each plot, determined by sunlight threshold|
+|precip_est_mm|estimated summer precipitation in each subplot (see Methods S1)|
+
+## Soil moisture
+
+:Summer averages of soil moisture in each subplot.
+
+|Column|Description|
+|:- |:------ |
+|year|year|
+|plotid|plot number and subplot letter|
+|VWC|% volumetric water content, averaged within a subplot for each date and then averaged across each summer|
+
+## Traits
+
+:Summer averages of traits for each flowering plant.
+
+|Column|Description|
+|:- |:------ |
+|year|year|
+|plotid|plot number and subplot letter|
+|plant|unique plant identifier|
+|corolla_length|length of the corolla (mm)|
+|style_length|length of the style (mm)|
+|corolla_width|width of the corolla at the opening (mm)|
+|sepal_width|width of one sepal at its widest point (mm)|
+|nectar_24_h_ul|nectar production (µL/day)|
+|nectar_conc|nectar sucrose concentration (% by mass)|
+|height_cm|inflorescence height (cm)|
+|flowers_est|total number of flowers produced during the growing season|
+
 
 # Figure 1
 
@@ -98,15 +160,7 @@ treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))
 
 # Models for replicated split-plot design
 
-This is a split-plot analysis, based on the original experimental design. The models use:
-
-* *mnps.plantyr*, the plant means within each year
-* *snow*, the snowmelt treatment
-* *water*, the water treatments with mock rainouts and controls combined
-* *plot* as a random effect (subplots vary within this larger unit)
-* *plotid* as a random effect (plants vary within this larger unit)
-
-The models are specified as:
+This is a split-plot analysis of traits averaged for each plant and year, specified as:
 
     lmer(trait ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data = mnps.plantyr)
 
@@ -114,14 +168,14 @@ The models are specified as:
 
 ```{r splitplot}
 options(contrasts = c("contr.sum", "contr.poly"))
-mod.split <- c(map(set_names(traits), 
+mod.split <- map(set_names(floraltraits), 
                    ~ lmer(mnps.plantyr[[.x]]  ~ year * snow * water + (1|snow:plot) + (1|snow:plotid),
-                          data=mnps.plantyr)))
+                          data=mnps.plantyr))
 
 mod.split.coefs <- map_dfr(mod.split, tidy, .id="trait")
 mod.split.tests <- map(mod.split, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 mod.split.emm <- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)), .id = "trait")
-  anova_table(mod.split.tests, mod.split) %>% kable()
+  anova_table(mod.split.tests, mod.split)
 ```
 
 ```{r water_glht}

@@ -300,15 +300,195 @@ anova_table &lt;- function(df, mod) { #for lmer models and lmerTest::anova
     mutate(R2m = map_dbl(mod, ~ MuMIn::r.squaredGLMM(.x)[[1,&quot;R2m&quot;]]),
            singular = map_lgl(mod, isSingular))
 }
-Anova_table &lt;- function(df) { #for glmmTMB models and car::Anova
-  df %&gt;% select(Trait=trait, term, p.value) %&gt;% 
-    pivot_wider(names_from=term, values_from=p.value,names_repair=&quot;unique&quot;)
-}
-re_table &lt;- function(coefs) {
-  coefs %&gt;% filter(effect==&quot;ran_pars&quot;) %&gt;% select(trait, group, estimate) %&gt;% pivot_wider(names_from=group, values_from=estimate)
-}
 select &lt;- dplyr::select
 snow_pal_grey &lt;- c(&quot;grey50&quot;,&quot;black&quot;)</code></pre>
+<div id="metadata" class="section level1">
+<h1>Metadata</h1>
+<pre class="r"><code>alldata &lt;- list(&quot;snowmelt&quot;=groundcover %&gt;% select(source, year, contains(&quot;cm_day&quot;), precip_est_mm),
+                &quot;treatments&quot;=treatments %&gt;% select(year, plotid, water, water4, snow, sun_date,precip_est_mm),
+                &quot;soil_moisture&quot;=sm.subplotyear %&gt;% select(year, plotid, VWC),
+                &quot;traits&quot;=mnps.plantyr %&gt;% select(year, plotid, plant, any_of(floraltraits)) %&gt;% 
+                  arrange(year, plotid) %&gt;% drop_na(plant) %&gt;% filter(plant!=&quot;NA&quot;))
+
+purrr::walk(names(alldata), ~write_tsv(alldata[[.]], paste0(&quot;data_cut/&quot;,., &quot;.tsv&quot;), na=&quot;&quot;))</code></pre>
+<p>The following four datasets are available in tab-delimited (TSV) format under the ‘data’ folder.</p>
+<div id="snowmelt" class="section level2">
+<h2>Snowmelt</h2>
+<table>
+<caption>Records of observed or inferred snowmelt timing from 1935 - 2021 in Gothic, CO, USA.</caption>
+<colgroup>
+<col width="22%" />
+<col width="77%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Column</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">source</td>
+<td align="left">data source (billy: <a href="http://www.gothicwx.org/ground-cover.html">billy barr’s plot observations</a> in Gothic, CO; streamflow: estimates from amount of peak runoff in the East River reported in <a href="https://doi.org/10.1104/pp.112.206219">Anderson et al. 2012 <em>Plant Physiology</em></a>)</td>
+</tr>
+<tr class="even">
+<td align="left">year</td>
+<td align="left">year</td>
+</tr>
+<tr class="odd">
+<td align="left">first_100_cm_day</td>
+<td align="left">day of the year the the snowpack first dropped below 100 cm</td>
+</tr>
+<tr class="even">
+<td align="left">first_50_cm_day</td>
+<td align="left">day of the year the the snowpack first dropped below 50 cm</td>
+</tr>
+<tr class="odd">
+<td align="left">first_0_cm_day</td>
+<td align="left">day of the year the the snowpack first melted completely (snowmelt date)</td>
+</tr>
+<tr class="even">
+<td align="left">precip_est_mm</td>
+<td align="left">summer precipitation from snowmelt date to day 214 (see Methods S1)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="treatments" class="section level2">
+<h2>Treatments</h2>
+<table>
+<caption>The precipitation and snowmelt treatments in the split-plot design, with snowmelt dates for each plot and precipitation totals for each subplot.</caption>
+<colgroup>
+<col width="22%" />
+<col width="77%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Column</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="left">year</td>
+</tr>
+<tr class="even">
+<td align="left">plotid</td>
+<td align="left">plot number and subplot letter</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="left">precipitation treatment, with mock rainouts combined with controls</td>
+</tr>
+<tr class="even">
+<td align="left">water4</td>
+<td align="left">precipitation treatment, with mock rainouts separate from controls</td>
+</tr>
+<tr class="odd">
+<td align="left">snow</td>
+<td align="left">snowmelt treatment (in 2019, plot 2 was covered but coded as normal)</td>
+</tr>
+<tr class="even">
+<td align="left">sun_date</td>
+<td align="left">snowmelt date in each plot, determined by sunlight threshold</td>
+</tr>
+<tr class="odd">
+<td align="left">precip_est_mm</td>
+<td align="left">estimated summer precipitation in each subplot (see Methods S1)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="soil-moisture" class="section level2">
+<h2>Soil moisture</h2>
+<table>
+<caption>Summer averages of soil moisture in each subplot.</caption>
+<colgroup>
+<col width="22%" />
+<col width="77%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Column</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="left">year</td>
+</tr>
+<tr class="even">
+<td align="left">plotid</td>
+<td align="left">plot number and subplot letter</td>
+</tr>
+<tr class="odd">
+<td align="left">VWC</td>
+<td align="left">% volumetric water content, averaged within a subplot for each date and then averaged across each summer</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="traits" class="section level2">
+<h2>Traits</h2>
+<table>
+<caption>Summer averages of traits for each flowering plant.</caption>
+<thead>
+<tr class="header">
+<th align="left">Column</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="left">year</td>
+</tr>
+<tr class="even">
+<td align="left">plotid</td>
+<td align="left">plot number and subplot letter</td>
+</tr>
+<tr class="odd">
+<td align="left">plant</td>
+<td align="left">unique plant identifier</td>
+</tr>
+<tr class="even">
+<td align="left">corolla_length</td>
+<td align="left">length of the corolla (mm)</td>
+</tr>
+<tr class="odd">
+<td align="left">style_length</td>
+<td align="left">length of the style (mm)</td>
+</tr>
+<tr class="even">
+<td align="left">corolla_width</td>
+<td align="left">width of the corolla at the opening (mm)</td>
+</tr>
+<tr class="odd">
+<td align="left">sepal_width</td>
+<td align="left">width of one sepal at its widest point (mm)</td>
+</tr>
+<tr class="even">
+<td align="left">nectar_24_h_ul</td>
+<td align="left">nectar production (µL/day)</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_conc</td>
+<td align="left">nectar sucrose concentration (% by mass)</td>
+</tr>
+<tr class="even">
+<td align="left">height_cm</td>
+<td align="left">inflorescence height (cm)</td>
+</tr>
+<tr class="odd">
+<td align="left">flowers_est</td>
+<td align="left">total number of flowers produced during the growing season</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <div id="figure-1" class="section level1">
 <h1>Figure 1</h1>
 <pre class="r"><code>size_meter &lt;- 0.11
