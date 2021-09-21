@@ -67,6 +67,8 @@ select <- dplyr::select
 snow_pal_grey <- c("grey50","black")
 ```
 
+## Figure 1
+
 ```{r map, fig.height=4, fig.width=6.5}
 size_meter <- 0.11
 subplot_offset <- size_meter * 1.5
@@ -86,6 +88,8 @@ ggplot(treatments_map %>% mutate(snow=fct_relevel(snow, "Normal"))) + coord_fixe
 
 # Snowmelt timing
 
+## Figure S2
+
 ```{r groundcover, fig.height=5, fig.width=7.5}
 groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% select(-first_snow_day) %>% 
   pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>% drop_na(day) %>% select(-starts_with("first")) %>% 
@@ -101,11 +105,13 @@ groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% select(-first_snow
 meltdate.mod <- lm(first_0_cm_day ~ year, data=groundcover)
 summary(meltdate.mod)
 early.melt_offset <- treatments %>% filter(snow=="Early") %>% pull(melt_offset)
-cat("SD of first bare ground =", round(sd(groundcover$first_0_cm_day),1),"days over",range(groundcover$year))
+
 cat("Snowmelt is advancing",-10*tidy(meltdate.mod)$estimate[2],"+-",10*tidy(meltdate.mod)$std.error[2], "days per decade")
 cat("Early snow treatments melted", -round(mean(early.melt_offset),1), "+-", round(sd(early.melt_offset),1), "days earlier (mean +- SD)")
 cat("Equivalent to", mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], "+-", (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), "years of future warming")#propagate error from SD of treatment advance and SE of regression
 ```
+
+## Figure 2
 
 ```{r hist_climate, fig.height=4, fig.width=6.5}
 treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
@@ -120,18 +126,24 @@ treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))
 
 # Soil moisture
 
+## Table S1
+
 ```{r soil_treatments}
 # VWC split-plot analysis on subplot means (for the whole measurement period)
 sm.mod <- lmer(VWC ~ year * snow * water + (1|snow:plot)+ (1|snow:plotid), data=sm.subplotyear)
 anova(sm.mod) %>% kable()
+```
+
+## Estimated marginal means
+
+```{r soil_emms}
 (sm.emm.snow <- summary(emmeans(sm.mod, ~ snow))) %>% kable()
-sm.emm.snow$emmean[1] - sm.emm.snow$emmean[2]
 (sm.emm.water <- summary(emmeans(sm.mod, ~ water))) %>% kable()
-sm.emm.water$emmean[1] - sm.emm.water$emmean[2]
-sm.emm.water$emmean[3] - sm.emm.water$emmean[2]
 ```
 
 # Timing of measurements
+
+## Figure S1
 
 ```{r timings}
   timings_labels <- c(snowcloth="Snow cloths applied to early plots", 
@@ -163,7 +175,7 @@ ggplot(aes(y=variable, color=year))+
 plot_timings(filter(timings, !variable %in% c("sds","lt","pt","cen")))
 ```
 
-## Sample sizes
+# Sample sizes
 
 ```{r sample_sizes}
 count_measurements <- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
@@ -180,14 +192,18 @@ bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits
          n_per_plant_year = n_measurements / plant_year,
          n_per_plant = n_measurements/ plant,
          plant_per_subplot_per_year = plant_year / 24 / 3) %>% kable(digits=2)
+```
 
+## Number of years plants flowered
+
+```{r flowering_years}
 #How many plants flowered twice?
 with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))
 ```
 
-# Floral traits
 
-## Floral trait correlations
+# Floral trait correlations
+
 ```{r correlations}
 mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %>% 
   ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
@@ -200,7 +216,7 @@ mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,
 This is a split-plot analysis, based on the original experimental design. The models use:
 
 * *mnps.plantyr*, the plant means within each year
-* *snow*, the snowmelt treatment (except for plot 2 in 2019)
+* *snow*, the snowmelt treatment
 * *water*, the water treatments with mock rainouts and controls combined
 * *plot* as a random effect (subplots vary within this larger unit)
 * *plotid* as a random effect (plants vary within this larger unit)
@@ -209,22 +225,13 @@ The models are specified as:
 
     lmer(trait ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data = mnps.plantyr)
 
-### ANOVA tables
+### Table 1
 
 ```{r splitplot}
-lt.subplot.r2 <- lt.subplotround %>% filter(round=="2") 
-lt.plantyr.r2 <- lt.plantyr %>% filter(round=="2")
-
 options(contrasts = c("contr.sum", "contr.poly"))
 mod.split <- c(map(set_names(traits), 
                    ~ lmer(mnps.plantyr[[.x]]  ~ year * snow * water + (1|snow:plot) + (1|snow:plotid),
-                          data=mnps.plantyr)),
-               map(set_names(leaftraits), 
-                   ~ lmer(lt.plantyr.r2[[.x]] ~ year * snow * water + (1|snow:plot) + (1|snow:plotid),
-                          data=lt.plantyr.r2)),
-               map(set_names(phystraits), 
-                   ~ lmer(pt.plantyr[[.x]]    ~ year * snow * water + (1|snow:plot) + (1|snow:plotid) + (1|round),
-                          data=pt.plantyr)))
+                          data=mnps.plantyr)))
 
 mod.split.coefs <- map_dfr(mod.split, tidy, .id="trait")
 mod.split.tests <- map(mod.split, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
@@ -232,7 +239,15 @@ mod.split.emm <- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * sno
   anova_table(mod.split.tests, mod.split) %>% kable()
 ```
 
-### Plots
+```{r water_glht}
+mod.split.tests.water <- map(mod.split, multcomp::glht, 
+                             linfct = multcomp::mcp(water = c("Addition - Control = 0", "Reduction - Control = 0"))) %>% 
+  map_dfr(tidy, .id="trait")
+
+mod.split.tests.water %>% select(trait, contrast, adj.p.value) %>% pivot_wider(names_from=contrast, values_from=adj.p.value) %>% kable()
+```
+
+### Figure 3
 
 ```{r multi_splitplot, fig.width=9, fig.height=10}
 plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = TRUE, facets="year") {
@@ -288,19 +303,11 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
 
 ```{r compensation}
 mnps.plantyr <- mnps.plantyr %>% mutate(snowwater= paste0(snow, water))
-lt.plantyr.r2 <- lt.plantyr.r2 %>% mutate(snowwater= paste0(snow, water))
-pt.plantyr <- pt.plantyr %>% mutate(snowwater= paste0(snow, water))
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
 options(contrasts = c("contr.sum", "contr.poly"))
 mod.split.glht <- c(map(set_names(traits), 
                    ~ lmer(mnps.plantyr[[.x]]  ~ snowwater * year + (1|snow:plot) + (1|snow:plotid),
-                          data=mnps.plantyr)),
-               map(set_names(leaftraits), 
-                   ~ lmer(lt.plantyr.r2[[.x]] ~ snowwater * year + (1|snow:plot) + (1|snow:plotid),
-                          data=lt.plantyr.r2)),
-               map(set_names(phystraits), 
-                   ~ lmer(pt.plantyr[[.x]]    ~ snowwater * year + (1|snow:plot) + (1|snow:plotid) + (1|round),
-                          data=pt.plantyr))) %>% 
+                          data=mnps.plantyr))) %>% 
   #compare early snowmelt + addition vs. normal snowmelt + control
   map(glht, linfct = mcp(snowwater = c("EarlyAddition - NormalControl = 0"))) %>% 
   map_dfr(~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=summary(.x)$test$pvalues), .id="trait") 
@@ -310,7 +317,7 @@ mod.split.glht %>% kable()
 
 ## Plasticity: absolute snowmelt date and estimated summer precipitation
 
-### ANOVA tables
+### ANOVA table
 
 ```{r meltdate}
 options(contrasts = c("contr.sum", "contr.poly"))
@@ -323,7 +330,7 @@ anova_table(mod.abs.tests, mod.abs) %>% kable()
 mod.abs.coefs %>% filter(effect=="fixed", term!="(Intercept)") %>% pivot_wider(id_cols=trait, names_from=term, values_from=c("estimate","std.error")) %>% kable()
 ```
 
-### Plots
+### Figure 4
 
 ```{r multi_meltdate, fig.width=6, fig.height=10}
 plot_abs <- function(mod, data, traits.plot, tests=NULL, facets = "trait") {
@@ -374,7 +381,7 @@ plot_abs(mod.abs, mnps.subplot, floraltraits, mod.abs.tests) + #Morphological tr
   scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
 ```
 
-### Slope plots and compensation
+### Compensation
 
 Compensation points calculated at average value of other predictor - only use for traits where there are effects of both predictors but no interaction
 ```{r compensation_meltdate_avg}
@@ -402,22 +409,16 @@ mod.abs.emm.avg.compensate %>% select(-predictor) %>% kable()
 Both snowmelt timing and summer precipitation affect soil moisture and its timing. This analysis regresses the floral traits against the mean soil moisture in a subplot. Slopes may differ among years. The models use:
 
 * *mt.plantyr*, the trait data averaged by plant within year
-* *VWC*, the summer mean of the approximately weekly mean volumetric water content in a subplot. This may need to change to a subset of the summer because it includes soil moisture taken after traits were measured. See section on within-season variation for timing of measurements in each year.
+* *VWC*, the summer mean of the approximately weekly mean volumetric water content in a subplot. 
 * *plotid* (subplot) as a random effect (plants vary within this larger unit)
 
 The models are specified as:
 
     lmer(trait ~ year * VWC + (1|plotid), data = mt.plantyr)
 
-### ANOVAs
+### ANOVA table
 
 ```{r sm}
-lt.subplot.r2 <- lt.subplotround %>% filter(round=="2")
-lt.plantyr.r2 <- lt.plantyr %>% filter(round=="2")
-
-pt.plantyr <- pt.plantyr %>% mutate(VWC = ifelse(is.na(VWC.plant), VWC.sm, VWC.plant)) #phys traits had the VWC measured next to the plant in 2019 and 2020 only - substitute VWC in subplot on closest date
-pt <- pt %>% mutate(VWC = ifelse(is.na(VWC.plant), VWC.sm, VWC.plant)) 
-
 options(contrasts = c("contr.sum", "contr.poly"))
 mod.sm <- c(map(set_names(traits), 
                   ~ lmer(mnps.plantyr[[.x]]  ~ year * VWC + (1|plotid), data=mnps.plantyr)))
@@ -427,7 +428,7 @@ mod.sm.tests <- map(mod.sm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 anova_table(mod.sm.tests, mod.sm) %>% kable()
 ```
 
-### Plots
+### Figure 5
 
 ```{r multi_sm, fig.width=6, fig.height=10}
 plot_sm <- function(mod, data, traits.plot, tests=NULL) {
@@ -450,7 +451,6 @@ plot_sm <- function(mod, data, traits.plot, tests=NULL) {
     tests.sig <- tests %>% filter(p.value < 0.05) %>% 
           mutate(term.abbr = str_replace_all(term, c(year="Yr", VWC="SM",`:`="\U00D7"))) %>% 
           group_by(trait) %>% summarize(terms.sig = paste0("(",paste(term.abbr, collapse=", "),")")) %>% deframe
-    print(tests.sig[traits.plot])
     traitnames.multiline[] <- paste(traitnames.multiline, replace_na(tests.sig[alltraits], ""))
   }
   
@@ -469,9 +469,9 @@ plot_sm(mod.sm, mnps.plantyr, floraltraits, mod.sm.tests) +
   scale_y_continuous(limits=c(-4.3,5)) + xlab("Summer mean of soil moisture in subplot (%VWC)")
 ```
 
-# Multivariate models
+# Multivariate model
 
-## Multivariate response
+## Figure S4
 
 ```{r multresp_VWC, fig.height=7, fig.width=8}
 mt.morph.plantyr <- mt.plantyr[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","VWC")] %>% drop_na() 
