@@ -11,7 +11,7 @@
 
 <meta name="author" content="John M. Powers, Heather M. Briggs, Rachel G. Dickson, Xinyu Li, Diane R. Campbell" />
 
-<meta name="date" content="2021-09-20" />
+<meta name="date" content="2021-09-21" />
 
 <title>Code for “Earlier snowmelt and reduced summer precipitation alter floral traits important to pollination”</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Code for “Earlier snowmelt and reduced summer precipitation alter floral traits important to pollination”</h1>
 <h4 class="author">John M. Powers, Heather M. Briggs, Rachel G. Dickson, Xinyu Li, Diane R. Campbell</h4>
-<h4 class="date">2021-09-20</h4>
+<h4 class="date">2021-09-21</h4>
 
 </div>
 
@@ -265,8 +265,6 @@ div.tocify {
 img{ max-width:200%; height: auto; }
 td, th { padding : 6px }
 </style>
-<div id="treatments" class="section level1">
-<h1>Treatments</h1>
 <pre class="r"><code>library(tidyverse)
 library(lubridate)
 
@@ -311,8 +309,8 @@ re_table &lt;- function(coefs) {
 }
 select &lt;- dplyr::select
 snow_pal_grey &lt;- c(&quot;grey50&quot;,&quot;black&quot;)</code></pre>
-<div id="figure-1" class="section level2">
-<h2>Figure 1</h2>
+<div id="figure-1" class="section level1">
+<h1>Figure 1</h1>
 <pre class="r"><code>size_meter &lt;- 0.11
 subplot_offset &lt;- size_meter * 1.5
 ggplot(treatments_map %&gt;% mutate(snow=fct_relevel(snow, &quot;Normal&quot;))) + coord_fixed(clip=&quot;off&quot;)+
@@ -329,53 +327,8 @@ ggplot(treatments_map %&gt;% mutate(snow=fct_relevel(snow, &quot;Normal&quot;)))
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())</code></pre>
 <p><img src="images_cut/map-1.png" width="624" /></p>
 </div>
-</div>
-<div id="snowmelt-timing" class="section level1">
-<h1>Snowmelt timing</h1>
-<div id="figure-s2" class="section level2">
-<h2>Figure S2</h2>
-<pre class="r"><code>groundcover %&gt;% mutate(first_snow_day=first_snow_day-365) %&gt;% select(-first_snow_day) %&gt;% 
-  pivot_longer(ends_with(&quot;day&quot;), names_to=&quot;threshold&quot;, values_to=&quot;day&quot;) %&gt;% drop_na(day) %&gt;% select(-starts_with(&quot;first&quot;)) %&gt;% 
-  mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %&gt;% 
-  ggplot(aes(x=year, y=day, color=threshold)) +  
-  annotate(&quot;rect&quot;, xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill=&quot;lightblue&quot;)+
-  geom_line(aes(group=year), size=1.5)+ geom_smooth(method=&quot;lm&quot;, se=F) +
-  geom_point(aes(shape=source)) + scale_shape_manual(&quot;Source&quot;,values=c(19,17), labels=c(&quot;Observed&quot;, &quot;Inferred from peak runoff&quot;)) +
-  scale_x_continuous(breaks=seq(1940,2020, by=10), minor_breaks = scales::pretty_breaks(n = 100), position = &quot;top&quot;) + scale_y_continuous(n.breaks=10)+
-  scale_color_grey(labels=c(paste(c(0,50,100),&quot;cm&quot;)), start=0, end=0.85) +
-  labs(x=&quot;Year&quot;, y=&quot;Day of year&quot;, color=&quot;First day snowpack below&quot;) + theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),  panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
-<p><img src="images_cut/groundcover-1.png" width="720" /></p>
-<pre class="r"><code>meltdate.mod &lt;- lm(first_0_cm_day ~ year, data=groundcover)
-summary(meltdate.mod)</code></pre>
-<pre><code>
-Call:
-lm(formula = first_0_cm_day ~ year, data = groundcover)
-
-Residuals:
-    Min      1Q  Median      3Q     Max 
--26.090  -8.017   0.051   7.499  30.360 
-
-Coefficients:
-            Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept) 411.2126    97.0568    4.24  5.7e-05 ***
-year         -0.1361     0.0491   -2.77   0.0068 ** 
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-
-Residual standard error: 11.5 on 85 degrees of freedom
-Multiple R-squared:  0.083, Adjusted R-squared:  0.0723 
-F-statistic:  7.7 on 1 and 85 DF,  p-value: 0.0068</code></pre>
-<pre class="r"><code>early.melt_offset &lt;- treatments %&gt;% filter(snow==&quot;Early&quot;) %&gt;% pull(melt_offset)
-
-cat(&quot;Snowmelt is advancing&quot;,-10*tidy(meltdate.mod)$estimate[2],&quot;+-&quot;,10*tidy(meltdate.mod)$std.error[2], &quot;days per decade&quot;)</code></pre>
-<pre><code>Snowmelt is advancing 1.361 +- 0.4906 days per decade</code></pre>
-<pre class="r"><code>cat(&quot;Early snow treatments melted&quot;, -round(mean(early.melt_offset),1), &quot;+-&quot;, round(sd(early.melt_offset),1), &quot;days earlier (mean +- SD)&quot;)</code></pre>
-<pre><code>Early snow treatments melted 5.7 +- 2.2 days earlier (mean +- SD)</code></pre>
-<pre class="r"><code>cat(&quot;Equivalent to&quot;, mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], &quot;+-&quot;, (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), &quot;years of future warming&quot;)#propagate error from SD of treatment advance and SE of regression</code></pre>
-<pre><code>Equivalent to 41.78 +- 22.12 years of future warming</code></pre>
-</div>
-<div id="figure-2" class="section level2">
-<h2>Figure 2</h2>
+<div id="figure-2" class="section level1">
+<h1>Figure 2</h1>
 <pre class="r"><code>treatments %&gt;% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
   geom_point(data=groundcover, aes(x=first_0_cm_day, color=&quot;Control&quot;, shape=&quot;1990-2017&quot;), fill=&quot;white&quot;, size=2) +
   scale_color_manual(values=water_pal) + scale_shape_manual(values=c(21, 19, 17, 15))+ 
@@ -385,506 +338,8 @@ cat(&quot;Snowmelt is advancing&quot;,-10*tidy(meltdate.mod)$estimate[2],&quot;+
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
 <p><img src="images_cut/hist_climate-1.png" width="624" /></p>
 </div>
-</div>
-<div id="soil-moisture" class="section level1">
-<h1>Soil moisture</h1>
-<div id="table-s1" class="section level2">
-<h2>Table S1</h2>
-<pre class="r"><code># VWC split-plot analysis on subplot means (for the whole measurement period)
-sm.mod &lt;- lmer(VWC ~ year * snow * water + (1|snow:plot)+ (1|snow:plotid), data=sm.subplotyear)
-anova(sm.mod) %&gt;% kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left"></th>
-<th align="right">Sum Sq</th>
-<th align="right">Mean Sq</th>
-<th align="right">NumDF</th>
-<th align="right">DenDF</th>
-<th align="right">F value</th>
-<th align="right">Pr(&gt;F)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">year</td>
-<td align="right">21.0823</td>
-<td align="right">10.5411</td>
-<td align="right">2</td>
-<td align="right">34.783</td>
-<td align="right">50.4914</td>
-<td align="right">0.0000</td>
-</tr>
-<tr class="even">
-<td align="left">snow</td>
-<td align="right">1.1642</td>
-<td align="right">1.1642</td>
-<td align="right">1</td>
-<td align="right">5.046</td>
-<td align="right">5.5765</td>
-<td align="right">0.0642</td>
-</tr>
-<tr class="odd">
-<td align="left">water</td>
-<td align="right">51.0709</td>
-<td align="right">25.5354</td>
-<td align="right">2</td>
-<td align="right">15.012</td>
-<td align="right">122.3132</td>
-<td align="right">0.0000</td>
-</tr>
-<tr class="even">
-<td align="left">year:snow</td>
-<td align="right">2.3509</td>
-<td align="right">1.1754</td>
-<td align="right">2</td>
-<td align="right">34.782</td>
-<td align="right">5.6303</td>
-<td align="right">0.0076</td>
-</tr>
-<tr class="odd">
-<td align="left">year:water</td>
-<td align="right">4.4296</td>
-<td align="right">1.1074</td>
-<td align="right">4</td>
-<td align="right">36.320</td>
-<td align="right">5.3044</td>
-<td align="right">0.0018</td>
-</tr>
-<tr class="even">
-<td align="left">snow:water</td>
-<td align="right">0.5762</td>
-<td align="right">0.2881</td>
-<td align="right">2</td>
-<td align="right">15.013</td>
-<td align="right">1.3800</td>
-<td align="right">0.2817</td>
-</tr>
-<tr class="odd">
-<td align="left">year:snow:water</td>
-<td align="right">0.3480</td>
-<td align="right">0.0870</td>
-<td align="right">4</td>
-<td align="right">36.320</td>
-<td align="right">0.4168</td>
-<td align="right">0.7954</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="estimated-marginal-means" class="section level2">
-<h2>Estimated marginal means</h2>
-<pre class="r"><code>(sm.emm.snow &lt;- summary(emmeans(sm.mod, ~ snow))) %&gt;% kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">snow</th>
-<th align="right">emmean</th>
-<th align="right">SE</th>
-<th align="right">df</th>
-<th align="right">lower.CL</th>
-<th align="right">upper.CL</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">Early</td>
-<td align="right">4.503</td>
-<td align="right">0.1984</td>
-<td align="right">4.938</td>
-<td align="right">3.991</td>
-<td align="right">5.015</td>
-</tr>
-<tr class="even">
-<td align="left">Normal</td>
-<td align="right">5.128</td>
-<td align="right">0.1763</td>
-<td align="right">5.189</td>
-<td align="right">4.679</td>
-<td align="right">5.576</td>
-</tr>
-</tbody>
-</table>
-<pre class="r"><code>(sm.emm.water &lt;- summary(emmeans(sm.mod, ~ water))) %&gt;% kable()</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="left">water</th>
-<th align="right">emmean</th>
-<th align="right">SE</th>
-<th align="right">df</th>
-<th align="right">lower.CL</th>
-<th align="right">upper.CL</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">Addition</td>
-<td align="right">6.184</td>
-<td align="right">0.1638</td>
-<td align="right">10.618</td>
-<td align="right">5.821</td>
-<td align="right">6.546</td>
-</tr>
-<tr class="even">
-<td align="left">Control</td>
-<td align="right">4.389</td>
-<td align="right">0.1430</td>
-<td align="right">6.717</td>
-<td align="right">4.048</td>
-<td align="right">4.730</td>
-</tr>
-<tr class="odd">
-<td align="left">Reduction</td>
-<td align="right">3.873</td>
-<td align="right">0.1638</td>
-<td align="right">10.618</td>
-<td align="right">3.511</td>
-<td align="right">4.236</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div id="timing-of-measurements" class="section level1">
-<h1>Timing of measurements</h1>
-<div id="figure-s1" class="section level2">
-<h2>Figure S1</h2>
-<pre class="r"><code>  timings_labels &lt;- c(snowcloth=&quot;Snow cloths applied to early plots&quot;, 
-                     meltdates=&quot;Mean early and normal snowmelt timing&quot;, 
-                     waterdates=&quot;Summer precipitation treatments applied&quot;,
-                     sm=&quot;Soil moisture recorded&quot;,         ph=&quot;Inflorescence height recorded&quot;, 
-                     mt=&quot;Floral morphology recorded&quot;,     nt=&quot;Nectar traits recorded&quot;, 
-                     pt= &quot;Physiology traits recorded&quot;,    lt=&quot;Vegetative traits recorded&quot;, 
-                     sds=&quot;Flower collection period&quot;,      cen=&quot;Rosette size and survival recorded&quot;)
-
-plot_timings &lt;- function(data) {
-  data %&gt;% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T),
-                  drawline = ifelse(variable %in% c(&quot;lt&quot;,&quot;meltdates&quot;), NA, TRUE)) %&gt;% 
-ggplot(aes(y=variable, color=year))+ 
-  geom_linerange(aes(xmin=begin, xmax=end, linetype=drawline), 
-                 position = position_dodge2(width=0.7, reverse = T), size=1.2, show.legend=FALSE) + 
-  geom_text(data=data %&gt;% drop_na(plots) %&gt;% filter(year==&quot;2019&quot;),
-            aes(x = end+7, label=paste(ifelse(nchar(plots)&gt;1, &quot;Plots&quot;,&quot;Plot&quot;), str_replace(plots,&quot;,&quot;,&quot; &amp; &quot;))), 
-            position = position_dodge2(width=0.8, reverse = T), size=4, hjust=0, show.legend=FALSE)+
-  geom_point(aes(x=begin), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2)+
-  geom_point(aes(x=end), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2) +
-  scale_color_manual(&quot;Year&quot;, values=year_pal, guide=guide_legend(override.aes = list(size=5))) + 
-  scale_y_discrete(&quot;&quot;, labels=timings_labels)+
-  scale_x_continuous(&quot;Day of year&quot;, breaks=seq(80,240, by=20)) +
-  theme_minimal() + theme(legend.position = &quot;top&quot;, text=element_text(size=14, color=&quot;black&quot;), axis.text = element_text(color=&quot;black&quot;),
-                            panel.border = element_rect(fill=NA, colour = &quot;black&quot;))
-}
-
-plot_timings(filter(timings, !variable %in% c(&quot;sds&quot;,&quot;lt&quot;,&quot;pt&quot;,&quot;cen&quot;)))</code></pre>
-<p><img src="images_cut/timings-1.png" width="672" /></p>
-</div>
-</div>
-<div id="sample-sizes" class="section level1">
-<h1>Sample sizes</h1>
-<pre class="r"><code>count_measurements &lt;- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
-bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits),
-          plant_year_round =   count_measurements(bind_rows(mnps.plantyr, lt.plantyr, pt.plantyr), alltraits), 
-          plant_year = count_measurements(bind_rows(mnps, lt, pt) %&gt;% group_by(year, plantid) %&gt;% 
-                                            summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits) %&gt;% 
-            ungroup %&gt;% summarize(across(all_of(alltraits), sum)),
-          plant =       count_measurements(bind_rows(mnps, lt, pt) %&gt;% group_by(plantid) %&gt;% 
-                                             summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits),
-          .id=&quot;sample_size&quot;) %&gt;% column_to_rownames(&quot;sample_size&quot;) %&gt;% 
-  t %&gt;% as.data.frame %&gt;% rownames_to_column(&quot;trait&quot;) %&gt;% as_tibble %&gt;% 
-  mutate(n_per_plant_year_round = n_measurements / plant_year_round,
-         n_per_plant_year = n_measurements / plant_year,
-         n_per_plant = n_measurements/ plant,
-         plant_per_subplot_per_year = plant_year / 24 / 3) %&gt;% kable(digits=2)</code></pre>
-<table>
-<colgroup>
-<col width="14%" />
-<col width="10%" />
-<col width="11%" />
-<col width="7%" />
-<col width="4%" />
-<col width="15%" />
-<col width="11%" />
-<col width="8%" />
-<col width="18%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">trait</th>
-<th align="right">n_measurements</th>
-<th align="right">plant_year_round</th>
-<th align="right">plant_year</th>
-<th align="right">plant</th>
-<th align="right">n_per_plant_year_round</th>
-<th align="right">n_per_plant_year</th>
-<th align="right">n_per_plant</th>
-<th align="right">plant_per_subplot_per_year</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">corolla_length</td>
-<td align="right">1194</td>
-<td align="right">494</td>
-<td align="right">494</td>
-<td align="right">484</td>
-<td align="right">2.42</td>
-<td align="right">2.42</td>
-<td align="right">2.47</td>
-<td align="right">6.86</td>
-</tr>
-<tr class="even">
-<td align="left">style_length</td>
-<td align="right">1185</td>
-<td align="right">491</td>
-<td align="right">491</td>
-<td align="right">481</td>
-<td align="right">2.41</td>
-<td align="right">2.41</td>
-<td align="right">2.46</td>
-<td align="right">6.82</td>
-</tr>
-<tr class="odd">
-<td align="left">corolla_width</td>
-<td align="right">963</td>
-<td align="right">455</td>
-<td align="right">455</td>
-<td align="right">448</td>
-<td align="right">2.12</td>
-<td align="right">2.12</td>
-<td align="right">2.15</td>
-<td align="right">6.32</td>
-</tr>
-<tr class="even">
-<td align="left">sepal_width</td>
-<td align="right">749</td>
-<td align="right">340</td>
-<td align="right">340</td>
-<td align="right">334</td>
-<td align="right">2.20</td>
-<td align="right">2.20</td>
-<td align="right">2.24</td>
-<td align="right">4.72</td>
-</tr>
-<tr class="odd">
-<td align="left">nectar_24_h_ul</td>
-<td align="right">744</td>
-<td align="right">432</td>
-<td align="right">432</td>
-<td align="right">419</td>
-<td align="right">1.72</td>
-<td align="right">1.72</td>
-<td align="right">1.78</td>
-<td align="right">6.00</td>
-</tr>
-<tr class="even">
-<td align="left">nectar_conc</td>
-<td align="right">656</td>
-<td align="right">401</td>
-<td align="right">401</td>
-<td align="right">390</td>
-<td align="right">1.64</td>
-<td align="right">1.64</td>
-<td align="right">1.68</td>
-<td align="right">5.57</td>
-</tr>
-<tr class="odd">
-<td align="left">nectar_sugar_24_h_mg</td>
-<td align="right">656</td>
-<td align="right">401</td>
-<td align="right">401</td>
-<td align="right">390</td>
-<td align="right">1.64</td>
-<td align="right">1.64</td>
-<td align="right">1.68</td>
-<td align="right">5.57</td>
-</tr>
-<tr class="even">
-<td align="left">height_cm</td>
-<td align="right">1865</td>
-<td align="right">674</td>
-<td align="right">674</td>
-<td align="right">653</td>
-<td align="right">2.77</td>
-<td align="right">2.77</td>
-<td align="right">2.86</td>
-<td align="right">9.36</td>
-</tr>
-<tr class="odd">
-<td align="left">open</td>
-<td align="right">10143</td>
-<td align="right">818</td>
-<td align="right">746</td>
-<td align="right">723</td>
-<td align="right">12.40</td>
-<td align="right">13.60</td>
-<td align="right">14.03</td>
-<td align="right">10.36</td>
-</tr>
-<tr class="even">
-<td align="left">seeds_per_fruit</td>
-<td align="right">528</td>
-<td align="right">505</td>
-<td align="right">505</td>
-<td align="right">491</td>
-<td align="right">1.05</td>
-<td align="right">1.05</td>
-<td align="right">1.08</td>
-<td align="right">7.01</td>
-</tr>
-<tr class="odd">
-<td align="left">seeds_est</td>
-<td align="right">528</td>
-<td align="right">505</td>
-<td align="right">505</td>
-<td align="right">491</td>
-<td align="right">1.05</td>
-<td align="right">1.05</td>
-<td align="right">1.08</td>
-<td align="right">7.01</td>
-</tr>
-<tr class="even">
-<td align="left">fruits_nonaborted</td>
-<td align="right">641</td>
-<td align="right">610</td>
-<td align="right">610</td>
-<td align="right">591</td>
-<td align="right">1.05</td>
-<td align="right">1.05</td>
-<td align="right">1.08</td>
-<td align="right">8.47</td>
-</tr>
-<tr class="odd">
-<td align="left">flowers_est</td>
-<td align="right">641</td>
-<td align="right">610</td>
-<td align="right">610</td>
-<td align="right">591</td>
-<td align="right">1.05</td>
-<td align="right">1.05</td>
-<td align="right">1.08</td>
-<td align="right">8.47</td>
-</tr>
-<tr class="even">
-<td align="left">prop_infested</td>
-<td align="right">611</td>
-<td align="right">581</td>
-<td align="right">581</td>
-<td align="right">563</td>
-<td align="right">1.05</td>
-<td align="right">1.05</td>
-<td align="right">1.09</td>
-<td align="right">8.07</td>
-</tr>
-<tr class="odd">
-<td align="left">prop_aborted</td>
-<td align="right">636</td>
-<td align="right">606</td>
-<td align="right">606</td>
-<td align="right">587</td>
-<td align="right">1.05</td>
-<td align="right">1.05</td>
-<td align="right">1.08</td>
-<td align="right">8.42</td>
-</tr>
-<tr class="even">
-<td align="left">seeds_per_flower</td>
-<td align="right">528</td>
-<td align="right">505</td>
-<td align="right">505</td>
-<td align="right">491</td>
-<td align="right">1.05</td>
-<td align="right">1.05</td>
-<td align="right">1.08</td>
-<td align="right">7.01</td>
-</tr>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="right">505</td>
-<td align="right">496</td>
-<td align="right">326</td>
-<td align="right">264</td>
-<td align="right">1.02</td>
-<td align="right">1.55</td>
-<td align="right">1.91</td>
-<td align="right">4.53</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">592</td>
-<td align="right">583</td>
-<td align="right">326</td>
-<td align="right">264</td>
-<td align="right">1.02</td>
-<td align="right">1.82</td>
-<td align="right">2.24</td>
-<td align="right">4.53</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">505</td>
-<td align="right">496</td>
-<td align="right">326</td>
-<td align="right">264</td>
-<td align="right">1.02</td>
-<td align="right">1.55</td>
-<td align="right">1.91</td>
-<td align="right">4.53</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">327</td>
-<td align="right">327</td>
-<td align="right">319</td>
-<td align="right">275</td>
-<td align="right">1.00</td>
-<td align="right">1.03</td>
-<td align="right">1.19</td>
-<td align="right">4.43</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">323</td>
-<td align="right">323</td>
-<td align="right">315</td>
-<td align="right">271</td>
-<td align="right">1.00</td>
-<td align="right">1.03</td>
-<td align="right">1.19</td>
-<td align="right">4.38</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="right">327</td>
-<td align="right">327</td>
-<td align="right">319</td>
-<td align="right">275</td>
-<td align="right">1.00</td>
-<td align="right">1.03</td>
-<td align="right">1.19</td>
-<td align="right">4.43</td>
-</tr>
-</tbody>
-</table>
-<div id="number-of-years-plants-flowered" class="section level2">
-<h2>Number of years plants flowered</h2>
-<pre class="r"><code>#How many plants flowered twice?
-with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))</code></pre>
-<pre><code>
-  0   1   2 
-499 548  22 </code></pre>
-</div>
-</div>
-<div id="floral-trait-correlations" class="section level1">
-<h1>Floral trait correlations</h1>
-<pre class="r"><code>mnps.plantyr %&gt;% select(corolla_length, corolla_width,  style_length,   anther_max, anther_min, sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %&gt;% 
-  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)</code></pre>
-<p><img src="images_cut/correlations-1.png" width="672" /></p>
-</div>
-<div id="plasticity-models" class="section level1">
-<h1>Plasticity models</h1>
-<div id="plasticity-water-and-snowmelt-treatments" class="section level2">
-<h2>Plasticity: water and snowmelt treatments</h2>
+<div id="models-for-replicated-split-plot-design" class="section level1">
+<h1>Models for replicated split-plot design</h1>
 <p>This is a split-plot analysis, based on the original experimental design. The models use:</p>
 <ul>
 <li><em>mnps.plantyr</em>, the plant means within each year</li>
@@ -895,8 +350,8 @@ with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_sta
 </ul>
 <p>The models are specified as:</p>
 <pre><code>lmer(trait ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data = mnps.plantyr)</code></pre>
-<div id="table-1" class="section level3">
-<h3>Table 1</h3>
+<div id="table-1" class="section level2">
+<h2>Table 1</h2>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 mod.split &lt;- c(map(set_names(traits), 
                    ~ lmer(mnps.plantyr[[.x]]  ~ year * snow * water + (1|snow:plot) + (1|snow:plotid),
@@ -1255,8 +710,8 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 </tbody>
 </table>
 </div>
-<div id="figure-3" class="section level3">
-<h3>Figure 3</h3>
+<div id="figure-3" class="section level2">
+<h2>Figure 3</h2>
 <pre class="r"><code>plot_split_plot &lt;- function(emm, data, traits.plot, geom = &quot;point&quot;, plot.emm = TRUE, facets=&quot;year&quot;) {
   
   data.long &lt;- data %&gt;% select(c(all_of(traits.plot), all_of(facets), water, snow)) %&gt;% 
@@ -1310,8 +765,8 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 1 1 (1-1,1-1) arrange gtable[layout]
 2 2 (1-1,2-2) arrange gtable[layout]</code></pre>
 </div>
-<div id="compensation-of-water-addition-for-early-snowmelt" class="section level3">
-<h3>Compensation of water addition for early snowmelt</h3>
+<div id="compensation" class="section level2">
+<h2>Compensation</h2>
 <pre class="r"><code>mnps.plantyr &lt;- mnps.plantyr %&gt;% mutate(snowwater= paste0(snow, water))
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
@@ -1416,10 +871,10 @@ mod.split.glht %&gt;% kable()</code></pre>
 </table>
 </div>
 </div>
-<div id="plasticity-absolute-snowmelt-date-and-estimated-summer-precipitation" class="section level2">
-<h2>Plasticity: absolute snowmelt date and estimated summer precipitation</h2>
-<div id="anova-table" class="section level3">
-<h3>ANOVA table</h3>
+<div id="models-with-snowmelt-date-and-total-summer-precipitation" class="section level1">
+<h1>Models with snowmelt date and total summer precipitation</h1>
+<div id="table-s2" class="section level2">
+<h2>Table S2</h2>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 mod.abs &lt;- c(map(set_names(traits), 
                  ~ lmer(mnps.plantyr[[.x]]  ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=mnps.plantyr)))
@@ -1739,8 +1194,8 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tbody>
 </table>
 </div>
-<div id="figure-4" class="section level3">
-<h3>Figure 4</h3>
+<div id="figure-4" class="section level2">
+<h2>Figure 4</h2>
 <pre class="r"><code>plot_abs &lt;- function(mod, data, traits.plot, tests=NULL, facets = &quot;trait&quot;) {
   data.long &lt;- data %&gt;% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm) %&gt;% 
     pivot_longer(all_of(traits.plot), names_to=&quot;trait&quot;) %&gt;% 
@@ -1789,8 +1244,8 @@ plot_abs(mod.abs, mnps.subplot, floraltraits, mod.abs.tests) + #Morphological tr
   scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))</code></pre>
 <p><img src="images_cut/multi_meltdate-1.png" width="576" /></p>
 </div>
-<div id="compensation" class="section level3">
-<h3>Compensation</h3>
+<div id="compensation-1" class="section level2">
+<h2>Compensation</h2>
 <p>Compensation points calculated at average value of other predictor - only use for traits where there are effects of both predictors but no interaction</p>
 <pre class="r"><code>mod.abs.emm.avg &lt;- map_dfr(set_names(c(&quot;sun_date&quot;, &quot;precip_est_mm&quot;)), 
                    ~ mod.abs %&gt;% map(emtrends, var = .x, ~1) %&gt;% 
@@ -1997,8 +1452,8 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 </table>
 </div>
 </div>
-<div id="plasticity-soil-moisture" class="section level2">
-<h2>Plasticity: soil moisture</h2>
+<div id="models-with-soil-moisture" class="section level1">
+<h1>Models with soil moisture</h1>
 <p>Both snowmelt timing and summer precipitation affect soil moisture and its timing. This analysis regresses the floral traits against the mean soil moisture in a subplot. Slopes may differ among years. The models use:</p>
 <ul>
 <li><em>mt.plantyr</em>, the trait data averaged by plant within year</li>
@@ -2007,8 +1462,8 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 </ul>
 <p>The models are specified as:</p>
 <pre><code>lmer(trait ~ year * VWC + (1|plotid), data = mt.plantyr)</code></pre>
-<div id="anova-table-1" class="section level3">
-<h3>ANOVA table</h3>
+<div id="table-s3" class="section level2">
+<h2>Table S3</h2>
 <pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 mod.sm &lt;- c(map(set_names(traits), 
                   ~ lmer(mnps.plantyr[[.x]]  ~ year * VWC + (1|plotid), data=mnps.plantyr)))
@@ -2159,8 +1614,8 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tbody>
 </table>
 </div>
-<div id="figure-5" class="section level3">
-<h3>Figure 5</h3>
+<div id="figure-5" class="section level2">
+<h2>Figure 5</h2>
 <pre class="r"><code>plot_sm &lt;- function(mod, data, traits.plot, tests=NULL) {
   data.long &lt;- data %&gt;% select(all_of(traits.plot), water, snow, year, sun_date, precip_est_mm, VWC) %&gt;% 
     pivot_longer(all_of(traits.plot), names_to=&quot;trait&quot;) %&gt;% 
@@ -2200,11 +1655,238 @@ plot_sm(mod.sm, mnps.plantyr, floraltraits, mod.sm.tests) +
 <p><img src="images_cut/multi_sm-1.png" width="576" /></p>
 </div>
 </div>
+<div id="table-s1" class="section level1">
+<h1>Table S1</h1>
+<pre class="r"><code># VWC split-plot analysis on subplot means (for the whole measurement period)
+sm.mod &lt;- lmer(VWC ~ year * snow * water + (1|snow:plot)+ (1|snow:plotid), data=sm.subplotyear)
+anova(sm.mod) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Sum Sq</th>
+<th align="right">Mean Sq</th>
+<th align="right">NumDF</th>
+<th align="right">DenDF</th>
+<th align="right">F value</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">21.0823</td>
+<td align="right">10.5411</td>
+<td align="right">2</td>
+<td align="right">34.783</td>
+<td align="right">50.4914</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">1.1642</td>
+<td align="right">1.1642</td>
+<td align="right">1</td>
+<td align="right">5.046</td>
+<td align="right">5.5765</td>
+<td align="right">0.0642</td>
+</tr>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">51.0709</td>
+<td align="right">25.5354</td>
+<td align="right">2</td>
+<td align="right">15.012</td>
+<td align="right">122.3132</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">year:snow</td>
+<td align="right">2.3509</td>
+<td align="right">1.1754</td>
+<td align="right">2</td>
+<td align="right">34.782</td>
+<td align="right">5.6303</td>
+<td align="right">0.0076</td>
+</tr>
+<tr class="odd">
+<td align="left">year:water</td>
+<td align="right">4.4296</td>
+<td align="right">1.1074</td>
+<td align="right">4</td>
+<td align="right">36.320</td>
+<td align="right">5.3044</td>
+<td align="right">0.0018</td>
+</tr>
+<tr class="even">
+<td align="left">snow:water</td>
+<td align="right">0.5762</td>
+<td align="right">0.2881</td>
+<td align="right">2</td>
+<td align="right">15.013</td>
+<td align="right">1.3800</td>
+<td align="right">0.2817</td>
+</tr>
+<tr class="odd">
+<td align="left">year:snow:water</td>
+<td align="right">0.3480</td>
+<td align="right">0.0870</td>
+<td align="right">4</td>
+<td align="right">36.320</td>
+<td align="right">0.4168</td>
+<td align="right">0.7954</td>
+</tr>
+</tbody>
+</table>
+<div id="soil-moisture-in-each-treatment" class="section level2">
+<h2>Soil moisture in each treatment</h2>
+<pre class="r"><code>(sm.emm.snow &lt;- summary(emmeans(sm.mod, ~ snow))) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">snow</th>
+<th align="right">emmean</th>
+<th align="right">SE</th>
+<th align="right">df</th>
+<th align="right">lower.CL</th>
+<th align="right">upper.CL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Early</td>
+<td align="right">4.503</td>
+<td align="right">0.1984</td>
+<td align="right">4.938</td>
+<td align="right">3.991</td>
+<td align="right">5.015</td>
+</tr>
+<tr class="even">
+<td align="left">Normal</td>
+<td align="right">5.128</td>
+<td align="right">0.1763</td>
+<td align="right">5.189</td>
+<td align="right">4.679</td>
+<td align="right">5.576</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>(sm.emm.water &lt;- summary(emmeans(sm.mod, ~ water))) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">water</th>
+<th align="right">emmean</th>
+<th align="right">SE</th>
+<th align="right">df</th>
+<th align="right">lower.CL</th>
+<th align="right">upper.CL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Addition</td>
+<td align="right">6.184</td>
+<td align="right">0.1638</td>
+<td align="right">10.618</td>
+<td align="right">5.821</td>
+<td align="right">6.546</td>
+</tr>
+<tr class="even">
+<td align="left">Control</td>
+<td align="right">4.389</td>
+<td align="right">0.1430</td>
+<td align="right">6.717</td>
+<td align="right">4.048</td>
+<td align="right">4.730</td>
+</tr>
+<tr class="odd">
+<td align="left">Reduction</td>
+<td align="right">3.873</td>
+<td align="right">0.1638</td>
+<td align="right">10.618</td>
+<td align="right">3.511</td>
+<td align="right">4.236</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div id="multivariate-model" class="section level1">
-<h1>Multivariate model</h1>
-<div id="figure-s4" class="section level2">
-<h2>Figure S4</h2>
+</div>
+<div id="figure-s1" class="section level1">
+<h1>Figure S1</h1>
+<pre class="r"><code>  timings_labels &lt;- c(snowcloth=&quot;Snow cloths applied to early plots&quot;, 
+                     meltdates=&quot;Mean early and normal snowmelt timing&quot;, 
+                     waterdates=&quot;Summer precipitation treatments applied&quot;,
+                     sm=&quot;Soil moisture recorded&quot;,         ph=&quot;Inflorescence height recorded&quot;, 
+                     mt=&quot;Floral morphology recorded&quot;,     nt=&quot;Nectar traits recorded&quot;, 
+                     pt= &quot;Physiology traits recorded&quot;,    lt=&quot;Vegetative traits recorded&quot;, 
+                     sds=&quot;Flower collection period&quot;,      cen=&quot;Rosette size and survival recorded&quot;)
+
+plot_timings &lt;- function(data) {
+  data %&gt;% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T),
+                  drawline = ifelse(variable %in% c(&quot;lt&quot;,&quot;meltdates&quot;), NA, TRUE)) %&gt;% 
+ggplot(aes(y=variable, color=year))+ 
+  geom_linerange(aes(xmin=begin, xmax=end, linetype=drawline), 
+                 position = position_dodge2(width=0.7, reverse = T), size=1.2, show.legend=FALSE) + 
+  geom_text(data=data %&gt;% drop_na(plots) %&gt;% filter(year==&quot;2019&quot;),
+            aes(x = end+7, label=paste(ifelse(nchar(plots)&gt;1, &quot;Plots&quot;,&quot;Plot&quot;), str_replace(plots,&quot;,&quot;,&quot; &amp; &quot;))), 
+            position = position_dodge2(width=0.8, reverse = T), size=4, hjust=0, show.legend=FALSE)+
+  geom_point(aes(x=begin), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2)+
+  geom_point(aes(x=end), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2) +
+  scale_color_manual(&quot;Year&quot;, values=year_pal, guide=guide_legend(override.aes = list(size=5))) + 
+  scale_y_discrete(&quot;&quot;, labels=timings_labels)+
+  scale_x_continuous(&quot;Day of year&quot;, breaks=seq(80,240, by=20)) +
+  theme_minimal() + theme(legend.position = &quot;top&quot;, text=element_text(size=14, color=&quot;black&quot;), axis.text = element_text(color=&quot;black&quot;),
+                            panel.border = element_rect(fill=NA, colour = &quot;black&quot;))
+}
+
+plot_timings(filter(timings, !variable %in% c(&quot;sds&quot;,&quot;lt&quot;,&quot;pt&quot;,&quot;cen&quot;)))</code></pre>
+<p><img src="images_cut/timings-1.png" width="672" /></p>
+</div>
+<div id="figure-s2" class="section level1">
+<h1>Figure S2</h1>
+<pre class="r"><code>groundcover %&gt;% mutate(first_snow_day=first_snow_day-365) %&gt;% select(-first_snow_day) %&gt;% 
+  pivot_longer(ends_with(&quot;day&quot;), names_to=&quot;threshold&quot;, values_to=&quot;day&quot;) %&gt;% drop_na(day) %&gt;% select(-starts_with(&quot;first&quot;)) %&gt;% 
+  mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %&gt;% 
+  ggplot(aes(x=year, y=day, color=threshold)) +  
+  annotate(&quot;rect&quot;, xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill=&quot;lightblue&quot;)+
+  geom_line(aes(group=year), size=1.5)+ geom_smooth(method=&quot;lm&quot;, se=F) +
+  geom_point(aes(shape=source)) + scale_shape_manual(&quot;Source&quot;,values=c(19,17), labels=c(&quot;Observed&quot;, &quot;Inferred from peak runoff&quot;)) +
+  scale_x_continuous(breaks=seq(1940,2020, by=10), minor_breaks = scales::pretty_breaks(n = 100), position = &quot;top&quot;) + scale_y_continuous(n.breaks=10)+
+  scale_color_grey(labels=c(paste(c(0,50,100),&quot;cm&quot;)), start=0, end=0.85) +
+  labs(x=&quot;Year&quot;, y=&quot;Day of year&quot;, color=&quot;First day snowpack below&quot;) + theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),  panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
+<p><img src="images_cut/groundcover-1.png" width="720" /></p>
+<pre class="r"><code>meltdate.mod &lt;- lm(first_0_cm_day ~ year, data=groundcover)
+summary(meltdate.mod)</code></pre>
+<pre><code>
+Call:
+lm(formula = first_0_cm_day ~ year, data = groundcover)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-26.090  -8.017   0.051   7.499  30.360 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) 411.2126    97.0568    4.24  5.7e-05 ***
+year         -0.1361     0.0491   -2.77   0.0068 ** 
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 11.5 on 85 degrees of freedom
+Multiple R-squared:  0.083, Adjusted R-squared:  0.0723 
+F-statistic:  7.7 on 1 and 85 DF,  p-value: 0.0068</code></pre>
+<pre class="r"><code>early.melt_offset &lt;- treatments %&gt;% filter(snow==&quot;Early&quot;) %&gt;% pull(melt_offset)
+
+cat(&quot;Snowmelt is advancing&quot;,-10*tidy(meltdate.mod)$estimate[2],&quot;+-&quot;,10*tidy(meltdate.mod)$std.error[2], &quot;days per decade&quot;)</code></pre>
+<pre><code>Snowmelt is advancing 1.361 +- 0.4906 days per decade</code></pre>
+<pre class="r"><code>cat(&quot;Early snow treatments melted&quot;, -round(mean(early.melt_offset),1), &quot;+-&quot;, round(sd(early.melt_offset),1), &quot;days earlier (mean +- SD)&quot;)</code></pre>
+<pre><code>Early snow treatments melted 5.7 +- 2.2 days earlier (mean +- SD)</code></pre>
+<pre class="r"><code>cat(&quot;Equivalent to&quot;, mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], &quot;+-&quot;, (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), &quot;years of future warming&quot;)#propagate error from SD of treatment advance and SE of regression</code></pre>
+<pre><code>Equivalent to 41.78 +- 22.12 years of future warming</code></pre>
+</div>
+<div id="figure-s4" class="section level1">
+<h1>Figure S4</h1>
 <pre class="r"><code>mt.morph.plantyr &lt;- mt.plantyr[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;VWC&quot;)] %&gt;% drop_na() 
 options(contrasts = c(&quot;contr.treatment&quot;, &quot;contr.poly&quot;))
 mt.rda &lt;- rda(scale(select(mt.morph.plantyr, !c(year, VWC))) ~ VWC * year, data=mt.morph.plantyr)
@@ -2286,6 +1968,306 @@ ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) +
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
 <p><img src="images_cut/multresp_VWC-1.png" width="768" /></p>
 </div>
+<div id="sample-sizes" class="section level1">
+<h1>Sample sizes</h1>
+<pre class="r"><code>count_measurements &lt;- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
+bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits),
+          plant_year_round =   count_measurements(bind_rows(mnps.plantyr, lt.plantyr, pt.plantyr), alltraits), 
+          plant_year = count_measurements(bind_rows(mnps, lt, pt) %&gt;% group_by(year, plantid) %&gt;% 
+                                            summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits) %&gt;% 
+            ungroup %&gt;% summarize(across(all_of(alltraits), sum)),
+          plant =       count_measurements(bind_rows(mnps, lt, pt) %&gt;% group_by(plantid) %&gt;% 
+                                             summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits),
+          .id=&quot;sample_size&quot;) %&gt;% column_to_rownames(&quot;sample_size&quot;) %&gt;% 
+  t %&gt;% as.data.frame %&gt;% rownames_to_column(&quot;trait&quot;) %&gt;% as_tibble %&gt;% 
+  mutate(n_per_plant_year_round = n_measurements / plant_year_round,
+         n_per_plant_year = n_measurements / plant_year,
+         n_per_plant = n_measurements/ plant,
+         plant_per_subplot_per_year = plant_year / 24 / 3) %&gt;% kable(digits=2)</code></pre>
+<table>
+<colgroup>
+<col width="14%" />
+<col width="10%" />
+<col width="11%" />
+<col width="7%" />
+<col width="4%" />
+<col width="15%" />
+<col width="11%" />
+<col width="8%" />
+<col width="18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">trait</th>
+<th align="right">n_measurements</th>
+<th align="right">plant_year_round</th>
+<th align="right">plant_year</th>
+<th align="right">plant</th>
+<th align="right">n_per_plant_year_round</th>
+<th align="right">n_per_plant_year</th>
+<th align="right">n_per_plant</th>
+<th align="right">plant_per_subplot_per_year</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">corolla_length</td>
+<td align="right">1194</td>
+<td align="right">494</td>
+<td align="right">494</td>
+<td align="right">484</td>
+<td align="right">2.42</td>
+<td align="right">2.42</td>
+<td align="right">2.47</td>
+<td align="right">6.86</td>
+</tr>
+<tr class="even">
+<td align="left">style_length</td>
+<td align="right">1185</td>
+<td align="right">491</td>
+<td align="right">491</td>
+<td align="right">481</td>
+<td align="right">2.41</td>
+<td align="right">2.41</td>
+<td align="right">2.46</td>
+<td align="right">6.82</td>
+</tr>
+<tr class="odd">
+<td align="left">corolla_width</td>
+<td align="right">963</td>
+<td align="right">455</td>
+<td align="right">455</td>
+<td align="right">448</td>
+<td align="right">2.12</td>
+<td align="right">2.12</td>
+<td align="right">2.15</td>
+<td align="right">6.32</td>
+</tr>
+<tr class="even">
+<td align="left">sepal_width</td>
+<td align="right">749</td>
+<td align="right">340</td>
+<td align="right">340</td>
+<td align="right">334</td>
+<td align="right">2.20</td>
+<td align="right">2.20</td>
+<td align="right">2.24</td>
+<td align="right">4.72</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_24_h_ul</td>
+<td align="right">744</td>
+<td align="right">432</td>
+<td align="right">432</td>
+<td align="right">419</td>
+<td align="right">1.72</td>
+<td align="right">1.72</td>
+<td align="right">1.78</td>
+<td align="right">6.00</td>
+</tr>
+<tr class="even">
+<td align="left">nectar_conc</td>
+<td align="right">656</td>
+<td align="right">401</td>
+<td align="right">401</td>
+<td align="right">390</td>
+<td align="right">1.64</td>
+<td align="right">1.64</td>
+<td align="right">1.68</td>
+<td align="right">5.57</td>
+</tr>
+<tr class="odd">
+<td align="left">nectar_sugar_24_h_mg</td>
+<td align="right">656</td>
+<td align="right">401</td>
+<td align="right">401</td>
+<td align="right">390</td>
+<td align="right">1.64</td>
+<td align="right">1.64</td>
+<td align="right">1.68</td>
+<td align="right">5.57</td>
+</tr>
+<tr class="even">
+<td align="left">height_cm</td>
+<td align="right">1865</td>
+<td align="right">674</td>
+<td align="right">674</td>
+<td align="right">653</td>
+<td align="right">2.77</td>
+<td align="right">2.77</td>
+<td align="right">2.86</td>
+<td align="right">9.36</td>
+</tr>
+<tr class="odd">
+<td align="left">open</td>
+<td align="right">10143</td>
+<td align="right">818</td>
+<td align="right">746</td>
+<td align="right">723</td>
+<td align="right">12.40</td>
+<td align="right">13.60</td>
+<td align="right">14.03</td>
+<td align="right">10.36</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_fruit</td>
+<td align="right">528</td>
+<td align="right">505</td>
+<td align="right">505</td>
+<td align="right">491</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+<td align="right">7.01</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_est</td>
+<td align="right">528</td>
+<td align="right">505</td>
+<td align="right">505</td>
+<td align="right">491</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+<td align="right">7.01</td>
+</tr>
+<tr class="even">
+<td align="left">fruits_nonaborted</td>
+<td align="right">641</td>
+<td align="right">610</td>
+<td align="right">610</td>
+<td align="right">591</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+<td align="right">8.47</td>
+</tr>
+<tr class="odd">
+<td align="left">flowers_est</td>
+<td align="right">641</td>
+<td align="right">610</td>
+<td align="right">610</td>
+<td align="right">591</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+<td align="right">8.47</td>
+</tr>
+<tr class="even">
+<td align="left">prop_infested</td>
+<td align="right">611</td>
+<td align="right">581</td>
+<td align="right">581</td>
+<td align="right">563</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.09</td>
+<td align="right">8.07</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_aborted</td>
+<td align="right">636</td>
+<td align="right">606</td>
+<td align="right">606</td>
+<td align="right">587</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+<td align="right">8.42</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_flower</td>
+<td align="right">528</td>
+<td align="right">505</td>
+<td align="right">505</td>
+<td align="right">491</td>
+<td align="right">1.05</td>
+<td align="right">1.05</td>
+<td align="right">1.08</td>
+<td align="right">7.01</td>
+</tr>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">505</td>
+<td align="right">496</td>
+<td align="right">326</td>
+<td align="right">264</td>
+<td align="right">1.02</td>
+<td align="right">1.55</td>
+<td align="right">1.91</td>
+<td align="right">4.53</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">592</td>
+<td align="right">583</td>
+<td align="right">326</td>
+<td align="right">264</td>
+<td align="right">1.02</td>
+<td align="right">1.82</td>
+<td align="right">2.24</td>
+<td align="right">4.53</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">505</td>
+<td align="right">496</td>
+<td align="right">326</td>
+<td align="right">264</td>
+<td align="right">1.02</td>
+<td align="right">1.55</td>
+<td align="right">1.91</td>
+<td align="right">4.53</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">327</td>
+<td align="right">327</td>
+<td align="right">319</td>
+<td align="right">275</td>
+<td align="right">1.00</td>
+<td align="right">1.03</td>
+<td align="right">1.19</td>
+<td align="right">4.43</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">323</td>
+<td align="right">323</td>
+<td align="right">315</td>
+<td align="right">271</td>
+<td align="right">1.00</td>
+<td align="right">1.03</td>
+<td align="right">1.19</td>
+<td align="right">4.38</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">327</td>
+<td align="right">327</td>
+<td align="right">319</td>
+<td align="right">275</td>
+<td align="right">1.00</td>
+<td align="right">1.03</td>
+<td align="right">1.19</td>
+<td align="right">4.43</td>
+</tr>
+</tbody>
+</table>
+<div id="number-of-years-plants-flowered" class="section level2">
+<h2>Number of years plants flowered</h2>
+<pre class="r"><code>#How many plants flowered twice?
+with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))</code></pre>
+<pre><code>
+  0   1   2 
+499 548  22 </code></pre>
+</div>
+</div>
+<div id="trait-correlations" class="section level1">
+<h1>Trait correlations</h1>
+<pre class="r"><code>mnps.plantyr %&gt;% select(corolla_length, corolla_width,  style_length,   anther_max, anther_min, sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %&gt;% 
+  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)</code></pre>
+<p><img src="images_cut/correlations-1.png" width="672" /></p>
 </div>
 
 

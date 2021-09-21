@@ -18,8 +18,6 @@ img{ max-width:200%; height: auto; }
 td, th { padding : 6px }
 </style>
 
-# Treatments
-
 ```{r setup, message=FALSE}
 library(tidyverse)
 library(lubridate)
@@ -67,7 +65,7 @@ select <- dplyr::select
 snow_pal_grey <- c("grey50","black")
 ```
 
-## Figure 1
+# Figure 1
 
 ```{r map, fig.height=4, fig.width=6.5}
 size_meter <- 0.11
@@ -86,32 +84,7 @@ ggplot(treatments_map %>% mutate(snow=fct_relevel(snow, "Normal"))) + coord_fixe
         axis.ticks = element_blank(), panel.background = element_blank(), panel.grid = element_blank())
 ```
 
-# Snowmelt timing
-
-## Figure S2
-
-```{r groundcover, fig.height=5, fig.width=7.5}
-groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% select(-first_snow_day) %>% 
-  pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>% drop_na(day) %>% select(-starts_with("first")) %>% 
-  mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %>% 
-  ggplot(aes(x=year, y=day, color=threshold)) +  
-  annotate("rect", xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill="lightblue")+
-  geom_line(aes(group=year), size=1.5)+ geom_smooth(method="lm", se=F) +
-  geom_point(aes(shape=source)) + scale_shape_manual("Source",values=c(19,17), labels=c("Observed", "Inferred from peak runoff")) +
-  scale_x_continuous(breaks=seq(1940,2020, by=10), minor_breaks = scales::pretty_breaks(n = 100), position = "top") + scale_y_continuous(n.breaks=10)+
-  scale_color_grey(labels=c(paste(c(0,50,100),"cm")), start=0, end=0.85) +
-  labs(x="Year", y="Day of year", color="First day snowpack below") + theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),  panel.border = element_rect(fill=NA, colour = "black"))
-
-meltdate.mod <- lm(first_0_cm_day ~ year, data=groundcover)
-summary(meltdate.mod)
-early.melt_offset <- treatments %>% filter(snow=="Early") %>% pull(melt_offset)
-
-cat("Snowmelt is advancing",-10*tidy(meltdate.mod)$estimate[2],"+-",10*tidy(meltdate.mod)$std.error[2], "days per decade")
-cat("Early snow treatments melted", -round(mean(early.melt_offset),1), "+-", round(sd(early.melt_offset),1), "days earlier (mean +- SD)")
-cat("Equivalent to", mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], "+-", (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), "years of future warming")#propagate error from SD of treatment advance and SE of regression
-```
-
-## Figure 2
+# Figure 2
 
 ```{r hist_climate, fig.height=4, fig.width=6.5}
 treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))+geom_point(size=2)+
@@ -123,95 +96,7 @@ treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))
                             panel.border = element_rect(fill=NA, colour = "black"))
 ```
 
-
-# Soil moisture
-
-## Table S1
-
-```{r soil_treatments}
-# VWC split-plot analysis on subplot means (for the whole measurement period)
-sm.mod <- lmer(VWC ~ year * snow * water + (1|snow:plot)+ (1|snow:plotid), data=sm.subplotyear)
-anova(sm.mod) %>% kable()
-```
-
-## Estimated marginal means
-
-```{r soil_emms}
-(sm.emm.snow <- summary(emmeans(sm.mod, ~ snow))) %>% kable()
-(sm.emm.water <- summary(emmeans(sm.mod, ~ water))) %>% kable()
-```
-
-# Timing of measurements
-
-## Figure S1
-
-```{r timings}
-  timings_labels <- c(snowcloth="Snow cloths applied to early plots", 
-                     meltdates="Mean early and normal snowmelt timing", 
-                     waterdates="Summer precipitation treatments applied",
-                     sm="Soil moisture recorded",         ph="Inflorescence height recorded", 
-                     mt="Floral morphology recorded",     nt="Nectar traits recorded", 
-                     pt= "Physiology traits recorded",    lt="Vegetative traits recorded", 
-                     sds="Flower collection period",      cen="Rosette size and survival recorded")
-
-plot_timings <- function(data) {
-  data %>% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T),
-                  drawline = ifelse(variable %in% c("lt","meltdates"), NA, TRUE)) %>% 
-ggplot(aes(y=variable, color=year))+ 
-  geom_linerange(aes(xmin=begin, xmax=end, linetype=drawline), 
-                 position = position_dodge2(width=0.7, reverse = T), size=1.2, show.legend=FALSE) + 
-  geom_text(data=data %>% drop_na(plots) %>% filter(year=="2019"),
-            aes(x = end+7, label=paste(ifelse(nchar(plots)>1, "Plots","Plot"), str_replace(plots,","," & "))), 
-            position = position_dodge2(width=0.8, reverse = T), size=4, hjust=0, show.legend=FALSE)+
-  geom_point(aes(x=begin), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2)+
-  geom_point(aes(x=end), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2) +
-  scale_color_manual("Year", values=year_pal, guide=guide_legend(override.aes = list(size=5))) + 
-  scale_y_discrete("", labels=timings_labels)+
-  scale_x_continuous("Day of year", breaks=seq(80,240, by=20)) +
-  theme_minimal() + theme(legend.position = "top", text=element_text(size=14, color="black"), axis.text = element_text(color="black"),
-                            panel.border = element_rect(fill=NA, colour = "black"))
-}
-
-plot_timings(filter(timings, !variable %in% c("sds","lt","pt","cen")))
-```
-
-# Sample sizes
-
-```{r sample_sizes}
-count_measurements <- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
-bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits),
-          plant_year_round =   count_measurements(bind_rows(mnps.plantyr, lt.plantyr, pt.plantyr), alltraits), 
-          plant_year = count_measurements(bind_rows(mnps, lt, pt) %>% group_by(year, plantid) %>% 
-                                            summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits) %>% 
-            ungroup %>% summarize(across(all_of(alltraits), sum)),
-          plant =       count_measurements(bind_rows(mnps, lt, pt) %>% group_by(plantid) %>% 
-                                             summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits),
-          .id="sample_size") %>% column_to_rownames("sample_size") %>% 
-  t %>% as.data.frame %>% rownames_to_column("trait") %>% as_tibble %>% 
-  mutate(n_per_plant_year_round = n_measurements / plant_year_round,
-         n_per_plant_year = n_measurements / plant_year,
-         n_per_plant = n_measurements/ plant,
-         plant_per_subplot_per_year = plant_year / 24 / 3) %>% kable(digits=2)
-```
-
-## Number of years plants flowered
-
-```{r flowering_years}
-#How many plants flowered twice?
-with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))
-```
-
-
-# Floral trait correlations
-
-```{r correlations}
-mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %>% 
-  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
-```
-
-# Plasticity models
-
-## Plasticity: water and snowmelt treatments
+# Models for replicated split-plot design
 
 This is a split-plot analysis, based on the original experimental design. The models use:
 
@@ -225,7 +110,7 @@ The models are specified as:
 
     lmer(trait ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data = mnps.plantyr)
 
-### Table 1
+## Table 1
 
 ```{r splitplot}
 options(contrasts = c("contr.sum", "contr.poly"))
@@ -247,7 +132,7 @@ mod.split.tests.water <- map(mod.split, multcomp::glht,
 mod.split.tests.water %>% select(trait, contrast, adj.p.value) %>% pivot_wider(names_from=contrast, values_from=adj.p.value) %>% kable()
 ```
 
-### Figure 3
+## Figure 3
 
 ```{r multi_splitplot, fig.width=9, fig.height=10}
 plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = TRUE, facets="year") {
@@ -299,7 +184,7 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
     theme(legend.title = element_text(color = "white"), legend.text = element_text(color = "white")), nrow=1))
 ```
 
-### Compensation of water addition for early snowmelt
+## Compensation
 
 ```{r compensation}
 mnps.plantyr <- mnps.plantyr %>% mutate(snowwater= paste0(snow, water))
@@ -315,9 +200,9 @@ mod.split.glht <- c(map(set_names(traits),
 mod.split.glht %>% kable()
 ```
 
-## Plasticity: absolute snowmelt date and estimated summer precipitation
+# Models with snowmelt date and total summer precipitation
 
-### ANOVA table
+## Table S2
 
 ```{r meltdate}
 options(contrasts = c("contr.sum", "contr.poly"))
@@ -330,7 +215,7 @@ anova_table(mod.abs.tests, mod.abs) %>% kable()
 mod.abs.coefs %>% filter(effect=="fixed", term!="(Intercept)") %>% pivot_wider(id_cols=trait, names_from=term, values_from=c("estimate","std.error")) %>% kable()
 ```
 
-### Figure 4
+## Figure 4
 
 ```{r multi_meltdate, fig.width=6, fig.height=10}
 plot_abs <- function(mod, data, traits.plot, tests=NULL, facets = "trait") {
@@ -381,7 +266,7 @@ plot_abs(mod.abs, mnps.subplot, floraltraits, mod.abs.tests) + #Morphological tr
   scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
 ```
 
-### Compensation
+## Compensation
 
 Compensation points calculated at average value of other predictor - only use for traits where there are effects of both predictors but no interaction
 ```{r compensation_meltdate_avg}
@@ -404,7 +289,7 @@ mod.abs.emm.avg.compensate <- mod.abs.emm.avg %>%
 mod.abs.emm.avg.compensate %>% select(-predictor) %>% kable()
 ```
 
-## Plasticity: soil moisture
+# Models with soil moisture
 
 Both snowmelt timing and summer precipitation affect soil moisture and its timing. This analysis regresses the floral traits against the mean soil moisture in a subplot. Slopes may differ among years. The models use:
 
@@ -416,7 +301,7 @@ The models are specified as:
 
     lmer(trait ~ year * VWC + (1|plotid), data = mt.plantyr)
 
-### ANOVA table
+## Table S3
 
 ```{r sm}
 options(contrasts = c("contr.sum", "contr.poly"))
@@ -428,7 +313,7 @@ mod.sm.tests <- map(mod.sm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 anova_table(mod.sm.tests, mod.sm) %>% kable()
 ```
 
-### Figure 5
+## Figure 5
 
 ```{r multi_sm, fig.width=6, fig.height=10}
 plot_sm <- function(mod, data, traits.plot, tests=NULL) {
@@ -469,9 +354,77 @@ plot_sm(mod.sm, mnps.plantyr, floraltraits, mod.sm.tests) +
   scale_y_continuous(limits=c(-4.3,5)) + xlab("Summer mean of soil moisture in subplot (%VWC)")
 ```
 
-# Multivariate model
+# Table S1
 
-## Figure S4
+```{r soil_treatments}
+# VWC split-plot analysis on subplot means (for the whole measurement period)
+sm.mod <- lmer(VWC ~ year * snow * water + (1|snow:plot)+ (1|snow:plotid), data=sm.subplotyear)
+anova(sm.mod) %>% kable()
+```
+
+## Soil moisture in each treatment
+
+```{r soil_emms}
+(sm.emm.snow <- summary(emmeans(sm.mod, ~ snow))) %>% kable()
+(sm.emm.water <- summary(emmeans(sm.mod, ~ water))) %>% kable()
+```
+
+# Figure S1
+
+```{r timings}
+  timings_labels <- c(snowcloth="Snow cloths applied to early plots", 
+                     meltdates="Mean early and normal snowmelt timing", 
+                     waterdates="Summer precipitation treatments applied",
+                     sm="Soil moisture recorded",         ph="Inflorescence height recorded", 
+                     mt="Floral morphology recorded",     nt="Nectar traits recorded", 
+                     pt= "Physiology traits recorded",    lt="Vegetative traits recorded", 
+                     sds="Flower collection period",      cen="Rosette size and survival recorded")
+
+plot_timings <- function(data) {
+  data %>% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T),
+                  drawline = ifelse(variable %in% c("lt","meltdates"), NA, TRUE)) %>% 
+ggplot(aes(y=variable, color=year))+ 
+  geom_linerange(aes(xmin=begin, xmax=end, linetype=drawline), 
+                 position = position_dodge2(width=0.7, reverse = T), size=1.2, show.legend=FALSE) + 
+  geom_text(data=data %>% drop_na(plots) %>% filter(year=="2019"),
+            aes(x = end+7, label=paste(ifelse(nchar(plots)>1, "Plots","Plot"), str_replace(plots,","," & "))), 
+            position = position_dodge2(width=0.8, reverse = T), size=4, hjust=0, show.legend=FALSE)+
+  geom_point(aes(x=begin), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2)+
+  geom_point(aes(x=end), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2) +
+  scale_color_manual("Year", values=year_pal, guide=guide_legend(override.aes = list(size=5))) + 
+  scale_y_discrete("", labels=timings_labels)+
+  scale_x_continuous("Day of year", breaks=seq(80,240, by=20)) +
+  theme_minimal() + theme(legend.position = "top", text=element_text(size=14, color="black"), axis.text = element_text(color="black"),
+                            panel.border = element_rect(fill=NA, colour = "black"))
+}
+
+plot_timings(filter(timings, !variable %in% c("sds","lt","pt","cen")))
+```
+
+# Figure S2
+
+```{r groundcover, fig.height=5, fig.width=7.5}
+groundcover %>% mutate(first_snow_day=first_snow_day-365) %>% select(-first_snow_day) %>% 
+  pivot_longer(ends_with("day"), names_to="threshold", values_to="day") %>% drop_na(day) %>% select(-starts_with("first")) %>% 
+  mutate(threshold = fct_reorder(factor(threshold),day, na.rm=T, .desc=T)) %>% 
+  ggplot(aes(x=year, y=day, color=threshold)) +  
+  annotate("rect", xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill="lightblue")+
+  geom_line(aes(group=year), size=1.5)+ geom_smooth(method="lm", se=F) +
+  geom_point(aes(shape=source)) + scale_shape_manual("Source",values=c(19,17), labels=c("Observed", "Inferred from peak runoff")) +
+  scale_x_continuous(breaks=seq(1940,2020, by=10), minor_breaks = scales::pretty_breaks(n = 100), position = "top") + scale_y_continuous(n.breaks=10)+
+  scale_color_grey(labels=c(paste(c(0,50,100),"cm")), start=0, end=0.85) +
+  labs(x="Year", y="Day of year", color="First day snowpack below") + theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),  panel.border = element_rect(fill=NA, colour = "black"))
+
+meltdate.mod <- lm(first_0_cm_day ~ year, data=groundcover)
+summary(meltdate.mod)
+early.melt_offset <- treatments %>% filter(snow=="Early") %>% pull(melt_offset)
+
+cat("Snowmelt is advancing",-10*tidy(meltdate.mod)$estimate[2],"+-",10*tidy(meltdate.mod)$std.error[2], "days per decade")
+cat("Early snow treatments melted", -round(mean(early.melt_offset),1), "+-", round(sd(early.melt_offset),1), "days earlier (mean +- SD)")
+cat("Equivalent to", mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], "+-", (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), "years of future warming")#propagate error from SD of treatment advance and SE of regression
+```
+
+# Figure S4
 
 ```{r multresp_VWC, fig.height=7, fig.width=8}
 mt.morph.plantyr <- mt.plantyr[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","VWC")] %>% drop_na() 
@@ -496,4 +449,37 @@ ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) +
   scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + 
   theme(panel.grid.minor=element_blank(), text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                             panel.border = element_rect(fill=NA, colour = "black"))
+```
+
+# Sample sizes
+
+```{r sample_sizes}
+count_measurements <- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
+bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits),
+          plant_year_round =   count_measurements(bind_rows(mnps.plantyr, lt.plantyr, pt.plantyr), alltraits), 
+          plant_year = count_measurements(bind_rows(mnps, lt, pt) %>% group_by(year, plantid) %>% 
+                                            summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits) %>% 
+            ungroup %>% summarize(across(all_of(alltraits), sum)),
+          plant =       count_measurements(bind_rows(mnps, lt, pt) %>% group_by(plantid) %>% 
+                                             summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits),
+          .id="sample_size") %>% column_to_rownames("sample_size") %>% 
+  t %>% as.data.frame %>% rownames_to_column("trait") %>% as_tibble %>% 
+  mutate(n_per_plant_year_round = n_measurements / plant_year_round,
+         n_per_plant_year = n_measurements / plant_year,
+         n_per_plant = n_measurements/ plant,
+         plant_per_subplot_per_year = plant_year / 24 / 3) %>% kable(digits=2)
+```
+
+## Number of years plants flowered
+
+```{r flowering_years}
+#How many plants flowered twice?
+with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))
+```
+
+# Trait correlations
+
+```{r correlations}
+mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %>% 
+  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
 ```
