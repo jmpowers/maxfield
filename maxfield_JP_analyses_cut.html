@@ -11,7 +11,7 @@
 
 <meta name="author" content="John M. Powers, Heather M. Briggs, Rachel G. Dickson, Xinyu Li, Diane R. Campbell" />
 
-<meta name="date" content="2021-09-22" />
+<meta name="date" content="2021-09-23" />
 
 <title>Code for “Earlier snowmelt and reduced summer precipitation alter floral traits important to pollination”</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Code for “Earlier snowmelt and reduced summer precipitation alter floral traits important to pollination”</h1>
 <h4 class="author">John M. Powers, Heather M. Briggs, Rachel G. Dickson, Xinyu Li, Diane R. Campbell</h4>
-<h4 class="date">2021-09-22</h4>
+<h4 class="date">2021-09-23</h4>
 
 </div>
 
@@ -490,7 +490,10 @@ purrr::walk(names(alldata), ~write_tsv(alldata[[.]], paste0(&quot;data_cut/&quot
 </div>
 <div id="sample-sizes" class="section level1">
 <h1>Sample sizes</h1>
-<pre class="r"><code>count_measurements &lt;- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
+<pre class="r"><code>years_flowering &lt;- with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))
+
+count_measurements &lt;- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
+
 bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), floraltraits),
           plant_year = count_measurements(bind_rows(mnps, lt, pt) %&gt;% group_by(year, plantid) %&gt;% 
                                             summarize(across(all_of(floraltraits), mean, na.rm=T)), floraltraits) %&gt;% 
@@ -500,24 +503,30 @@ bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), floraltra
           .id=&quot;sample_size&quot;) %&gt;% column_to_rownames(&quot;sample_size&quot;) %&gt;% 
   t %&gt;% as.data.frame %&gt;% rownames_to_column(&quot;trait&quot;) %&gt;% as_tibble %&gt;% 
   mutate(n_per_plant_year = n_measurements / plant_year,
-         plant_per_subplot_per_year = plant_year / 24 / 3) %&gt;% kable(digits=2)</code></pre>
+         plant_per_subplot_per_year = plant_year / 24 / 3) %&gt;% 
+  kable(digits=2, col.names=c(&quot;Trait&quot;, &quot;Total measurements&quot;, &quot;Total plant-years&quot;, 
+        &quot;Total unique plants measured&quot;, &quot;Measurements / plant-year&quot;, &quot;Plants / subplot / year&quot;),
+        caption=paste0(&quot;The number of unique plants is slightly less than the plant-years because &quot;, 
+                       round(100*years_flowering[[&quot;2&quot;]]/(years_flowering[[&quot;1&quot;]]+years_flowering[[&quot;2&quot;]]),2),
+                       &quot;% of plants flowered in 2 years.&quot;))</code></pre>
 <table>
+<caption>The number of unique plants is slightly less than the plant-years because 3.86% of plants flowered in 2 years.</caption>
 <colgroup>
-<col width="16%" />
-<col width="16%" />
-<col width="12%" />
-<col width="6%" />
+<col width="11%" />
+<col width="14%" />
+<col width="13%" />
+<col width="22%" />
+<col width="19%" />
 <col width="18%" />
-<col width="29%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="left">trait</th>
-<th align="right">n_measurements</th>
-<th align="right">plant_year</th>
-<th align="right">plant</th>
-<th align="right">n_per_plant_year</th>
-<th align="right">plant_per_subplot_per_year</th>
+<th align="left">Trait</th>
+<th align="right">Total measurements</th>
+<th align="right">Total plant-years</th>
+<th align="right">Total unique plants measured</th>
+<th align="right">Measurements / plant-year</th>
+<th align="right">Plants / subplot / year</th>
 </tr>
 </thead>
 <tbody>
@@ -587,9 +596,6 @@ bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), floraltra
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>years_flowering &lt;- with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))
-cat(100*years_flowering[[&quot;2&quot;]]/(years_flowering[[&quot;1&quot;]]+years_flowering[[&quot;2&quot;]]), &quot;% of plants that flowered flowered twice&quot;)</code></pre>
-<pre><code>3.86 % of plants that flowered flowered twice</code></pre>
 </div>
 <div id="trait-correlations" class="section level1">
 <h1>Trait correlations</h1>
@@ -789,19 +795,15 @@ anova_table(mod.split.tests, mod.split) %&gt;%
   data.long &lt;- data %&gt;% select(c(all_of(traits.plot), all_of(facets), water, snow)) %&gt;% 
     pivot_longer(all_of(traits.plot), names_to=&quot;trait&quot;) %&gt;% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, &quot;Normal&quot;)) %&gt;% 
-           #value = (value - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)]) %&gt;% 
     drop_na(value, water) %&gt;% filter(trait %in% traits.plot)
   
   traitnames.multiline &lt;- ifelse(nchar(traitnames.units) &gt; 30, str_replace(traitnames.units, fixed(&quot;(&quot;),&quot;\n(&quot;), traitnames.units)
   
   split_plot &lt;- emm %&gt;% filter(trait %in% traits.plot) %&gt;% 
     mutate(trait = fct_relevel(trait, traits.plot), snow=fct_relevel(snow, &quot;Normal&quot;)) %&gt;%  
-           #emmean = (emmean - alltraits.mean[as.character(trait)])/alltraits.sd[as.character(trait)],
-           #SE = SE/alltraits.sd[as.character(trait)]) %&gt;% 
   ggplot(aes(x=water, color=snow)) +
     labs(x=&quot;Precipitation&quot;, y=&quot;Standardized trait&quot;, color=&quot;Snowmelt&quot;) + 
     scale_y_continuous(position=&quot;right&quot;) + scale_x_discrete(guide=guide_axis(angle=90)) + 
-    #coord_fixed() + #maintains y scale across plots if figure width is constant
     scale_color_manual(values=snow_pal_grey, guide=guide_legend(override.aes = list(shape=15, size=ifelse(plot.emm,5,1)))) + 
     theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                             axis.title.y= element_blank(),
@@ -845,8 +847,9 @@ mod.split.glht &lt;- c(map(set_names(floraltraits),
   map(glht, linfct = mcp(snowwater = c(&quot;EarlyAddition - NormalControl = 0&quot;))) %&gt;% 
   map_dfr(~ tibble(EarlyAddition_minus_NormalControl = coef(.x), p=summary(.x)$test$pvalues), .id=&quot;trait&quot;) 
 
-mod.split.glht %&gt;% kable()</code></pre>
+mod.split.glht %&gt;% kable(caption=&quot;Comparisons of traits in subplots with early snowmelt but water addition vs. subplots with normal snowmelt and precipiation.&quot;)</code></pre>
 <table>
+<caption>Comparisons of traits in subplots with early snowmelt but water addition vs. subplots with normal snowmelt and precipiation.</caption>
 <thead>
 <tr class="header">
 <th align="left">trait</th>
@@ -1148,8 +1151,9 @@ plot_abs(mod.abs, mnps.subplot, floraltraits, mod.abs.tests) + #Morphological tr
   mutate(precip_mm_per_snow_day = trend_sun_date / trend_precip_est_mm, 
          SE = abs(precip_mm_per_snow_day) * # propagate error in SEs using formula for quotients
            sqrt((SE_precip_est_mm / trend_precip_est_mm)^2 + (SE_sun_date / trend_sun_date)^2),
-         .keep=&quot;unused&quot;) %&gt;% kable)</code></pre>
+         .keep=&quot;unused&quot;) %&gt;% kable(caption=&quot;The amount of precipiation (mm) required to compensate for snowmelt occuring 1 day earlier.&quot;))</code></pre>
 <table>
+<caption>The amount of precipiation (mm) required to compensate for snowmelt occuring 1 day earlier.</caption>
 <thead>
 <tr class="header">
 <th align="left">trait</th>
@@ -1408,12 +1412,12 @@ anova(sm.mod) %&gt;% kable()</code></pre>
 </table>
 <div id="soil-moisture-in-each-treatment" class="section level2">
 <h2>Soil moisture in each treatment</h2>
-<pre class="r"><code>sm.mod %&gt;% emmeans(~ snow)  %&gt;% summary() %&gt;% select(-c(df,lower.CL,upper.CL)) %&gt;% kable()</code></pre>
+<pre class="r"><code>sm.mod %&gt;% emmeans(~ snow)  %&gt;% summary() %&gt;% select(-c(df,lower.CL,upper.CL),mean_VWC=emmean) %&gt;% kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left">snow</th>
-<th align="right">emmean</th>
+<th align="right">mean_VWC</th>
 <th align="right">SE</th>
 </tr>
 </thead>
@@ -1430,12 +1434,12 @@ anova(sm.mod) %&gt;% kable()</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>sm.mod %&gt;% emmeans(~ water) %&gt;% summary() %&gt;% select(-c(df,lower.CL,upper.CL)) %&gt;% kable()</code></pre>
+<pre class="r"><code>sm.mod %&gt;% emmeans(~ water) %&gt;% summary() %&gt;% select(-c(df,lower.CL,upper.CL),mean_VWC=emmean) %&gt;% kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left">water</th>
-<th align="right">emmean</th>
+<th align="right">mean_VWC</th>
 <th align="right">SE</th>
 </tr>
 </thead>
@@ -1504,29 +1508,40 @@ plot_timings(filter(timings, !variable %in% c(&quot;sds&quot;,&quot;lt&quot;,&qu
   labs(x=&quot;Year&quot;, y=&quot;Day of year&quot;, color=&quot;First day snowpack below&quot;) + theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),  panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
 <p><img src="images_cut/groundcover-1.png" width="720" /></p>
 <pre class="r"><code>meltdate.mod &lt;- lm(first_0_cm_day ~ year, data=groundcover)
-summary(meltdate.mod)</code></pre>
-<pre><code>
-Call:
-lm(formula = first_0_cm_day ~ year, data = groundcover)
+early.melt_offset &lt;- treatments %&gt;% filter(snow==&quot;Early&quot;) %&gt;% pull(melt_offset)
+yearrange &lt;- paste(range(groundcover$year), collapse=&quot; - &quot;)
 
-Residuals:
-    Min      1Q  Median      3Q     Max 
--26.090  -8.017   0.051   7.499  30.360 
-
-Coefficients:
-            Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept) 411.2126    97.0568    4.24  5.7e-05 ***
-year         -0.1361     0.0491   -2.77   0.0068 ** 
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-
-Residual standard error: 11.5 on 85 degrees of freedom
-Multiple R-squared:  0.083, Adjusted R-squared:  0.0723 
-F-statistic:  7.7 on 1 and 85 DF,  p-value: 0.0068</code></pre>
-<pre class="r"><code>early.melt_offset &lt;- treatments %&gt;% filter(snow==&quot;Early&quot;) %&gt;% pull(melt_offset)
-
-cat(&quot;Snowmelt is advancing&quot;,-10*tidy(meltdate.mod)$estimate[2],&quot;+-&quot;,10*tidy(meltdate.mod)$std.error[2], &quot;days per decade from&quot;,paste(range(groundcover$year), collapse=&quot; - &quot;))</code></pre>
-<pre><code>Snowmelt is advancing 1.361 +- 0.4906 days per decade from 1935 - 2021</code></pre>
+meltdate.mod %&gt;% tidy() %&gt;% kable(caption=paste(&quot;Regression of snowmelt date vs. year from&quot;,yearrange))</code></pre>
+<table>
+<caption>Regression of snowmelt date vs. year from 1935 - 2021</caption>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">411.2126</td>
+<td align="right">97.0568</td>
+<td align="right">4.237</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="even">
+<td align="left">year</td>
+<td align="right">-0.1361</td>
+<td align="right">0.0491</td>
+<td align="right">-2.775</td>
+<td align="right">0.0068</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>cat(&quot;Snowmelt is advancing&quot;,-10*tidy(meltdate.mod)$estimate[2],&quot;+-&quot;,10*tidy(meltdate.mod)$std.error[2], &quot;days per decade&quot;)</code></pre>
+<pre><code>Snowmelt is advancing 1.361 +- 0.4906 days per decade</code></pre>
 <pre class="r"><code>cat(&quot;Early snow treatments melted&quot;, -round(mean(early.melt_offset),1), &quot;+-&quot;, round(sd(early.melt_offset),1), &quot;days earlier (mean +- SD), which is equivalent to&quot;, mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], &quot;+-&quot;, (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), &quot;years of future warming&quot;)#propagate error from SD of treatment advance and SE of regression</code></pre>
 <pre><code>Early snow treatments melted 5.7 +- 2.2 days earlier (mean +- SD), which is equivalent to 41.78 +- 22.12 years of future warming</code></pre>
 </div>
@@ -1535,7 +1550,26 @@ cat(&quot;Snowmelt is advancing&quot;,-10*tidy(meltdate.mod)$estimate[2],&quot;+
 <pre class="r"><code>mt.morph.plantyr &lt;- mt.plantyr[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;VWC&quot;)] %&gt;% drop_na() 
 options(contrasts = c(&quot;contr.treatment&quot;, &quot;contr.poly&quot;))
 mt.rda &lt;- rda(scale(select(mt.morph.plantyr, !c(year, VWC))) ~ VWC * year, data=mt.morph.plantyr)
-mt.rda</code></pre>
+
+mt.rda.df &lt;- fortify(update(mt.rda, ~ VWC + year))#drop interaction
+ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) + 
+  geom_point(data=mt.rda.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(mt.morph.plantyr), aes(color=VWC))+
+  geom_segment(data=mt.rda.df %&gt;% filter(Label==&quot;VWC&quot;), aes(x=0,y=0,xend=RDA1*3, yend=RDA2*3), 
+               arrow=arrow(length=unit(0.5, &quot;lines&quot;)), size=1.5)+
+  geom_text(   data=mt.rda.df %&gt;% filter(Label==&quot;VWC&quot;), aes(x=RDA1*3.7, y=RDA2*3.7, angle=atan(RDA2/RDA1)*180/pi), label=&quot;Soil moisture&quot;)+
+  geom_segment(data=mt.rda.df %&gt;% filter(Score==&quot;species&quot;), aes(x=0,y=0,xend=RDA1, yend=RDA2), 
+               arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
+  geom_text(   data=mt.rda.df %&gt;% filter(Score==&quot;species&quot;), aes(x=RDA1*1.7, y=RDA2*1.7, angle=atan(RDA2/RDA1)*180/pi,
+    label = c(traitnames, c(&quot;anther_max&quot;=&quot;Max stamen length&quot;, &quot;anther_min&quot;=&quot;Min stamen length&quot;))[as.character(Label)] %&gt;% str_remove(fixed(&quot; (mm)&quot;))), size=3)+
+  geom_text(data=mt.rda.df %&gt;% filter(Score==&quot;centroids&quot;), aes(label=str_remove(Label, &quot;year&quot;)), fontface=2, size=6)+
+  scale_color_viridis(&quot;Soil\nmoisture\n(%VWC)&quot;, direction=-1, option=&quot;plasma&quot;) + coord_fixed() + 
+  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + 
+  theme(panel.grid.minor=element_blank(), text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
+                            panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
+<p><img src="images_cut/multresp_VWC-1.png" width="768" /></p>
+<div id="rda-summary-and-test" class="section level2">
+<h2>RDA summary and test</h2>
+<pre class="r"><code>mt.rda</code></pre>
 <pre><code>Call: rda(formula = scale(select(mt.morph.plantyr, !c(year, VWC))) ~
 VWC * year, data = mt.morph.plantyr)
 
@@ -1566,22 +1600,7 @@ VWC:year   2     0.02  0.99  0.362
 Residual 446     3.78                 
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>mt.rda.df &lt;- fortify(update(mt.rda, ~ VWC + year))#drop interaction
-ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) + 
-  geom_point(data=mt.rda.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(mt.morph.plantyr), aes(color=VWC))+
-  geom_segment(data=mt.rda.df %&gt;% filter(Label==&quot;VWC&quot;), aes(x=0,y=0,xend=RDA1*3, yend=RDA2*3), 
-               arrow=arrow(length=unit(0.5, &quot;lines&quot;)), size=1.5)+
-  geom_text(   data=mt.rda.df %&gt;% filter(Label==&quot;VWC&quot;), aes(x=RDA1*3.7, y=RDA2*3.7, angle=atan(RDA2/RDA1)*180/pi), label=&quot;Soil moisture&quot;)+
-  geom_segment(data=mt.rda.df %&gt;% filter(Score==&quot;species&quot;), aes(x=0,y=0,xend=RDA1, yend=RDA2), 
-               arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
-  geom_text(   data=mt.rda.df %&gt;% filter(Score==&quot;species&quot;), aes(x=RDA1*1.7, y=RDA2*1.7, angle=atan(RDA2/RDA1)*180/pi,
-    label = c(traitnames, c(&quot;anther_max&quot;=&quot;Max stamen length&quot;, &quot;anther_min&quot;=&quot;Min stamen length&quot;))[as.character(Label)] %&gt;% str_remove(fixed(&quot; (mm)&quot;))), size=3)+
-  geom_text(data=mt.rda.df %&gt;% filter(Score==&quot;centroids&quot;), aes(label=str_remove(Label, &quot;year&quot;)), fontface=2, size=6)+
-  scale_color_viridis(&quot;Soil\nmoisture\n(%VWC)&quot;, direction=-1, option=&quot;plasma&quot;) + coord_fixed() + 
-  scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + 
-  theme(panel.grid.minor=element_blank(), text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
-                            panel.border = element_rect(fill=NA, colour = &quot;black&quot;))</code></pre>
-<p><img src="images_cut/multresp_VWC-1.png" width="768" /></p>
+</div>
 </div>
 
 
