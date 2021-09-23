@@ -40,12 +40,14 @@ library(ggvegan)
 library(ggfortify) 
 library(ggnewscale)
 library(ggpattern)
+library(ggpmisc)
 
 library(knitr)
 knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = "images_cut/")
 options(digits=4) # for kables
 
 load("data/maxfield_data.rda")
+load("data/daily_all.rda")
 
 options(contrasts = c("contr.sum", "contr.poly")) #needed for Type III SS
 
@@ -372,6 +374,21 @@ mod.abs.emm.avg <- map_dfr(set_names(c("sun_date",  "precip_est_mm")),
 
 # Models with soil moisture
 
+## Table S1
+
+```{r soil_treatments}
+# VWC split-plot analysis on subplot means (for the whole measurement period)
+sm.mod <- lmer(VWC ~ year * snow * water + (1|snow:plot)+ (1|snow:plotid), data=sm.subplotyear)
+anova(sm.mod) %>% kable()
+```
+
+### Soil moisture in each treatment
+
+```{r soil_emms}
+sm.mod %>% emmeans(~ snow)  %>% summary() %>% select(-c(df,lower.CL,upper.CL),mean_VWC=emmean) %>% kable()
+sm.mod %>% emmeans(~ water) %>% summary() %>% select(-c(df,lower.CL,upper.CL),mean_VWC=emmean) %>% kable()
+```
+
 ## Table S3
 
 ```{r sm}
@@ -424,20 +441,9 @@ plot_sm(mod.sm, mnps.plantyr, floraltraits, mod.sm.tests) +
   scale_y_continuous(limits=c(-4.3,5)) + xlab("Summer mean of soil moisture in subplot (%VWC)")
 ```
 
-# Table S1
+# Figure 6
 
-```{r soil_treatments}
-# VWC split-plot analysis on subplot means (for the whole measurement period)
-sm.mod <- lmer(VWC ~ year * snow * water + (1|snow:plot)+ (1|snow:plotid), data=sm.subplotyear)
-anova(sm.mod) %>% kable()
-```
-
-## Soil moisture in each treatment
-
-```{r soil_emms}
-sm.mod %>% emmeans(~ snow)  %>% summary() %>% select(-c(df,lower.CL,upper.CL),mean_VWC=emmean) %>% kable()
-sm.mod %>% emmeans(~ water) %>% summary() %>% select(-c(df,lower.CL,upper.CL),mean_VWC=emmean) %>% kable()
-```
+Drawn manually from results of script "maxfield_path_analysis.sas" executed in SAS 9.3.
 
 # Figure S1
 
@@ -494,6 +500,25 @@ cat("Snowmelt is advancing",-10*tidy(meltdate.mod)$estimate[2],"+-",10*tidy(melt
 cat("Early snow treatments melted", -round(mean(early.melt_offset),1), "+-", round(sd(early.melt_offset),1), "days earlier (mean +- SD), which is equivalent to", mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], "+-", (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), "years of future warming")#propagate error from SD of treatment advance and SE of regression
 ```
 
+# Figure S3
+
+```{r soil, fig.height=9, fig.width=9}
+max_VWC <- max(sm.subplot$VWC, na.rm=T)
+ggplot(sm.subplot, aes(x=yday(date))) + 
+  facet_wrap(vars(year), ncol=1) +
+  geom_segment(data=waterdates %>% pivot_wider(names_from=precip_treatments, values_from=c(day,date)),
+               aes(x=day_started, xend=day_ended, y=max_VWC+0.5, yend=max_VWC+0.5)) +
+  geom_col(data=daily_precip_est, aes(x=yday(date), y=EPA_NOAA_filled), fill=brewer.pal(7, "Set3")[7]) +
+  geom_line(data=daily_precip_est, aes(y=VWC_Control_4*100), color=brewer.pal(7, "Set3")[6], size=1) +
+  geom_point(aes(shape=snow, color=water, y = VWC)) + 
+  geom_line(data=sm.subplot %>% group_by(water, snow, year, date) %>% summarize(VWC=mean(VWC, na.rm=T)), aes(linetype=snow, color=water, y = VWC)) +
+  scale_color_manual(values=water_pal) +  scale_linetype_manual(values=c(2,1)) + 
+  geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow), color="black", show.legend=F) +
+  coord_cartesian(xlim=c(110, 230), ylim=c(0, max_VWC+1), expand=F)+
+  labs(x="Day of year", y="Mean soil moisture in subplot (%VWC) / Precipitation (mm)", color="Precipitation", shape="Snowmelt", linetype="Snowmelt") + theme_minimal() + theme(legend.key.width = unit(2, "lines"), text=element_text(color="black", size=14), axis.text = element_text(color="black"), panel.border = element_rect(fill=NA, colour = "black"))
+```
+
+
 # Figure S4
 
 ```{r multresp_VWC, fig.height=7, fig.width=8}
@@ -523,5 +548,41 @@ ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) +
 ```{r rda_VWC}
 mt.rda
 anova(mt.rda, by="term")
+```
+
+# Figure S5
+
+Drawn manually from results of script "maxfield_path_analysis.sas" executed in SAS 9.3.
+
+# Figure S6
+
+```{r precip_trend}
+summary_EPA_NOAA <- daily_filled_7am %>% filter(year(date)>1989, year(date)<2021, EPA_NOAA_filled > 2) %>% 
+  mutate(drought_days = c(0,diff(date)), year=year(date)) %>% filter(ground_covered=="smmr") %>% 
+  select(year, date, drought_days) %>% group_by(year) %>% summarize(max_drought_days_2mm = max(drought_days)) %>% 
+  left_join(daily_filled_7am  %>% filter(year(date)>1989, year(date)<2021, ground_covered=="smmr") %>% group_by(year=year(date)) %>% 
+              summarize(snow_free_days = n(),
+                        rain_days_2mm = sum(EPA_NOAA_filled > 2, na.rm=T),
+                        prop_rain_days_2mm = rain_days_2mm / snow_free_days,
+                        max_precip_mm = max(EPA_NOAA_filled, na.rm=T),
+                        avg_precip_mm = mean(EPA_NOAA_filled, na.rm=T),
+                        total_precip_mm = sum(EPA_NOAA_filled, na.rm=T)))
+
+summary_names <- c(snow_free_days = "Snowmelt to first permanent snowfall (days)",
+                   max_drought_days_2mm="Longest drought < 2 mm/day (days)", 
+                   rain_days_2mm = "Days with > 2 mm precipitation",
+                   prop_rain_days_2mm = "Proportion days > 2 mm precipitation",
+                   max_precip_mm = "Maximum precipitation (mm/day)",
+                   avg_precip_mm = "Average precipitation (mm/day)",
+                   total_precip_mm = "Total precipitation (mm)")
+
+summary_EPA_NOAA %>% pivot_longer(!year) %>% filter(!name %in% c("rain_days_2mm","max_precip_mm","total_precip_mm")) %>% 
+  ggplot(aes(y=value, x=year))+ 
+  facet_wrap(vars(name), scales="free_y", labeller=as_labeller(summary_names)) +
+  annotate("rect", xmin=2017.5, xmax=2020.5, ymin=-Inf, ymax=Inf, fill="lightblue")+
+  geom_smooth(method="lm", color="black", se=F) + geom_point(color="grey60") + labs(x="Year", y="") + 
+  stat_poly_eq(formula = y ~ x, aes(label = paste(..eq.label.., ..rr.label.., ..p.value.label.., sep = "~~~")), parse = T) +
+  theme_minimal() +theme(axis.title.y= element_blank(), text=element_text(color="black", size=14), 
+                         axis.text = element_text(color="black"),  panel.border = element_rect(fill=NA, colour = "black"))
 ```
 
