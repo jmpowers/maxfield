@@ -9,6 +9,7 @@ output:
     code_folding: hide
     toc: yes
     toc_float: TRUE
+    theme: cosmo
 editor_options: 
   chunk_output_type: console
 ---
@@ -126,6 +127,32 @@ The following four datasets are available in tab-delimited (TSV) format under th
 |height_cm|inflorescence height (cm)|
 |flowers_est|total number of flowers produced during the growing season|
 
+# Sample sizes
+
+```{r sample_sizes}
+count_measurements <- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
+bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), floraltraits),
+          plant_year = count_measurements(bind_rows(mnps, lt, pt) %>% group_by(year, plantid) %>% 
+                                            summarize(across(all_of(floraltraits), mean, na.rm=T)), floraltraits) %>% 
+            ungroup %>% summarize(across(all_of(floraltraits), sum)),
+          plant =       count_measurements(bind_rows(mnps, lt, pt) %>% group_by(plantid) %>% 
+                                             summarize(across(all_of(floraltraits), mean, na.rm=T)), floraltraits),
+          .id="sample_size") %>% column_to_rownames("sample_size") %>% 
+  t %>% as.data.frame %>% rownames_to_column("trait") %>% as_tibble %>% 
+  mutate(n_per_plant_year = n_measurements / plant_year,
+         plant_per_subplot_per_year = plant_year / 24 / 3) %>% kable(digits=2)
+
+years_flowering <- with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))
+cat(100*years_flowering[["2"]]/(years_flowering[["1"]]+years_flowering[["2"]]), "% of plants that flowered flowered twice")
+```
+
+# Trait correlations
+
+```{r correlations}
+mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %>% 
+  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
+```
+
 
 # Figure 1
 
@@ -158,11 +185,7 @@ treatments %>% ggplot(aes(x=sun_date, shape=year, color=water, y=precip_est_mm))
                             panel.border = element_rect(fill=NA, colour = "black"))
 ```
 
-# Models for replicated split-plot design
-
-This is a split-plot analysis of traits averaged for each plant and year, specified as:
-
-    lmer(trait ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data = mnps.plantyr)
+# Replicated split-plot models
 
 ## Table 1
 
@@ -175,15 +198,13 @@ mod.split <- map(set_names(floraltraits),
 mod.split.coefs <- map_dfr(mod.split, tidy, .id="trait")
 mod.split.tests <- map(mod.split, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 mod.split.emm <- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)), .id = "trait")
-  anova_table(mod.split.tests, mod.split)
-```
-
-```{r water_glht}
 mod.split.tests.water <- map(mod.split, multcomp::glht, 
                              linfct = multcomp::mcp(water = c("Addition - Control = 0", "Reduction - Control = 0"))) %>% 
   map_dfr(tidy, .id="trait")
 
-mod.split.tests.water %>% select(trait, contrast, adj.p.value) %>% pivot_wider(names_from=contrast, values_from=adj.p.value) %>% kable()
+anova_table(mod.split.tests, mod.split) %>% 
+  left_join(mod.split.tests.water %>% select(trait, contrast, adj.p.value) %>% 
+              pivot_wider(names_from=contrast, values_from=adj.p.value)) %>% kable()
 ```
 
 ## Figure 3
@@ -231,11 +252,11 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
 }
 
 #Morphological traits - plot of EMMs and subplot means
-(split_plot.floral <- grid.arrange(
+split_plot.floral <- grid.arrange(
   plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[1:4]),
   plot_split_plot(mod.split.emm, mnps.subplot, floraltraits[5:8]) + 
     guides(color = guide_legend(override.aes = list(color="white", shape=15, size=5))) + 
-    theme(legend.title = element_text(color = "white"), legend.text = element_text(color = "white")), nrow=1))
+    theme(legend.title = element_text(color = "white"), legend.text = element_text(color = "white")), nrow=1)
 ```
 
 ## Compensation
@@ -244,7 +265,7 @@ plot_split_plot <- function(emm, data, traits.plot, geom = "point", plot.emm = T
 mnps.plantyr <- mnps.plantyr %>% mutate(snowwater= paste0(snow, water))
 library(multcomp)#careful, this loads MASS, which overrides dplyr::select
 options(contrasts = c("contr.sum", "contr.poly"))
-mod.split.glht <- c(map(set_names(traits), 
+mod.split.glht <- c(map(set_names(floraltraits), 
                    ~ lmer(mnps.plantyr[[.x]]  ~ snowwater * year + (1|snow:plot) + (1|snow:plotid),
                           data=mnps.plantyr))) %>% 
   #compare early snowmelt + addition vs. normal snowmelt + control
@@ -254,20 +275,28 @@ mod.split.glht <- c(map(set_names(traits),
 mod.split.glht %>% kable()
 ```
 
-# Models with snowmelt date and total summer precipitation
+# Models with snowmelt date and total precipitation
 
 ## Table S2
 
+### P-values
+
 ```{r meltdate}
 options(contrasts = c("contr.sum", "contr.poly"))
-mod.abs <- c(map(set_names(traits), 
+mod.abs <- c(map(set_names(floraltraits), 
                  ~ lmer(mnps.plantyr[[.x]]  ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=mnps.plantyr)))
 
 mod.abs.coefs <- map_dfr(mod.abs, tidy, .id="trait")
 mod.abs.tests <- map(mod.abs, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 anova_table(mod.abs.tests, mod.abs) %>% kable()
+```
+
+### Regression slopes
+
+```{r meltdate_slopes}
 mod.abs.coefs %>% filter(effect=="fixed", term!="(Intercept)") %>% pivot_wider(id_cols=trait, names_from=term, values_from=c("estimate","std.error")) %>% kable()
 ```
+
 
 ## Figure 4
 
@@ -322,46 +351,31 @@ plot_abs(mod.abs, mnps.subplot, floraltraits, mod.abs.tests) + #Morphological tr
 
 ## Compensation
 
-Compensation points calculated at average value of other predictor - only use for traits where there are effects of both predictors but no interaction
 ```{r compensation_meltdate_avg}
-mod.abs.emm.avg <- map_dfr(set_names(c("sun_date", "precip_est_mm")), 
+mod.abs.emm.avg <- map_dfr(set_names(c("sun_date",  "precip_est_mm")), 
                    ~ mod.abs %>% map(emtrends, var = .x, ~1) %>% 
-                     map(as_tibble) %>% set_names(traits) %>% bind_rows(.id="trait") %>% 
+                     map(as_tibble) %>% set_names(floraltraits) %>% bind_rows(.id="trait") %>% 
                      rename_with(.cols=ends_with("trend"), ~ "trend"), .id="predictor") %>% 
   mutate(predictor=fct_relevel(predictor,"sun_date"), 
          sd.plantyr = alltraits.sd[trait],
          trend = trend / sd.plantyr, SE = SE / sd.plantyr)
 
-mod.abs.emm.avg.compensate <- mod.abs.emm.avg %>% 
+(mod.abs.emm.avg.compensate <- mod.abs.emm.avg %>% 
   pivot_wider(names_from=predictor, values_from=c(trend, SE), id_cols=c(trait)) %>% 
-  mutate(predictor = "compensation",
-         precip_mm_per_snow_day = trend_sun_date / trend_precip_est_mm, 
+  mutate(precip_mm_per_snow_day = trend_sun_date / trend_precip_est_mm, 
          SE = abs(precip_mm_per_snow_day) * # propagate error in SEs using formula for quotients
            sqrt((SE_precip_est_mm / trend_precip_est_mm)^2 + (SE_sun_date / trend_sun_date)^2),
-         prop_mean_total_precip_per_snow_day = precip_mm_per_snow_day / mean(groundcover$precip_est_mm, na.rm=T))
-# divide compensation by mean summer precip 1990 - 2020 (mm)
-mod.abs.emm.avg.compensate %>% select(-predictor) %>% kable()
+         .keep="unused") %>% kable)
 ```
 
 # Models with soil moisture
-
-Both snowmelt timing and summer precipitation affect soil moisture and its timing. This analysis regresses the floral traits against the mean soil moisture in a subplot. Slopes may differ among years. The models use:
-
-* *mt.plantyr*, the trait data averaged by plant within year
-* *VWC*, the summer mean of the approximately weekly mean volumetric water content in a subplot. 
-* *plotid* (subplot) as a random effect (plants vary within this larger unit)
-
-The models are specified as:
-
-    lmer(trait ~ year * VWC + (1|plotid), data = mt.plantyr)
 
 ## Table S3
 
 ```{r sm}
 options(contrasts = c("contr.sum", "contr.poly"))
-mod.sm <- c(map(set_names(traits), 
+mod.sm <- c(map(set_names(floraltraits), 
                   ~ lmer(mnps.plantyr[[.x]]  ~ year * VWC + (1|plotid), data=mnps.plantyr)))
-
 mod.sm.coefs <- map_dfr(mod.sm, tidy, .id="trait")
 mod.sm.tests <- map(mod.sm, anova, ddf="Ken") %>% map_dfr(tidy, .id="trait")
 anova_table(mod.sm.tests, mod.sm) %>% kable()
@@ -419,8 +433,8 @@ anova(sm.mod) %>% kable()
 ## Soil moisture in each treatment
 
 ```{r soil_emms}
-(sm.emm.snow <- summary(emmeans(sm.mod, ~ snow))) %>% kable()
-(sm.emm.water <- summary(emmeans(sm.mod, ~ water))) %>% kable()
+sm.mod %>% emmeans(~ snow)  %>% summary() %>% select(-c(df,lower.CL,upper.CL)) %>% kable()
+sm.mod %>% emmeans(~ water) %>% summary() %>% select(-c(df,lower.CL,upper.CL)) %>% kable()
 ```
 
 # Figure S1
@@ -473,9 +487,8 @@ meltdate.mod <- lm(first_0_cm_day ~ year, data=groundcover)
 summary(meltdate.mod)
 early.melt_offset <- treatments %>% filter(snow=="Early") %>% pull(melt_offset)
 
-cat("Snowmelt is advancing",-10*tidy(meltdate.mod)$estimate[2],"+-",10*tidy(meltdate.mod)$std.error[2], "days per decade")
-cat("Early snow treatments melted", -round(mean(early.melt_offset),1), "+-", round(sd(early.melt_offset),1), "days earlier (mean +- SD)")
-cat("Equivalent to", mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], "+-", (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), "years of future warming")#propagate error from SD of treatment advance and SE of regression
+cat("Snowmelt is advancing",-10*tidy(meltdate.mod)$estimate[2],"+-",10*tidy(meltdate.mod)$std.error[2], "days per decade from",paste(range(groundcover$year), collapse=" - "))
+cat("Early snow treatments melted", -round(mean(early.melt_offset),1), "+-", round(sd(early.melt_offset),1), "days earlier (mean +- SD), which is equivalent to", mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2], "+-", (mean(early.melt_offset)/tidy(meltdate.mod)$estimate[2])*sqrt((sd(early.melt_offset)/mean(early.melt_offset))^2 + (tidy(meltdate.mod)$std.error[2]/tidy(meltdate.mod)$estimate[2])^2), "years of future warming")#propagate error from SD of treatment advance and SE of regression
 ```
 
 # Figure S4
@@ -485,8 +498,7 @@ mt.morph.plantyr <- mt.plantyr[,c("corolla_length", "corolla_width","style_lengt
 options(contrasts = c("contr.treatment", "contr.poly"))
 mt.rda <- rda(scale(select(mt.morph.plantyr, !c(year, VWC))) ~ VWC * year, data=mt.morph.plantyr)
 mt.rda
-anova(mt.rda, by="term") %>% tidy %>% kable()
-#autoplot(mt.rda)
+anova(mt.rda, by="term")
 
 mt.rda.df <- fortify(update(mt.rda, ~ VWC + year))#drop interaction
 ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) + 
@@ -503,37 +515,4 @@ ggplot(mapping=aes(x=RDA1, y=RDA2, label=Label)) +
   scale_x_continuous(expand=expansion(mult=.16), breaks=c(-2,0,2))+   theme_minimal() + 
   theme(panel.grid.minor=element_blank(), text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                             panel.border = element_rect(fill=NA, colour = "black"))
-```
-
-# Sample sizes
-
-```{r sample_sizes}
-count_measurements <- function(df, tr) summarize(df, across(all_of(tr), ~ sum(!is.na(.x))))
-bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits),
-          plant_year_round =   count_measurements(bind_rows(mnps.plantyr, lt.plantyr, pt.plantyr), alltraits), 
-          plant_year = count_measurements(bind_rows(mnps, lt, pt) %>% group_by(year, plantid) %>% 
-                                            summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits) %>% 
-            ungroup %>% summarize(across(all_of(alltraits), sum)),
-          plant =       count_measurements(bind_rows(mnps, lt, pt) %>% group_by(plantid) %>% 
-                                             summarize(across(all_of(alltraits), mean, na.rm=T)), alltraits),
-          .id="sample_size") %>% column_to_rownames("sample_size") %>% 
-  t %>% as.data.frame %>% rownames_to_column("trait") %>% as_tibble %>% 
-  mutate(n_per_plant_year_round = n_measurements / plant_year_round,
-         n_per_plant_year = n_measurements / plant_year,
-         n_per_plant = n_measurements/ plant,
-         plant_per_subplot_per_year = plant_year / 24 / 3) %>% kable(digits=2)
-```
-
-## Number of years plants flowered
-
-```{r flowering_years}
-#How many plants flowered twice?
-with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_status_20))
-```
-
-# Trait correlations
-
-```{r correlations}
-mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %>% 
-  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
 ```
