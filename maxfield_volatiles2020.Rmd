@@ -22,16 +22,16 @@ td, th { padding : 6px }
 ```{r setup, message=FALSE}
 library(tidyverse)
 library(lubridate)
-#library(googlesheets4)
 library(vegan)
 library(viridis)
 library(ggvegan)
 
 library(knitr)
-knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = "images_volatiles/", fig.height=8, fig.width=8)
+knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = "images_volatiles2020/", fig.height=8, fig.width=8)
 options(digits=4) # for kables
 
 load("data/maxfield_data.rda")
+load("data/volatiles/maxfield_volatiles.rda")
 ```
 
 # Sample size
@@ -51,37 +51,30 @@ ggplot(vt %>% drop_na(water), aes(x=factor(date), y=VWC, color=water)) + facet_w
 
 # Multivariate analyses
 
-Original code and filtered volatiles from "multivariate voc maxfield.R"
+```{r samplesizes}
+volsmeta <- maxfmeta %>% mutate(year=factor(year(sampledate))) %>% 
+  drop_na(plotid) %>% #cut out ambients
+  filter(year %in% c("2018","2019","2020")) %>% droplevels() %>% left_join(treatments)
+rownames(volsmeta) <- volsmeta$index
+vols <- maxf[volsmeta$index,]
 
-```{r hmb_data}
-scents.dat <- read.table("data/volatiles/Max.2018.2019_combined_USE_NOV08plantsreduced.tsv", header = T, row.names = 1)
-planttype.dat<- read.csv("data/volatiles/Max.2018.2019_combined_USE_NOV08plantsclasses.csv", na.strings=".")
+with(maxfmeta, table(type))
+with(volsmeta, table(year, plotid))
+with(volsmeta, table(water, snow, year))
 
-#Drop samples with no volatiles
-planttype.dat <- planttype.dat[rowSums(scents.dat) > 0,]
-scents.dat <- scents.dat[rowSums(scents.dat) > 0,]
-
-#One row is missing plant data
-scents.dat <- scents.dat[!is.na(planttype.dat$precip),]
-planttype.dat <- planttype.dat[!is.na(planttype.dat$precip),]
-
-#consolidate mock rainouts and controls
-planttype.dat$water <- factor(recode(planttype.dat$precip, mockrainout="Control", Control="Control", addH20 = "Addition", rainout = "Reduction"))
-planttype.dat$year <- as.factor(planttype.dat$year)
+volsmeta %>% drop_na(sampledate) %>% group_by(sampledate) %>% tally() %>% 
+  ggplot(aes(x=yday(sampledate), y=n)) + geom_col() + facet_wrap(vars(year(sampledate)), ncol=1) +
+  labs(x="VOC sampling date (day of year)", y="Floral samples")
+# TODO fix early 2020 date? and check singletons in 2018, 2019
+# TODO there are some duplicate file names in maxfmeta, especially sampled 190805
 ```
 
-## Barplot
+```{r filtering}
+vols.cut <- vols[,colSums(vols)>1e7]
 
-```{r barplot}
-set.seed(5)
-chemcols <- sample(rainbow(ncol(scents.dat)))
-scents.dat.sorted <- scents.dat[order(rowSums(scents.dat)),]
-planttype.dat.sorted <- planttype.dat[order(rowSums(scents.dat)),]
-
-barplot(t(as.matrix(scents.dat.sorted[planttype.dat.sorted$year=="2018",])), col=chemcols, main="2018")
-legend("topleft", rev(colnames(scents.dat)[colSums(scents.dat)>100]), fill=rev(chemcols[colSums(scents.dat)>100]))
-barplot(t(as.matrix(scents.dat.sorted[planttype.dat.sorted$year=="2019",])), col=chemcols, main="2019")
-legend("topleft", rev(colnames(scents.dat)[colSums(scents.dat)>100]), fill=rev(chemcols[colSums(scents.dat)>100]))
+ipochems <- read_csv("data/volatiles/chemsf_ipo.csv")
+ipogood <- ipochems %>% filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge")) %>% pull(name)
+vols.good <- vols[,intersect(colnames(vols),ipogood)]
 ```
 
 
@@ -89,19 +82,22 @@ legend("topleft", rev(colnames(scents.dat)[colSums(scents.dat)>100]), fill=rev(c
 
 ```{r heatmap}
 library(viridis)
-heatmap(as.matrix(t(scents.dat))^(1/4), scale="none", col=mako(512), ColSideColors=as.character(planttype.dat$year), main="2018 (red) and 2019 (green)")
-heatmap(as.matrix(t(scents.dat[planttype.dat$year=="2018",]))^(1/4), scale="none", col=mako(512), ColSideColors=as.character(planttype.dat$year[planttype.dat$year=="2018"]), main="2018")
-heatmap(as.matrix(t(scents.dat[planttype.dat$year=="2019",]))^(1/4), scale="none", col=mako(512), ColSideColors=as.character(planttype.dat$year[planttype.dat$year=="2019"]), main="2019")
+library(pheatmap)
+log10(sum(vols.cut$`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`))
+pheatmap(as.matrix(t(vols[,colSums(vols)>3e8]))^(1/4), color=mako(512),
+         annotation_col=volsmeta %>% select(year))
+
+pheatmap(as.matrix(t(vols.good))^(1/4), color=mako(512),
+         annotation_col=volsmeta %>% select(year))
 ```
 
 ## Boxplots
 
 ```{r boxplots, fig.width=10, fig.height=10}
-scents.dat.cut <- scents.dat[,colSums(decostand(scents.dat, "pa"))> 20]
-cbind(planttype.dat, scents.dat.cut) %>%  pivot_longer(-all_of(colnames(planttype.dat))) %>% 
-  #mutate(name = fct_reorder(name, colSums(scents.dat.cut))) %>% 
+vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))>81]#occur in more than N samples
+bind_cols(volsmeta, vols.good.top) %>%  pivot_longer(-all_of(colnames(volsmeta))) %>% 
   ggplot(aes(x = year, color = water, y = value)) + geom_boxplot() + facet_wrap(vars(name), scales="free_y") + 
-  scale_y_sqrt() + scale_color_manual(values=water_pal) + labs(x="Year", y ="Emissions (ng/hr)") + guides(color=F)
+  scale_y_sqrt() + scale_color_manual(values=water_pal) + labs(x="Year", y ="Emissions (ng/hr)") + guides(color="none")
 ```
 
 ## Ordinations
