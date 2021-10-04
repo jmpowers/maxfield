@@ -25,6 +25,8 @@ library(lubridate)
 library(vegan)
 library(viridis)
 library(ggvegan)
+library(pheatmap)
+library(DT)
 
 library(knitr)
 knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = "images_volatiles2020/", fig.height=8, fig.width=8)
@@ -32,58 +34,83 @@ options(digits=4) # for kables
 
 load("data/maxfield_data.rda")
 load("data/volatiles/maxfield_volatiles.rda")
+
+vt <- vt %>% rename(sampledate=date) %>% mutate(type=recode(type, air="ambient"))
+volsmeta <- maxfmeta %>% mutate(year=factor(year(sampledate))) %>% 
+  drop_na(plotid) %>% #cut out ambients
+  filter(year %in% c("2018","2019","2020")) %>% droplevels() %>% 
+  left_join(treatments) %>% 
+  left_join(vt %>% select(observer:notes)) #TODO work on lining these up - 251/459 have no match in vt
+rownames(volsmeta) <- volsmeta$index
+
+vols <- maxf[volsmeta$index,]
 ```
 
 # Sample size
 
-```{r sampsize}
-with(vt, table(year, type)) %>% kable
-with(vt %>% filter(type=="floral"), table(year, water, snow))
+Calculated from two datasets that will eventually match: datasheets from sampling and GC-MS filenames.
+
+```{r samplesizes, fig.width=10, fig.height=5}
+bind_rows(sampling=vt %>% group_by(year, type) %>% tally(),
+  filenames=maxfmeta %>% mutate(year=factor(year(sampledate))) %>% group_by(year, type) %>% tally(), .id="source") %>% 
+  pivot_wider(names_from=c(year,type), values_from = n) %>% kable()
+
+bind_rows(sampling=vt %>% filter(type=="floral") %>% group_by(year, water, snow) %>% tally(),
+  filenames=volsmeta %>% mutate(year=factor(year(sampledate))) %>% group_by(year, water, snow) %>% tally(), .id="source") %>% 
+  pivot_wider(names_from=c(year), values_from = n) %>% kable()
+
+bind_rows(sampling = vt %>% filter(type=="floral") %>% group_by(sampledate) %>% tally(),
+         filenames = volsmeta %>% drop_na(sampledate) %>% group_by(sampledate) %>% tally(), .id="source") %>% 
+  ggplot(aes(x=yday(sampledate), y=n, fill=source)) + geom_col(position=position_dodge(preserve="single")) +
+  facet_wrap(vars(year(sampledate)), ncol=1) +
+  labs(x="VOC sampling date (day of year)", y="Floral samples")
+# TODO fix early 2020 date? and check singletons in 2018, 2019
+# TODO there are some duplicate file names in maxfmeta, especially sampled 190805
 ```
 
 # Soil moisture
 
 ```{r sm}
-ggplot(vt %>% drop_na(water), aes(x=factor(date), y=VWC, color=water)) + facet_wrap(vars(year), ncol = 1, scales="free_x") +
+ggplot(vt %>% drop_na(water), aes(x=factor(sampledate), y=VWC, color=water)) + facet_wrap(vars(year), ncol = 1, scales="free_x") +
   geom_boxplot() + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle=90)) + 
   labs(x="Date", y="Soil moisture (%VWC)", color="Precipitation")
 ```
 
 # Multivariate analyses
 
-```{r samplesizes}
-volsmeta <- maxfmeta %>% mutate(year=factor(year(sampledate))) %>% 
-  drop_na(plotid) %>% #cut out ambients
-  filter(year %in% c("2018","2019","2020")) %>% droplevels() %>% left_join(treatments)
-rownames(volsmeta) <- volsmeta$index
-vols <- maxf[volsmeta$index,]
+## Filtering
 
-with(maxfmeta, table(type))
-with(volsmeta, table(year, plotid))
-with(volsmeta, table(water, snow, year))
+Filtering criteria (verdict="fvoc" in the table below):
 
-volsmeta %>% drop_na(sampledate) %>% group_by(sampledate) %>% tally() %>% 
-  ggplot(aes(x=yday(sampledate), y=n)) + geom_col() + facet_wrap(vars(year(sampledate)), ncol=1) +
-  labs(x="VOC sampling date (day of year)", y="Floral samples")
-# TODO fix early 2020 date? and check singletons in 2018, 2019
-# TODO there are some duplicate file names in maxfmeta, especially sampled 190805
-```
+* Present in 10% of samples
+* Maximum peak area is at least 4000000
+* Passes t-test against ambient controls with FDR correction OR mean exceeds 4x mean of controls
+* Not a known contaminant (Oxybenzone, Ethanol, 2,2'-oxybis-, Butylated Hydroxytoluene, Caprolactam, [1,1'-Bicyclopentyl]-2-one, L-Lactic acid, Pentadecane, 8-hexyl-, Decane, 2,8,8-trimethyl-, 2-Methyltetradecan-2-ol)
+
+Note that these potential floral compounds did not meet the tests against ambient controls: 2-phenylacetaldehyde, 3-carene, D-limonene, camphene, benzaldehyde, a-thujene, sabinene, abietadiene, 2-ethylhexan-1-ol 
+
+Plus (verdict other than "fvoc"): 
+
+* bis14: compounds included in Bischoff et al. (2014)
+* keep: kept since they are known floral volatiles
+* keep_leaf: kept since they are known leaf volatiles
+* merge: a compound that is a synonym of one of the floral volatiles (b-caryophyllene, b-ocimene, verbenone)
 
 ```{r filtering}
 vols.cut <- vols[,colSums(vols)>1e7]
 
-ipochems <- read_csv("data/volatiles/chemsf_ipo.csv")
-ipogood <- ipochems %>% filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge")) %>% pull(name)
+ipochems <- read_csv("data/volatiles/chemsf_ipo.csv") %>% filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge")) 
+ipogood <- ipochems %>% pull(name)
 vols.good <- vols[,intersect(colnames(vols),ipogood)]
-```
 
+ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambient, ambient_ratio, filter_ambient_ttest, filters_passed) %>%
+  arrange(desc(freq.floral)) %>% mutate(across(starts_with("freq."), round, 3)) %>% 
+  DT::datatable(caption="Volatile compounds to use for analysis")
+```
 
 ## Heatmap
 
-```{r heatmap}
-library(viridis)
-library(pheatmap)
-log10(sum(vols.cut$`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`))
+```{r heatmap, fig.width=16, fig.height=12}
 pheatmap(as.matrix(t(vols[,colSums(vols)>3e8]))^(1/4), color=mako(512),
          annotation_col=volsmeta %>% select(year))
 
@@ -93,7 +120,7 @@ pheatmap(as.matrix(t(vols.good))^(1/4), color=mako(512),
 
 ## Boxplots
 
-```{r boxplots, fig.width=10, fig.height=10}
+```{r boxplots, fig.width=16, fig.height=10}
 vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))>81]#occur in more than N samples
 bind_cols(volsmeta, vols.good.top) %>%  pivot_longer(-all_of(colnames(volsmeta))) %>% 
   ggplot(aes(x = year, fill = water, y = value)) + geom_boxplot() + facet_wrap(vars(name), scales="free_y") + 
@@ -102,53 +129,32 @@ bind_cols(volsmeta, vols.good.top) %>%  pivot_longer(-all_of(colnames(volsmeta))
 
 ## Ordinations
 
-### Absolute amounts
+### NMDS
 
-```{r hmb_ords}
-#Nmds 
-(scents.mds <- metaMDS(sqrt(scents.dat), autotransform=FALSE)) #had noshare = FALSE
-plot(scents.mds,type="t",display=c("species"))
-plot(scents.mds,type="t",display=c("sites"))
+```{r nmds}
+nonzero <- rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
+(scents.nmds <- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
 
-#PerMANOVA using adonis function in vegan package
-(scents.permanova <- adonis(sqrt(scents.dat) ~ water * year, planttype.dat))
+plot(scents.nmds,type="n")
+points(scents.nmds, display = "sites", col=water_pal[volsmeta$water[nonzero]], pch=as.integer(volsmeta$year[nonzero])+14)
+legend("topleft", legend=2018:2020, pch=15:17)
+legend("topright", legend=names(water_pal), fill=water_pal)
 
-#Canonical analysis of principal coordinates (CAP) allows for other distance measures
-(scents.cap <-capscale(sqrt(scents.dat) ~ year * water, planttype.dat, dist="bray"))
-anova(scents.cap, by="term")
-
-scents.cap <-capscale(sqrt(scents.dat) ~ year + water, planttype.dat, dist="bray")
-plot(scents.cap, type="n", xlim=c(-2,2))
-points(scents.cap, display = "sites", col=water_pal[planttype.dat$water], pch=as.integer(planttype.dat$year))
-text(scents.cap, display="cn", labels=c("2018","2019", names(water_pal)), col=c("black","black",water_pal), font=2)
-
-plot(scents.cap, type="n", xlim=c(-1,3), ylim=c(-0.5,0.5))
-text(scents.cap, display="sp", cex=0.7)
+plot(scents.nmds,type="n")
+text(scents.nmds, display="species", col="black", cex=0.5)
 ```
 
-
-### Relative amounts
-
-```{r hmb_ords_rel}
-#Nmds 
-(scents.mds <- metaMDS(decostand(scents.dat, "hellinger"), autotransform=FALSE)) #had noshare = FALSE
-plot(scents.mds,type="t",display=c("species"))
-plot(scents.mds,type="t",display=c("sites"))
-
-#PerMANOVA using adonis function in vegan package
-(scents.permanova <- adonis(decostand(scents.dat, "hellinger") ~ water * year, planttype.dat))
-
-#Canonical analysis of principal coordinates (CAP) allows for other distance measures
-(scents.cap <-capscale(sqrt(scents.dat) ~ year * water, planttype.dat, dist="bray"))
+### CAP
+```{r cap}
+(scents.cap <- capscale(sqrt(vols.good) ~ year * water * snow, data=volsmeta))
 anova(scents.cap, by="term")
 
-scents.cap <-capscale(decostand(scents.dat, "hellinger") ~ year + water, planttype.dat, dist="bray")
-plot(scents.cap, type="n", xlim=c(-2,2))
-points(scents.cap, display = "sites", col=water_pal[planttype.dat$water], pch=as.integer(planttype.dat$year))
-text(scents.cap, display="cn", labels=c("2018","2019", names(water_pal)), col=c("black","black",water_pal), font=2)
+scents.cap <- capscale(sqrt(vols.good) ~ year + water, data=volsmeta)
+plot(scents.cap, type="n")
+points(scents.cap, display = "sites", col=water_pal[volsmeta$water], pch=as.integer(volsmeta$year)+14)
+text(scents.cap, display="cn", labels=c(2018:2020, names(water_pal)), col=c(rep("black",3),water_pal), font=2, cex=1.5)
 
-plot(scents.cap, type="n", xlim=c(-1.5,1.5), ylim=c(-0.5,0.5))
-text(scents.cap, display="sp", cex=0.7)
+plot(scents.cap, type="n")
+text(scents.cap, display="species", col="black", cex=0.5)
 ```
-
 
