@@ -516,10 +516,10 @@ ipochems %&gt;% select(verdict, name, RT, mean, max, match, freq.floral, freq.am
 <div id="heatmap" class="section level2">
 <h2>Heatmap</h2>
 <pre class="r"><code>pheatmap(as.matrix(t(vols[,colSums(vols)&gt;3e8]))^(1/4), color=mako(512),
-         annotation_col=volsmeta %&gt;% select(year))</code></pre>
+         annotation_col=volsmeta %&gt;% select(year), main=&quot;Unfiltered top volatiles&quot;)</code></pre>
 <p><img src="images_volatiles2020/heatmap-1.png" width="1536" /></p>
 <pre class="r"><code>pheatmap(as.matrix(t(vols.good))^(1/4), color=mako(512),
-         annotation_col=volsmeta %&gt;% select(year))</code></pre>
+         annotation_col=volsmeta %&gt;% select(year), main=&quot;Filtered volatiles&quot;)</code></pre>
 <p><img src="images_volatiles2020/heatmap-2.png" width="1536" /></p>
 </div>
 <div id="boxplots" class="section level2">

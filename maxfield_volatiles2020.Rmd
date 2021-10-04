@@ -112,10 +112,10 @@ ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambie
 
 ```{r heatmap, fig.width=16, fig.height=12}
 pheatmap(as.matrix(t(vols[,colSums(vols)>3e8]))^(1/4), color=mako(512),
-         annotation_col=volsmeta %>% select(year))
+         annotation_col=volsmeta %>% select(year), main="Unfiltered top volatiles")
 
 pheatmap(as.matrix(t(vols.good))^(1/4), color=mako(512),
-         annotation_col=volsmeta %>% select(year))
+         annotation_col=volsmeta %>% select(year), main="Filtered volatiles")
 ```
 
 ## Boxplots
