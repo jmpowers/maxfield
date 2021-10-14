@@ -300,15 +300,18 @@ cen20 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          notes = notes %>% fct_explicit_na("blank"),
          flowering = flowering %>% as.character %>% fct_explicit_na("blank"),
          n_rosettes = as.integer(as.character(rosettes)),
-         rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more", ),
-         plotid = paste0(plot, subplot)) %>% 
+         rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more")) %>% 
   fix_dataset("census20") %>% left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
 
 cen21 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2021") %>% 
-  mutate(plot = factor(str_sub(plantid,1,1)), subplot = factor(str_sub(plantid,2,2)),
-         plotid = factor(paste0(plot, subplot)), plant = str_sub(plantid, 3, -1),
-         year=factor(year(date))) %>% left_join(treatments_map) %>% #TODO get 2021 meltdates for treatments
+  mutate(plot = factor(str_sub(plantid,1,1)), 
+         subplot = factor(str_sub(plantid,2,2)),
+         plotid = factor(paste0(plot, subplot)), 
+         plant = str_sub(plantid, 3, -1),
+         year=factor(year(date)),
+         status=recode(status, V="vegetative",F="flowering",D="dead_nf",NF="dead_nf",TNF="tagnf",O="dead_nf")) %>% 
+  left_join(treatments_map) %>% #TODO get 2021 meltdates for treatments
   mutate_if(is.character, as.factor)
 #with(cen21 %>% filter(water=="Control") %>% mutate(plotid = fct_drop(plotid)), table(plotid, status)) 
 
@@ -323,9 +326,9 @@ cen21 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
 # This is automatic, but it may be better to resolve duplicates manually in some cases. The duplicates are written out to [spreadsheets](https://docs.google.com/spreadsheets/d/1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA/edit#gid=367829026)
 
 # Write out the duplicates
-censuses <- c("2018","2018r2","2019","2020")
+censuses <- c("2018","2018r2","2019","2020","2021")
 joiners <- c("plot","subplot","plotid","plant","plantid")
-cen <- list(cen18, cen18r2, cen19, cen20) %>% 
+cen <- list(cen18, cen18r2, cen19, cen20,cen21) %>% 
   walk2(.y=censuses, .f = ~ .x %>% group_by(plantid) %>% filter(n()>1) %>% arrange(plantid, status, desc(date)) %>% 
           write_sheet(ss=filter(datasheets, name=="Maxfield Results"), sheet=paste0(.y,"duplicates"))) %>% 
   map(~ .x %>% arrange(plantid, status, desc(date)) %>% distinct(plantid, .keep_all = TRUE)) %>% # distinct() keeps the first row after sorting, discards the other rows
@@ -341,13 +344,15 @@ cen.status <- cen %>% select(any_of(joiners) | (starts_with(c("status","check"))
                 ~ .x %>% fct_explicit_na("no_record") %>% fct_expand(status_priority) %>% fct_relevel(status_priority)),
          status_19 = ifelse(status_19 == "no_record" & (status_18 %in% assumedead | status_18r2 %in% assumedead), "dead_nf", as.character(status_19)), 
          status_20 = ifelse(status_20 == "no_record" & status_19 %in% assumedead, "dead_nf", as.character(status_20)), 
+         status_21 = ifelse(status_21 == "no_record" & status_20 %in% assumedead, "dead_nf", as.character(status_21)),
          across(starts_with("status"), 
                 ~ .x %>% fct_explicit_na("no_record") %>% fct_expand(status_priority) %>% fct_relevel(status_priority)),
          plantid = fct_reorder(factor(plantid), .desc=T, 
-                          paste(as.integer(status_18),as.integer(status_19),as.integer(status_20),as.integer(status_18r2))),
+                          paste(as.integer(status_18),as.integer(status_19),as.integer(status_20),as.integer(status_21),as.integer(status_18r2))),
          transition_1819 = paste(status_18, status_19, sep=" > "),
          transition_1920 = paste(status_19, status_20, sep=" > "),
          transition_181920 = paste(status_18, status_19, status_20, sep=" > "),
+         transition_18192021 = paste(status_18, status_19, status_20, status_21, sep=" > "),
          across(starts_with("status"), .names="flowering_{.col}", 
                 ~ recode(.x, "flowering"=1,"vegetative"=0,"dead_nf"=0,.default=as.double(NA))),
          across(starts_with("status"), .names="alive_{.col}", 
@@ -360,9 +365,11 @@ cen.status.long <- cen.status %>% select(!starts_with("transition|flowering|aliv
   mutate(census = paste0("20",str_remove(census, "status_")), year=str_remove(census,"r2")) %>% 
   mutate(across(.fns=factor)) %>% 
   mutate(survived = as.integer(case_when(year == "2018" ~ alive_status_19,
-                                         year == "2019" ~ alive_status_20))-1,
+                                         year == "2019" ~ alive_status_20,
+                                         year == "2020" ~ alive_status_21))-1,
          flowered = as.integer(case_when(year == "2018" ~ flowering_status_19,
-                                         year == "2019" ~ flowering_status_20))-1) 
+                                         year == "2019" ~ flowering_status_20,
+                                         year == "2020" ~ flowering_status_21))-1) 
 
 cen.size.long <- cen %>% select(plantid|starts_with("n_rosettes")|contains(c("longest","leaves"))) %>% 
   pivot_longer(-plantid) %>% separate(name, into=c("rosette","variable","census")) %>% drop_na(value)
@@ -376,16 +383,19 @@ cen.size <- cen.size.sum %>% left_join(treatments)
 
 cen.RGR <- cen.size.sum %>% select(-year) %>%
   pivot_wider(names_from="census", names_prefix="size", values_from="size") %>% 
-  mutate(RGR_18r2 = 1.41*log(size18r2/size18)/(63/365), RGR_19=1.41*log(size19/size18)/(373/365), RGR_20=1.41*log(size20/size19)/(363/365))
+  mutate(RGR_18r2 = 1.41*log(size18r2/size18)/(63/365), 
+         RGR_19 =  1.41*log(size19/size18)/(373/365), 
+         RGR_20 =  1.41*log(size20/size19)/(363/365),
+         RGR_21 =  1.41*log(size21/size20)/(365/365))
 # scaling between dry mass and leaf length follows a power law with exponent 1.41 (see NLS in maxfield_JP_analyses.Rmd/leaf_scaling_length)
 # time interval is in years between census dates with most individuals, so the RGR units are 1/year (pseudo-mass units cancel)
-# ymd("2018-08-13") - ymd("2018-06-11"), ymd("2019-06-19") - ymd("2018-06-11"), ymd("2020-06-16") - ymd("2019-06-19")
+# ymd("2018-08-13") - ymd("2018-06-11"), ymd("2019-06-19") - ymd("2018-06-11"), ymd("2020-06-16") - ymd("2019-06-19"), ymd("2021-06-16") - ymd("2020-06-16")
 # TODO change time interval to actual plant measurements (might be tricky if plant in census twice)
 
 cen.RGR.long <- cen.RGR %>% select(plantid, plotid, starts_with("RGR")) %>% 
   pivot_longer(starts_with("RGR"), names_to="census", names_prefix="RGR_", values_to="RGR") %>% 
   mutate(RGR = ifelse(is.infinite(RGR), NA, RGR), 
-    year=recode(census, `18r2`="2017", `19`="2018", `20`="2019")) #growth to next year
+    year=recode(census, `18r2`="2017", `19`="2018", `20`="2019", `21`="2020")) #growth to next year
 
 # phenology ---------------------------------------------------------------
 
@@ -865,6 +875,7 @@ alldata <- list("treatments"=treatments,
                 "census_2018"=cen18,
                 "census_2019"=cen19,
                 "census_2020"=cen20,
+                "census_2021"=cen21,
                 "phenology_2018"=ph18,
                 "phenology_2019"=ph19,
                 "phenology_2020"=ph20,
