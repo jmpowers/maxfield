@@ -180,7 +180,10 @@ fixes <- read_sheet(filter(datasheets, name=="Maxfield Results"), sheet="megatal
   unite("separate", separate, separate2, sep=" ", na.rm=T) %>% 
   mutate(across(c("separate","modify","discard"), replace_na, "")) %>% 
   mutate(transition_fixed = ifelse(is.na(transition_fixed), transition_181920, transition_fixed)) %>% 
-  separate(transition_fixed, into=paste("status",18:20,"fixed", sep="_"), sep=" > ", remove=F)
+  separate(transition_fixed, into=paste("status",18:20,"fixed", sep="_"), sep=" > ", remove=F) %>% 
+  left_join(read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2021") %>% 
+              mutate(status=recode(status, V="vegetative",F="flowering",D="dead_nf",NF="dead_nf",TNF="tagnf",O="dead_nf")) %>%
+              select(plantid, status_21_fixed=status)) # solution until megatally updated for 2021
 
 fixes.fixed <- fixes %>% mutate(plantid = ifelse(is.na(plantid_new), plantid, plantid_new))
 mergefixes <- fixes.fixed %>% group_by(plantid) %>% tally() %>% filter(n> 1) %>% pull(plantid)
@@ -218,7 +221,7 @@ fix_dataset <- function(dat, name) { #name must end with two-digit year 20XX
                   select(plantid, discard, separate, modify, plantid_new, ends_with("fixed")) %>% 
                   rename(status=sym(status_yr_fixed))) %>% fill(year)
   }
-  if(yr!="20" & name !="census18r2") { #add survival and flowering. can't say "flowering" - a census column name
+  if(yr!="21" & name !="census18r2") { #add survival and flowering. can't say "flowering" - a census column name
     status_nextyr_fixed <- paste("status",as.integer(yr)+1,"fixed", sep="_") 
     dat_fixed <- dat_fixed %>% mutate(
       flowered = recode(!!sym(status_nextyr_fixed), "flowering"=1,"vegetative"=0,"dead_nf"=0,.default=as.double(NA)),
