@@ -183,7 +183,8 @@ fixes <- read_sheet(filter(datasheets, name=="Maxfield Results"), sheet="megatal
   separate(transition_fixed, into=paste("status",18:20,"fixed", sep="_"), sep=" > ", remove=F) %>% 
   left_join(read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2021") %>% 
               mutate(status=recode(status, V="vegetative",F="flowering",D="dead_nf",NF="dead_nf",TNF="tagnf",O="dead_nf")) %>%
-              select(plantid, status_21_fixed=status)) # solution until megatally updated for 2021
+              select(plantid, status_21=status)) %>% # solution until megatally updated for 2021
+  left_join(read_tsv("./data/fixstatus_21.tsv")) #fix status_21 to status_21_fixed based on rolling over dead from status_20
 
 fixes.fixed <- fixes %>% mutate(plantid = ifelse(is.na(plantid_new), plantid, plantid_new))
 mergefixes <- fixes.fixed %>% group_by(plantid) %>% tally() %>% filter(n> 1) %>% pull(plantid)
