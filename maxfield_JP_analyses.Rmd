@@ -1668,6 +1668,29 @@ mod.selection <- selection.combos  %>%
          tests = map(model, ~ tidy(car::Anova(.x, type=3))))
 ```
 
+```{r selec_diff}
+std_selection_differential <- function(response, trait, wa, sn, yr) {
+  set <- ifelse(trait %in% leaftraits, "lt","pt")
+  trait.data <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% ungroup() %>% 
+    filter(water==wa, snow==sn, year==yr) %>% select(all_of(c(trait, response)))
+  trait_before <- trait.data %>% filter(!is.nan(!!!response)) %>% pull(trait)
+  sd_before <- sd(trait_before, na.rm=T)
+  mean_before <-  mean(trait_before, na.rm=T)
+  mean_after <-  trait.data[trait.data[[response]]==1,] %>% pull(trait) %>% mean(na.rm=T)
+  return((mean_after-mean_before)/sd_before)
+}
+
+seldiffs <- expand.grid(list(response = fitnesstraits[1:2], 
+                                     trait=c(leaftraits, phystraits),
+                                     wa=names(water_pal),
+                                     sn=names(snow_pal),
+                                     yr=names(year_pal))) %>% as_tibble() %>% 
+  mutate(seldiff = pmap_dbl(., std_selection_differential))
+
+ggplot(seldiffs, aes(y=seldiff, x=wa, shape=sn, color=yr)) + facet_grid(response ~ trait) + geom_hline(yintercept=0) + geom_point() + scale_color_manual(values=year_pal) + theme_dark() + coord_flip() +
+  labs(y="Standardized selection differential", x="Precipitation", shape="Snowmelt", color="Year")
+```
+
 ```{r anova_selection, results='asis'}
 mod.selection %>% group_by(response, treatment) %>% 
   group_walk(function(.x,.y) {cat(paste("Effect of trait on whether a plant",ifelse(.y$response=="RGR", "grew faster", as.character(.y$response)),

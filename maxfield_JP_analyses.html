@@ -5659,6 +5659,27 @@ mod.selection &lt;- selection.combos  %&gt;%
   mutate(model = pmap(., step_selection_mod),
          coefs = map(model, tidy),
          tests = map(model, ~ tidy(car::Anova(.x, type=3))))</code></pre>
+<pre class="r"><code>std_selection_differential &lt;- function(response, trait, wa, sn, yr) {
+  set &lt;- ifelse(trait %in% leaftraits, &quot;lt&quot;,&quot;pt&quot;)
+  trait.data &lt;- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %&gt;% ungroup() %&gt;% 
+    filter(water==wa, snow==sn, year==yr) %&gt;% select(all_of(c(trait, response)))
+  trait_before &lt;- trait.data %&gt;% filter(!is.nan(!!!response)) %&gt;% pull(trait)
+  sd_before &lt;- sd(trait_before, na.rm=T)
+  mean_before &lt;-  mean(trait_before, na.rm=T)
+  mean_after &lt;-  trait.data[trait.data[[response]]==1,] %&gt;% pull(trait) %&gt;% mean(na.rm=T)
+  return((mean_after-mean_before)/sd_before)
+}
+
+seldiffs &lt;- expand.grid(list(response = fitnesstraits[1:2], 
+                                     trait=c(leaftraits, phystraits),
+                                     wa=names(water_pal),
+                                     sn=names(snow_pal),
+                                     yr=names(year_pal))) %&gt;% as_tibble() %&gt;% 
+  mutate(seldiff = pmap_dbl(., std_selection_differential))
+
+ggplot(seldiffs, aes(y=seldiff, x=wa, shape=sn, color=yr)) + facet_grid(response ~ trait) + geom_hline(yintercept=0) + geom_point() + scale_color_manual(values=year_pal) + theme_dark() + coord_flip() +
+  labs(y=&quot;Standardized selection differential&quot;, x=&quot;Precipitation&quot;, shape=&quot;Snowmelt&quot;, color=&quot;Year&quot;)</code></pre>
+<p><img src="images/selec_diff-1.png" width="672" /></p>
 <pre class="r"><code>mod.selection %&gt;% group_by(response, treatment) %&gt;% 
   group_walk(function(.x,.y) {cat(paste(&quot;Effect of trait on whether a plant&quot;,ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
                                         &quot;under different&quot;,.y$treatment,&quot;conditions&quot;)); 
