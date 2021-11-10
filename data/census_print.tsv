@@ -43,7 +43,7 @@ plantid	other_notes_21	cen181920	size20	notes1818r2_19_20chk1920
 1B649		 V | V | F 	1,,	,||,
 1B650		 V | V | F 	1,,	,||,
 1B651		 V |DNF|DNF	0,,	,|dead|,
-1B652		 V | V | V 	1,19,38	,|UL of tag, ts|,
+1B652		 V | V | V 	1,19,38	,JP: changed r2_longest from 266 > 26 on 2021-11-09|UL of tag, ts|,
 1B653		 V | V | F 	1,,	,||,
 1B654		 V |DNF|DNF	0,,	,|nf|,
 1B655		 F |DNF|DNF	0,,	,|nf|,
@@ -120,7 +120,7 @@ plantid	other_notes_21	cen181920	size20	notes1818r2_19_20chk1920
 1D13_20		 V |DNF|DNF	1,18,45	,||,refound?
 1D14		 V | V | F 	,,	,||,
 1D15		 V | V |DNF	0,,	,|chewed, ts|,chew death
-1D16		 V | V | V 	4,4,43	,||,flower or veg?
+1D16	JP fixed r1_leaves from 1 > 11 2021-11-09	 V | V | V 	4,4,43	,||,flower or veg?
 1D17		 V | V | F 	,,	,|nf|,refound?
 1D18		 V | V |DNF	0,,	,|chewed|,
 1D19		 V | F |DNF	0,,	,||,
@@ -299,7 +299,7 @@ plantid	other_notes_21	cen181920	size20	notes1818r2_19_20chk1920
 2C288		 V | F |DNF	,,	,||,
 2C289		 V | V | F 	,,	,|tagnf|,tagnf last year
 2C290		 V | V |DNF	0,,	,||,died and nf?
-2C291		 F |DNF|DNF	,,	,|dead|,
+2C291		 F |DNF|DNF	,,	JP: checked 147 leaves against scan, OK,|dead|,
 2C291_20		 F |DNF|DNF	1,8,29	,||,resurrected?
 2C292	MAY NOT BE SAME PLANT	 V | V | F 	,,	,||,
 2C293		 V | V | F 	,,	,||,
@@ -377,7 +377,7 @@ plantid	other_notes_21	cen181920	size20	notes1818r2_19_20chk1920
 3A126		 V |DNF|DNF	,,	,|dead|,
 3A126_20	recheck - says 2 rosettes but 1 entry	 V |DNF|DNF	1,12,42	,||,resurrected?
 3A127		 F |DNF|DNF	0,,	,|dead|,
-3A128		 F |DNF|DNF	0,,	,||,died and nf?
+3A128		 F |DNF|DNF	0,,	JP fixed r1_longest 4 > 40 from scan 2021-11-09,||,died and nf?
 3A129		 V | V | V 	0,,	,||,died and nf?
 3A174		NA | F |TNF	,,	,||,
 3A174_19		NA | F |TNF	,,	,||,
@@ -780,7 +780,7 @@ plantid	other_notes_21	cen181920	size20	notes1818r2_19_20chk1920
 4C31		 V |DNF|DNF	0,,	,gone|nf|,
 4C32		 V | F |DNF	,,	,||,
 4C33		 V | V | V 	2,6,45	,||,
-4C34		 V | V | V 	5,9,47	DL,||,
+4C34		 V | V | V 	5,9,47	DL. JP checked 72 mm against scan, OK,||,
 4C35		 V | F |DNF	0,,	,||,died and nf?
 4C36		 V | F |DNF	0,,	,||,
 4C625	tag loose	 V | V |DNF	0,,	,||,died and nf?
@@ -1128,7 +1128,7 @@ plantid	other_notes_21	cen181920	size20	notes1818r2_19_20chk1920
 6C110		 V |DNF|DNF	,,	,|nf|,
 6C110_20		 V |DNF|DNF	2,12,34	,||,refound?
 6C111	possibly the same plant as 6C109	 V | V | F 	1,,	,|5 ts|1 stalk chewed,
-6C112		 V |DNF|DNF	0,,	could be 2 rosettes-check,|dead|,
+6C112		 V |DNF|DNF	0,,	could be 2 rosettes-check,JP: checked 92 leaves against scan, OK|dead|,
 6C113		 V | V | F 	1,,	,|2 ts|,
 6C114		 V | V |DNF	0,,	,|1 inch above|,
 6C115		 V | V |DNF	0,,	,|1 ts|,

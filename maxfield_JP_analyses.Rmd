@@ -499,15 +499,18 @@ re_table(fitness.mod.coefs) %>% kable()
 
 ggplot(fitness.mod.emm %>% mutate(snow=fct_relevel(snow, "Normal", "Early")), aes(x=water, color=snow, y=emmean)) + 
   facet_grid(trait ~ year, scales="free_y", labeller = as_labeller(c(fitnessnames, set_names(2018:2020))), switch="y")+
-  geom_hline(data=data.frame(trait = fitnesstraits, plot=c(NA,NA,"yes")), aes(linetype=plot, yintercept=0), color="grey")+ guides(linetype="none")+
+  geom_hline(data=data.frame(trait = fitnesstraits, plot=c(NA,NA,"yes")), aes(linetype=plot, yintercept=0), color="grey")+
+  guides(linetype="none")+
   geom_linerange(aes(ymin=lSE, ymax=uSE), position=position_dodge(width=0.8), size=1, show.legend=F) +
   geom_point(position=position_dodge(width=0.8), shape="-", size=16) + 
-  labs(x="Precipitation", color="Snowmelt") + scale_y_continuous(position="right")  + scale_x_discrete(guide=guide_axis(angle=90))+ 
+  labs(x="Precipitation", color="Snowmelt") + 
+  scale_y_continuous(position="right", expand=expansion(mult=c(0,0.05)))  + scale_x_discrete(guide=guide_axis(angle=90))+ 
   scale_color_manual(values=snow_pal_grey, guide=guide_legend(override.aes = list(shape=15, size=5))) + 
   theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                           axis.title.y= element_blank(),
                           panel.border = element_rect(fill=NA, colour = "black"),
-                          panel.spacing=unit(0, "pt"), plot.margin = margin(0,0,0,0, "pt"), legend.position = "top") 
+                          panel.spacing.x=unit(0, "lines"), panel.spacing.y=unit(1, "lines"),
+                          plot.margin = margin(0,0,0,0, "pt"), legend.position = "top") 
 ```
 
 ```{r transitions_sm}
@@ -1727,10 +1730,10 @@ mod.selection %>% unnest(coefs) %>% filter(effect=="ran_pars") %>%
 plot_selection_facets <- function(response, treatment) {
   p <- bind_rows(lt.plantyr.r2, pt.plantyr) %>% 
     pivot_longer(all_of(c(leaftraits, phystraits)), names_to="trait") %>% 
-    mutate(trait = fct_relevel(trait, c(leaftraits, phystraits))) %>% 
     left_join(emt.selection %>% select(!!!treatment, year, trait, p.value) %>% 
                 drop_na(!!!treatment) %>% 
                 mutate(sig = ifelse(p.value < 0.05,"signif","ns"))) %>% 
+    mutate(trait = fct_relevel(trait, c(leaftraits, phystraits))) %>% 
     ggplot(aes_string(y=response, x="value", color=treatment, linetype="year")) + 
     facet_wrap(vars(trait), scales="free_x", labeller = as_labeller(traitnames.units))+
     scale_color_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + 
@@ -1745,7 +1748,8 @@ plot_selection_facets <- function(response, treatment) {
           legend.position = "top", legend.key.width = unit(2, "lines"))
   
   if(response =="RGR") {
-    p <- p + geom_point(aes(shape=year)) + 
+    p <- p + geom_hline(yintercept=0, color="grey") +
+      geom_point(aes(shape=year)) + 
       geom_line(aes(alpha=sig), stat="smooth", size=1, se=F, method="lm")
   }  else {
     p <- p + geom_point(shape="|") + 
