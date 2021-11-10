@@ -289,8 +289,8 @@ cen19 <- read_sheet(filter(datasheets, name=="2020 Maxfield Rosettes"), sheet="2
          flowering = flowering %>% tolower %>% factor %>% fct_explicit_na("blank"),
          n_rosettes = as.integer(as.character(rosettes)),
          rosettes = recode(as.character(rosettes), ID = "indist", `0` = "zero" , `NULL`="blank",.default="one_or_more", ),
-         r1_longest	= ifelse(rosettes=="zero", NA, r1_longest),
-         r1_leaves = ifelse(rosettes=="zero", NA, r1_leaves)) %>% 
+         r1_longest	= ifelse(rosettes=="zero", NA, r1_longest) %>% na_if(0),
+         r1_leaves = ifelse(rosettes=="zero", NA, r1_leaves) %>% na_if(0)) %>% 
   fix_dataset("census19") %>% left_join(treatments) %>% 
   mutate_if(is.character, as.factor)
 

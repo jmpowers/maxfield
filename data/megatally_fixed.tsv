@@ -53,7 +53,7 @@ index	plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_2
 52	1	B	1B	649	1B649	vegetative	vegetative	vegetative	flowering	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering		2	blank		1							2	blank							1	blank		3	4	1	1			15
 53	1	B	1B	650	1B650	vegetative	vegetative	vegetative	flowering	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering		2	blank		1						3	2	blank					2	2	1	blank		3	2	3	1			22
 54	1	B	1B	651	1B651	vegetative	vegetative	dead_nf	dead_nf	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf		2	blank		1							2	dead	dead						1	nf								6
-55	1	B	1B	652	1B652	vegetative	vegetative	vegetative	vegetative	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative		2	blank		1							2	ts	UL of tag, ts						1	blank								6
+55	1	B	1B	652	1B652	vegetative	vegetative	vegetative	vegetative	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative		2	blank		1	JP: changed r2_longest from 266 > 26 on 2021-11-09						2	ts	UL of tag, ts						1	blank								6
 56	1	B	1B	653	1B653	vegetative	vegetative	vegetative	flowering	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering		2	blank		1							2	blank							1	blank		3	4	2	1			16
 57	1	B	1B	654	1B654	vegetative	vegetative	dead_nf	dead_nf	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf		2	blank		1					1	2	2	nf	nf						1	nf								9
 58	1	B	1B	655	1B655	flowering	no_record	dead_nf	dead_nf	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf		2	blank				14	4	1			2	nf	nf						1	nf								24
@@ -362,7 +362,7 @@ index	plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_2
 361	2	C	2C	288	2C288	vegetative	vegetative	flowering	dead_nf	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf		1	blank		1							1	blank		3	4	1			1	tagnf								12
 362	2	C	2C	289	2C289	vegetative	no_record	vegetative	flowering	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering	tagnf last year	1	ts									1	tagnf	tagnf						1	blank		3	2	1	1			10
 363	2	C	2C	290	2C290	vegetative	no_record	vegetative	dead_nf	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf	died and nf?	1	ts									1	blank							1	nf								3
-364	2	C	2C	291	2C291	flowering	no_record	dead_nf	dead_nf	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf		1	blank				14	5	1			1	dead	dead															22
+364	2	C	2C	291	2C291	flowering	no_record	dead_nf	dead_nf	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf		1	blank	JP: checked 147 leaves against scan, OK			14	5	1			1	dead	dead															22
 365	2	C	2C	291_20	2C291_20	no_record	no_record	no_record	dead_nf	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf	resurrected?																			1	blank								1
 366	2	C	2C	292	2C292	vegetative	no_record	vegetative	flowering	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering		1	ts									1	blank					2		1	blank		4	3	1	1			14
 367	2	C	2C	293	2C293	vegetative	no_record	vegetative	flowering	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering		1	ts									1	blank						4	1	blank		4	3	1	1			16
@@ -464,7 +464,7 @@ index	plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_2
 463	3	A	3A	126	3A126	vegetative	vegetative	dead_nf	dead_nf	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf		1	blank		1						2	1	dead	dead															5
 464	3	A	3A	126_20	3A126_20	no_record	no_record	no_record	dead_nf	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf	resurrected?																			1	blank						2		3
 465	3	A	3A	127	3A127	flowering	vegetative	dead_nf	dead_nf	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf		1	blank		1		12	7	1			1	dead	dead						1	nf								24
-466	3	A	3A	128	3A128	flowering	no_record	dead_nf	dead_nf	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf	died and nf?	1	blank				19	8	1			1	blank							1	nf								31
+466	3	A	3A	128	3A128	flowering	no_record	dead_nf	dead_nf	flowering > dead_nf	dead_nf > dead_nf	flowering > dead_nf > dead_nf	died and nf?	1	blank	JP fixed r1_longest 4 > 40 from scan 2021-11-09			19	8	1			1	blank							1	nf								31
 467	3	A	3A	129	3A129	vegetative	vegetative	vegetative	vegetative	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative	died and nf?	1	blank		1							1	blank						2	1	nf							1	7
 468	3	A	3A	135	3A135																1																				1
 469	3	A	3A	174	3A174	no_record	no_record	no_record	tagnf	no_record > no_record	no_record > tagnf	no_record > no_record > tagnf																				1	tagnf								1
@@ -963,7 +963,7 @@ index	plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_2
 962	4	C	4C	31	4C31	vegetative	recheck	dead_nf	dead_nf	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf		1	blank		1	gone						1	nf	nf						1	nf								4
 963	4	C	4C	32	4C32	vegetative	no_record	flowering	dead_nf	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf		1	tagnf									1	blank							1									3
 964	4	C	4C	33	4C33	vegetative	vegetative	vegetative	vegetative	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative		1	blank		1							1	blank							1	blank							2	6
-965	4	C	4C	34	4C34	vegetative	vegetative	vegetative	vegetative	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative		1	blank	DL	1						2	1	blank							1	blank								6
+965	4	C	4C	34	4C34	vegetative	vegetative	vegetative	vegetative	vegetative > vegetative	vegetative > vegetative	vegetative > vegetative > vegetative		1	blank	DL. JP checked 72 mm against scan, OK	1						2	1	blank							1	blank								6
 966	4	C	4C	35	4C35	vegetative	no_record	flowering	dead_nf	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf	died and nf?	1	tagnf									1	blank		2					1	nf								5
 967	4	C	4C	36	4C36	vegetative	vegetative	flowering	dead_nf	vegetative > flowering	flowering > dead_nf	vegetative > flowering > dead_nf		1	blank		1					2	2	1	blank		2	4	1	1		1	nf								16
 968	4	C	4C	625	4C625	vegetative	vegetative	vegetative	dead_nf	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf	died and nf?	1	blank		1							1	blank							1	nf								4
@@ -1409,7 +1409,7 @@ index	plot	subplot	plotid	plant	plantid	status_18	status_18r2	status_19	status_2
 1408	6	C	6C	110	6C110	vegetative	vegetative	dead_nf	dead_nf	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf		1	blank		1							1	nf	nf														3	6
 1409	6	C	6C	110_20	6C110_20	no_record	no_record	no_record	dead_nf	no_record > no_record	no_record > dead_nf	no_record > no_record > dead_nf	refound?																			1	blank						1		2
 1410	6	C	6C	111	6C111	vegetative	vegetative	vegetative	flowering	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering		1	blank		1							1	ts	5 ts					1	1	chewed	1 stalk chewed	5	4	1	1			16
-1411	6	C	6C	112	6C112	vegetative	vegetative	dead_nf	dead_nf	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf		1	blank	could be 2 rosettes-check	1					2	2	1	dead	dead						1	dead								8
+1411	6	C	6C	112	6C112	vegetative	vegetative	dead_nf	dead_nf	vegetative > dead_nf	dead_nf > dead_nf	vegetative > dead_nf > dead_nf		1	blank	could be 2 rosettes-check	1	JP: checked 92 leaves against scan, OK				2	2	1	dead	dead						1	dead								8
 1412	6	C	6C	113	6C113	vegetative	vegetative	vegetative	flowering	vegetative > vegetative	vegetative > flowering	vegetative > vegetative > flowering		1	blank		1							1	ts	2 ts					2	1	blank		3	2		1			12
 1413	6	C	6C	114	6C114	vegetative	vegetative	vegetative	dead_nf	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf		1	blank		1							1	blank	1 inch above						1	dead								4
 1414	6	C	6C	115	6C115	vegetative	no_record	vegetative	dead_nf	vegetative > vegetative	vegetative > dead_nf	vegetative > vegetative > dead_nf		1	ts									1	ts	1 ts				1		1	nf								4
