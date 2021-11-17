@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-11-12" />
+<meta name="date" content="2021-11-17" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-11-12</h4>
+<h4 class="date">2021-11-17</h4>
 
 </div>
 
@@ -934,7 +934,7 @@ ggplot(aes(y=variable, color=year))+
             position = position_dodge2(width=0.8, reverse = T), size=4, hjust=0, show.legend=FALSE)+
   geom_point(aes(x=begin), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2)+
   geom_point(aes(x=end), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2) +
-  scale_color_manual(&quot;Year&quot;, values=year_pal, guide=guide_legend(override.aes = list(size=5))) + 
+  scale_color_manual(&quot;Year&quot;, values=c(year_pal, `2021`=brewer.pal(8, name=&quot;Set2&quot;)[[4]]), guide=guide_legend(override.aes = list(size=5))) + 
   scale_y_discrete(&quot;&quot;, labels=timings_labels)+
   scale_x_continuous(&quot;Day of year&quot;, breaks=seq(80,240, by=20)) +
   theme_minimal() + theme(legend.position = &quot;top&quot;, text=element_text(size=14, color=&quot;black&quot;), axis.text = element_text(color=&quot;black&quot;),
@@ -6638,18 +6638,22 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_emt)</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>plot_selection_facets &lt;- function(response, treatment) {
+<pre class="r"><code>library(directlabels)
+plot_selection_facets &lt;- function(response, treatment) {
+  emt.selection.filtered &lt;- emt.selection %&gt;% 
+    select(!!!treatment, response, year, trait, p.value) %&gt;% 
+    drop_na(!!!treatment) %&gt;% filter(response==!!response) %&gt;% 
+    mutate(sig = ifelse(p.value &lt; 0.05,&quot;signif&quot;,&quot;ns&quot;))
+  
   p &lt;- bind_rows(lt.plantyr.r2, pt.plantyr) %&gt;% 
     pivot_longer(all_of(c(leaftraits, phystraits)), names_to=&quot;trait&quot;) %&gt;% 
-    left_join(emt.selection %&gt;% select(!!!treatment, response, year, trait, p.value) %&gt;% 
-                drop_na(!!!treatment) %&gt;% filter(response==!!response) %&gt;% 
-                mutate(sig = ifelse(p.value &lt; 0.05,&quot;signif&quot;,&quot;ns&quot;))) %&gt;% 
+    left_join(emt.selection.filtered) %&gt;% 
     mutate(trait = fct_relevel(trait, c(leaftraits, phystraits))) %&gt;% 
     ggplot(aes_string(y=response, x=&quot;value&quot;, color=treatment, linetype=&quot;year&quot;)) + 
     facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller = as_labeller(traitnames.units))+
     scale_color_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + 
     scale_linetype_manual(values=c(&quot;22&quot;,&quot;solid&quot;,&quot;42&quot;)) +
-    scale_alpha_manual(values=c(0.5,1)) + guides(alpha=&quot;none&quot;) + 
+    #scale_alpha_manual(values=c(0.5,1)) + guides(alpha=&quot;none&quot;) + 
     labs(linetype=&quot;Year&quot;, shape=&quot;Year&quot;, x=&quot;&quot;, y=fitnessnames[response],
          color=c(water=&quot;Precipitation&quot;,snow=&quot;Snowmelt&quot;)[treatment]) + 
     theme_minimal() + 
@@ -6661,13 +6665,20 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_emt)</code></pre>
   if(response ==&quot;RGR&quot;) {
     p &lt;- p + geom_hline(yintercept=0, color=&quot;grey&quot;) +
       geom_point(aes(shape=year)) + 
-      geom_line(aes(alpha=sig), stat=&quot;smooth&quot;, size=1, se=F, method=&quot;lm&quot;)
+      geom_line(stat=&quot;smooth&quot;, size=1, se=F, method=&quot;lm&quot;) #aes(alpha=sig), 
   }  else {
     p &lt;- p + geom_point(shape=&quot;|&quot;) + 
-      geom_line(aes(alpha=sig), stat=&quot;smooth&quot;, size=1, se=F, 
+      geom_line(stat=&quot;smooth&quot;, size=1, se=F, #aes(alpha=sig), 
                   method=&quot;glm&quot;, method.args = list(family=&quot;binomial&quot;)) +
       scale_y_continuous(labels=scales::label_percent(accuracy=1))
   }
+  #get rightmost edge of geom_smooths to add signif labels
+  smooth.ends &lt;- layer_data(p, ifelse(response==&quot;RGR&quot;, 3, 2)) %&gt;% #hline adds a layer
+    group_by(group, PANEL) %&gt;% filter(x==max(x)) %&gt;% ungroup() %&gt;% select(-PANEL) %&gt;% 
+    bind_cols(emt.selection.filtered) %&gt;% 
+    filter(sig==&quot;signif&quot;) %&gt;% 
+    mutate(trait = factor(trait, levels=c(leaftraits, phystraits))) 
+  p &lt;- p + geom_point(data=smooth.ends, aes(x=x,y=y), color=&quot;black&quot;, shape=8, size=2, inherit.aes = F)
   print(p)
 }
 

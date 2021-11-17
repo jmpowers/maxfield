@@ -356,7 +356,7 @@ ggplot(aes(y=variable, color=year))+
             position = position_dodge2(width=0.8, reverse = T), size=4, hjust=0, show.legend=FALSE)+
   geom_point(aes(x=begin), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2)+
   geom_point(aes(x=end), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2) +
-  scale_color_manual("Year", values=year_pal, guide=guide_legend(override.aes = list(size=5))) + 
+  scale_color_manual("Year", values=c(year_pal, `2021`=brewer.pal(8, name="Set2")[[4]]), guide=guide_legend(override.aes = list(size=5))) + 
   scale_y_discrete("", labels=timings_labels)+
   scale_x_continuous("Day of year", breaks=seq(80,240, by=20)) +
   theme_minimal() + theme(legend.position = "top", text=element_text(size=14, color="black"), axis.text = element_text(color="black"),
@@ -1752,17 +1752,19 @@ mod.selection %>% unnest(coefs) %>% filter(effect=="ran_pars") %>%
 
 ```{r plot_selection, fig.width=9, fig.height=6}
 plot_selection_facets <- function(response, treatment) {
+  emt.selection.filtered <- emt.selection %>% 
+    select(!!!treatment, response, year, trait, p.value) %>% 
+    drop_na(!!!treatment) %>% filter(response==!!response) %>% 
+    mutate(sig = ifelse(p.value < 0.05,"signif","ns"))
+  
   p <- bind_rows(lt.plantyr.r2, pt.plantyr) %>% 
     pivot_longer(all_of(c(leaftraits, phystraits)), names_to="trait") %>% 
-    left_join(emt.selection %>% select(!!!treatment, response, year, trait, p.value) %>% 
-                drop_na(!!!treatment) %>% filter(response==!!response) %>% 
-                mutate(sig = ifelse(p.value < 0.05,"signif","ns"))) %>% 
+    left_join(emt.selection.filtered) %>% 
     mutate(trait = fct_relevel(trait, c(leaftraits, phystraits))) %>% 
     ggplot(aes_string(y=response, x="value", color=treatment, linetype="year")) + 
     facet_wrap(vars(trait), scales="free_x", labeller = as_labeller(traitnames.units))+
     scale_color_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + 
     scale_linetype_manual(values=c("22","solid","42")) +
-    scale_alpha_manual(values=c(0.5,1)) + guides(alpha="none") + 
     labs(linetype="Year", shape="Year", x="", y=fitnessnames[response],
          color=c(water="Precipitation",snow="Snowmelt")[treatment]) + 
     theme_minimal() + 
@@ -1774,13 +1776,20 @@ plot_selection_facets <- function(response, treatment) {
   if(response =="RGR") {
     p <- p + geom_hline(yintercept=0, color="grey") +
       geom_point(aes(shape=year)) + 
-      geom_line(aes(alpha=sig), stat="smooth", size=1, se=F, method="lm")
+      geom_line(stat="smooth", size=1, se=F, method="lm")
   }  else {
     p <- p + geom_point(shape="|") + 
-      geom_line(aes(alpha=sig), stat="smooth", size=1, se=F, 
+      geom_line(stat="smooth", size=1, se=F, 
                   method="glm", method.args = list(family="binomial")) +
       scale_y_continuous(labels=scales::label_percent(accuracy=1))
   }
+  #get rightmost edge of geom_smooths to add signif labels
+  smooth.ends <- layer_data(p, ifelse(response=="RGR", 3, 2)) %>% #hline adds a layer
+    group_by(group, PANEL) %>% filter(x==max(x)) %>% ungroup() %>% select(-PANEL) %>% 
+    bind_cols(emt.selection.filtered) %>% 
+    filter(sig=="signif") %>% 
+    mutate(trait = factor(trait, levels=c(leaftraits, phystraits))) 
+  p <- p + geom_point(data=smooth.ends, aes(x=x,y=y), color="black", shape=8, size=2, inherit.aes = F)
   print(p)
 }
 
