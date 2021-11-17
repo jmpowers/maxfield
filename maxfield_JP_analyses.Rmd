@@ -1677,29 +1677,36 @@ std_selection_differential <- function(set, treatment) {
   
   left_join(seldata %>% summarize(n_before=n(), sd_before = sd(value), mean_before = mean(value)),
             seldata %>% filter(outcome == 1) %>% summarize(n_after=n(), mean_after = mean(value))) %>% 
-    mutate(seldiff = (mean_after-mean_before)/sd_before) %>% ungroup()
+    mutate(seldiff = (mean_after-mean_before)/sd_before,
+           seldiff.mean = (mean_after-mean_before)/mean_before) %>% ungroup()
 }
 
 #rather than computing for water * snow groups, calculate for either water or snow groups
 seldiffs <- pmap_dfr(expand_grid(set=c("lt","pt"), treatment=c("water","snow")), std_selection_differential, .id="set")
 #with(seldiffs, table(year, trait)) #we cut out 2019r2 dry weights
 
-plot_seldiffs <- function(treatment) {
+plot_seldiffs <- function(treatment, yvar) {
    p <- ggplot(seldiffs %>% mutate(snow=fct_relevel(snow,"Normal")) %>% drop_na(!!!treatment),
-          aes_string(y="seldiff", x=treatment, shape="year", color=treatment)) +
+          aes_string(y=yvar, x=treatment, shape="year", color=treatment)) +
      facet_grid(response ~ trait, labeller=as_labeller(c(traitnames, survived="Survival", flowered="Flowering"))) + 
      geom_hline(yintercept=0) + geom_point(size=2) + 
      scale_color_manual(values=list(water=water_pal,snow=snow_pal)[[treatment]]) + 
      scale_x_discrete(guide=guide_axis(angle = 90)) + 
-     labs(y="Standardized selection differential", shape="Year") +
+     labs(title=list(seldiff="SD-standardized selection differential", seldiff.mean="Mean-standardized selection differential")[[yvar]])+
      theme_bw()
    print(p)
 }
-walk(c("water","snow"), plot_seldiffs)
+walk(c("water","snow"), plot_seldiffs, yvar="seldiff")
+walk(c("water","snow"), plot_seldiffs, yvar="seldiff.mean")
 
 ggplot(seldiffs, aes(x=n_after, y=abs(seldiff), color=trait)) + facet_wrap(vars(response), ncol=1) +
   geom_point() + theme_minimal() + geom_smooth(aes(group=1), se=F, color="black") +
-  labs(y="Absolute value of standardized selection differential\n|(mean_after-mean_before)/sd_before|",
+  labs(y="Absolute value of SD-standardized selection differential\n|(mean_after-mean_before)/mean_before|",
+       x="Number of individuals that flowered or survived", color="Trait",
+       title = "Selection strength is sensitive to small N", subtitle = "Estimates from each precip x snow x year subset")
+ggplot(seldiffs, aes(x=n_after, y=abs(seldiff.mean), color=trait)) + facet_wrap(vars(response), ncol=1) +
+  geom_point() + theme_minimal() + geom_smooth(aes(group=1), se=F, color="black") +
+  labs(y="Absolute value of mean-standardized selection differential\n|(mean_after-mean_before)/mean_before|",
        x="Number of individuals that flowered or survived", color="Trait",
        title = "Selection strength is sensitive to small N", subtitle = "Estimates from each precip x snow x year subset")
 ```
@@ -1727,7 +1734,7 @@ plot_emt <- function(trt) {
 }
 walk(c("water","snow"), plot_emt)
 
-left_join(emt.selection, seldiffs) %>% filter(p.value < 0.05) %>% select(response, treatment, trait, year, water, snow, trait.trend.sd, n_before, n_after, seldiff) %>% kable()
+left_join(emt.selection, seldiffs) %>% filter(p.value < 0.05) %>% select(response, treatment, trait, year, water, snow, trait.trend.sd, p.value, n_before, n_after, seldiff) %>% kable()
 ```
 
 
