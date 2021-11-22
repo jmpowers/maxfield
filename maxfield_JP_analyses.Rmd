@@ -1666,6 +1666,8 @@ mod.selection <- selection.combos  %>%
          tests = map(model, ~ tidy(car::Anova(., type=3))))
 ```
 
+### Selection differentials as change in mean
+
 ```{r selec_diff, fig.width=10, fig.height=5}
 std_selection_differential <- function(set, treatment) {
   seldata <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% ungroup() %>% 
@@ -1711,13 +1713,15 @@ ggplot(seldiffs, aes(x=n_after, y=abs(seldiff.mean), color=trait)) + facet_wrap(
        title = "Selection strength is sensitive to small N", subtitle = "Estimates from each precip x snow x year subset")
 ```
 
+### Test individual slopes
+
 ```{r emt_selection}
 emt.selection <- mod.selection %>% 
   mutate(yrtrend = map2(full_model, treatment, 
                         ~tidy(emtrends(.x, specs=c("year",as.character(.y)), var="trait")))) %>%
   select(response, treatment, trait, yrtrend) %>% unnest(yrtrend) %>% 
   mutate(sd.trait=alltraits.sd[trait], 
-         trait.trend.sd = trait.trend*sd.trait, std.error.sd=std.error*sd.trait)
+         trait.trend.sd = trait.trend*sd.trait, std.error.sd=std.error*sd.trait)#Divide by SD, not multiply?
 
 plot_emt <- function(trt) {
   p <- ggplot(emt.selection %>% filter(treatment==trt), aes_string(x=trt, color=trt)) + 
@@ -1735,8 +1739,42 @@ plot_emt <- function(trt) {
 walk(c("water","snow"), plot_emt)
 
 left_join(emt.selection, seldiffs) %>% filter(p.value < 0.05) %>% select(response, treatment, trait, year, water, snow, trait.trend.sd, p.value, n_before, n_after, seldiff) %>% kable()
+
+#left_join(emt.selection, seldiffs) %>% googlesheets4::write_sheet("1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA", sheet="emt_selection")
 ```
 
+### Calculate selection differential from logistic regression
+
+Method of Janzen and Stern 1998 using this [tutorial](http://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm).
+
+```{r seldiff_logreg}
+calc_JS <- function(mod) {
+  mod$frame %>% as_tibble %>% 
+    mutate(w = predict(mod, type="response")) %>% 
+    mutate(w1w = w * (1-w)) %>% 
+    group_by(across(any_of(c("year","snow","water")))) %>% 
+    summarize(C=mean(w1w), wbar=mean(w), .groups="drop") %>% 
+    mutate(Crel = C/wbar)
+}
+
+JS.selection <- mod.selection %>% filter(response!="RGR") %>% 
+  mutate(JS = map(full_model, calc_JS)) %>% 
+  select(response, treatment, trait, JS) %>% unnest(JS) %>% 
+  left_join(emt.selection) %>% #unlike seldiff, the sd is for the whole dataset
+  mutate(across(ends_with("sd"), ~ . * Crel, .names="{col}.linear")) %>% 
+  left_join(seldiffs)
+
+ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) + 
+  geom_abline(intercept=0, slope=1) +
+  geom_point() + 
+  labs(x="S', logistic regression + Janzen & Stern + whole SD",
+       y="S', subtracting means + SD from treatment & year subset")
+
+JS.selection %>% googlesheets4::write_sheet("1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA", sheet="logis_selection")
+```
+
+
+### Selection ANOVA
 
 ```{r anova_selection, results='asis'}
 mod.selection %>% group_by(treatment, response) %>%
@@ -1749,6 +1787,8 @@ mod.selection %>% unnest(coefs) %>% filter(effect=="ran_pars") %>%
   select(trait, group, estimate, response, treatment) %>% 
   pivot_wider(names_from=group, values_from=estimate) %>% kable()
 ```
+
+### Selection plots
 
 ```{r plot_selection, fig.width=9, fig.height=6}
 plot_selection_facets <- function(response, treatment) {
