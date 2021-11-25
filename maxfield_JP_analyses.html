@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-11-17" />
+<meta name="date" content="2021-11-24" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-11-17</h4>
+<h4 class="date">2021-11-24</h4>
 
 </div>
 
@@ -5657,6 +5657,8 @@ mod.selection &lt;- selection.combos  %&gt;%
          model =      pmap(., step_selection_mod, drop=T),
          coefs = map(model, tidy),
          tests = map(model, ~ tidy(car::Anova(., type=3))))</code></pre>
+<div id="selection-differentials-as-change-in-mean" class="section level3">
+<h3>Selection differentials as change in mean</h3>
 <pre class="r"><code>std_selection_differential &lt;- function(set, treatment) {
   seldata &lt;- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %&gt;% ungroup() %&gt;% 
     select(any_of(c(alltraits, fitnesstraits[1:2])), all_of(treatment), year) %&gt;% 
@@ -5702,12 +5704,35 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_seldiffs, yvar=&quot;seldiff&qu
        x=&quot;Number of individuals that flowered or survived&quot;, color=&quot;Trait&quot;,
        title = &quot;Selection strength is sensitive to small N&quot;, subtitle = &quot;Estimates from each precip x snow x year subset&quot;)</code></pre>
 <p><img src="images/selec_diff-6.png" width="960" /></p>
+</div>
+</div>
+<div id="selection-differential-as-covariance-between-relative-fitness-and-trait" class="section level2">
+<h2>Selection differential as covariance between relative fitness and trait</h2>
+<pre class="r"><code>std_selection_differential_cov &lt;- function(set, treatment) {
+  seldata &lt;- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %&gt;% ungroup() %&gt;% 
+    select(any_of(c(alltraits, fitnesstraits[3])), all_of(treatment), year) %&gt;% 
+    pivot_longer(c(list(lt=leaftraits, pt=phystraits)[[set]]), names_to=&quot;trait&quot;, values_to =&quot;value&quot;) %&gt;% 
+    pivot_longer(fitnesstraits[3], names_to=&quot;response&quot;, values_to=&quot;outcome&quot;) %&gt;% 
+    filter(!is.nan(outcome), !is.na(outcome), !is.na(value)) %&gt;% 
+    group_by_at(vars(all_of(treatment), year, trait, response)) %&gt;% 
+    mutate(relfitness = outcome / mean(outcome, na.rm=T)) %&gt;% 
+    summarize(seldiff.cov = cov(relfitness, value),
+              #sd.trait = alltraits.sd[[trait[1]]], 
+              sd.trait = sd(value),
+              n = n(), .groups=&quot;drop&quot;) %&gt;% 
+    mutate(seldiff.cov.sd = seldiff.cov / sd.trait)
+}
+
+seldiffs.cov &lt;- pmap_dfr(expand_grid(set=c(&quot;lt&quot;,&quot;pt&quot;), treatment=c(&quot;water&quot;,&quot;snow&quot;)), std_selection_differential_cov)
+#seldiffs.cov %&gt;% googlesheets4::write_sheet(&quot;1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA&quot;, sheet=&quot;cov_selection&quot;)</code></pre>
+<div id="test-individual-slopes" class="section level3">
+<h3>Test individual slopes</h3>
 <pre class="r"><code>emt.selection &lt;- mod.selection %&gt;% 
   mutate(yrtrend = map2(full_model, treatment, 
                         ~tidy(emtrends(.x, specs=c(&quot;year&quot;,as.character(.y)), var=&quot;trait&quot;)))) %&gt;%
   select(response, treatment, trait, yrtrend) %&gt;% unnest(yrtrend) %&gt;% 
   mutate(sd.trait=alltraits.sd[trait], 
-         trait.trend.sd = trait.trend*sd.trait, std.error.sd=std.error*sd.trait)
+         trait.trend.sd = trait.trend*sd.trait, std.error.sd=std.error*sd.trait) #multiply by SDto get change in fitness per SD
 
 plot_emt &lt;- function(trt) {
   p &lt;- ggplot(emt.selection %&gt;% filter(treatment==trt), aes_string(x=trt, color=trt)) + 
@@ -5848,6 +5873,36 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_emt)</code></pre>
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>#left_join(emt.selection, seldiffs) %&gt;% googlesheets4::write_sheet(&quot;1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA&quot;, sheet=&quot;emt_selection&quot;)</code></pre>
+</div>
+<div id="calculate-selection-differential-from-logistic-regression" class="section level3">
+<h3>Calculate selection differential from logistic regression</h3>
+<p>Method of Janzen and Stern 1998 using this <a href="http://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm">tutorial</a>.</p>
+<pre class="r"><code>calc_JS &lt;- function(mod) {
+  mod$frame %&gt;% as_tibble %&gt;% 
+    mutate(w = predict(mod, type=&quot;response&quot;)) %&gt;% 
+    mutate(w1w = w * (1-w)) %&gt;% 
+    group_by(across(any_of(c(&quot;year&quot;,&quot;snow&quot;,&quot;water&quot;)))) %&gt;% 
+    summarize(C=mean(w1w), wbar=mean(w), .groups=&quot;drop&quot;) %&gt;% 
+    mutate(Crel = C/wbar)
+}
+
+JS.selection &lt;- mod.selection %&gt;% filter(response!=&quot;RGR&quot;) %&gt;% 
+  mutate(JS = map(full_model, calc_JS)) %&gt;% 
+  select(response, treatment, trait, JS) %&gt;% unnest(JS) %&gt;% 
+  left_join(emt.selection) %&gt;% #unlike seldiff, the sd is for the whole dataset
+  mutate(across(ends_with(&quot;sd&quot;), ~ . * Crel, .names=&quot;{col}.linear&quot;)) %&gt;% 
+  left_join(seldiffs)
+
+ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) + 
+  geom_point() + geom_abline(intercept=0, slope=1) +geom_smooth(se=F, color=&quot;red&quot;) + 
+  labs(x=&quot;S&#39;, logistic regression + Janzen &amp; Stern + whole SD&quot;,
+       y=&quot;S&#39;, subtracting means + SD from treatment &amp; year subset&quot;)</code></pre>
+<p><img src="images/seldiff_logreg-1.png" width="672" /></p>
+<pre class="r"><code>JS.selection %&gt;% googlesheets4::write_sheet(&quot;1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA&quot;, sheet=&quot;logis_selection&quot;)</code></pre>
+</div>
+<div id="selection-anova" class="section level3">
+<h3>Selection ANOVA</h3>
 <pre class="r"><code>mod.selection %&gt;% group_by(treatment, response) %&gt;%
   group_walk(function(.x,.y) {cat(paste(&quot;Effect of trait on whether a plant&quot;,
                                         ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
@@ -6638,8 +6693,10 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_emt)</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>library(directlabels)
-plot_selection_facets &lt;- function(response, treatment) {
+</div>
+<div id="selection-plots" class="section level3">
+<h3>Selection plots</h3>
+<pre class="r"><code>plot_selection_facets &lt;- function(response, treatment) {
   emt.selection.filtered &lt;- emt.selection %&gt;% 
     select(!!!treatment, response, year, trait, p.value) %&gt;% 
     drop_na(!!!treatment) %&gt;% filter(response==!!response) %&gt;% 
@@ -6653,7 +6710,6 @@ plot_selection_facets &lt;- function(response, treatment) {
     facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller = as_labeller(traitnames.units))+
     scale_color_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + 
     scale_linetype_manual(values=c(&quot;22&quot;,&quot;solid&quot;,&quot;42&quot;)) +
-    #scale_alpha_manual(values=c(0.5,1)) + guides(alpha=&quot;none&quot;) + 
     labs(linetype=&quot;Year&quot;, shape=&quot;Year&quot;, x=&quot;&quot;, y=fitnessnames[response],
          color=c(water=&quot;Precipitation&quot;,snow=&quot;Snowmelt&quot;)[treatment]) + 
     theme_minimal() + 
@@ -6665,10 +6721,10 @@ plot_selection_facets &lt;- function(response, treatment) {
   if(response ==&quot;RGR&quot;) {
     p &lt;- p + geom_hline(yintercept=0, color=&quot;grey&quot;) +
       geom_point(aes(shape=year)) + 
-      geom_line(stat=&quot;smooth&quot;, size=1, se=F, method=&quot;lm&quot;) #aes(alpha=sig), 
+      geom_line(stat=&quot;smooth&quot;, size=1, se=F, method=&quot;lm&quot;)
   }  else {
     p &lt;- p + geom_point(shape=&quot;|&quot;) + 
-      geom_line(stat=&quot;smooth&quot;, size=1, se=F, #aes(alpha=sig), 
+      geom_line(stat=&quot;smooth&quot;, size=1, se=F, 
                   method=&quot;glm&quot;, method.args = list(family=&quot;binomial&quot;)) +
       scale_y_continuous(labels=scales::label_percent(accuracy=1))
   }
@@ -6685,6 +6741,7 @@ plot_selection_facets &lt;- function(response, treatment) {
 expand_grid(treatment=c(&quot;water&quot;,&quot;snow&quot;), response = fitnesstraits) %&gt;% 
   pwalk(plot_selection_facets)</code></pre>
 <p><img src="images/plot_selection-1.png" width="864" /><img src="images/plot_selection-2.png" width="864" /><img src="images/plot_selection-3.png" width="864" /><img src="images/plot_selection-4.png" width="864" /><img src="images/plot_selection-5.png" width="864" /><img src="images/plot_selection-6.png" width="864" /></p>
+</div>
 </div>
 <div id="selection-vs.-absolute-snowmelt-precip" class="section level2">
 <h2>Selection vs. absolute snowmelt, precip</h2>

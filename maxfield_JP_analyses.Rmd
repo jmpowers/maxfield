@@ -1713,6 +1713,29 @@ ggplot(seldiffs, aes(x=n_after, y=abs(seldiff.mean), color=trait)) + facet_wrap(
        title = "Selection strength is sensitive to small N", subtitle = "Estimates from each precip x snow x year subset")
 ```
 
+## Selection differential as covariance between relative fitness and trait
+
+```{r selec_diff_cov}
+std_selection_differential_cov <- function(set, treatment) {
+  seldata <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% ungroup() %>% 
+    select(any_of(c(alltraits, fitnesstraits[3])), all_of(treatment), year) %>% 
+    pivot_longer(c(list(lt=leaftraits, pt=phystraits)[[set]]), names_to="trait", values_to ="value") %>% 
+    pivot_longer(fitnesstraits[3], names_to="response", values_to="outcome") %>% 
+    filter(!is.nan(outcome), !is.na(outcome), !is.na(value)) %>% 
+    group_by_at(vars(all_of(treatment), year, trait, response)) %>% 
+    mutate(relfitness = outcome / mean(outcome, na.rm=T)) %>% 
+    summarize(seldiff.cov = cov(relfitness, value),
+              #sd.trait = alltraits.sd[[trait[1]]], 
+              sd.trait = sd(value),
+              n = n(), .groups="drop") %>% 
+    mutate(seldiff.cov.sd = seldiff.cov / sd.trait)
+}
+
+seldiffs.cov <- pmap_dfr(expand_grid(set=c("lt","pt"), treatment=c("water","snow")), std_selection_differential_cov)
+#seldiffs.cov %>% googlesheets4::write_sheet("1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA", sheet="cov_selection")
+```
+
+
 ### Test individual slopes
 
 ```{r emt_selection}
@@ -1721,7 +1744,7 @@ emt.selection <- mod.selection %>%
                         ~tidy(emtrends(.x, specs=c("year",as.character(.y)), var="trait")))) %>%
   select(response, treatment, trait, yrtrend) %>% unnest(yrtrend) %>% 
   mutate(sd.trait=alltraits.sd[trait], 
-         trait.trend.sd = trait.trend*sd.trait, std.error.sd=std.error*sd.trait)#Divide by SD, not multiply?
+         trait.trend.sd = trait.trend*sd.trait, std.error.sd=std.error*sd.trait) #multiply by SDto get change in fitness per SD
 
 plot_emt <- function(trt) {
   p <- ggplot(emt.selection %>% filter(treatment==trt), aes_string(x=trt, color=trt)) + 
@@ -1765,8 +1788,7 @@ JS.selection <- mod.selection %>% filter(response!="RGR") %>%
   left_join(seldiffs)
 
 ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) + 
-  geom_abline(intercept=0, slope=1) +
-  geom_point() + 
+  geom_point() + geom_abline(intercept=0, slope=1) +geom_smooth(se=F, color="red") + 
   labs(x="S', logistic regression + Janzen & Stern + whole SD",
        y="S', subtracting means + SD from treatment & year subset")
 
