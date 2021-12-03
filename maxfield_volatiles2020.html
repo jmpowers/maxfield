@@ -641,14 +641,6 @@ ipochems %&gt;% select(verdict, name, RT, mean, max, match, freq.floral, freq.am
          annotation_col=volsmeta %&gt;% select(year), main=&quot;Filtered volatiles&quot;)</code></pre>
 <p><img src="images_volatiles2020/heatmap-2.png" width="1536" /></p>
 </div>
-<div id="boxplots" class="section level2">
-<h2>Boxplots</h2>
-<pre class="r"><code>vols.good.top &lt;- vols.good[,colSums(decostand(vols.good,&quot;pa&quot;))&gt;81]#occur in more than N samples
-bind_cols(volsmeta, vols.good.top) %&gt;%  pivot_longer(-all_of(colnames(volsmeta))) %&gt;% 
-  ggplot(aes(x = year, fill = water, y = value)) + geom_boxplot() + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  scale_y_sqrt() + scale_fill_manual(values=water_pal) + labs(x=&quot;Year&quot;, y =&quot;Emissions (ng/hr)&quot;) + guides(color=&quot;none&quot;)</code></pre>
-<p><img src="images_volatiles2020/boxplots-1.png" width="1536" /></p>
-</div>
 <div id="ordinations" class="section level2">
 <h2>Ordinations</h2>
 <div id="nmds" class="section level3">
@@ -729,6 +721,41 @@ text(scents.cap, display=&quot;cn&quot;, labels=c(2018:2020, names(water_pal)), 
 text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</code></pre>
 <p><img src="images_volatiles2020/cap-2.png" width="768" /></p>
 </div>
+</div>
+</div>
+<div id="univariate-analyses" class="section level1">
+<h1>Univariate analyses</h1>
+<div id="volatiles-vs.-treatments" class="section level2">
+<h2>Volatiles vs. treatments</h2>
+<pre class="r"><code>vols.good.top &lt;- vols.good[,colSums(decostand(vols.good,&quot;pa&quot;))&gt;81]#occur in more than N samples
+volsmeta.good.top &lt;- bind_cols(volsmeta, vols.good.top) %&gt;%  pivot_longer(-all_of(colnames(volsmeta)))
+
+vols.drydown &lt;- vols[,c(&quot;1,3-Octadiene&quot;,&quot;Benzyl alcohol&quot;, &quot;(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene&quot;,&quot;.alpha.-Farnesene&quot;, &quot;Bicyclo[3.1.1]heptane, 6,6-dimethyl-2-methylene-, (1S)-&quot;, &quot;.beta.-Ocimene&quot;)]
+volsmeta.drydown &lt;- bind_cols(volsmeta, vols.drydown) %&gt;%  pivot_longer(-all_of(colnames(volsmeta)))
+
+ggplot(volsmeta.good.top, aes(x = year, fill = water, y = value)) + geom_boxplot() + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  scale_y_sqrt() + scale_fill_manual(values=water_pal) + labs(x=&quot;Year&quot;, y =&quot;Emissions (ng/hr)&quot;, fill=&quot;Precipitation&quot;)</code></pre>
+<p><img src="images_volatiles2020/boxplots-1.png" width="1536" /></p>
+<pre class="r"><code>ggplot(volsmeta.drydown, aes(x = year, fill = water, y = value)) + geom_boxplot() + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  scale_y_sqrt() + scale_fill_manual(values=water_pal) + labs(x=&quot;Year&quot;, y =&quot;Emissions (ng/hr)&quot;, fill=&quot;Precipitation&quot;)</code></pre>
+<p><img src="images_volatiles2020/boxplots-2.png" width="1536" /></p>
+<pre class="r"><code>ggplot(volsmeta.good.top, aes(x = year, fill = snow, y = value)) + geom_boxplot() + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  scale_y_sqrt() + scale_fill_manual(values=snow_pal) + labs(x=&quot;Year&quot;, y =&quot;Emissions (ng/hr)&quot;, fill=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images_volatiles2020/boxplots-3.png" width="1536" /></p>
+<pre class="r"><code>ggplot(volsmeta.drydown, aes(x = year, fill = snow, y = value)) + geom_boxplot() + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  scale_y_sqrt() + scale_fill_manual(values=snow_pal) + labs(x=&quot;Year&quot;, y =&quot;Emissions (ng/hr)&quot;, fill=&quot;Snowmelt&quot;)</code></pre>
+<p><img src="images_volatiles2020/boxplots-4.png" width="1536" /></p>
+</div>
+<div id="volatiles-vs.-soil-moisture" class="section level2">
+<h2>Volatiles vs. soil moisture</h2>
+<pre class="r"><code>ggplot(volsmeta.good.top, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  geom_point() + geom_smooth(se=F)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
+  scale_y_sqrt() + scale_color_manual(values=year_pal) + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)</code></pre>
+<p><img src="images_volatiles2020/sm_vols-1.png" width="1536" /></p>
+<pre class="r"><code>ggplot(volsmeta.drydown, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  geom_point() + geom_smooth(se=F)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
+  scale_y_sqrt() + scale_color_manual(values=year_pal) + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)</code></pre>
+<p><img src="images_volatiles2020/sm_vols-2.png" width="1536" /></p>
 </div>
 </div>
 
