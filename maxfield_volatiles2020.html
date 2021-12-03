@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-10-04" />
+<meta name="date" content="2021-12-03" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -263,7 +263,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-10-04</h4>
+<h4 class="date">2021-12-03</h4>
 
 </div>
 
@@ -285,15 +285,21 @@ library(knitr)
 knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, fig.path = &quot;images_volatiles2020/&quot;, fig.height=8, fig.width=8)
 options(digits=4) # for kables
 
-load(&quot;data/maxfield_data.rda&quot;)
+#setwd(&quot;~/MyDocs/MEGA/UCI/RMBL 2020/maxfield&quot;)
 load(&quot;data/volatiles/maxfield_volatiles.rda&quot;)
 
-vt &lt;- vt %&gt;% rename(sampledate=date) %&gt;% mutate(type=recode(type, air=&quot;ambient&quot;))
-volsmeta &lt;- maxfmeta %&gt;% mutate(year=factor(year(sampledate))) %&gt;% 
-  drop_na(plotid) %&gt;% #cut out ambients
+load(&quot;data/maxfield_data.rda&quot;)
+vt &lt;- vt %&gt;% rename(sampledate=date) %&gt;% 
+  mutate(sampledate = as.Date(sampledate), type = recode(type, air=&quot;ambient&quot;), 
+                    vt.n = row_number(),
+                    across(c(plot, subplot, plant), as.character)) %&gt;% 
+  filter(type==&quot;floral&quot;)
+
+volsmeta &lt;- maxfmeta %&gt;% mutate(sampledate = as.Date(sampledate), year = factor(year(sampledate))) %&gt;% 
+  drop_na(plotid) %&gt;% #cut out ambients, leaving 459 chromatograms
   filter(year %in% c(&quot;2018&quot;,&quot;2019&quot;,&quot;2020&quot;)) %&gt;% droplevels() %&gt;% 
   left_join(treatments) %&gt;% 
-  left_join(vt %&gt;% select(observer:notes)) #TODO work on lining these up - 251/459 have no match in vt
+  left_join(vt %&gt;% select(observer:notes)) 
 rownames(volsmeta) &lt;- volsmeta$index
 
 vols &lt;- maxf[volsmeta$index,]</code></pre>
@@ -306,24 +312,24 @@ vols &lt;- maxf[volsmeta$index,]</code></pre>
 <table>
 <colgroup>
 <col width="9%" />
-<col width="11%" />
+<col width="10%" />
+<col width="10%" />
 <col width="10%" />
 <col width="11%" />
-<col width="10%" />
 <col width="11%" />
-<col width="10%" />
+<col width="11%" />
 <col width="11%" />
 <col width="10%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th align="left">source</th>
-<th align="right">2018_ambient</th>
 <th align="right">2018_floral</th>
-<th align="right">2019_ambient</th>
 <th align="right">2019_floral</th>
-<th align="right">2020_ambient</th>
 <th align="right">2020_floral</th>
+<th align="right">2018_ambient</th>
+<th align="right">2019_ambient</th>
+<th align="right">2020_ambient</th>
 <th align="right">2021_ambient</th>
 <th align="right">2021_floral</th>
 </tr>
@@ -331,23 +337,23 @@ vols &lt;- maxf[volsmeta$index,]</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">sampling</td>
-<td align="right">12</td>
 <td align="right">136</td>
-<td align="right">12</td>
 <td align="right">143</td>
-<td align="right">7</td>
 <td align="right">158</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
 <td align="left">filenames</td>
-<td align="right">15</td>
 <td align="right">168</td>
-<td align="right">12</td>
 <td align="right">146</td>
-<td align="right">7</td>
 <td align="right">145</td>
+<td align="right">15</td>
+<td align="right">12</td>
+<td align="right">7</td>
 <td align="right">5</td>
 <td align="right">44</td>
 </tr>
@@ -473,7 +479,120 @@ vols &lt;- maxf[volsmeta$index,]</code></pre>
   labs(x=&quot;VOC sampling date (day of year)&quot;, y=&quot;Floral samples&quot;)</code></pre>
 <p><img src="images_volatiles2020/samplesizes-1.png" width="960" /></p>
 <pre class="r"><code># TODO fix early 2020 date? and check singletons in 2018, 2019
-# TODO there are some duplicate file names in maxfmeta, especially sampled 190805</code></pre>
+# TODO there are some duplicate file names in maxfmeta, especially sampled 190805
+#vt$sampledate[vt$sampledate==&quot;2020-07-30&quot;] &lt;- ymd(&quot;2020-07-29&quot;)#notes say samples taken on 7/30 have incorrect labels that say 7/29
+#vt$sampledate[vt$sampledate==&quot;2019-07-21&quot;] &lt;- ymd(&quot;2019-07-22&quot;)#notes say CONFIRM DATE on 7/22
+#TODO work on lining these up - 251/459 have no match in vt</code></pre>
+<div id="matching-datasheets-and-filenames" class="section level2">
+<h2>Matching datasheets and filenames</h2>
+<pre class="r"><code># diagnostics for matching up vt (datasheets) and volsmeta (filenames)
+volsmeta.samp &lt;- volsmeta %&gt;% mutate(samp = paste(sampledate, plot, subplot, plant)) %&gt;% arrange(samp) %&gt;% pull(samp)
+vt.samp &lt;- vt %&gt;% mutate(samp = paste(sampledate, plot, subplot, plant)) %&gt;% arrange(samp) %&gt;% pull(samp)
+#intersect(volsmeta.samp, vt.samp) #in both volsmeta and vt
+cat(&quot;Have files but not datasheet entries:&quot;)</code></pre>
+<pre><code>Have files but not datasheet entries:</code></pre>
+<pre class="r"><code>setdiff(volsmeta.samp, vt.samp)</code></pre>
+<pre><code>  [1] &quot;2018-06-22 3 D 844&quot;  &quot;2018-06-27 5 C 205&quot;  &quot;2018-06-28 3 B 833&quot; 
+  [4] &quot;2018-06-28 4 D 45&quot;   &quot;2018-06-29 2 D 200&quot;  &quot;2018-07-03 5 C 103&quot; 
+  [7] &quot;2018-07-03 6 D 258&quot;  &quot;2018-07-05 2 A 172&quot;  &quot;2018-07-05 2 B 87&quot;  
+ [10] &quot;2018-07-05 2 C 266&quot;  &quot;2018-07-05 2 D 218&quot;  &quot;2018-07-05 6 D 66&quot;  
+ [13] &quot;2018-07-06 2 D 258&quot;  &quot;2018-07-06 5 B 15&quot;   &quot;2018-07-09 6 D 167&quot; 
+ [16] &quot;2018-07-11 1 C 60&quot;   &quot;2018-07-11 2 D 218&quot;  &quot;2018-07-17 2 C 100&quot; 
+ [19] &quot;2018-07-17 2 D 189&quot;  &quot;2018-07-17 2 D 212&quot;  &quot;2018-07-17 2 D 218&quot; 
+ [22] &quot;2018-07-17 4 A 76&quot;   &quot;2018-07-17 4 D 45&quot;   &quot;2018-07-19 3 D 877&quot; 
+ [25] &quot;2018-07-24 1 A 253&quot;  &quot;2018-07-24 1 D 29&quot;   &quot;2018-07-24 2 C 258&quot; 
+ [28] &quot;2018-07-24 2 D 200&quot;  &quot;2018-07-24 2 D 206&quot;  &quot;2018-07-24 3 B 601&quot; 
+ [31] &quot;2018-07-24 3 B 833&quot;  &quot;2018-07-24 3 C 147&quot;  &quot;2018-07-24 3 C 98&quot;  
+ [34] &quot;2018-07-24 5 C 216&quot;  &quot;2018-07-27 5 D 245&quot;  &quot;2018-07-30 5 A 173&quot; 
+ [37] &quot;2018-07-30 5 A 175&quot;  &quot;2018-07-30 5 A 181&quot;  &quot;2018-07-30 5 C 216&quot; 
+ [40] &quot;2018-07-30 5 C 221&quot;  &quot;2018-07-30 6 A 160&quot;  &quot;2018-07-30 6 B 25&quot;  
+ [43] &quot;2018-07-30 6 B 34&quot;   &quot;2018-07-30 6 C 102&quot;  &quot;2018-07-30 6 C 82&quot;  
+ [46] &quot;2018-07-30 6 C 87&quot;   &quot;2018-07-30 6 D 38&quot;   &quot;2018-07-30 6 D 45&quot;  
+ [49] &quot;2018-08-02 1 A 232&quot;  &quot;2018-08-02 2 D 206&quot;  &quot;2018-08-02 3 C 147&quot; 
+ [52] &quot;2019-07-02 2 B 201&quot;  &quot;2019-07-07 2 D 211&quot;  &quot;2019-07-08 1 C 64&quot;  
+ [55] &quot;2019-07-16 3 D 282&quot;  &quot;2019-07-17 1 B 684&quot;  &quot;2019-07-17 1 C 43&quot;  
+ [58] &quot;2019-07-17 1 C 47&quot;   &quot;2019-07-17 3 C 183&quot;  &quot;2019-07-17 4 A 68&quot;  
+ [61] &quot;2019-07-17 4 D 199&quot;  &quot;2019-07-17 5 B 1&quot;    &quot;2019-07-17 5 C 214&quot; 
+ [64] &quot;2019-07-17 5 D 264&quot;  &quot;2019-07-17 6 A 156&quot;  &quot;2019-07-17 6 B 29&quot;  
+ [67] &quot;2019-07-17 6 C 83&quot;   &quot;2019-07-17 6 D 40&quot;   &quot;2019-07-22 2 A 158&quot; 
+ [70] &quot;2019-07-22 2 A 679&quot;  &quot;2019-07-22 2 B 92&quot;   &quot;2019-07-22 2 C 268&quot; 
+ [73] &quot;2019-07-22 2 D 257&quot;  &quot;2019-07-22 3 A 120&quot;  &quot;2019-07-22 3 C 167&quot; 
+ [76] &quot;2019-07-22 3 C 184&quot;  &quot;2019-07-22 4 D 357&quot;  &quot;2019-07-22 5 C 214&quot; 
+ [79] &quot;2019-07-22 5 C 228&quot;  &quot;2019-07-22 5 D 257&quot;  &quot;2019-07-24 3 A 172&quot; 
+ [82] &quot;2019-07-24 4 D 641&quot;  &quot;2019-07-24 5 C 151&quot;  &quot;2019-07-26 2 D 212A&quot;
+ [85] &quot;2019-07-26 2 D 212B&quot; &quot;2019-08-05 2 D 288&quot;  &quot;2020-06-08 2 A 674&quot; 
+ [88] &quot;2020-06-08 2 A 94&quot;   &quot;2020-06-08 2 B 145&quot;  &quot;2020-06-08 2 C 270&quot; 
+ [91] &quot;2020-06-08 2 C 277&quot;  &quot;2020-06-08 2 D 187&quot;  &quot;2020-06-08 2 D 204&quot; 
+ [94] &quot;2020-06-08 2 D 214&quot;  &quot;2020-07-01 4 B 576&quot;  &quot;2020-07-08 3 B 851&quot; 
+ [97] &quot;2020-07-15 6 A 136&quot;  &quot;2020-07-15 6 A 165&quot;  &quot;2020-07-15 6 A 169&quot; 
+[100] &quot;2020-07-15 6 A 685&quot;  &quot;2020-07-15 6 B 120&quot;  &quot;2020-07-15 6 B 21&quot;  
+[103] &quot;2020-07-15 6 B 243&quot;  &quot;2020-07-15 6 C 96&quot;   &quot;2020-07-15 6 C 99&quot;  
+[106] &quot;2020-07-22 1 B 650A&quot; &quot;2020-07-22 1 B 650B&quot; &quot;2020-07-22 2 D 194&quot; 
+[109] &quot;2020-07-22 2 D 207&quot;  &quot;2020-07-22 2 D 219&quot;  &quot;2020-07-22 2 D 220&quot; 
+[112] &quot;2020-07-29 3 A 641&quot;  &quot;2020-07-29 3 B 618&quot;  &quot;2020-07-29 3 B 828&quot; 
+[115] &quot;2020-07-29 3 B 838&quot;  &quot;2020-07-29 3 D 881&quot;  &quot;2020-07-29 3 D 895&quot; 
+[118] &quot;2020-07-29 5 A 180&quot;  &quot;2020-07-29 5 B 289&quot;  &quot;2020-07-29 5 B 296&quot; 
+[121] &quot;2020-07-29 5 B 299&quot;  &quot;2020-07-29 5 C 207&quot;  &quot;2020-07-29 5 C 208&quot; 
+[124] &quot;2020-07-29 5 C 217&quot;  &quot;2020-07-29 5 C 683&quot;  &quot;2020-07-29 6 A 136&quot; 
+[127] &quot;2020-07-29 6 A 145&quot;  &quot;2020-07-29 6 C 111&quot;  &quot;2020-07-29 6 C 116&quot; 
+[130] &quot;2020-07-29 6 C 121&quot;  &quot;2020-07-29 6 D 48&quot;   &quot;2020-07-29 6 D 59&quot;  
+[133] &quot;2020-07-29 6 D 64&quot;  </code></pre>
+<pre class="r"><code>cat(&quot;Have datasheet entries but no files:&quot;)</code></pre>
+<pre><code>Have datasheet entries but no files:</code></pre>
+<pre class="r"><code>setdiff(vt.samp, volsmeta.samp)</code></pre>
+<pre><code>  [1] &quot;2018-06-22 3 D 884&quot;   &quot;2018-06-27 4 D 45&quot;    &quot;2018-06-27 5 C 245&quot;  
+  [4] &quot;2018-06-27 5 D 205&quot;   &quot;2018-06-28 1 B 655&quot;   &quot;2018-06-28 1 C 50&quot;   
+  [7] &quot;2018-06-29 2 C 265&quot;   &quot;2018-06-29 2 D 209&quot;   &quot;2018-06-29 3 B 833&quot;  
+ [10] &quot;2018-07-03 5 D 258&quot;   &quot;2018-07-03 6 C 103&quot;   &quot;2018-07-03 6 D 66&quot;   
+ [13] &quot;2018-07-05 1 A 172&quot;   &quot;2018-07-05 1 B 87&quot;    &quot;2018-07-05 1 C 266&quot;  
+ [16] &quot;2018-07-05 1 D 218&quot;   &quot;2018-07-06 5 B 574&quot;   &quot;2018-07-06 5 D 258&quot;  
+ [19] &quot;2018-07-09 3 D 877&quot;   &quot;2018-07-09 6 D 44&quot;    &quot;2018-07-11 1 C 50&quot;   
+ [22] &quot;2018-07-11 2 D 118&quot;   &quot;2018-07-16 6 C 271&quot;   &quot;2018-08-02 1 A 232.1&quot;
+ [25] &quot;2018-08-02 1 A 232.2&quot; &quot;2018-08-02 2 D 206.1&quot; &quot;2018-08-02 2 D 206.2&quot;
+ [28] &quot;2018-08-02 3 C 147.1&quot; &quot;2018-08-02 3 C 147.2&quot; &quot;2019-07-21 2 A 158&quot;  
+ [31] &quot;2019-07-21 2 A 679&quot;   &quot;2019-07-21 2 B 201&quot;   &quot;2019-07-21 2 B 92&quot;   
+ [34] &quot;2019-07-21 2 C 268&quot;   &quot;2019-07-21 2 D 257&quot;   &quot;2019-07-21 3 A 120&quot;  
+ [37] &quot;2019-07-21 3 C 183&quot;   &quot;2019-07-21 3 C 184&quot;   &quot;2019-07-21 4 D 35&quot;   
+ [40] &quot;2019-07-21 4 D 60&quot;    &quot;2019-07-21 5 C 228&quot;   &quot;2019-07-21 5 C 514&quot;  
+ [43] &quot;2019-07-21 5 D 257&quot;   &quot;2019-07-22 1 B 684&quot;   &quot;2019-07-22 1 C 43&quot;   
+ [46] &quot;2019-07-22 1 C 47&quot;    &quot;2019-07-22 2 D 211&quot;   &quot;2019-07-22 4 A 68&quot;   
+ [49] &quot;2019-07-22 4 D 199&quot;   &quot;2019-07-24 3 A 272&quot;   &quot;2019-07-24 3 C 151&quot;  
+ [52] &quot;2019-07-24 3 C 167&quot;   &quot;2019-07-24 4 C 641&quot;   &quot;2019-07-26 2 A 166&quot;  
+ [55] &quot;2019-07-26 2 D 212&quot;   &quot;2019-07-26 3 C 150&quot;   &quot;2019-07-26 3 C 183&quot;  
+ [58] &quot;2019-07-26 5 A 193&quot;   &quot;2019-07-26 5 B 13&quot;    &quot;2019-07-26 5 D 241&quot;  
+ [61] &quot;2019-08-05 2 D 258&quot;   &quot;2020-07-01 2 A 285&quot;   &quot;2020-07-01 2 B 138&quot;  
+ [64] &quot;2020-07-01 2 D 193&quot;   &quot;2020-07-01 3 A 125&quot;   &quot;2020-07-01 3 A 278&quot;  
+ [67] &quot;2020-07-01 3 B 603&quot;   &quot;2020-07-01 4 B 596&quot;   &quot;2020-07-01 5 A 185&quot;  
+ [70] &quot;2020-07-01 5 B 16&quot;    &quot;2020-07-01 5 D 242&quot;   &quot;2020-07-08 1 C 64&quot;   
+ [73] &quot;2020-07-08 2 A 674&quot;   &quot;2020-07-08 2 A 94&quot;    &quot;2020-07-08 2 B 195&quot;  
+ [76] &quot;2020-07-08 2 C 270&quot;   &quot;2020-07-08 2 C 277&quot;   &quot;2020-07-08 2 D 187&quot;  
+ [79] &quot;2020-07-08 2 D 204&quot;   &quot;2020-07-08 2 D 214&quot;   &quot;2020-07-08 3 B 831&quot;  
+ [82] &quot;2020-07-22 1 B 650&quot;   &quot;2020-07-22 2 B 194&quot;   &quot;2020-07-22 2 B 207&quot;  
+ [85] &quot;2020-07-22 2 B 219&quot;   &quot;2020-07-22 2 B 220&quot;   &quot;2020-07-29 1 B 650&quot;  
+ [88] &quot;2020-07-29 1 B 653&quot;   &quot;2020-07-29 3 C 133&quot;   &quot;2020-07-29 3 C 137&quot;  
+ [91] &quot;2020-07-29 3 C 139&quot;   &quot;2020-07-29 3 C 153&quot;   &quot;2020-07-29 3 C 166&quot;  
+ [94] &quot;2020-07-29 3 C 173&quot;   &quot;2020-07-29 3 C 177&quot;   &quot;2020-07-29 4 D 52&quot;   
+ [97] &quot;2020-07-30 3 A 641&quot;   &quot;2020-07-30 3 B 618&quot;   &quot;2020-07-30 3 B 828&quot;  
+[100] &quot;2020-07-30 3 B 838&quot;   &quot;2020-07-30 3 D 881&quot;   &quot;2020-07-30 3 D 895&quot;  
+[103] &quot;2020-07-30 5 A 180&quot;   &quot;2020-07-30 5 B 289&quot;   &quot;2020-07-30 5 B 296&quot;  
+[106] &quot;2020-07-30 5 B 299&quot;   &quot;2020-07-30 5 C 207&quot;   &quot;2020-07-30 5 C 208&quot;  
+[109] &quot;2020-07-30 5 C 217&quot;   &quot;2020-07-30 5 C 683&quot;   &quot;2020-07-30 6 A 136&quot;  
+[112] &quot;2020-07-30 6 A 145&quot;   &quot;2020-07-30 6 C 111&quot;   &quot;2020-07-30 6 C 116&quot;  
+[115] &quot;2020-07-30 6 C 121&quot;   &quot;2020-07-30 6 D 45&quot;    &quot;2020-07-30 6 D 48&quot;   
+[118] &quot;2020-07-30 6 D 59&quot;    &quot;2020-07-30 6 D 64&quot;   </code></pre>
+<pre class="r"><code>vt.volsmeta &lt;- full_join(vt %&gt;% select(vt.n, sampledate, plot, subplot, plant) %&gt;% mutate(in.vt=T),
+                         volsmeta %&gt;% select(FileName, sampledate, plot, subplot, plant) %&gt;% mutate(in.volsmeta=T)) %&gt;% 
+  mutate(across(c(in.vt, in.volsmeta), ~replace_na(.,FALSE)))
+vt.volsmeta.count &lt;- vt.volsmeta  %&gt;% count(sampledate, in.vt, in.volsmeta) %&gt;% mutate(status=paste(&quot;datasheet&quot;,ifelse(in.vt,&quot;yes&quot;,&quot;no&quot;),&quot;+&quot;,&quot;GCfile&quot;, ifelse(in.volsmeta,&quot;yes&quot;,&quot;no&quot;)))
+#View(vt.volsmeta.count %&gt;% filter(!in.vt | !in.volsmeta) %&gt;% arrange(sampledate))
+
+ggplot(vt.volsmeta.count, aes(x=sampledate,y=n, fill=status))+ geom_col() +
+  facet_wrap(vars(year(sampledate)), scales=&quot;free_x&quot;, ncol=1) +
+  scale_x_date(breaks=scales::date_breaks(width = &quot;7 days&quot;), minor_breaks = scales::date_breaks(width = &quot;1 days&quot;)) +
+  theme_minimal() + theme(legend.position=&quot;top&quot;) + scale_fill_manual(values=c(&quot;red&quot;,&quot;orange&quot;,&quot;darkgreen&quot;)) +
+  labs(x=&quot;Sampling date&quot;, y=&quot;Samples&quot;, fill=&quot;Data status&quot;)</code></pre>
+<p><img src="images_volatiles2020/matching-1.png" width="768" /></p>
+</div>
 </div>
 <div id="soil-moisture" class="section level1">
 <h1>Soil moisture</h1>

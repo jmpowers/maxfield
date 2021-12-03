@@ -32,15 +32,21 @@ library(knitr)
 knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, fig.path = "images_volatiles2020/", fig.height=8, fig.width=8)
 options(digits=4) # for kables
 
-load("data/maxfield_data.rda")
+#setwd("~/MyDocs/MEGA/UCI/RMBL 2020/maxfield")
 load("data/volatiles/maxfield_volatiles.rda")
 
-vt <- vt %>% rename(sampledate=date) %>% mutate(type=recode(type, air="ambient"))
-volsmeta <- maxfmeta %>% mutate(year=factor(year(sampledate))) %>% 
-  drop_na(plotid) %>% #cut out ambients
+load("data/maxfield_data.rda")
+vt <- vt %>% rename(sampledate=date) %>% 
+  mutate(sampledate = as.Date(sampledate), type = recode(type, air="ambient"), 
+                    vt.n = row_number(),
+                    across(c(plot, subplot, plant), as.character)) %>% 
+  filter(type=="floral")
+
+volsmeta <- maxfmeta %>% mutate(sampledate = as.Date(sampledate), year = factor(year(sampledate))) %>% 
+  drop_na(plotid) %>% #cut out ambients, leaving 459 chromatograms
   filter(year %in% c("2018","2019","2020")) %>% droplevels() %>% 
   left_join(treatments) %>% 
-  left_join(vt %>% select(observer:notes)) #TODO work on lining these up - 251/459 have no match in vt
+  left_join(vt %>% select(observer:notes)) 
 rownames(volsmeta) <- volsmeta$index
 
 vols <- maxf[volsmeta$index,]
@@ -66,7 +72,35 @@ bind_rows(sampling = vt %>% filter(type=="floral") %>% group_by(sampledate) %>% 
   labs(x="VOC sampling date (day of year)", y="Floral samples")
 # TODO fix early 2020 date? and check singletons in 2018, 2019
 # TODO there are some duplicate file names in maxfmeta, especially sampled 190805
+#vt$sampledate[vt$sampledate=="2020-07-30"] <- ymd("2020-07-29")#notes say samples taken on 7/30 have incorrect labels that say 7/29
+#vt$sampledate[vt$sampledate=="2019-07-21"] <- ymd("2019-07-22")#notes say CONFIRM DATE on 7/22
+#TODO work on lining these up - 251/459 have no match in vt
 ```
+
+## Matching datasheets and filenames
+```{r matching}
+# diagnostics for matching up vt (datasheets) and volsmeta (filenames)
+volsmeta.samp <- volsmeta %>% mutate(samp = paste(sampledate, plot, subplot, plant)) %>% arrange(samp) %>% pull(samp)
+vt.samp <- vt %>% mutate(samp = paste(sampledate, plot, subplot, plant)) %>% arrange(samp) %>% pull(samp)
+#intersect(volsmeta.samp, vt.samp) #in both volsmeta and vt
+cat("Have files but not datasheet entries:")
+setdiff(volsmeta.samp, vt.samp)
+cat("Have datasheet entries but no files:")
+setdiff(vt.samp, volsmeta.samp)
+
+vt.volsmeta <- full_join(vt %>% select(vt.n, sampledate, plot, subplot, plant) %>% mutate(in.vt=T),
+                         volsmeta %>% select(FileName, sampledate, plot, subplot, plant) %>% mutate(in.volsmeta=T)) %>% 
+  mutate(across(c(in.vt, in.volsmeta), ~replace_na(.,FALSE)))
+vt.volsmeta.count <- vt.volsmeta  %>% count(sampledate, in.vt, in.volsmeta) %>% mutate(status=paste("datasheet",ifelse(in.vt,"yes","no"),"+","GCfile", ifelse(in.volsmeta,"yes","no")))
+#View(vt.volsmeta.count %>% filter(!in.vt | !in.volsmeta) %>% arrange(sampledate))
+
+ggplot(vt.volsmeta.count, aes(x=sampledate,y=n, fill=status))+ geom_col() +
+  facet_wrap(vars(year(sampledate)), scales="free_x", ncol=1) +
+  scale_x_date(breaks=scales::date_breaks(width = "7 days"), minor_breaks = scales::date_breaks(width = "1 days")) +
+  theme_minimal() + theme(legend.position="top") + scale_fill_manual(values=c("red","orange","darkgreen")) +
+  labs(x="Sampling date", y="Samples", fill="Data status")
+```
+
 
 # Soil moisture
 
