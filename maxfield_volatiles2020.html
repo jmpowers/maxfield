@@ -276,6 +276,7 @@ td, th { padding : 6px }
 <pre class="r"><code>library(tidyverse)
 library(lubridate)
 library(vegan)
+library(broom)
 library(viridis)
 library(ggvegan)
 library(pheatmap)
@@ -729,6 +730,7 @@ text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</c
 <h2>Volatiles vs. treatments</h2>
 <pre class="r"><code>vols.good.top &lt;- vols.good[,colSums(decostand(vols.good,&quot;pa&quot;))&gt;81]#occur in more than N samples
 volsmeta.good.top &lt;- bind_cols(volsmeta, vols.good.top) %&gt;%  pivot_longer(-all_of(colnames(volsmeta)))
+ipogood.top &lt;- unique(volsmeta.good.top$name)
 
 vols.drydown &lt;- vols[,c(&quot;1,3-Octadiene&quot;,&quot;Benzyl alcohol&quot;, &quot;(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene&quot;,&quot;.alpha.-Farnesene&quot;, &quot;Bicyclo[3.1.1]heptane, 6,6-dimethyl-2-methylene-, (1S)-&quot;, &quot;.beta.-Ocimene&quot;)]
 volsmeta.drydown &lt;- bind_cols(volsmeta, vols.drydown) %&gt;%  pivot_longer(-all_of(colnames(volsmeta)))
@@ -756,6 +758,104 @@ ggplot(volsmeta.good.top, aes(x = year, fill = water, y = value)) + geom_boxplot
   geom_point() + geom_smooth(se=F)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
   scale_y_sqrt() + scale_color_manual(values=year_pal) + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)</code></pre>
 <p><img src="images_volatiles2020/sm_vols-2.png" width="1536" /></p>
+</div>
+</div>
+<div id="selection-analyses" class="section level1">
+<h1>Selection analyses</h1>
+<div id="plots-of-selection-in-treatments-and-years" class="section level2">
+<h2>Plots of selection in treatments and years</h2>
+<pre class="r"><code>seeds.good.top &lt;- volsmeta.good.top %&gt;% left_join(mnps.plantyr %&gt;% select(year, plotid, plant, seeds_est))
+
+ggplot(seeds.good.top, aes(x=value, y=seeds_est, color=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
+  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
+  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Year&quot;)+
+  theme_bw() + scale_color_manual(values=year_pal) +
+  scale_x_sqrt()</code></pre>
+<p><img src="images_volatiles2020/selection-1.png" width="1536" /></p>
+<pre class="r"><code>ggplot(seeds.good.top, aes(x=value, y=seeds_est, color=water, linetype=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
+  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
+  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;)+
+  theme_bw() + scale_color_manual(values=water_pal)+
+  scale_x_sqrt()</code></pre>
+<p><img src="images_volatiles2020/selection-2.png" width="1536" /></p>
+<pre class="r"><code>ggplot(seeds.good.top, aes(x=value, y=seeds_est, color=snow, linetype=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
+  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
+  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;)+
+  theme_bw() + scale_color_manual(values=snow_pal)+
+  scale_x_sqrt()</code></pre>
+<p><img src="images_volatiles2020/selection-3.png" width="1536" /></p>
+</div>
+<div id="selection-gradients" class="section level2">
+<h2>Selection gradients</h2>
+<p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong et al. 2018</a> for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.</p>
+<ul>
+<li>PCA can’t handle missing values so they are removed, but this biases the data and reduces sample size - multiple imputation?</li>
+</ul>
+<pre class="r"><code>calculate_beta &lt;- function(E, slopes) {
+  data.frame(B = E %*% slopes$A,
+             SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %&gt;% rownames_to_column(&quot;trait&quot;)
+}
+plot_beta &lt;- function(beta) {
+  beta %&gt;% mutate(trait = fct_reorder(trait, B)) %&gt;% 
+    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
+    geom_vline(xintercept=0)+ geom_pointrange() + 
+    labs(x = &quot;Selection gradient (beta) estimated from gradients on PCs&quot;, y = &quot;Trait&quot;)
+}
+
+vols.std &lt;- bind_cols(volsmeta, vols.good.top) %&gt;% left_join(mnps.plantyr %&gt;% select(year, plotid, plant, seeds_est)) %&gt;% 
+  select(all_of(ipogood.top),seeds_est, any_of(names(treatments))) %&gt;% 
+  mutate(across(all_of(ipogood.top), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% 
+  group_by(year) %&gt;% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T), .keep=&quot;unused&quot;) %&gt;% ungroup %&gt;% 
+  drop_na(all_of(ipogood.top)) 
+
+# Run PCA on traits
+vols.PCA &lt;- vols.std %&gt;% select(ipogood.top) %&gt;% prcomp() 
+summary(vols.PCA) # PCs 1 - 5 explain 51% of the variation</code></pre>
+<pre><code>Importance of components:
+                         PC1   PC2    PC3    PC4    PC5    PC6   PC7    PC8
+Standard deviation     1.987 1.468 1.2625 1.1680 1.0993 1.0827 1.010 0.9848
+Proportion of Variance 0.197 0.108 0.0797 0.0682 0.0604 0.0586 0.051 0.0485
+Cumulative Proportion  0.197 0.305 0.3850 0.4532 0.5136 0.5722 0.623 0.6718
+                          PC9  PC10   PC11   PC12  PC13   PC14   PC15   PC16
+Standard deviation     0.9304 0.883 0.8724 0.8220 0.787 0.7680 0.7065 0.6807
+Proportion of Variance 0.0433 0.039 0.0381 0.0338 0.031 0.0295 0.0249 0.0232
+Cumulative Proportion  0.7150 0.754 0.7921 0.8259 0.857 0.8863 0.9113 0.9344
+                         PC17   PC18   PC19   PC20
+Standard deviation     0.6585 0.5771 0.5386 0.5043
+Proportion of Variance 0.0217 0.0167 0.0145 0.0127
+Cumulative Proportion  0.9561 0.9728 0.9873 1.0000</code></pre>
+<pre class="r"><code>vols.PCA.E &lt;- vols.PCA$rotation[,1:5]
+vols.std.PCA &lt;- bind_cols(vols.std, as.data.frame(vols.PCA$x))
+
+# Regress relative fitness on PCs
+vols.PCA.regression &lt;- lm(seeds_rel ~ PC1 + PC2 + PC3 + PC4 + PC5, data = vols.std.PCA)
+vols.PCA.slopes &lt;- tidy(vols.PCA.regression) %&gt;% filter(term != &quot;(Intercept)&quot;) %&gt;% rename(A=estimate, SE=std.error)
+
+# Convert selection gradients on PCs to gradients on traits
+(vols.beta &lt;- calculate_beta(vols.PCA.E, vols.PCA.slopes))</code></pre>
+<pre><code>                                          trait          B       SE
+1                                .beta.-Myrcene  0.0045099 0.012400
+2                                .beta.-Ocimene  0.0013989 0.016781
+3  (1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene -0.0026768 0.014062
+4                           (E)-4-Oxohex-2-enal -0.0003252 0.014521
+5                          1-Butanol, 3-methyl-  0.0041370 0.018933
+6                                    1-Pentanol -0.0120774 0.019004
+7                            3-Hexen-1-ol, (E)-  0.0115955 0.012660
+8                   3-Hexen-1-ol, acetate, (E)- -0.0076502 0.017585
+9                                       Acetoin  0.0196875 0.020854
+10                                 Benzophenone  0.0277494 0.014129
+11                   E-11,13-Tetradecadien-1-ol  0.0166248 0.009169
+12                                     Linalool  0.0258720 0.021582
+13                              2-Hexenal, (E)-  0.0163887 0.014855
+14       Butanoic acid, 2-methyl-, methyl ester  0.0092330 0.018976
+15         Butanoic acid, 3-hexenyl ester, (Z)- -0.0096747 0.021050
+16                                Caryophyllene  0.0084881 0.012203
+17                                  Longifolene  0.0360867 0.017655
+18                            Methyl salicylate  0.0390779 0.026385
+19                     Octane, 2,4,6-trimethyl-  0.0523828 0.024525
+20                                   Petasitene  0.0030758 0.011175</code></pre>
+<pre class="r"><code>plot_beta(vols.beta)</code></pre>
+<p><img src="images_volatiles2020/gradients-1.png" width="768" /></p>
 </div>
 </div>
 
