@@ -643,15 +643,26 @@ mt.subplot <- mt.plantyr %>%
 # floralvolatiles ---------------------------------------------------------------
 
 vt_sheets <- filter(datasheets, name=="2020 Maxfield Floral Volatiles")
-vt <- map_dfr(sheet_names(vt_sheets), ~ read_sheet(vt_sheets, sheet=.x)) %>% 
+vt <- map_dfr(sheet_names(vt_sheets), ~ read_sheet(vt_sheets, sheet=.x) %>% 
+                mutate(plant.file=as.character(plant.file) %>% na_if("NULL"))) %>% 
   mutate(plotid = paste0(plot, subplot), plot = as.character(plot), plant=as.character(plant),
          type = ifelse(plant == "air", "air", "floral"), plant = na_if(plant, "air"),
          plantid = ifelse(is.na(plant), NA, paste0(plotid, plant)),
-         year=factor(year(date))) %>% 
+         year=factor(year(sampledate))) %>% 
   #TODO get fix_dataset working here
   #group_by(year) %>% group_split() %>% map2_dfr(paste0("volatiles",18:20), fix_dataset) %>% 
   left_join(treatments) %>%
-  mutate_if(is.character, as.factor)
+  mutate_if(is.character, as.factor) %>% 
+  mutate(sampledate = as.Date(sampledate), 
+         type = recode(type, air="ambient"), 
+         vt.n = row_number(),
+         across(c(plot, subplot, plant), as.character)) %>% 
+  filter(type=="floral") %>% 
+  mutate(sampledate.file = coalesce(sampledate.file, sampledate),
+         plot.file = coalesce(as.character(plot.file), as.character(plot)),
+         subplot.file = coalesce(subplot.file, subplot),
+         plant.file = coalesce(as.character(plant.file), as.character(plant))) %>% 
+  select(-index)
 
 # seeds -------------------------------------------------------------------
 
