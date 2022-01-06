@@ -48,7 +48,9 @@ volsmeta <- maxfmeta %>% mutate(sampledate = as.Date(sampledate), year = factor(
   rename(sampledate.file=sampledate, plot.file = plot, subplot.file=subplot, plant.file=plant) %>% 
   left_join(vt %>% select(-c(colnames(treatments),"type","plantid")) %>% 
               filter(!exclude %in% c("flowers", "incomplete", "resample"))) %>% 
-  left_join(treatments) #assume that the written metadata is correct not the info in the  .file name
+  left_join(treatments) %>% #assume that the written metadata is correct not the info in the  .file name
+  mutate(total_time = end - bag,
+         total_time = replace_na(total_time, median(total_time, na.rm=T)))# fill in 45 minutes when missing metadata
 rownames(volsmeta) <- volsmeta$index 
 ```
 
@@ -130,12 +132,17 @@ Plus (verdict other than "fvoc"):
 vols <- maxf[volsmeta$index,]
 vols.cut <- vols[,colSums(vols)>1e7]
 
-ipochems <- read_csv("data/volatiles/chemsf_ipo.csv") %>% filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge")) 
-ipogood <- ipochems %>% pull(name)
-vols.good <- vols[,intersect(colnames(vols),ipogood)]
+ipochems <- read_csv("data/volatiles/chemsf_ipo.csv") %>% 
+  filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge"),
+         name %in% colnames(vols)[colSums(vols)>0]) %>% #filter empty compounds
+  left_join(read_csv("data/volatiles/regressions_2019_prexfer_filtered_slopes.csv")) #TODO get appropriate slopes for each year
+ipogood <- ipochems$name
+vols.good <- vols[,ipogood] %>% 
+  sweep(2, ipochems$area_per_ng, FUN = '/') %>%  # convert areas to nanograms 
+  sweep(1, as.numeric(volsmeta$total_time, units="hours"),  FUN = '/') #divide by equilibration + pumping time
 nonzero <- rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
 
-ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambient, ambient_ratio, filter_ambient_ttest, filters_passed) %>%
+ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambient, ambient_ratio, filter_ambient_ttest, filters_passed, standard) %>%
   arrange(desc(freq.floral)) %>% mutate(across(starts_with("freq."), round, 3)) %>% 
   DT::datatable(caption="Volatile compounds to use for analysis")
 
@@ -156,12 +163,48 @@ volsmeta.drydown <- bind_cols(volsmeta, vols.drydown) %>%  pivot_longer(-all_of(
 ## Heatmap
 
 ```{r heatmap, fig.width=16, fig.height=12}
-pheatmap(as.matrix(t(vols[,colSums(vols)>3e8]))^(1/4), color=mako(512),
+library(dendsort)
+pheatmap(as.matrix(t(vols[,colSums(vols)>3e8]))^(1/4), 
+         cluster_cols=F, show_colnames=F,
+         clustering_method="mcquitty", clustering_distance_rows="correlation",
+         clustering_callback = function(hc, ...){dendsort(hc, type="average")},
+         scale="none", color=mako(512),
          annotation_col=volsmeta %>% select(year), main="Unfiltered top volatiles")
 
-pheatmap(as.matrix(t(vols.good))^(1/4), color=mako(512),
+pheatmap(as.matrix(t(vols.good))^(1/4), 
+         cluster_cols=F, show_colnames=F,
+         clustering_method="mcquitty", clustering_distance_rows="correlation",
+         clustering_callback = function(hc, ...){dendsort(hc, type="average")},
+         scale="none", color=mako(512),
          annotation_col=volsmeta %>% select(year), main="Filtered volatiles")
+
+pinene_correlates <- cor(sqrt(vols[,colSums(vols)>3e7])) %>% as.data.frame() %>% filter(`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`>0.15) %>% rownames()
+pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4), 
+         cluster_cols=F, show_colnames=F,
+         clustering_method="mcquitty", clustering_distance_rows="correlation",
+         clustering_callback = function(hc, ...){dendsort(hc, type="average")},
+         scale="none", color=mako(512),
+         annotation_col=volsmeta %>% select(year), main="Volatiles that correlate with alpha-pinene")
 ```
+
+## Detection over time
+
+```{r gcms_date, fig.height=8, fig.width=7}
+plot_vols_rundate <- function(type, checkvols) {
+volsmeta %>% mutate(yr=year(Desorb.Start.Time)) %>% 
+  bind_cols(vols %>% select(checkvols)) %>% pivot_longer(cols=checkvols) %>% 
+ggplot(aes(x=Desorb.Start.Time)) + facet_grid(name ~ yr, scales="free") + 
+  geom_point(aes(y=value, color=name), alpha=0.3)  + 
+  guides(color="none") + theme_bw() + labs(x="GCMS run time", y="Area", title=type)
+}
+
+plot_vols_rundate("Terpenes", c("(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene", ".beta.-Myrcene",".beta.-Ocimene","Linalool","Caryophyllene", "Longifolene"))
+
+plot_vols_rundate("Benzenoids", c("Benzophenone","Methyl salicylate","Anisole"))
+
+plot_vols_rundate("Green leaf volatiles", c("4-Hexen-1-ol, (Z)-", "3-Hexen-1-ol, (E)-"))
+```
+
 
 ## Ordinations
 
