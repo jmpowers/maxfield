@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2021-12-17" />
+<meta name="date" content="2022-01-05" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -263,7 +263,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2021-12-17</h4>
+<h4 class="date">2022-01-05</h4>
 
 </div>
 
@@ -289,14 +289,20 @@ options(digits=4) # for kables
 load(&quot;data/volatiles/maxfield_volatiles.rda&quot;)
 load(&quot;data/maxfield_data.rda&quot;)
 
+#check for duplicates
+#View(vt %&gt;% filter(!exclude %in% c(&quot;flowers&quot;, &quot;incomplete&quot;, &quot;resample&quot;)) %&gt;% count(sampledate.file, plot.file, subplot.file, plant.file) %&gt;% filter(n&gt;1) %&gt;% left_join(vt)) #exclude=&quot;resample&quot;
+#View(maxfmeta %&gt;% count(sampledate,plantid) %&gt;% filter(n&gt;1) %&gt;% left_join(maxfmeta))
+#TODO fix these GCMS filename duplicates
+
 volsmeta &lt;- maxfmeta %&gt;% mutate(sampledate = as.Date(sampledate), year = factor(year(sampledate))) %&gt;% 
   drop_na(plotid) %&gt;% #cut out ambients, leaving 459 chromatograms
   filter(year %in% c(&quot;2018&quot;,&quot;2019&quot;,&quot;2020&quot;)) %&gt;% droplevels() %&gt;% 
     mutate(plot=str_sub(plotid, 1,1), subplot=str_sub(plotid, 2,2)) %&gt;% 
   rename(sampledate.file=sampledate, plot.file = plot, subplot.file=subplot, plant.file=plant) %&gt;% 
-  left_join(vt %&gt;% select(observer:notes)) %&gt;% 
-  left_join(treatments) %&gt;% drop_na(snow)
-#rownames(volsmeta) &lt;- volsmeta$index #TODO fix duplicate rownames
+  left_join(vt %&gt;% select(-c(colnames(treatments),&quot;type&quot;,&quot;plantid&quot;)) %&gt;% 
+              filter(!exclude %in% c(&quot;flowers&quot;, &quot;incomplete&quot;, &quot;resample&quot;))) %&gt;% 
+  left_join(treatments) #assume that the written metadata is correct not the info in the  .file name
+rownames(volsmeta) &lt;- volsmeta$index 
 
 vols &lt;- maxf[volsmeta$index,]</code></pre>
 <div id="sample-size" class="section level1">
@@ -356,7 +362,7 @@ vols &lt;- maxf[volsmeta$index,]</code></pre>
 </tbody>
 </table>
 <pre class="r"><code>bind_rows(sampling=vt %&gt;% filter(type==&quot;floral&quot;) %&gt;% group_by(year, water, snow) %&gt;% tally(),
-  filenames=volsmeta %&gt;% mutate(year=factor(year(sampledate))) %&gt;% group_by(year, water, snow) %&gt;% tally(), .id=&quot;source&quot;) %&gt;% 
+  filenames=volsmeta %&gt;% mutate(year=factor(year(sampledate.file))) %&gt;% group_by(year, water, snow) %&gt;% tally(), .id=&quot;source&quot;) %&gt;% 
   pivot_wider(names_from=c(year), values_from = n) %&gt;% kable()</code></pre>
 <table>
 <thead>
@@ -422,140 +428,99 @@ vols &lt;- maxf[volsmeta$index,]</code></pre>
 <td align="left">filenames</td>
 <td align="left">Addition</td>
 <td align="left">Early</td>
-<td align="right">32</td>
+<td align="right">36</td>
 <td align="right">14</td>
-<td align="right">19</td>
+<td align="right">23</td>
 </tr>
 <tr class="even">
 <td align="left">filenames</td>
 <td align="left">Addition</td>
 <td align="left">Normal</td>
 <td align="right">31</td>
-<td align="right">39</td>
+<td align="right">40</td>
 <td align="right">19</td>
 </tr>
 <tr class="odd">
 <td align="left">filenames</td>
 <td align="left">Control</td>
 <td align="left">Early</td>
+<td align="right">28</td>
 <td align="right">24</td>
-<td align="right">22</td>
-<td align="right">31</td>
+<td align="right">32</td>
 </tr>
 <tr class="even">
 <td align="left">filenames</td>
 <td align="left">Control</td>
 <td align="left">Normal</td>
-<td align="right">29</td>
-<td align="right">21</td>
-<td align="right">37</td>
+<td align="right">34</td>
+<td align="right">25</td>
+<td align="right">35</td>
 </tr>
 <tr class="odd">
 <td align="left">filenames</td>
 <td align="left">Reduction</td>
 <td align="left">Early</td>
-<td align="right">18</td>
-<td align="right">12</td>
+<td align="right">22</td>
+<td align="right">17</td>
 <td align="right">18</td>
 </tr>
 <tr class="even">
 <td align="left">filenames</td>
 <td align="left">Reduction</td>
 <td align="left">Normal</td>
-<td align="right">15</td>
-<td align="right">25</td>
+<td align="right">17</td>
+<td align="right">26</td>
 <td align="right">18</td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>bind_rows(sampling = vt %&gt;% filter(type==&quot;floral&quot;) %&gt;% group_by(sampledate) %&gt;% tally(),
-         filenames = volsmeta %&gt;% drop_na(sampledate) %&gt;% group_by(sampledate) %&gt;% tally(), .id=&quot;source&quot;) %&gt;% 
-  ggplot(aes(x=yday(sampledate), y=n, fill=source)) + geom_col(position=position_dodge(preserve=&quot;single&quot;)) +
-  facet_wrap(vars(year(sampledate)), ncol=1) +
+<pre class="r"><code>bind_rows(sampling = vt %&gt;% filter(type==&quot;floral&quot;) %&gt;% group_by(sampledate.file) %&gt;% tally(),
+         filenames = volsmeta %&gt;% drop_na(sampledate.file) %&gt;% group_by(sampledate.file) %&gt;% tally(), .id=&quot;source&quot;) %&gt;% 
+  ggplot(aes(x=yday(sampledate.file), y=n, fill=source)) + geom_col(position=position_dodge(preserve=&quot;single&quot;)) +
+  facet_wrap(vars(year(sampledate.file)), ncol=1) +
   labs(x=&quot;VOC sampling date (day of year)&quot;, y=&quot;Floral samples&quot;)</code></pre>
 <p><img src="images_volatiles2020/samplesizes-1.png" width="960" /></p>
-<pre class="r"><code># TODO fix early 2020 date? and check singletons in 2018, 2019
-# TODO there are some duplicate file names in maxfmeta, especially sampled 190805
-#vt$sampledate[vt$sampledate==&quot;2020-07-30&quot;] &lt;- ymd(&quot;2020-07-29&quot;)#notes say samples taken on 7/30 have incorrect labels that say 7/29
-#vt$sampledate[vt$sampledate==&quot;2019-07-21&quot;] &lt;- ymd(&quot;2019-07-22&quot;)#notes say CONFIRM DATE on 7/22
-#TODO work on lining these up - 251/459 have no match in vt</code></pre>
 <div id="matching-datasheets-and-filenames" class="section level2">
 <h2>Matching datasheets and filenames</h2>
 <pre class="r"><code># diagnostics for matching up vt (datasheets) and volsmeta (filenames)
 volsmeta.samp &lt;- volsmeta %&gt;% mutate(samp = paste(sampledate.file, plot.file, subplot.file, plant.file)) %&gt;% arrange(samp) %&gt;% pull(samp)
-vt.samp &lt;- vt %&gt;% mutate(samp = paste(sampledate, plot, subplot, plant)) %&gt;% arrange(samp) %&gt;% pull(samp)
+vt.samp &lt;- vt %&gt;% mutate(samp = paste(sampledate.file, plot.file, subplot.file, plant.file)) %&gt;% arrange(samp) %&gt;% pull(samp)
 #intersect(volsmeta.samp, vt.samp) #in both volsmeta and vt
 cat(&quot;Have files but not datasheet entries:&quot;)</code></pre>
 <pre><code>Have files but not datasheet entries:</code></pre>
 <pre class="r"><code>setdiff(volsmeta.samp, vt.samp)</code></pre>
-<pre><code> [1] &quot;2018-06-22 3 D 844&quot;  &quot;2018-06-28 3 B 833&quot;  &quot;2018-06-28 4 D 45&quot;  
- [4] &quot;2018-06-29 2 D 200&quot;  &quot;2018-07-05 6 D 66&quot;   &quot;2018-07-11 1 C 60&quot;  
- [7] &quot;2018-07-11 2 D 218&quot;  &quot;2018-07-19 3 D 877&quot;  &quot;2018-07-30 5 C 221&quot; 
-[10] &quot;2019-07-07 2 D 211&quot;  &quot;2019-07-17 1 B 684&quot;  &quot;2019-07-17 1 C 43&quot;  
-[13] &quot;2019-07-17 1 C 47&quot;   &quot;2019-07-17 3 C 183&quot;  &quot;2019-07-17 4 A 68&quot;  
-[16] &quot;2019-07-17 4 D 199&quot;  &quot;2019-07-22 2 A 158&quot;  &quot;2019-07-22 2 A 679&quot; 
-[19] &quot;2019-07-22 2 B 92&quot;   &quot;2019-07-22 2 C 268&quot;  &quot;2019-07-22 2 D 257&quot; 
-[22] &quot;2019-07-22 3 A 120&quot;  &quot;2019-07-22 3 C 167&quot;  &quot;2019-07-22 3 C 184&quot; 
-[25] &quot;2019-07-22 5 C 228&quot;  &quot;2019-07-22 5 D 257&quot;  &quot;2019-07-24 3 A 172&quot; 
-[28] &quot;2019-07-26 2 D 212A&quot; &quot;2019-07-26 2 D 212B&quot; &quot;2019-08-05 2 D 288&quot; 
-[31] &quot;2020-06-08 2 A 674&quot;  &quot;2020-06-08 2 A 94&quot;   &quot;2020-06-08 2 B 145&quot; 
-[34] &quot;2020-06-08 2 C 270&quot;  &quot;2020-06-08 2 C 277&quot;  &quot;2020-06-08 2 D 187&quot; 
-[37] &quot;2020-06-08 2 D 204&quot;  &quot;2020-06-08 2 D 214&quot;  &quot;2020-07-08 3 B 851&quot; 
-[40] &quot;2020-07-22 1 B 650A&quot; &quot;2020-07-22 1 B 650B&quot; &quot;2020-07-29 5 B 289&quot; 
-[43] &quot;2020-07-29 5 B 296&quot;  &quot;2020-07-29 5 B 299&quot;  &quot;2020-07-29 5 C 207&quot; 
-[46] &quot;2020-07-29 5 C 208&quot;  &quot;2020-07-29 5 C 217&quot;  &quot;2020-07-29 5 C 683&quot; 
-[49] &quot;2020-07-29 6 A 136&quot;  &quot;2020-07-29 6 C 111&quot;  &quot;2020-07-29 6 C 116&quot; 
-[52] &quot;2020-07-29 6 C 121&quot;  &quot;2020-07-29 6 D 48&quot;   &quot;2020-07-29 6 D 59&quot;  
-[55] &quot;2020-07-29 6 D 64&quot;  </code></pre>
+<pre><code> [1] &quot;2018-07-06 5 B 15&quot;  &quot;2018-07-09 6 D 167&quot; &quot;2018-07-30 5 A 173&quot;
+ [4] &quot;2018-07-30 5 A 175&quot; &quot;2018-07-30 5 A 181&quot; &quot;2018-07-30 5 C 216&quot;
+ [7] &quot;2018-07-30 6 A 160&quot; &quot;2018-07-30 6 B 25&quot;  &quot;2018-07-30 6 B 34&quot; 
+[10] &quot;2018-07-30 6 C 102&quot; &quot;2018-07-30 6 C 82&quot;  &quot;2018-07-30 6 C 87&quot; 
+[13] &quot;2018-07-30 6 D 38&quot;  &quot;2018-07-30 6 D 45&quot;  &quot;2019-07-17 5 B 1&quot;  
+[16] &quot;2019-07-17 5 C 214&quot; &quot;2019-07-17 5 D 264&quot; &quot;2019-07-17 6 A 156&quot;
+[19] &quot;2019-07-17 6 B 29&quot;  &quot;2019-07-17 6 C 83&quot;  &quot;2019-07-17 6 D 40&quot; </code></pre>
 <pre class="r"><code>cat(&quot;Have datasheet entries but no files:&quot;)</code></pre>
 <pre><code>Have datasheet entries but no files:</code></pre>
 <pre class="r"><code>setdiff(vt.samp, volsmeta.samp)</code></pre>
-<pre><code>  [1] &quot;2018-06-22 3 D 884&quot; &quot;2018-06-27 4 D 45&quot;  &quot;2018-06-27 5 C 245&quot;
-  [4] &quot;2018-06-27 5 D 205&quot; &quot;2018-06-28 1 B 655&quot; &quot;2018-06-28 1 C 50&quot; 
-  [7] &quot;2018-06-29 2 C 265&quot; &quot;2018-06-29 2 D 209&quot; &quot;2018-06-29 3 B 833&quot;
- [10] &quot;2018-07-03 5 D 258&quot; &quot;2018-07-03 6 C 103&quot; &quot;2018-07-03 6 D 66&quot; 
- [13] &quot;2018-07-05 1 A 172&quot; &quot;2018-07-05 1 B 87&quot;  &quot;2018-07-05 1 C 266&quot;
- [16] &quot;2018-07-05 1 D 218&quot; &quot;2018-07-06 5 B 574&quot; &quot;2018-07-06 5 D 258&quot;
- [19] &quot;2018-07-09 3 D 877&quot; &quot;2018-07-09 6 D 44&quot;  &quot;2018-07-11 1 C 50&quot; 
- [22] &quot;2018-07-11 2 D 118&quot; &quot;2018-07-16 6 C 271&quot; &quot;2018-07-24 5 C 221&quot;
- [25] &quot;2019-07-21 2 A 158&quot; &quot;2019-07-21 2 A 679&quot; &quot;2019-07-21 2 B 201&quot;
- [28] &quot;2019-07-21 2 B 92&quot;  &quot;2019-07-21 2 C 268&quot; &quot;2019-07-21 2 D 257&quot;
- [31] &quot;2019-07-21 3 A 120&quot; &quot;2019-07-21 3 C 183&quot; &quot;2019-07-21 3 C 184&quot;
- [34] &quot;2019-07-21 4 D 35&quot;  &quot;2019-07-21 4 D 60&quot;  &quot;2019-07-21 5 C 228&quot;
- [37] &quot;2019-07-21 5 C 514&quot; &quot;2019-07-21 5 D 257&quot; &quot;2019-07-22 1 B 684&quot;
- [40] &quot;2019-07-22 1 C 43&quot;  &quot;2019-07-22 1 C 47&quot;  &quot;2019-07-22 2 D 211&quot;
- [43] &quot;2019-07-22 4 A 68&quot;  &quot;2019-07-22 4 D 199&quot; &quot;2019-07-24 3 A 272&quot;
- [46] &quot;2019-07-24 3 C 151&quot; &quot;2019-07-24 3 C 167&quot; &quot;2019-07-24 4 C 641&quot;
- [49] &quot;2019-07-26 2 A 166&quot; &quot;2019-07-26 2 D 212&quot; &quot;2019-07-26 5 A 193&quot;
- [52] &quot;2019-07-26 5 B 13&quot;  &quot;2019-07-26 5 D 241&quot; &quot;2019-08-05 2 D 258&quot;
- [55] &quot;2020-07-01 2 A 285&quot; &quot;2020-07-01 2 B 138&quot; &quot;2020-07-01 2 D 193&quot;
- [58] &quot;2020-07-01 3 A 125&quot; &quot;2020-07-01 3 A 278&quot; &quot;2020-07-01 3 B 603&quot;
- [61] &quot;2020-07-01 4 B 596&quot; &quot;2020-07-01 5 A 185&quot; &quot;2020-07-01 5 B 16&quot; 
- [64] &quot;2020-07-01 5 D 242&quot; &quot;2020-07-08 1 C 64&quot;  &quot;2020-07-08 2 A 674&quot;
- [67] &quot;2020-07-08 2 A 94&quot;  &quot;2020-07-08 2 B 195&quot; &quot;2020-07-08 2 C 270&quot;
- [70] &quot;2020-07-08 2 C 277&quot; &quot;2020-07-08 2 D 187&quot; &quot;2020-07-08 2 D 204&quot;
- [73] &quot;2020-07-08 2 D 214&quot; &quot;2020-07-08 3 B 831&quot; &quot;2020-07-22 1 B 650&quot;
- [76] &quot;2020-07-22 2 B 194&quot; &quot;2020-07-22 2 B 207&quot; &quot;2020-07-22 2 B 219&quot;
- [79] &quot;2020-07-22 2 B 220&quot; &quot;2020-07-29 1 B 650&quot; &quot;2020-07-29 1 B 653&quot;
- [82] &quot;2020-07-29 3 C 133&quot; &quot;2020-07-29 3 C 137&quot; &quot;2020-07-29 3 C 139&quot;
- [85] &quot;2020-07-29 3 C 153&quot; &quot;2020-07-29 3 C 166&quot; &quot;2020-07-29 3 C 173&quot;
- [88] &quot;2020-07-29 3 C 177&quot; &quot;2020-07-29 4 D 52&quot;  &quot;2020-07-30 5 B 289&quot;
- [91] &quot;2020-07-30 5 B 296&quot; &quot;2020-07-30 5 B 299&quot; &quot;2020-07-30 5 C 207&quot;
- [94] &quot;2020-07-30 5 C 208&quot; &quot;2020-07-30 5 C 217&quot; &quot;2020-07-30 5 C 683&quot;
- [97] &quot;2020-07-30 6 A 136&quot; &quot;2020-07-30 6 A 145&quot; &quot;2020-07-30 6 C 111&quot;
-[100] &quot;2020-07-30 6 C 116&quot; &quot;2020-07-30 6 C 121&quot; &quot;2020-07-30 6 D 45&quot; 
-[103] &quot;2020-07-30 6 D 48&quot;  &quot;2020-07-30 6 D 59&quot;  &quot;2020-07-30 6 D 64&quot; </code></pre>
+<pre><code> [1] &quot;2018-06-28 1 B 655&quot; &quot;2018-06-28 1 C 50&quot;  &quot;2018-06-29 2 C 265&quot;
+ [4] &quot;2018-07-06 5 B 574&quot; &quot;2018-07-09 6 D 44&quot;  &quot;2018-07-16 6 C 271&quot;
+ [7] &quot;2019-07-22 4 D 60&quot;  &quot;2019-07-26 2 A 166&quot; &quot;2019-07-26 5 A 193&quot;
+[10] &quot;2019-07-26 5 B 13&quot;  &quot;2019-07-26 5 D 241&quot; &quot;2020-07-01 2 A 285&quot;
+[13] &quot;2020-07-01 2 B 138&quot; &quot;2020-07-01 2 D 193&quot; &quot;2020-07-01 3 A 125&quot;
+[16] &quot;2020-07-01 3 A 278&quot; &quot;2020-07-01 3 B 603&quot; &quot;2020-07-01 5 A 185&quot;
+[19] &quot;2020-07-01 5 B 16&quot;  &quot;2020-07-01 5 D 242&quot; &quot;2020-07-29 1 B 650&quot;
+[22] &quot;2020-07-29 1 B 653&quot; &quot;2020-07-29 3 C 133&quot; &quot;2020-07-29 3 C 137&quot;
+[25] &quot;2020-07-29 3 C 139&quot; &quot;2020-07-29 3 C 153&quot; &quot;2020-07-29 3 C 166&quot;
+[28] &quot;2020-07-29 3 C 173&quot; &quot;2020-07-29 3 C 177&quot; &quot;2020-07-29 4 D 52&quot; 
+[31] &quot;2020-07-29 6 D 45&quot; </code></pre>
 <pre class="r"><code>vt.volsmeta &lt;- full_join(vt %&gt;% select(vt.n, sampledate.file, plot.file, subplot.file, plant.file) %&gt;% mutate(in.vt=T),
                          volsmeta %&gt;% select(FileName, sampledate.file, plot.file, subplot.file, plant.file) %&gt;% mutate(in.volsmeta=T)) %&gt;% 
   mutate(across(c(in.vt, in.volsmeta), ~replace_na(.,FALSE)))
 vt.volsmeta.count &lt;- vt.volsmeta  %&gt;% count(sampledate.file, in.vt, in.volsmeta) %&gt;% mutate(status=paste(&quot;datasheet&quot;,ifelse(in.vt,&quot;yes&quot;,&quot;no&quot;),&quot;+&quot;,&quot;GCfile&quot;, ifelse(in.volsmeta,&quot;yes&quot;,&quot;no&quot;)))
-#View(vt.volsmeta.count %&gt;% filter(!in.vt | !in.volsmeta) %&gt;% arrange(sampledate))
+#View(vt.volsmeta.count %&gt;% filter(!in.vt | !in.volsmeta) %&gt;% arrange(sampledate.file))
 
 ggplot(vt.volsmeta.count, aes(x=as.Date(sampledate.file),y=n, fill=status))+ geom_col() +
   facet_wrap(vars(year(sampledate.file)), scales=&quot;free_x&quot;, ncol=1) +
   scale_x_date(breaks=scales::date_breaks(width = &quot;7 days&quot;), minor_breaks = scales::date_breaks(width = &quot;1 days&quot;)) +
-  theme_minimal() + theme(legend.position=&quot;top&quot;) + scale_fill_manual(values=c(&quot;orange&quot;,&quot;darkgreen&quot;)) +
-  labs(x=&quot;Sampling date&quot;, y=&quot;Samples&quot;, fill=&quot;Data status&quot;)</code></pre>
+  theme_minimal() + theme(legend.position=&quot;top&quot;) + scale_fill_manual(values=c(&quot;red&quot;,&quot;orange&quot;,&quot;darkgreen&quot;)) +
+  labs(x=&quot;Sampling date (according to GCfile)&quot;, y=&quot;Samples&quot;, fill=&quot;Data status&quot;)</code></pre>
 <p><img src="images_volatiles2020/matching-1.png" width="768" /></p>
 </div>
 </div>
@@ -611,10 +576,10 @@ ipochems %&gt;% select(verdict, name, RT, mean, max, match, freq.floral, freq.am
 <div id="nmds" class="section level3">
 <h3>NMDS</h3>
 <pre class="r"><code>nonzero &lt;- rowSums(vols.good) &gt; 0 #one sample (&quot;55&quot; on row 44) has no volatiles
-(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE</code></pre>
+(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F, trymax=5)) #had noshare = FALSE</code></pre>
 <pre><code>
 Call:
-metaMDS(comm = sqrt(vols.good[nonzero, ]), autotransform = FALSE,      trace = F) 
+metaMDS(comm = sqrt(vols.good[nonzero, ]), trymax = 5, autotransform = FALSE,      trace = F) 
 
 global Multidimensional Scaling using monoMDS
 
@@ -622,7 +587,7 @@ Data:     sqrt(vols.good[nonzero, ])
 Distance: bray 
 
 Dimensions: 2 
-Stress:     0.2605 
+Stress:     0.263 
 Stress type 1, weak ties
 No convergent solutions - best solution after 20 tries
 Scaling: centring, PC rotation, halfchange scaling 
@@ -643,21 +608,21 @@ text(scents.nmds, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</
 volsmeta)
 
                Inertia Proportion Rank
-Total         4.78e+06   1.00e+00     
-Constrained   6.34e+05   1.33e-01   17
-Unconstrained 4.15e+06   8.67e-01   66
+Total         4.68e+06   1.00e+00     
+Constrained   5.97e+05   1.27e-01   17
+Unconstrained 4.08e+06   8.73e-01   66
 Inertia is mean squared Euclidean distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good&#39; 
 
 Eigenvalues for constrained axes:
   CAP1   CAP2   CAP3   CAP4   CAP5   CAP6   CAP7   CAP8   CAP9  CAP10  CAP11 
-282990 217944  35519  25892  16850  11550   8843   6530   6165   4682   4378 
+277976 201040  32053  25441  12752   9280   8098   6165   5142   4651   3550 
  CAP12  CAP13  CAP14  CAP15  CAP16  CAP17 
-  3697   2814   2226   2082   1295    661 
+  2882   2609   1734   1670   1028    599 
 
 Eigenvalues for unconstrained axes:
    MDS1    MDS2    MDS3    MDS4    MDS5    MDS6    MDS7    MDS8 
-1068834  436551  283699  272270  228376  193422  176953  171219 
+1052250  421751  285526  269954  221802  187366  180022  176737 
 (Showing 8 of 66 unconstrained eigenvalues)</code></pre>
 <pre class="r"><code>anova(scents.cap, by=&quot;term&quot;)</code></pre>
 <pre><code>Permutation test for capscale under reduced model
@@ -667,14 +632,14 @@ Number of permutations: 999
 
 Model: capscale(formula = sqrt(vols.good) ~ year * water * snow, data = volsmeta)
                  Df Variance     F Pr(&gt;F)    
-year              2   445652 21.82  0.001 ***
-water             2    34226  1.68  0.049 *  
-snow              1     9536  0.93  0.456    
-year:water        4    64644  1.58  0.020 *  
-year:snow         2    29091  1.42  0.098 .  
-water:snow        2    14675  0.72  0.851    
-year:water:snow   4    36291  0.89  0.643    
-Residual        406  4145943                 
+year              2   428970 23.16  0.001 ***
+water             2    30146  1.63  0.039 *  
+snow              1     9804  1.06  0.364    
+year:water        4    53824  1.45  0.044 *  
+year:snow         2    26076  1.41  0.096 .  
+water:snow        2    20259  1.09  0.317    
+year:water:snow   4    27592  0.74  0.893    
+Residual        441  4084006                 
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ year + water, data=volsmeta)
@@ -776,18 +741,18 @@ vols.std &lt;- bind_cols(volsmeta, vols.good.top) %&gt;% left_join(mnps.plantyr 
 vols.PCA &lt;- vols.std %&gt;% select(ipogood.top) %&gt;% prcomp() 
 summary(vols.PCA) # PCs 1 - 5 explain 51% of the variation</code></pre>
 <pre><code>Importance of components:
-                         PC1   PC2    PC3   PC4    PC5    PC6    PC7    PC8
-Standard deviation     1.983 1.468 1.2475 1.169 1.0935 1.0490 0.9998 0.9461
-Proportion of Variance 0.207 0.113 0.0819 0.072 0.0629 0.0579 0.0526 0.0471
-Cumulative Proportion  0.207 0.320 0.4024 0.474 0.5373 0.5952 0.6478 0.6949
-                          PC9   PC10   PC11   PC12   PC13   PC14   PC15   PC16
-Standard deviation     0.9156 0.8770 0.8408 0.7926 0.7814 0.6914 0.6847 0.6588
-Proportion of Variance 0.0441 0.0405 0.0372 0.0331 0.0321 0.0252 0.0247 0.0228
-Cumulative Proportion  0.7390 0.7795 0.8167 0.8498 0.8819 0.9071 0.9318 0.9546
-                         PC17   PC18  PC19
-Standard deviation     0.5772 0.5320 0.496
-Proportion of Variance 0.0175 0.0149 0.013
-Cumulative Proportion  0.9721 0.9870 1.000</code></pre>
+                         PC1   PC2    PC3    PC4    PC5    PC6   PC7    PC8
+Standard deviation     1.987 1.468 1.2625 1.1680 1.0993 1.0827 1.010 0.9848
+Proportion of Variance 0.197 0.108 0.0797 0.0682 0.0604 0.0586 0.051 0.0485
+Cumulative Proportion  0.197 0.305 0.3850 0.4532 0.5136 0.5722 0.623 0.6718
+                          PC9  PC10   PC11   PC12  PC13   PC14   PC15   PC16
+Standard deviation     0.9304 0.883 0.8724 0.8220 0.787 0.7680 0.7065 0.6807
+Proportion of Variance 0.0433 0.039 0.0381 0.0338 0.031 0.0295 0.0249 0.0232
+Cumulative Proportion  0.7150 0.754 0.7921 0.8259 0.857 0.8863 0.9113 0.9344
+                         PC17   PC18   PC19   PC20
+Standard deviation     0.6585 0.5771 0.5386 0.5043
+Proportion of Variance 0.0217 0.0167 0.0145 0.0127
+Cumulative Proportion  0.9561 0.9728 0.9873 1.0000</code></pre>
 <pre class="r"><code>vols.PCA.E &lt;- vols.PCA$rotation[,1:5]
 vols.std.PCA &lt;- bind_cols(vols.std, as.data.frame(vols.PCA$x))
 
@@ -797,26 +762,27 @@ vols.PCA.slopes &lt;- tidy(vols.PCA.regression) %&gt;% filter(term != &quot;(Int
 
 # Convert selection gradients on PCs to gradients on traits
 (vols.beta &lt;- calculate_beta(vols.PCA.E, vols.PCA.slopes))</code></pre>
-<pre><code>                                          trait          B       SE
-1                                .beta.-Myrcene -0.0004885 0.012902
-2                                .beta.-Ocimene -0.0167343 0.015457
-3  (1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene  0.0038864 0.019614
-4                           (E)-4-Oxohex-2-enal -0.0203792 0.018727
-5                          1-Butanol, 3-methyl-  0.0094597 0.018206
-6                            3-Hexen-1-ol, (E)-  0.0063581 0.011690
-7                   3-Hexen-1-ol, acetate, (E)- -0.0272846 0.022456
-8                                       Acetoin  0.0257727 0.025628
-9                                  Benzophenone  0.0326156 0.013988
-10                   E-11,13-Tetradecadien-1-ol  0.0166806 0.010342
-11                                     Linalool  0.0080086 0.021827
-12                              2-Hexenal, (E)-  0.0094471 0.016324
-13       Butanoic acid, 2-methyl-, methyl ester  0.0136794 0.017318
-14         Butanoic acid, 3-hexenyl ester, (Z)- -0.0104059 0.008852
-15                                Caryophyllene  0.0017234 0.012001
-16                                  Longifolene  0.0386132 0.018041
-17                            Methyl salicylate  0.0245077 0.026426
-18                     Octane, 2,4,6-trimethyl-  0.0526507 0.026782
-19                                   Petasitene  0.0008768 0.015737</code></pre>
+<pre><code>                                          trait         B       SE
+1                                .beta.-Myrcene  0.008426 0.012313
+2                                .beta.-Ocimene -0.002393 0.016631
+3  (1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene  0.002724 0.013977
+4                           (E)-4-Oxohex-2-enal -0.005908 0.014373
+5                          1-Butanol, 3-methyl-  0.014944 0.018748
+6                                    1-Pentanol -0.019848 0.018872
+7                            3-Hexen-1-ol, (E)-  0.017327 0.012578
+8                   3-Hexen-1-ol, acetate, (E)- -0.016608 0.017394
+9                                       Acetoin  0.017694 0.020696
+10                                 Benzophenone  0.030140 0.013936
+11                   E-11,13-Tetradecadien-1-ol  0.017402 0.009035
+12                                     Linalool  0.026764 0.021357
+13                              2-Hexenal, (E)-  0.013558 0.014697
+14       Butanoic acid, 2-methyl-, methyl ester  0.010967 0.018761
+15         Butanoic acid, 3-hexenyl ester, (Z)- -0.017150 0.020919
+16                                Caryophyllene  0.013248 0.012132
+17                                  Longifolene  0.035372 0.017401
+18                            Methyl salicylate  0.037623 0.026102
+19                     Octane, 2,4,6-trimethyl-  0.047561 0.024237
+20                                   Petasitene -0.001359 0.011066</code></pre>
 <pre class="r"><code>plot_beta(vols.beta)</code></pre>
 <p><img src="images_volatiles2020/gradients-1.png" width="768" /></p>
 </div>

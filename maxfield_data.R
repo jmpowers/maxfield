@@ -642,27 +642,25 @@ mt.subplot <- mt.plantyr %>%
 
 # floralvolatiles ---------------------------------------------------------------
 
-vt_sheets <- filter(datasheets, name=="2020 Maxfield Floral Volatiles")
+vt_sheets <- gs4_get("1vhJNXeEmffkKFyhtkpMp2bhYcyPPEL-2aRsBAdSYNJY")#TODO temporary for convenience #filter(datasheets, name=="2020 Maxfield Floral Volatiles")
 vt <- map_dfr(sheet_names(vt_sheets), ~ read_sheet(vt_sheets, sheet=.x) %>% 
-                mutate(plant.file=as.character(plant.file) %>% na_if("NULL"))) %>% 
+                mutate(plant.file=as.character(plant.file) %>% na_if("NULL"))) %>% #some read in as a list
   mutate(plotid = paste0(plot, subplot), plot = as.character(plot), plant=as.character(plant),
-         type = ifelse(plant == "air", "air", "floral"), plant = na_if(plant, "air"),
+         type = ifelse(plant == "air", "ambient", "floral"), plant = na_if(plant, "ambient"),
          plantid = ifelse(is.na(plant), NA, paste0(plotid, plant)),
-         year=factor(year(sampledate))) %>% 
+         sampledate = as.Date(sampledate),
+         year=factor(year(sampledate)),
+         vt.n = row_number(),
+         sampledate.file = coalesce(sampledate.file, sampledate),
+         plot.file =       coalesce(as.character(plot.file), plot),
+         subplot.file =    coalesce(subplot.file, subplot),
+         plant.file =      coalesce(plant.file, plant)) %>% 
+  filter(type=="floral") %>% 
+  select(-index) %>% 
   #TODO get fix_dataset working here
   #group_by(year) %>% group_split() %>% map2_dfr(paste0("volatiles",18:20), fix_dataset) %>% 
-  left_join(treatments) %>%
-  mutate_if(is.character, as.factor) %>% 
-  mutate(sampledate = as.Date(sampledate), 
-         type = recode(type, air="ambient"), 
-         vt.n = row_number(),
-         across(c(plot, subplot, plant), as.character)) %>% 
-  filter(type=="floral") %>% 
-  mutate(sampledate.file = coalesce(sampledate.file, sampledate),
-         plot.file = coalesce(as.character(plot.file), as.character(plot)),
-         subplot.file = coalesce(subplot.file, subplot),
-         plant.file = coalesce(as.character(plant.file), as.character(plant))) %>% 
-  select(-index)
+  left_join(treatments) %>% #assume that the written metadata is correct not the info in the  .file name
+  mutate_if(is.character, as.factor)
 
 # seeds -------------------------------------------------------------------
 
@@ -880,7 +878,7 @@ alltraits.mean <- c(map_dbl(traits,   ~mean(mnps.plantyr[[.x]], na.rm=T)),
 # export ------------------------------------------------------------------
 
 #load("data/maxfield_data.rda")
-remove(datasheets)
+remove(datasheets, maxf, maxfmeta, alldata)
 save.image("data/maxfield_data.rda")
 
 alldata <- list("treatments"=treatments,

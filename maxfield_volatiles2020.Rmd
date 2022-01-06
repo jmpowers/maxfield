@@ -36,14 +36,20 @@ options(digits=4) # for kables
 load("data/volatiles/maxfield_volatiles.rda")
 load("data/maxfield_data.rda")
 
+#check for duplicates
+#View(vt %>% filter(!exclude %in% c("flowers", "incomplete", "resample")) %>% count(sampledate.file, plot.file, subplot.file, plant.file) %>% filter(n>1) %>% left_join(vt)) #exclude="resample"
+#View(maxfmeta %>% count(sampledate,plantid) %>% filter(n>1) %>% left_join(maxfmeta))
+#TODO fix these GCMS filename duplicates
+
 volsmeta <- maxfmeta %>% mutate(sampledate = as.Date(sampledate), year = factor(year(sampledate))) %>% 
   drop_na(plotid) %>% #cut out ambients, leaving 459 chromatograms
   filter(year %in% c("2018","2019","2020")) %>% droplevels() %>% 
     mutate(plot=str_sub(plotid, 1,1), subplot=str_sub(plotid, 2,2)) %>% 
   rename(sampledate.file=sampledate, plot.file = plot, subplot.file=subplot, plant.file=plant) %>% 
-  left_join(vt %>% select(observer:notes)) %>% 
-  left_join(treatments) %>% drop_na(snow)
-#rownames(volsmeta) <- volsmeta$index #TODO fix duplicate rownames
+  left_join(vt %>% select(-c(colnames(treatments),"type","plantid")) %>% 
+              filter(!exclude %in% c("flowers", "incomplete", "resample"))) %>% 
+  left_join(treatments) #assume that the written metadata is correct not the info in the  .file name
+rownames(volsmeta) <- volsmeta$index 
 
 vols <- maxf[volsmeta$index,]
 ```
@@ -58,19 +64,14 @@ bind_rows(sampling=vt %>% group_by(year, type) %>% tally(),
   pivot_wider(names_from=c(year,type), values_from = n) %>% kable()
 
 bind_rows(sampling=vt %>% filter(type=="floral") %>% group_by(year, water, snow) %>% tally(),
-  filenames=volsmeta %>% mutate(year=factor(year(sampledate))) %>% group_by(year, water, snow) %>% tally(), .id="source") %>% 
+  filenames=volsmeta %>% mutate(year=factor(year(sampledate.file))) %>% group_by(year, water, snow) %>% tally(), .id="source") %>% 
   pivot_wider(names_from=c(year), values_from = n) %>% kable()
 
-bind_rows(sampling = vt %>% filter(type=="floral") %>% group_by(sampledate) %>% tally(),
-         filenames = volsmeta %>% drop_na(sampledate) %>% group_by(sampledate) %>% tally(), .id="source") %>% 
-  ggplot(aes(x=yday(sampledate), y=n, fill=source)) + geom_col(position=position_dodge(preserve="single")) +
-  facet_wrap(vars(year(sampledate)), ncol=1) +
+bind_rows(sampling = vt %>% filter(type=="floral") %>% group_by(sampledate.file) %>% tally(),
+         filenames = volsmeta %>% drop_na(sampledate.file) %>% group_by(sampledate.file) %>% tally(), .id="source") %>% 
+  ggplot(aes(x=yday(sampledate.file), y=n, fill=source)) + geom_col(position=position_dodge(preserve="single")) +
+  facet_wrap(vars(year(sampledate.file)), ncol=1) +
   labs(x="VOC sampling date (day of year)", y="Floral samples")
-# TODO fix early 2020 date? and check singletons in 2018, 2019
-# TODO there are some duplicate file names in maxfmeta, especially sampled 190805
-#vt$sampledate[vt$sampledate=="2020-07-30"] <- ymd("2020-07-29")#notes say samples taken on 7/30 have incorrect labels that say 7/29
-#vt$sampledate[vt$sampledate=="2019-07-21"] <- ymd("2019-07-22")#notes say CONFIRM DATE on 7/22
-#TODO work on lining these up - 251/459 have no match in vt
 ```
 
 ## Matching datasheets and filenames
@@ -89,13 +90,13 @@ vt.volsmeta <- full_join(vt %>% select(vt.n, sampledate.file, plot.file, subplot
                          volsmeta %>% select(FileName, sampledate.file, plot.file, subplot.file, plant.file) %>% mutate(in.volsmeta=T)) %>% 
   mutate(across(c(in.vt, in.volsmeta), ~replace_na(.,FALSE)))
 vt.volsmeta.count <- vt.volsmeta  %>% count(sampledate.file, in.vt, in.volsmeta) %>% mutate(status=paste("datasheet",ifelse(in.vt,"yes","no"),"+","GCfile", ifelse(in.volsmeta,"yes","no")))
-#View(vt.volsmeta.count %>% filter(!in.vt | !in.volsmeta) %>% arrange(sampledate))
+#View(vt.volsmeta.count %>% filter(!in.vt | !in.volsmeta) %>% arrange(sampledate.file))
 
 ggplot(vt.volsmeta.count, aes(x=as.Date(sampledate.file),y=n, fill=status))+ geom_col() +
   facet_wrap(vars(year(sampledate.file)), scales="free_x", ncol=1) +
   scale_x_date(breaks=scales::date_breaks(width = "7 days"), minor_breaks = scales::date_breaks(width = "1 days")) +
-  theme_minimal() + theme(legend.position="top") + scale_fill_manual(values=c("orange","darkgreen")) +
-  labs(x="Sampling date", y="Samples", fill="Data status")
+  theme_minimal() + theme(legend.position="top") + scale_fill_manual(values=c("red","orange","darkgreen")) +
+  labs(x="Sampling date (according to GCfile)", y="Samples", fill="Data status")
 ```
 
 
@@ -155,7 +156,7 @@ pheatmap(as.matrix(t(vols.good))^(1/4), color=mako(512),
 
 ```{r nmds}
 nonzero <- rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
-(scents.nmds <- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
+(scents.nmds <- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F, trymax=5)) #had noshare = FALSE
 
 plot(scents.nmds,type="n")
 points(scents.nmds, display = "sites", col=water_pal[volsmeta$water[nonzero]], pch=as.integer(volsmeta$year[nonzero])+14)
