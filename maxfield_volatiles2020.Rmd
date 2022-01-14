@@ -44,7 +44,8 @@ load("data/maxfield_data.rda")
 volsmeta <- maxfmeta %>% mutate(sampledate = as.Date(sampledate), year = factor(year(sampledate))) %>% 
   drop_na(plotid) %>% #cut out ambients, leaving 459 chromatograms
   filter(year %in% c("2018","2019","2020")) %>% droplevels() %>% 
-    mutate(plot=str_sub(plotid, 1,1), subplot=str_sub(plotid, 2,2)) %>% 
+  mutate(plot=str_sub(plotid, 1,1), subplot=str_sub(plotid, 2,2),
+         sequence.date = date(sequence.start)) %>% 
   rename(sampledate.file=sampledate, plot.file = plot, subplot.file=subplot, plant.file=plant) %>% 
   left_join(vt %>% select(-c(colnames(treatments),"type","plantid")) %>% 
               filter(!exclude %in% c("flowers", "incomplete", "resample"))) %>% 
@@ -130,7 +131,7 @@ Plus (verdict other than "fvoc"):
 
 ```{r filtering}
 vols <- maxf[volsmeta$index,]
-vols.cut <- vols[,colSums(vols)>1e7]
+vols.cut <- vols[,colSums(vols)>3e8]
 
 ipochems <- read_csv("data/volatiles/chemsf_ipo.csv") %>% 
   filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge"),
@@ -164,19 +165,25 @@ volsmeta.drydown <- bind_cols(volsmeta, vols.drydown) %>%  pivot_longer(-all_of(
 
 ```{r heatmap, fig.width=16, fig.height=12}
 library(dendsort)
-pheatmap(as.matrix(t(vols[,colSums(vols)>3e8]))^(1/4), 
+sequence.date_pal <- list(sequence.date = volsmeta %>% mutate(yr = year(sequence.date)) %>% group_by(yr) %>% summarize(n = length(unique(sequence.date))) %>% pull(n) %>% map(scales::hue_pal()) %>% unlist() %>% set_names(unique(volsmeta$sequence.date)))
+
+pheatmap(as.matrix(t(vols.cut))^(1/4), 
          cluster_cols=F, show_colnames=F,
          clustering_method="mcquitty", clustering_distance_rows="correlation",
          clustering_callback = function(hc, ...){dendsort(hc, type="average")},
-         scale="none", color=mako(512),
-         annotation_col=volsmeta %>% select(year), main="Unfiltered top volatiles")
+         scale="none", color=mako(512),main="Unfiltered top volatiles",
+         annotation_col=volsmeta %>% mutate(sequence.date = factor(sequence.date)) %>% select(sequence.date),
+         annotation_colors = sequence.date_pal,
+         gaps_col = which(diff(year(volsmeta$sequence.date))>0))
 
 pheatmap(as.matrix(t(vols.good))^(1/4), 
          cluster_cols=F, show_colnames=F,
          clustering_method="mcquitty", clustering_distance_rows="correlation",
          clustering_callback = function(hc, ...){dendsort(hc, type="average")},
-         scale="none", color=mako(512),
-         annotation_col=volsmeta %>% select(year), main="Filtered volatiles")
+         scale="none", color=mako(512),main="Filtered volatiles",
+         annotation_col=volsmeta %>% mutate(sequence.date = factor(sequence.date)) %>% select(sequence.date),
+         annotation_colors = sequence.date_pal,
+         gaps_col = which(diff(year(volsmeta$sequence.date))>0))
 
 pinene_correlates <- cor(sqrt(vols[,colSums(vols)>3e7])) %>% as.data.frame() %>% filter(`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`>0.15) %>% rownames()
 pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4), 
@@ -184,10 +191,14 @@ pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4),
          clustering_method="mcquitty", clustering_distance_rows="correlation",
          clustering_callback = function(hc, ...){dendsort(hc, type="average")},
          scale="none", color=mako(512),
-         annotation_col=volsmeta %>% select(year), main="Volatiles that correlate with alpha-pinene")
+                  annotation_col=volsmeta %>% mutate(sequence.date = factor(sequence.date)) %>% select(sequence.date),
+         annotation_colors = sequence.date_pal,
+         gaps_col = which(diff(year(volsmeta$sequence.date))>0), main="Volatiles that correlate with alpha-pinene")
 ```
 
-## Detection over time
+## Chromatograms by GCMS run date
+
+### Univariate
 
 ```{r gcms_date, fig.height=8, fig.width=7}
 plot_vols_rundate <- function(type, checkvols) {
@@ -205,21 +216,133 @@ plot_vols_rundate("Benzenoids", c("Benzophenone","Methyl salicylate","Anisole"))
 plot_vols_rundate("Green leaf volatiles", c("4-Hexen-1-ol, (Z)-", "3-Hexen-1-ol, (E)-"))
 ```
 
+### Multivariate
+
+```{r gcms_date_ord}
+for(yr in unique(year(volsmeta$sequence.start))) {
+  print(yr)
+  yrfilter <- year(volsmeta$sequence.start) == yr
+  vols.cap <- capscale(sqrt(vols.cut[yrfilter,]) ~ factor(date(sequence.start)), data=volsmeta[yrfilter,])
+  print(vols.cap)
+  print(anova(vols.cap, by="term"))
+  # vols.cap.points <-  fortify(vols.cap) %>% as_tibble()
+  # vols.cap.samples <- vols.cap.points %>% filter(Score=="sites") %>% 
+  #   left_join(volsmeta, by=c("Label"="index"))
+  # vols.cap.chems <- vols.cap.points %>% filter(Score=="species")
+  # p <- vols.cap.samples %>% 
+  #   mutate(sequence.date = date(sequence.start)) %>% 
+  #   filter(year(sequence.date) == yr) %>% 
+  #   ggplot(aes(x=CAP1, y=CAP2)) + theme_classic()+
+  #   geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue("Run date")
+  # print(p)
+}
+```
 
 ## Ordinations
 
 ### NMDS
 
-```{r nmds}
-(scents.nmds <- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F, trymax=5)) #had noshare = FALSE
+```{r nmds, fig.height=9, fig.width=6}
+library(gridExtra)
+(vols.nmds <- metaMDS(sqrt(vols.cut), autotransform=FALSE, trace=F))
+vols.nmds.points <-  fortify(vols.nmds) %>% as_tibble()
+vols.nmds.samples <- vols.nmds.points %>% filter(Score=="sites") %>% 
+  left_join(volsmeta, by=c("Label"="index"))
+vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
 
-plot(scents.nmds,type="n")
-points(scents.nmds, display = "sites", col=water_pal[volsmeta$water[nonzero]], pch=as.integer(volsmeta$year[nonzero])+14)
-legend("topleft", legend=2018:2020, pch=15:17)
-legend("topright", legend=names(water_pal), fill=water_pal)
+(scents.nmds <- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
+nmds.points <-  fortify(scents.nmds) %>% as_tibble()
+nmds.samples <- nmds.points %>% filter(Score=="sites") %>% left_join(volsmeta, by=c("Label"="index"))
+nmds.chems <- nmds.points %>% filter(Score=="species")
 
-plot(scents.nmds,type="n")
-text(scents.nmds, display="species", col="black", cex=0.5)
+vols.plot <- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
+  geom_point(aes(color=factor(year(sequence.date)))) + 
+  labs(title="Unfiltered NMDS by year", color="Year")
+vols.good.plot <- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  #geom_text(data=nmds.chems, aes(label=Label)) +
+  geom_point(aes(color=factor(year(sequence.date))))+ 
+  #geom_point(aes(color=water, shape=year)) + scale_color_manual("Precipitation", values=water_pal) +
+  labs(title="Filtered NMDS by year", color="Year")
+grid.arrange(vols.plot, vols.good.plot)
+
+
+for(yr in unique(year(volsmeta$sequence.start))) {
+  
+  (vols.nmds <- metaMDS(sqrt(vols.cut[year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F))
+vols.nmds.points <-  fortify(vols.nmds) %>% as_tibble()
+vols.nmds.samples <- vols.nmds.points %>% filter(Score=="sites") %>% 
+  left_join(volsmeta, by=c("Label"="index"))
+vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
+
+(scents.nmds <- metaMDS(sqrt(vols.good[nonzero & year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
+nmds.points <-  fortify(scents.nmds) %>% as_tibble()
+nmds.samples <- nmds.points %>% filter(Score=="sites") %>% left_join(volsmeta, by=c("Label"="index"))
+nmds.chems <- nmds.points %>% filter(Score=="species")
+  
+  
+  vols.plot <- vols.nmds.samples %>% 
+    filter(year(sequence.start) == yr) %>% 
+    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste("Unfiltered NMDS run",yr))+
+    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue("Run date")
+  vols.good.plot <- nmds.samples %>% 
+    filter(year(sequence.start) == yr) %>% 
+    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste("Filtered NMDS run",yr))+
+    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue("Run date")
+  grid.arrange(vols.plot, vols.good.plot)
+}
+```
+
+```{r nmds_chems, fig.height=14, fig.width=12}
+library(gridExtra)
+(vols.nmds <- metaMDS(sqrt(vols.cut), autotransform=FALSE, trace=F))
+vols.nmds.points <-  fortify(vols.nmds) %>% as_tibble()
+vols.nmds.samples <- vols.nmds.points %>% filter(Score=="sites") %>% 
+  left_join(volsmeta, by=c("Label"="index"))
+vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
+
+(scents.nmds <- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
+nmds.points <-  fortify(scents.nmds) %>% as_tibble()
+nmds.samples <- nmds.points %>% filter(Score=="sites") %>% left_join(volsmeta, by=c("Label"="index"))
+nmds.chems <- nmds.points %>% filter(Score=="species")
+
+vols.plot <- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
+  geom_point(aes(color=factor(year(sequence.date)))) + 
+    geom_text(data=vols.nmds.chems, aes(label=Label)) +
+  labs(title="Unfiltered NMDS by year", color="Year")
+vols.good.plot <- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=factor(year(sequence.date))))+ 
+    geom_text(data=nmds.chems, aes(label=Label)) +
+  #geom_point(aes(color=water, shape=year)) + scale_color_manual("Precipitation", values=water_pal) +
+  labs(title="Filtered NMDS by year", color="Year")
+grid.arrange(vols.plot, vols.good.plot)
+
+
+for(yr in unique(year(volsmeta$sequence.start))) {
+  
+  (vols.nmds <- metaMDS(sqrt(vols.cut[year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F))
+vols.nmds.points <-  fortify(vols.nmds) %>% as_tibble()
+vols.nmds.samples <- vols.nmds.points %>% filter(Score=="sites") %>% 
+  left_join(volsmeta, by=c("Label"="index"))
+vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
+
+(scents.nmds <- metaMDS(sqrt(vols.good[nonzero & year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
+nmds.points <-  fortify(scents.nmds) %>% as_tibble()
+nmds.samples <- nmds.points %>% filter(Score=="sites") %>% left_join(volsmeta, by=c("Label"="index"))
+nmds.chems <- nmds.points %>% filter(Score=="species")
+  
+  
+  vols.plot <- vols.nmds.samples %>% 
+    filter(year(sequence.start) == yr) %>% 
+    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste("Unfiltered NMDS run",yr))+
+    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue("Run date") +
+          geom_text(data=vols.nmds.chems, aes(label=Label))
+  vols.good.plot <- nmds.samples %>% 
+    filter(year(sequence.start) == yr) %>% 
+    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste("Filtered NMDS run",yr))+
+    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue("Run date")+
+          geom_text(data=nmds.chems, aes(label=Label))
+  grid.arrange(vols.plot, vols.good.plot)
+}
 ```
 
 ### CAP
@@ -349,6 +472,12 @@ plot_beta(vols.beta)
 ggplot(traits.good.top, aes(x=corolla_length, y=value, color=year)) + geom_point() + geom_smooth(se=F) + 
   facet_wrap(vars(name), scales="free_y") + 
   labs(y="Emissions", x=traitnames.units["corolla_length"], color="Year")+
+  theme_bw() + scale_color_manual(values=year_pal) +
+  scale_y_sqrt()
+
+ggplot(traits.good.top, aes(x=sepal_width, y=value, color=year)) + geom_point() + geom_smooth(se=F) + 
+  facet_wrap(vars(name), scales="free_y") + 
+  labs(y="Emissions", x=traitnames.units["sepal_width"], color="Year")+
   theme_bw() + scale_color_manual(values=year_pal) +
   scale_y_sqrt()
 

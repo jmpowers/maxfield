@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-01-06" />
+<meta name="date" content="2022-01-13" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -263,7 +263,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-01-06</h4>
+<h4 class="date">2022-01-13</h4>
 
 </div>
 
@@ -297,7 +297,8 @@ load(&quot;data/maxfield_data.rda&quot;)
 volsmeta &lt;- maxfmeta %&gt;% mutate(sampledate = as.Date(sampledate), year = factor(year(sampledate))) %&gt;% 
   drop_na(plotid) %&gt;% #cut out ambients, leaving 459 chromatograms
   filter(year %in% c(&quot;2018&quot;,&quot;2019&quot;,&quot;2020&quot;)) %&gt;% droplevels() %&gt;% 
-    mutate(plot=str_sub(plotid, 1,1), subplot=str_sub(plotid, 2,2)) %&gt;% 
+  mutate(plot=str_sub(plotid, 1,1), subplot=str_sub(plotid, 2,2),
+         sequence.date = date(sequence.start)) %&gt;% 
   rename(sampledate.file=sampledate, plot.file = plot, subplot.file=subplot, plant.file=plant) %&gt;% 
   left_join(vt %&gt;% select(-c(colnames(treatments),&quot;type&quot;,&quot;plantid&quot;)) %&gt;% 
               filter(!exclude %in% c(&quot;flowers&quot;, &quot;incomplete&quot;, &quot;resample&quot;))) %&gt;% 
@@ -551,7 +552,7 @@ ggplot(vt.volsmeta.count, aes(x=as.Date(sampledate.file),y=n, fill=status))+ geo
 <li>merge: a compound that is a synonym of one of the floral volatiles (b-caryophyllene, b-ocimene, verbenone)</li>
 </ul>
 <pre class="r"><code>vols &lt;- maxf[volsmeta$index,]
-vols.cut &lt;- vols[,colSums(vols)&gt;1e7]
+vols.cut &lt;- vols[,colSums(vols)&gt;3e8]
 
 ipochems &lt;- read_csv(&quot;data/volatiles/chemsf_ipo.csv&quot;) %&gt;% 
   filter(verdict %in% c(&quot;bis14&quot;, &quot;fvoc&quot;, &quot;keep&quot;,&quot;keep_leaf&quot;,&quot;merge&quot;),
@@ -584,19 +585,25 @@ volsmeta.drydown &lt;- bind_cols(volsmeta, vols.drydown) %&gt;%  pivot_longer(-a
 <div id="heatmap" class="section level2">
 <h2>Heatmap</h2>
 <pre class="r"><code>library(dendsort)
-pheatmap(as.matrix(t(vols[,colSums(vols)&gt;3e8]))^(1/4), 
+sequence.date_pal &lt;- list(sequence.date = volsmeta %&gt;% mutate(yr = year(sequence.date)) %&gt;% group_by(yr) %&gt;% summarize(n = length(unique(sequence.date))) %&gt;% pull(n) %&gt;% map(scales::hue_pal()) %&gt;% unlist() %&gt;% set_names(unique(volsmeta$sequence.date)))
+
+pheatmap(as.matrix(t(vols.cut))^(1/4), 
          cluster_cols=F, show_colnames=F,
          clustering_method=&quot;mcquitty&quot;, clustering_distance_rows=&quot;correlation&quot;,
          clustering_callback = function(hc, ...){dendsort(hc, type=&quot;average&quot;)},
-         scale=&quot;none&quot;, color=mako(512),
-         annotation_col=volsmeta %&gt;% select(year), main=&quot;Unfiltered top volatiles&quot;)</code></pre>
+         scale=&quot;none&quot;, color=mako(512),main=&quot;Unfiltered top volatiles&quot;,
+         annotation_col=volsmeta %&gt;% mutate(sequence.date = factor(sequence.date)) %&gt;% select(sequence.date),
+         annotation_colors = sequence.date_pal,
+         gaps_col = which(diff(year(volsmeta$sequence.date))&gt;0))</code></pre>
 <p><img src="images_volatiles2020/heatmap-1.png" width="1536" /></p>
 <pre class="r"><code>pheatmap(as.matrix(t(vols.good))^(1/4), 
          cluster_cols=F, show_colnames=F,
          clustering_method=&quot;mcquitty&quot;, clustering_distance_rows=&quot;correlation&quot;,
          clustering_callback = function(hc, ...){dendsort(hc, type=&quot;average&quot;)},
-         scale=&quot;none&quot;, color=mako(512),
-         annotation_col=volsmeta %&gt;% select(year), main=&quot;Filtered volatiles&quot;)</code></pre>
+         scale=&quot;none&quot;, color=mako(512),main=&quot;Filtered volatiles&quot;,
+         annotation_col=volsmeta %&gt;% mutate(sequence.date = factor(sequence.date)) %&gt;% select(sequence.date),
+         annotation_colors = sequence.date_pal,
+         gaps_col = which(diff(year(volsmeta$sequence.date))&gt;0))</code></pre>
 <p><img src="images_volatiles2020/heatmap-2.png" width="1536" /></p>
 <pre class="r"><code>pinene_correlates &lt;- cor(sqrt(vols[,colSums(vols)&gt;3e7])) %&gt;% as.data.frame() %&gt;% filter(`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`&gt;0.15) %&gt;% rownames()
 pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4), 
@@ -604,11 +611,15 @@ pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4),
          clustering_method=&quot;mcquitty&quot;, clustering_distance_rows=&quot;correlation&quot;,
          clustering_callback = function(hc, ...){dendsort(hc, type=&quot;average&quot;)},
          scale=&quot;none&quot;, color=mako(512),
-         annotation_col=volsmeta %&gt;% select(year), main=&quot;Volatiles that correlate with alpha-pinene&quot;)</code></pre>
+                  annotation_col=volsmeta %&gt;% mutate(sequence.date = factor(sequence.date)) %&gt;% select(sequence.date),
+         annotation_colors = sequence.date_pal,
+         gaps_col = which(diff(year(volsmeta$sequence.date))&gt;0), main=&quot;Volatiles that correlate with alpha-pinene&quot;)</code></pre>
 <p><img src="images_volatiles2020/heatmap-3.png" width="1536" /></p>
 </div>
-<div id="detection-over-time" class="section level2">
-<h2>Detection over time</h2>
+<div id="chromatograms-by-gcms-run-date" class="section level2">
+<h2>Chromatograms by GCMS run date</h2>
+<div id="univariate" class="section level3">
+<h3>Univariate</h3>
 <pre class="r"><code>plot_vols_rundate &lt;- function(type, checkvols) {
 volsmeta %&gt;% mutate(yr=year(Desorb.Start.Time)) %&gt;% 
   bind_cols(vols %&gt;% select(checkvols)) %&gt;% pivot_longer(cols=checkvols) %&gt;% 
@@ -624,14 +635,152 @@ plot_vols_rundate(&quot;Terpenes&quot;, c(&quot;(1R)-2,6,6-Trimethylbicyclo[3.1.
 <pre class="r"><code>plot_vols_rundate(&quot;Green leaf volatiles&quot;, c(&quot;4-Hexen-1-ol, (Z)-&quot;, &quot;3-Hexen-1-ol, (E)-&quot;))</code></pre>
 <p><img src="images_volatiles2020/gcms_date-3.png" width="672" /></p>
 </div>
+<div id="multivariate" class="section level3">
+<h3>Multivariate</h3>
+<pre class="r"><code>for(yr in unique(year(volsmeta$sequence.start))) {
+  print(yr)
+  yrfilter &lt;- year(volsmeta$sequence.start) == yr
+  vols.cap &lt;- capscale(sqrt(vols.cut[yrfilter,]) ~ factor(date(sequence.start)), data=volsmeta[yrfilter,])
+  print(vols.cap)
+  print(anova(vols.cap, by=&quot;term&quot;))
+  # vols.cap.points &lt;-  fortify(vols.cap) %&gt;% as_tibble()
+  # vols.cap.samples &lt;- vols.cap.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
+  #   left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
+  # vols.cap.chems &lt;- vols.cap.points %&gt;% filter(Score==&quot;species&quot;)
+  # p &lt;- vols.cap.samples %&gt;% 
+  #   mutate(sequence.date = date(sequence.start)) %&gt;% 
+  #   filter(year(sequence.date) == yr) %&gt;% 
+  #   ggplot(aes(x=CAP1, y=CAP2)) + theme_classic()+
+  #   geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue(&quot;Run date&quot;)
+  # print(p)
+}</code></pre>
+<pre><code>[1] 2018
+Call: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~
+factor(date(sequence.start)), data = volsmeta[yrfilter, ])
+
+               Inertia Proportion Rank
+Total         3.58e+07   1.00e+00     
+Constrained   8.48e+06   2.36e-01   11
+Unconstrained 2.74e+07   7.64e-01   88
+Inertia is mean squared Euclidean distance 
+Species scores projected from &#39;sqrt&#39; &#39;vols.cut[yrfilter, ]&#39; 
+
+Eigenvalues for constrained axes:
+   CAP1    CAP2    CAP3    CAP4    CAP5    CAP6    CAP7    CAP8    CAP9   CAP10 
+2846450 2522429 1202386  489275  397185  344120  208923  174562  136896   84490 
+  CAP11 
+  69188 
+
+Eigenvalues for unconstrained axes:
+   MDS1    MDS2    MDS3    MDS4    MDS5    MDS6    MDS7    MDS8 
+6560009 4236095 1782454 1579282 1054984 1007955  856724  702605 
+(Showing 8 of 88 unconstrained eigenvalues)
+
+Permutation test for capscale under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+Model: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~ factor(date(sequence.start)), data = volsmeta[yrfilter, ])
+                              Df Variance    F Pr(&gt;F)    
+factor(date(sequence.start))  11  8475902 4.39  0.001 ***
+Residual                     156 27369925                
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+[1] 2019
+Call: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~
+factor(date(sequence.start)), data = volsmeta[yrfilter, ])
+
+               Inertia Proportion Rank
+Total         7.77e+07   1.00e+00     
+Constrained   1.37e+07   1.76e-01    6
+Unconstrained 6.40e+07   8.24e-01   89
+Inertia is mean squared Euclidean distance 
+Species scores projected from &#39;sqrt&#39; &#39;vols.cut[yrfilter, ]&#39; 
+
+Eigenvalues for constrained axes:
+   CAP1    CAP2    CAP3    CAP4    CAP5    CAP6 
+9573124 2384418  743376  445601  361725  179629 
+
+Eigenvalues for unconstrained axes:
+    MDS1     MDS2     MDS3     MDS4     MDS5     MDS6     MDS7     MDS8 
+34584419  4002172  2560566  1967341  1476215  1422494  1328896  1241090 
+(Showing 8 of 89 unconstrained eigenvalues)
+
+Permutation test for capscale under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+Model: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~ factor(date(sequence.start)), data = volsmeta[yrfilter, ])
+                              Df Variance    F Pr(&gt;F)    
+factor(date(sequence.start))   6 13687873 4.92  0.001 ***
+Residual                     138 63996960                
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+[1] 2021
+Call: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~
+factor(date(sequence.start)), data = volsmeta[yrfilter, ])
+
+               Inertia Proportion Rank
+Total         1.35e+08   1.00e+00     
+Constrained   4.62e+07   3.43e-01    6
+Unconstrained 8.85e+07   6.57e-01   90
+Inertia is mean squared Euclidean distance 
+Species scores projected from &#39;sqrt&#39; &#39;vols.cut[yrfilter, ]&#39; 
+
+Eigenvalues for constrained axes:
+    CAP1     CAP2     CAP3     CAP4     CAP5     CAP6 
+41489418  2423189   834628   759488   498655   241430 
+
+Eigenvalues for unconstrained axes:
+    MDS1     MDS2     MDS3     MDS4     MDS5     MDS6     MDS7     MDS8 
+39776235  5939815  4971861  3227157  2883716  2633380  2097703  1963548 
+(Showing 8 of 90 unconstrained eigenvalues)
+
+Permutation test for capscale under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+Model: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~ factor(date(sequence.start)), data = volsmeta[yrfilter, ])
+                              Df Variance    F Pr(&gt;F)    
+factor(date(sequence.start))   6 46246809 12.1  0.001 ***
+Residual                     139 88510578                
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+</div>
+</div>
 <div id="ordinations" class="section level2">
 <h2>Ordinations</h2>
 <div id="nmds" class="section level3">
 <h3>NMDS</h3>
-<pre class="r"><code>(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F, trymax=5)) #had noshare = FALSE</code></pre>
+<pre class="r"><code>library(gridExtra)
+(vols.nmds &lt;- metaMDS(sqrt(vols.cut), autotransform=FALSE, trace=F))</code></pre>
 <pre><code>
 Call:
-metaMDS(comm = sqrt(vols.good[nonzero, ]), trymax = 5, autotransform = FALSE,      trace = F) 
+metaMDS(comm = sqrt(vols.cut), autotransform = FALSE, trace = F) 
+
+global Multidimensional Scaling using monoMDS
+
+Data:     sqrt(vols.cut) 
+Distance: bray 
+
+Dimensions: 2 
+Stress:     0.1344 
+Stress type 1, weak ties
+Two convergent solutions found after 20 tries
+Scaling: centring, PC rotation, halfchange scaling 
+Species: expanded scores based on &#39;sqrt(vols.cut)&#39; </code></pre>
+<pre class="r"><code>vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
+vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
+  left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
+vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
+
+(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE</code></pre>
+<pre><code>
+Call:
+metaMDS(comm = sqrt(vols.good[nonzero, ]), autotransform = FALSE,      trace = F) 
 
 global Multidimensional Scaling using monoMDS
 
@@ -644,14 +793,125 @@ Stress type 1, weak ties
 No convergent solutions - best solution after 20 tries
 Scaling: centring, PC rotation, halfchange scaling 
 Species: expanded scores based on &#39;sqrt(vols.good[nonzero, ])&#39; </code></pre>
-<pre class="r"><code>plot(scents.nmds,type=&quot;n&quot;)
-points(scents.nmds, display = &quot;sites&quot;, col=water_pal[volsmeta$water[nonzero]], pch=as.integer(volsmeta$year[nonzero])+14)
-legend(&quot;topleft&quot;, legend=2018:2020, pch=15:17)
-legend(&quot;topright&quot;, legend=names(water_pal), fill=water_pal)</code></pre>
-<p><img src="images_volatiles2020/nmds-1.png" width="768" /></p>
-<pre class="r"><code>plot(scents.nmds,type=&quot;n&quot;)
-text(scents.nmds, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</code></pre>
-<p><img src="images_volatiles2020/nmds-2.png" width="768" /></p>
+<pre class="r"><code>nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
+nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
+nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;)
+
+vols.plot &lt;- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
+  geom_point(aes(color=factor(year(sequence.date)))) + 
+  labs(title=&quot;Unfiltered NMDS by year&quot;, color=&quot;Year&quot;)
+vols.good.plot &lt;- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  #geom_text(data=nmds.chems, aes(label=Label)) +
+  geom_point(aes(color=factor(year(sequence.date))))+ 
+  #geom_point(aes(color=water, shape=year)) + scale_color_manual(&quot;Precipitation&quot;, values=water_pal) +
+  labs(title=&quot;Filtered NMDS by year&quot;, color=&quot;Year&quot;)
+grid.arrange(vols.plot, vols.good.plot)</code></pre>
+<p><img src="images_volatiles2020/nmds-1.png" width="576" /></p>
+<pre class="r"><code>for(yr in unique(year(volsmeta$sequence.start))) {
+  
+  (vols.nmds &lt;- metaMDS(sqrt(vols.cut[year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F))
+vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
+vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
+  left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
+vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
+
+(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero &amp; year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
+nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
+nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
+nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;)
+  
+  
+  vols.plot &lt;- vols.nmds.samples %&gt;% 
+    filter(year(sequence.start) == yr) %&gt;% 
+    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste(&quot;Unfiltered NMDS run&quot;,yr))+
+    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue(&quot;Run date&quot;)
+  vols.good.plot &lt;- nmds.samples %&gt;% 
+    filter(year(sequence.start) == yr) %&gt;% 
+    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste(&quot;Filtered NMDS run&quot;,yr))+
+    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue(&quot;Run date&quot;)
+  grid.arrange(vols.plot, vols.good.plot)
+}</code></pre>
+<p><img src="images_volatiles2020/nmds-2.png" width="576" /><img src="images_volatiles2020/nmds-3.png" width="576" /><img src="images_volatiles2020/nmds-4.png" width="576" /></p>
+<pre class="r"><code>library(gridExtra)
+(vols.nmds &lt;- metaMDS(sqrt(vols.cut), autotransform=FALSE, trace=F))</code></pre>
+<pre><code>
+Call:
+metaMDS(comm = sqrt(vols.cut), autotransform = FALSE, trace = F) 
+
+global Multidimensional Scaling using monoMDS
+
+Data:     sqrt(vols.cut) 
+Distance: bray 
+
+Dimensions: 2 
+Stress:     0.1344 
+Stress type 1, weak ties
+Two convergent solutions found after 20 tries
+Scaling: centring, PC rotation, halfchange scaling 
+Species: expanded scores based on &#39;sqrt(vols.cut)&#39; </code></pre>
+<pre class="r"><code>vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
+vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
+  left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
+vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
+
+(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE</code></pre>
+<pre><code>
+Call:
+metaMDS(comm = sqrt(vols.good[nonzero, ]), autotransform = FALSE,      trace = F) 
+
+global Multidimensional Scaling using monoMDS
+
+Data:     sqrt(vols.good[nonzero, ]) 
+Distance: bray 
+
+Dimensions: 2 
+Stress:     0.2401 
+Stress type 1, weak ties
+No convergent solutions - best solution after 20 tries
+Scaling: centring, PC rotation, halfchange scaling 
+Species: expanded scores based on &#39;sqrt(vols.good[nonzero, ])&#39; </code></pre>
+<pre class="r"><code>nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
+nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
+nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;)
+
+vols.plot &lt;- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
+  geom_point(aes(color=factor(year(sequence.date)))) + 
+    geom_text(data=vols.nmds.chems, aes(label=Label)) +
+  labs(title=&quot;Unfiltered NMDS by year&quot;, color=&quot;Year&quot;)
+vols.good.plot &lt;- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=factor(year(sequence.date))))+ 
+    geom_text(data=nmds.chems, aes(label=Label)) +
+  #geom_point(aes(color=water, shape=year)) + scale_color_manual(&quot;Precipitation&quot;, values=water_pal) +
+  labs(title=&quot;Filtered NMDS by year&quot;, color=&quot;Year&quot;)
+grid.arrange(vols.plot, vols.good.plot)</code></pre>
+<p><img src="images_volatiles2020/nmds_chems-1.png" width="1152" /></p>
+<pre class="r"><code>for(yr in unique(year(volsmeta$sequence.start))) {
+  
+  (vols.nmds &lt;- metaMDS(sqrt(vols.cut[year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F))
+vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
+vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
+  left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
+vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
+
+(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero &amp; year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
+nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
+nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
+nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;)
+  
+  
+  vols.plot &lt;- vols.nmds.samples %&gt;% 
+    filter(year(sequence.start) == yr) %&gt;% 
+    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste(&quot;Unfiltered NMDS run&quot;,yr))+
+    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue(&quot;Run date&quot;) +
+          geom_text(data=vols.nmds.chems, aes(label=Label))
+  vols.good.plot &lt;- nmds.samples %&gt;% 
+    filter(year(sequence.start) == yr) %&gt;% 
+    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste(&quot;Filtered NMDS run&quot;,yr))+
+    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue(&quot;Run date&quot;)+
+          geom_text(data=nmds.chems, aes(label=Label))
+  grid.arrange(vols.plot, vols.good.plot)
+}</code></pre>
+<p><img src="images_volatiles2020/nmds_chems-2.png" width="1152" /><img src="images_volatiles2020/nmds_chems-3.png" width="1152" /><img src="images_volatiles2020/nmds_chems-4.png" width="1152" /></p>
 </div>
 <div id="cap" class="section level3">
 <h3>CAP</h3>
@@ -851,12 +1111,18 @@ vols.PCA.slopes &lt;- tidy(vols.PCA.regression) %&gt;% filter(term != &quot;(Int
   theme_bw() + scale_color_manual(values=year_pal) +
   scale_y_sqrt()</code></pre>
 <p><img src="images_volatiles2020/flrsize-1.png" width="1536" /></p>
+<pre class="r"><code>ggplot(traits.good.top, aes(x=sepal_width, y=value, color=year)) + geom_point() + geom_smooth(se=F) + 
+  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  labs(y=&quot;Emissions&quot;, x=traitnames.units[&quot;sepal_width&quot;], color=&quot;Year&quot;)+
+  theme_bw() + scale_color_manual(values=year_pal) +
+  scale_y_sqrt()</code></pre>
+<p><img src="images_volatiles2020/flrsize-2.png" width="1536" /></p>
 <pre class="r"><code>ggplot(traits.good.top, aes(x=nectar_24_h_ul, y=value, color=year)) + geom_point() + geom_smooth(se=F) + 
   facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   labs(y=&quot;Emissions&quot;, x=traitnames.units[&quot;nectar_24_h_ul&quot;], color=&quot;Year&quot;)+
   theme_bw() + scale_color_manual(values=year_pal) +
   scale_y_sqrt()</code></pre>
-<p><img src="images_volatiles2020/flrsize-2.png" width="1536" /></p>
+<p><img src="images_volatiles2020/flrsize-3.png" width="1536" /></p>
 </div>
 
 
