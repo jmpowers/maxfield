@@ -289,6 +289,7 @@ sm.subplot %>% mutate(day=yday(date)) %>% group_by(year) %>% summarize(start=min
 # VWC split-plot analysis on subplot means (for the whole measurement period)
 sm.mod <- lmer(VWC ~ year * snow * water + (1|snow:plot)+ (1|snow:plotid), data=sm.subplotyear)
 anova(sm.mod) %>% kable()
+MuMIn::r.squaredGLMM(sm.mod)
 (sm.emm.snow <- summary(emmeans(sm.mod, ~ snow))) %>% kable()
 sm.emm.snow$emmean[1] - sm.emm.snow$emmean[2]
 (sm.emm.water <- summary(emmeans(sm.mod, ~ water))) %>% kable()
@@ -297,6 +298,7 @@ sm.emm.water$emmean[3] - sm.emm.water$emmean[2]
 
 sm.mod.split.loc <- lmer(VWC ~ year * snow * water + location_y * water + (1|snow:plot) + (1|snow:plotid) + (1|date), data=mutate(sm, date=factor(date)))
 anova(sm.mod.split.loc) %>% kable()
+MuMIn::r.squaredGLMM(sm.mod.split.loc)
 emmeans(sm.mod.split.loc, ~ location_y * water, lmer.df = "satterthwaite") %>% plot
 
 sm.mod.split <- lmer(VWC ~ year * snow * water + (1|snow:plot) + (1|snow:plotid) + (1|date), data=mutate(sm, date=factor(date)))
@@ -313,9 +315,14 @@ ggplot(sm.subplotyear, aes(x=water, color=snow, y=VWC)) +
              position=position_dodge2(0.9)) +
   scale_color_manual(values=snow_pal) + scale_x_discrete(guide=guide_axis(angle=90))
 
-sm.mod.abs <- lmer(VWC ~ sun_date * water + (1|plot) + (1|plotid) + (1|date), data=mutate(sm, date=factor(date)))
+sm.mod.split.abs <- lmer(VWC ~ sun_date * water + (1|plot) + (1|plotid) + (1|date), data=mutate(sm, date=factor(date)))
+anova(sm.mod.split.abs) %>% kable()
+MuMIn::r.squaredGLMM(sm.mod.split.abs)
+sjPlot::plot_model(sm.mod.split.abs, type="int")
+
+sm.mod.abs <- lmer(VWC ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=left_join(sm.subplotyear, treatments))
 anova(sm.mod.abs) %>% kable()
-sjPlot::plot_model(sm.mod.abs, type="int")
+MuMIn::r.squaredGLMM(sm.mod.abs)
 ```
 
 ## Plant vs. subplot level
@@ -617,7 +624,8 @@ ggplot(cen.size, aes(x=census, y=size, color=water))+ facet_wrap(vars(water))+
   scale_color_manual(values=water_pal, guide=F) + theme_minimal() + 
   scale_y_sqrt() + labs(x="Census", y="Longest leaf (mm) * number of leaves")
   
-cen.RGR.long %>% mutate(year = as.character(as.integer(year)+1)) %>% left_join(treatments) %>% #get the second year to match with treatments
+cen.RGR.long %>% left_join(treatments_map) %>% 
+  #mutate(year = as.character(as.integer(year)+1)) %>% left_join(treatments) %>% #used to get the second year to match with treatments, but now use treatments_map as hack to work with 2021
   filter(census !="18r2") %>% 
   ggplot(aes(x=census, y=RGR, color=water))+ facet_wrap(vars(water))+
   geom_hline(yintercept=0)+ geom_boxplot(outlier.size=0.1)+ geom_path(aes(group=plantid), size=0.3)+
@@ -628,6 +636,11 @@ ggplot(cen.RGR, aes(x=RGR_19, y=RGR_20, color=log(size19))) +
   geom_hline(yintercept=0) + geom_vline(xintercept=0)+  geom_smooth(method="lm", color="black", se=F) +   geom_point() +
   scale_color_viridis_c() + coord_fixed() + scale_x_continuous(breaks=-6:6) + scale_y_continuous(breaks=-6:6) +
   labs(x="RGR from 2018 to 2019", y= "RGR from 2019 to 2020", color="ln size 2019")
+
+ggplot(cen.RGR, aes(x=RGR_20, y=RGR_21, color=log(size20))) + 
+  geom_hline(yintercept=0) + geom_vline(xintercept=0)+  geom_smooth(method="lm", color="black", se=F) +   geom_point() +
+  scale_color_viridis_c() + coord_fixed() + scale_x_continuous(breaks=-6:6) + scale_y_continuous(breaks=-6:6) +
+  labs(x="RGR from 2019 to 2010", y= "RGR from 2020 to 2021", color="ln size 2020")
 ```
 
 ## Traits vs. size
@@ -1175,6 +1188,8 @@ lt.long.repeated.3 <- lt.long.3  %>% filter(paste(trait, plantid) %in%
                         filter(n>1) %>% mutate(trait_plantid = paste(trait, plantid)) %>% pull(trait_plantid))) %>% 
   group_by(trait, plot, plotid, plantid, water, snow, year.round) %>% summarize(value=mean(value)) 
 lt.repeated.3 <- lt.long.repeated.3 %>% pivot_wider(names_from="trait")
+lt.repeated.3 %>% ungroup %>% count(year.round)
+lt.repeated.3 %>% ungroup %>% count(plantid) %>% count(n)
 lt.repeated.3.subplotround <- lt.repeated.3 %>% group_by(year.round, water, snow, plotid) %>% 
   summarize(across(all_of(leaftraits), mean, na.rm=T))
 
@@ -1859,6 +1874,65 @@ expand_grid(treatment=c("water","snow"), response = fitnesstraits) %>%
   pwalk(plot_selection_facets)
 ```
 
+### Number of flowers
+
+```{r selection_nflowers, fig.width=9, fig.height=6, results='asis'}
+t.plantyr.flowers <- bind_rows(lt.plantyr.r2, pt.plantyr) %>%
+  left_join(sds %>% select(year, plotid, plantid, flowers_est) %>%
+              mutate(year=as.character(as.integer(year)-1))) %>% #match to flowers next year
+  filter(year != "2020") %>%  #2021 flower data not entered
+  mutate(flowers_est = replace_na(flowers_est, 0)) #assume 0 flowers if no flowers recorded. 158/199 that flowered have flower counts
+
+
+response <- "flowers_est"
+for(treatment in c("water","snow")){
+p <- t.plantyr.flowers %>% 
+    pivot_longer(all_of(c(leaftraits, phystraits)), names_to="trait") %>% 
+  mutate(trait = fct_relevel(trait, c(leaftraits, phystraits))) %>% 
+  ggplot(aes_string(y=response, x="value", color=treatment, linetype="year")) + 
+  facet_wrap(vars(trait), scales="free_x", labeller = as_labeller(traitnames.units))+
+  scale_color_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + 
+  scale_linetype_manual(values=c("22","solid","42")) +
+  labs(linetype="Year", shape="Year", x="", y="Flower number",
+       color=c(water="Precipitation",snow="Snowmelt")[treatment]) + 
+  theme_minimal() + 
+  theme(text = element_text(color="black"), axis.text = element_text(color="black"),
+        panel.border = element_rect(fill=NA, colour = "black"), 
+        panel.spacing=unit(0, "pt"), plot.margin = margin(0,0,0,0, "pt"), 
+        legend.position = "top", legend.key.width = unit(2, "lines")) +
+  geom_point(aes(shape=year)) + 
+  geom_line(stat="smooth", size=1, se=F, method="lm")
+print(p)
+}
+
+flower_selection_mod <- function(trait, response, treatment, set) { 
+  re <- ifelse(treatment =="snow", "snow:plot", "plot")
+  t.plantyr <- t.plantyr.flowers %>% rename("trait"=trait) %>% drop_na(trait)
+  options(contrasts = c("contr.sum", "contr.poly"))
+  if(length(unique(t.plantyr$year))>1) {
+  mod <- glmmTMB(formula(paste(response, "~ trait * year * ", treatment," + (1|",re,")")), 
+                 data=t.plantyr, family="gaussian") 
+  } else {
+      mod <- glmmTMB(formula(paste(response, "~ trait * ", treatment," + (1|",re,")")), 
+                 data=t.plantyr, family="gaussian") 
+  }
+  return(mod)
+}
+
+selection.flowers <- expand_grid(response = "flowers_est", treatment=c("water","snow"), set = c("lt", "pt")) 
+mod.selection.flowers <- selection.flowers  %>% 
+  full_join(tibble(trait=c(leaftraits, phystraits), 
+                   set = c(rep("lt", length(leaftraits)), rep("pt", length(phystraits))))) %>% 
+  mutate(full_model = pmap(., flower_selection_mod), 
+         coefs = map(full_model, tidy),
+         tests = map(full_model, ~ tidy(car::Anova(., type=3))))
+
+mod.selection.flowers %>% group_by(treatment, response) %>%
+  group_walk(function(.x,.y) {cat(paste("Effect of trait on whether a plant produced more flowers under different",.y$treatment,"conditions")); 
+    Anova_table(.x %>% unnest(tests)) %>% kable() %>% print})
+```
+
+
 ## Selection vs. absolute snowmelt, precip
 
 ```{r selection_abs, results='asis'}
@@ -2120,4 +2194,5 @@ sds20.date.zeroed %>% group_by(snow, water, julian) %>% summarize_at("fruiting",
   scale_color_manual(values=water_pal) + scale_linetype_manual(values=c(2,1)) + theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 ```
+
 
