@@ -139,23 +139,30 @@ Plus (verdict other than "fvoc"):
 vols <- maxf[volsmeta$index,]
 vols.cut <- vols[,colSums(vols)>3e8]
 
+ipochems <- read_csv("data/volatiles/chemsf_ipo.csv") %>% 
+  filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge"),
+         name %in% colnames(vols)[colSums(vols)>0]) %>% #filter empty compounds
+  mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde")) %>%  #TODO find benzaldehyde regressions
+  left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
+              pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) #TODO get appropriate slopes for each year
+ipogood <- ipochems$name
+vols.good <- vols[,ipogood] %>% 
+  #sweep(2, ipochems$area_per_ng, FUN = '/') %>%  # convert areas to nanograms 
+  sweep(1, as.numeric(volsmeta$total_time, units="hours"),  FUN = '/') #divide by equilibration + pumping time
+for(yr in unique(volsmeta$sequence.year)) {
+  thisyr <- volsmeta$sequence.year==yr
+  vols.good[thisyr,] <- sweep(vols.good[thisyr,], 2, pull(ipochems, paste0("area_per_ng",yr)), FUN = '/')# convert areas to nanograms 
+}
+nonzero <- rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
+
 k <- 2 #split into this many k-means cluster per year
 volsmeta$cluster <- 0
 for(yr in unique(year(volsmeta$sequence.start))) {
   thisyr <- volsmeta$sequence.year==yr
+  chems.include <- setdiff(colnames(vols.cut), ipogood) #drop alpha-pinene so this is all nonfloral
   set.seed(1)
-  volsmeta$cluster[thisyr] <- kmeans(decostand(vols.cut[thisyr,], method="log"), k, nstart=3)$cluster
+  volsmeta$cluster[thisyr] <- kmeans(decostand(vols.cut[thisyr,chems.include], method="log"), k, nstart=3)$cluster
 }
-
-ipochems <- read_csv("data/volatiles/chemsf_ipo.csv") %>% 
-  filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge"),
-         name %in% colnames(vols)[colSums(vols)>0]) %>% #filter empty compounds
-  left_join(read_csv("data/volatiles/regressions_2019_prexfer_filtered_slopes.csv")) #TODO get appropriate slopes for each year
-ipogood <- ipochems$name
-vols.good <- vols[,ipogood] %>% 
-  sweep(2, ipochems$area_per_ng, FUN = '/') %>%  # convert areas to nanograms 
-  sweep(1, as.numeric(volsmeta$total_time, units="hours"),  FUN = '/') #divide by equilibration + pumping time
-nonzero <- rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
 
 ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambient, ambient_ratio, filter_ambient_ttest, filters_passed, standard) %>%
   arrange(desc(freq.floral)) %>% mutate(across(starts_with("freq."), round, 3)) %>% 
