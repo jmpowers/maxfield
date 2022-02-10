@@ -405,7 +405,7 @@ anova(scents.cap, by="term")
 scents.cap <- capscale(sqrt(vols.good) ~ year.cluster + water, data=volsmeta)
 plot(scents.cap, type="n")
 points(scents.cap, display = "sites", col=water_pal[volsmeta$water], pch=as.integer(volsmeta$year)+14)
-text(scents.cap, display="cn", labels=c(2018:2020, names(water_pal)), col=c(rep("black",3),water_pal), font=2, cex=1.5)
+text(scents.cap, display="cn", labels=c(unique(volsmeta$year.cluster), names(water_pal)), col=c(rep("black",5),water_pal), font=2, cex=1.5)
 
 plot(scents.cap, type="n")
 text(scents.cap, display="species", col="black", cex=0.5)
@@ -472,7 +472,7 @@ ggplot(traits.good.top, aes(x=value, y=seeds_est, color=snow, linetype=year.clus
 
 ## Fly infestation vs. volatiles
 
-```{r flies}
+```{r flies, fig.width=16, fig.height=10}
 ggplot(traits.good.top %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year)) + 
   geom_point() + geom_smooth(method="loess",span=1,se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
@@ -488,26 +488,24 @@ Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for rec
 
 * PCA can't handle missing values so they are removed, but this biases the data and reduces sample size - multiple imputation?
 
-```{r gradients}
+```{r gradients, fig.width=14, fig.height=10}
 calculate_beta <- function(E, slopes) {
   data.frame(B = E %*% slopes$A,
              SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %>% rownames_to_column("trait")
 }
-plot_beta <- function(beta) {
-  beta %>% mutate(trait = fct_reorder(trait, B)) %>% 
-    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
-    geom_vline(xintercept=0)+ geom_pointrange() + 
-    labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait")
-}
 
-vols.std <- bind_cols(volsmeta, vols.good.top) %>% left_join(mnps.plantyr %>% select(year, plotid, plant, seeds_est)) %>% 
+selection_pca <- function(year.cluster, water) {
+vols.std <- bind_cols(volsmeta, vols.good.top) %>% 
+  filter(year.cluster == .env$year.cluster, water %in% .env$water) %>% 
+  left_join(mnps.plantyr %>% select(year, plotid, plant, seeds_est)) %>% 
   select(all_of(ipogood.top),seeds_est, any_of(names(treatments))) %>% 
   mutate(across(all_of(ipogood.top), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% 
   group_by(year) %>% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T), .keep="unused") %>% ungroup %>% 
-  drop_na(all_of(ipogood.top)) 
+  drop_na(seeds_rel) %>% 
+  select(where(~sum(is.na(.))==0))  #drop_na(all_of(ipogood.top)) 
 
 # Run PCA on traits
-vols.PCA <- vols.std %>% select(ipogood.top) %>% prcomp() 
+vols.PCA <- vols.std %>% select(any_of(ipogood.top)) %>% prcomp() 
 summary(vols.PCA) # PCs 1 - 5 explain 51% of the variation
 vols.PCA.E <- vols.PCA$rotation[,1:5]
 vols.std.PCA <- bind_cols(vols.std, as.data.frame(vols.PCA$x))
@@ -517,8 +515,27 @@ vols.PCA.regression <- lm(seeds_rel ~ PC1 + PC2 + PC3 + PC4 + PC5, data = vols.s
 vols.PCA.slopes <- tidy(vols.PCA.regression) %>% filter(term != "(Intercept)") %>% rename(A=estimate, SE=std.error)
 
 # Convert selection gradients on PCs to gradients on traits
-(vols.beta <- calculate_beta(vols.PCA.E, vols.PCA.slopes))
-plot_beta(vols.beta)
+calculate_beta(vols.PCA.E, vols.PCA.slopes)
+}
+
+plot_beta <- function(betas, colorby="year.cluster") {
+  betas %>% mutate(trait = fct_reorder(trait, B)) %>% 
+    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
+    geom_vline(xintercept=0)+ geom_pointrange(aes_string(color=colorby), position=position_dodge(width=0.5)) + 
+    labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait")
+}
+
+vols.beta.yr <- map_dfr(set_names(unique(volsmeta$year.cluster)), 
+                     ~ selection_pca(.x, names(water_pal)), .id="year.cluster")
+plot_beta(vols.beta.yr)
+
+vols.beta.water <- expand_grid(year.cluster=unique(volsmeta$year.cluster), water=names(water_pal))  %>% 
+  mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+plot_beta(filter(vols.beta.water, year.cluster=="2018"), colorby="water") + 
+  scale_color_manual(values=water_pal) + ggtitle("2018")
+
+plot_beta(filter(vols.beta.water), colorby="water") + 
+  scale_color_manual(values=water_pal) + facet_wrap(vars(year.cluster), nrow=1)
 ```
 
 # Volatiles vs. floral traits

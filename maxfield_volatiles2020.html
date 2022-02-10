@@ -1010,7 +1010,7 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 <pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ year.cluster + water, data=volsmeta)
 plot(scents.cap, type=&quot;n&quot;)
 points(scents.cap, display = &quot;sites&quot;, col=water_pal[volsmeta$water], pch=as.integer(volsmeta$year)+14)
-text(scents.cap, display=&quot;cn&quot;, labels=c(2018:2020, names(water_pal)), col=c(rep(&quot;black&quot;,3),water_pal), font=2, cex=1.5)</code></pre>
+text(scents.cap, display=&quot;cn&quot;, labels=c(unique(volsmeta$year.cluster), names(water_pal)), col=c(rep(&quot;black&quot;,5),water_pal), font=2, cex=1.5)</code></pre>
 <p><img src="images_volatiles2020/cap-1.png" width="768" /></p>
 <pre class="r"><code>plot(scents.cap, type=&quot;n&quot;)
 text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</code></pre>
@@ -1117,7 +1117,7 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
   labs(x=&quot;Emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
   theme_bw()+scale_color_manual(values=year_pal) +
   scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/flies-1.png" width="768" /></p>
+<p><img src="images_volatiles2020/flies-1.png" width="1536" /></p>
 </div>
 <div id="selection-gradients" class="section level2">
 <h2>Selection gradients</h2>
@@ -1129,36 +1129,21 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
   data.frame(B = E %*% slopes$A,
              SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %&gt;% rownames_to_column(&quot;trait&quot;)
 }
-plot_beta &lt;- function(beta) {
-  beta %&gt;% mutate(trait = fct_reorder(trait, B)) %&gt;% 
-    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
-    geom_vline(xintercept=0)+ geom_pointrange() + 
-    labs(x = &quot;Selection gradient (beta) estimated from gradients on PCs&quot;, y = &quot;Trait&quot;)
-}
 
-vols.std &lt;- bind_cols(volsmeta, vols.good.top) %&gt;% left_join(mnps.plantyr %&gt;% select(year, plotid, plant, seeds_est)) %&gt;% 
+selection_pca &lt;- function(year.cluster, water) {
+vols.std &lt;- bind_cols(volsmeta, vols.good.top) %&gt;% 
+  filter(year.cluster == .env$year.cluster, water %in% .env$water) %&gt;% 
+  left_join(mnps.plantyr %&gt;% select(year, plotid, plant, seeds_est)) %&gt;% 
   select(all_of(ipogood.top),seeds_est, any_of(names(treatments))) %&gt;% 
   mutate(across(all_of(ipogood.top), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% 
   group_by(year) %&gt;% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T), .keep=&quot;unused&quot;) %&gt;% ungroup %&gt;% 
-  drop_na(all_of(ipogood.top)) 
+  drop_na(seeds_rel) %&gt;% 
+  select(where(~sum(is.na(.))==0))  #drop_na(all_of(ipogood.top)) 
 
 # Run PCA on traits
-vols.PCA &lt;- vols.std %&gt;% select(ipogood.top) %&gt;% prcomp() 
-summary(vols.PCA) # PCs 1 - 5 explain 51% of the variation</code></pre>
-<pre><code>Importance of components:
-                         PC1   PC2    PC3    PC4    PC5    PC6    PC7    PC8
-Standard deviation     2.067 1.531 1.2627 1.1541 1.0723 1.0663 1.0177 0.9913
-Proportion of Variance 0.214 0.117 0.0797 0.0666 0.0575 0.0568 0.0518 0.0491
-Cumulative Proportion  0.214 0.331 0.4107 0.4773 0.5348 0.5917 0.6434 0.6926
-                          PC9   PC10   PC11   PC12   PC13   PC14   PC15   PC16
-Standard deviation     0.9337 0.8997 0.8325 0.8149 0.7778 0.7267 0.6974 0.6312
-Proportion of Variance 0.0436 0.0405 0.0347 0.0332 0.0302 0.0264 0.0243 0.0199
-Cumulative Proportion  0.7362 0.7766 0.8113 0.8445 0.8748 0.9012 0.9255 0.9454
-                         PC17   PC18   PC19   PC20
-Standard deviation     0.5878 0.5379 0.4951 0.4605
-Proportion of Variance 0.0173 0.0145 0.0123 0.0106
-Cumulative Proportion  0.9627 0.9771 0.9894 1.0000</code></pre>
-<pre class="r"><code>vols.PCA.E &lt;- vols.PCA$rotation[,1:5]
+vols.PCA &lt;- vols.std %&gt;% select(any_of(ipogood.top)) %&gt;% prcomp() 
+summary(vols.PCA) # PCs 1 - 5 explain 51% of the variation
+vols.PCA.E &lt;- vols.PCA$rotation[,1:5]
 vols.std.PCA &lt;- bind_cols(vols.std, as.data.frame(vols.PCA$x))
 
 # Regress relative fitness on PCs
@@ -1166,30 +1151,28 @@ vols.PCA.regression &lt;- lm(seeds_rel ~ PC1 + PC2 + PC3 + PC4 + PC5, data = vol
 vols.PCA.slopes &lt;- tidy(vols.PCA.regression) %&gt;% filter(term != &quot;(Intercept)&quot;) %&gt;% rename(A=estimate, SE=std.error)
 
 # Convert selection gradients on PCs to gradients on traits
-(vols.beta &lt;- calculate_beta(vols.PCA.E, vols.PCA.slopes))</code></pre>
-<pre><code>                                          trait          B       SE
-1  (1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene -0.0001042 0.015642
-2                                 Caryophyllene  0.0117606 0.010312
-3                            3-Hexen-1-ol, (E)-  0.0104764 0.010460
-4                                .beta.-Myrcene  0.0173326 0.012863
-5                                   Longifolene  0.0258287 0.016890
-6                    E-11,13-Tetradecadien-1-ol  0.0144715 0.009766
-7                                .beta.-Ocimene -0.0123586 0.018406
-8                                    Petasitene -0.0142328 0.010482
-9                             Methyl salicylate  0.0320474 0.021518
-10                     Octane, 2,4,6-trimethyl-  0.0132307 0.024524
-11                                 Benzophenone  0.0246730 0.013793
-12                  3-Hexen-1-ol, acetate, (E)- -0.0119041 0.021693
-13                              2-Hexenal, (E)-  0.0112502 0.013257
-14                          (E)-4-Oxohex-2-enal -0.0128014 0.017529
-15         Butanoic acid, 3-hexenyl ester, (Z)- -0.0030220 0.015433
-16                                     Linalool  0.0324134 0.021402
-17       Butanoic acid, 2-methyl-, methyl ester  0.0287673 0.020830
-18                                      Acetoin -0.0138973 0.023629
-19                         1-Butanol, 3-methyl-  0.0178677 0.016136
-20                                   1-Pentanol -0.0167735 0.013504</code></pre>
-<pre class="r"><code>plot_beta(vols.beta)</code></pre>
-<p><img src="images_volatiles2020/gradients-1.png" width="768" /></p>
+calculate_beta(vols.PCA.E, vols.PCA.slopes)
+}
+
+plot_beta &lt;- function(betas, colorby=&quot;year.cluster&quot;) {
+  betas %&gt;% mutate(trait = fct_reorder(trait, B)) %&gt;% 
+    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
+    geom_vline(xintercept=0)+ geom_pointrange(aes_string(color=colorby), position=position_dodge(width=0.5)) + 
+    labs(x = &quot;Selection gradient (beta) estimated from gradients on PCs&quot;, y = &quot;Trait&quot;)
+}
+
+vols.beta.yr &lt;- map_dfr(set_names(unique(volsmeta$year.cluster)), 
+                     ~ selection_pca(.x, names(water_pal)), .id=&quot;year.cluster&quot;)
+plot_beta(vols.beta.yr)</code></pre>
+<p><img src="images_volatiles2020/gradients-1.png" width="1344" /></p>
+<pre class="r"><code>vols.beta.water &lt;- expand_grid(year.cluster=unique(volsmeta$year.cluster), water=names(water_pal))  %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
+plot_beta(filter(vols.beta.water, year.cluster==&quot;2018&quot;), colorby=&quot;water&quot;) + 
+  scale_color_manual(values=water_pal) + ggtitle(&quot;2018&quot;)</code></pre>
+<p><img src="images_volatiles2020/gradients-2.png" width="1344" /></p>
+<pre class="r"><code>plot_beta(filter(vols.beta.water), colorby=&quot;water&quot;) + 
+  scale_color_manual(values=water_pal) + facet_wrap(vars(year.cluster), nrow=1)</code></pre>
+<p><img src="images_volatiles2020/gradients-3.png" width="1344" /></p>
 </div>
 </div>
 <div id="volatiles-vs.-floral-traits" class="section level1">
