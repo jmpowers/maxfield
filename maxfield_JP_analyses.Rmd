@@ -70,7 +70,6 @@ re_table <- function(coefs) {
   coefs %>% filter(effect=="ran_pars") %>% select(trait, group, estimate) %>% pivot_wider(names_from=group, values_from=estimate)
 }
 select <- dplyr::select
-snow_pal_grey <- c("grey50","black")
 ```
 
 ```{r map, fig.height=4, fig.width=6.5}
@@ -505,8 +504,8 @@ Anova_table(fitness.mod.tests) %>% kable()
 re_table(fitness.mod.coefs) %>% kable()
 
 ggplot(fitness.mod.emm %>% mutate(snow=fct_relevel(snow, "Normal", "Early")), aes(x=water, color=snow, y=emmean)) + 
-  facet_grid(trait ~ year, scales="free_y", labeller = as_labeller(c(fitnessnames, set_names(2018:2020))), switch="y")+
-  geom_hline(data=data.frame(trait = fitnesstraits, plot=c(NA,NA,"yes")), aes(linetype=plot, yintercept=0), color="grey")+
+  facet_grid(trait ~ year, scales="free_y", labeller = as_labeller(c(fitnessnames, set_names(2018:2020))), switch="y", as.table=F)+
+  geom_hline(data=data.frame(trait = fitnesstraits, plot=c(NA,"yes",NA)), aes(linetype=plot, yintercept=0), color="grey")+
   guides(linetype="none")+
   geom_linerange(aes(ymin=lSE, ymax=uSE), position=position_dodge(width=0.8), size=1, show.legend=F) +
   geom_point(position=position_dodge(width=0.8), shape="-", size=16) + 
@@ -571,7 +570,7 @@ cen.size.fitness %>%  select(year, census, size, flowered, survived, water, snow
                           panel.spacing=unit(0, "pt"), plot.margin = margin(0,0,0,0, "pt"), legend.position = "top") 
 
 
-fitness.size.mod <- map(set_names(fitnesstraits[1:2]), 
+fitness.size.mod <- map(set_names(fitnesstraits[c(1,3)]), 
                     ~ glmmTMB(cen.size.fitness[[.x]] ~ census * size * water + (1|plot) + (1|plotid), data=cen.size.fitness, family="binomial")) 
 fitness.size.mod.tests <- map(fitness.size.mod, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
 Anova_table(fitness.size.mod.tests) %>% kable()
@@ -1280,7 +1279,7 @@ plot_abs <- function(mod, data, traits.plot, tests=NULL, facets = "trait") {
                           values=rev(c(1, (treatments %>% group_by(water) %>% summarize(across(precip_est_mm, mean)) %>%
                                              pull(precip_est_mm) %>% scales::rescale(from=range(precip.breaks)))[2],0)),
                           breaks=precip.breaks) + 
-    labs(x="Snowmelt date", y="Standardized trait", color="Summer\nprecipitation\n(mm)", shape="Year") + 
+    labs(x="Snowmelt date (day of year)", y="Standardized trait", color="Summer\nprecipitation\n(mm)", shape="Year") + 
     scale_y_continuous(position="right")+
     theme_minimal() + theme(text=element_text(color="black", size=14), axis.text = element_text(color="black"),
                             panel.border = element_rect(fill=NA, colour = "black")) +
@@ -1686,9 +1685,9 @@ mod.selection <- selection.combos  %>%
 ```{r selec_diff, fig.width=10, fig.height=5}
 std_selection_differential <- function(set, treatment) {
   seldata <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% ungroup() %>% 
-    select(any_of(c(alltraits, fitnesstraits[1:2])), all_of(treatment), year) %>% 
+    select(any_of(c(alltraits, fitnesstraits[c(1,3)])), all_of(treatment), year) %>% 
     pivot_longer(c(list(lt=leaftraits, pt=phystraits)[[set]]), names_to="trait", values_to ="value") %>% 
-    pivot_longer(fitnesstraits[1:2], names_to="response", values_to="outcome") %>% 
+    pivot_longer(fitnesstraits[c(1,3)], names_to="response", values_to="outcome") %>% 
     filter(!is.nan(outcome), !is.na(value)) %>% 
     group_by_at(vars(all_of(treatment), year, trait, response))
   
@@ -1733,9 +1732,9 @@ ggplot(seldiffs, aes(x=n_after, y=abs(seldiff.mean), color=trait)) + facet_wrap(
 ```{r selec_diff_cov}
 std_selection_differential_cov <- function(set, treatment) {
   seldata <- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %>% ungroup() %>% 
-    select(any_of(c(alltraits, fitnesstraits[3])), all_of(treatment), year) %>% 
+    select(any_of(c(alltraits, fitnesstraits[2])), all_of(treatment), year) %>% 
     pivot_longer(c(list(lt=leaftraits, pt=phystraits)[[set]]), names_to="trait", values_to ="value") %>% 
-    pivot_longer(fitnesstraits[3], names_to="response", values_to="outcome") %>% 
+    pivot_longer(fitnesstraits[2], names_to="response", values_to="outcome") %>% 
     filter(!is.nan(outcome), !is.na(outcome), !is.na(value)) %>% 
     group_by_at(vars(all_of(treatment), year, trait, response)) %>% 
     mutate(relfitness = outcome / mean(outcome, na.rm=T)) %>% 

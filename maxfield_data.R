@@ -847,8 +847,8 @@ seedtraits <- traits[10:16]
 leaftraits <- c("sla","trichome_density","water_content")
 phystraits <- c("photosynthesis", "conductance", "WUE")
 alltraits <- c(traits, leaftraits, phystraits)
-fitnesstraits <- c("flowered", "survived", "RGR")
-fitnessnames <- set_names(c("Flowering", "Survival", "RGR (year\U207B\U00B9)"), fitnesstraits)
+fitnesstraits <- c("survived","RGR","flowered")
+fitnessnames <- set_names(c("Survival","RGR (year\U207B\U00B9)","Flowering"), fitnesstraits)
 
 traitnames <- set_names(c(
   "Corolla length", "Style length", "Corolla width", "Sepal width", 

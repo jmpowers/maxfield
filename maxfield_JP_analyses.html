@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-01-26" />
+<meta name="date" content="2022-02-16" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-01-26</h4>
+<h4 class="date">2022-02-16</h4>
 
 </div>
 
@@ -316,8 +316,7 @@ Anova_table &lt;- function(df) { #for glmmTMB models and car::Anova
 re_table &lt;- function(coefs) {
   coefs %&gt;% filter(effect==&quot;ran_pars&quot;) %&gt;% select(trait, group, estimate) %&gt;% pivot_wider(names_from=group, values_from=estimate)
 }
-select &lt;- dplyr::select
-snow_pal_grey &lt;- c(&quot;grey50&quot;,&quot;black&quot;)</code></pre>
+select &lt;- dplyr::select</code></pre>
 <pre class="r"><code>subplot_offset &lt;- 1/6
 size_meter &lt;- 6
 ggplot(treatments_map) + coord_fixed(clip=&quot;off&quot;)+
@@ -1632,17 +1631,6 @@ Anova_table(fitness.mod.tests) %&gt;% kable()</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">flowered</td>
-<td align="right">0</td>
-<td align="right">0.0000</td>
-<td align="right">0.8817</td>
-<td align="right">0.0885</td>
-<td align="right">0.3232</td>
-<td align="right">0.4297</td>
-<td align="right">0.6055</td>
-<td align="right">0.0903</td>
-</tr>
-<tr class="even">
 <td align="left">survived</td>
 <td align="right">0</td>
 <td align="right">0.0654</td>
@@ -1653,7 +1641,7 @@ Anova_table(fitness.mod.tests) %&gt;% kable()</code></pre>
 <td align="right">0.5450</td>
 <td align="right">0.0168</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">RGR</td>
 <td align="right">0</td>
 <td align="right">0.0000</td>
@@ -1663,6 +1651,17 @@ Anova_table(fitness.mod.tests) %&gt;% kable()</code></pre>
 <td align="right">0.0000</td>
 <td align="right">0.5893</td>
 <td align="right">0.0082</td>
+</tr>
+<tr class="odd">
+<td align="left">flowered</td>
+<td align="right">0</td>
+<td align="right">0.0000</td>
+<td align="right">0.8817</td>
+<td align="right">0.0885</td>
+<td align="right">0.3232</td>
+<td align="right">0.4297</td>
+<td align="right">0.6055</td>
+<td align="right">0.0903</td>
 </tr>
 </tbody>
 </table>
@@ -1678,28 +1677,28 @@ Anova_table(fitness.mod.tests) %&gt;% kable()</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">flowered</td>
-<td align="right">0.3023</td>
-<td align="right">0.2771</td>
-<td align="right">NA</td>
-</tr>
-<tr class="even">
 <td align="left">survived</td>
 <td align="right">0.0001</td>
 <td align="right">0.4596</td>
 <td align="right">NA</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">RGR</td>
 <td align="right">0.0213</td>
 <td align="right">0.3913</td>
 <td align="right">1.225</td>
 </tr>
+<tr class="odd">
+<td align="left">flowered</td>
+<td align="right">0.3023</td>
+<td align="right">0.2771</td>
+<td align="right">NA</td>
+</tr>
 </tbody>
 </table>
 <pre class="r"><code>ggplot(fitness.mod.emm %&gt;% mutate(snow=fct_relevel(snow, &quot;Normal&quot;, &quot;Early&quot;)), aes(x=water, color=snow, y=emmean)) + 
-  facet_grid(trait ~ year, scales=&quot;free_y&quot;, labeller = as_labeller(c(fitnessnames, set_names(2018:2020))), switch=&quot;y&quot;)+
-  geom_hline(data=data.frame(trait = fitnesstraits, plot=c(NA,NA,&quot;yes&quot;)), aes(linetype=plot, yintercept=0), color=&quot;grey&quot;)+
+  facet_grid(trait ~ year, scales=&quot;free_y&quot;, labeller = as_labeller(c(fitnessnames, set_names(2018:2020))), switch=&quot;y&quot;, as.table=F)+
+  geom_hline(data=data.frame(trait = fitnesstraits, plot=c(NA,&quot;yes&quot;,NA)), aes(linetype=plot, yintercept=0), color=&quot;grey&quot;)+
   guides(linetype=&quot;none&quot;)+
   geom_linerange(aes(ymin=lSE, ymax=uSE), position=position_dodge(width=0.8), size=1, show.legend=F) +
   geom_point(position=position_dodge(width=0.8), shape=&quot;-&quot;, size=16) + 
@@ -1870,7 +1869,7 @@ cen.size.fitness %&gt;%  select(year, census, size, flowered, survived, water, s
                           panel.border = element_rect(fill=NA, colour = &quot;black&quot;),
                           panel.spacing=unit(0, &quot;pt&quot;), plot.margin = margin(0,0,0,0, &quot;pt&quot;), legend.position = &quot;top&quot;) </code></pre>
 <p><img src="images/surv_size-5.png" width="672" /></p>
-<pre class="r"><code>fitness.size.mod &lt;- map(set_names(fitnesstraits[1:2]), 
+<pre class="r"><code>fitness.size.mod &lt;- map(set_names(fitnesstraits[c(1,3)]), 
                     ~ glmmTMB(cen.size.fitness[[.x]] ~ census * size * water + (1|plot) + (1|plotid), data=cen.size.fitness, family=&quot;binomial&quot;)) 
 fitness.size.mod.tests &lt;- map(fitness.size.mod, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 Anova_table(fitness.size.mod.tests) %&gt;% kable()</code></pre>
@@ -1901,17 +1900,6 @@ Anova_table(fitness.size.mod.tests) %&gt;% kable()</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">flowered</td>
-<td align="right">0</td>
-<td align="right">0.0000</td>
-<td align="right">0.0058</td>
-<td align="right">0.9566</td>
-<td align="right">0.0635</td>
-<td align="right">0.9118</td>
-<td align="right">0.5483</td>
-<td align="right">0.7510</td>
-</tr>
-<tr class="even">
 <td align="left">survived</td>
 <td align="right">0</td>
 <td align="right">0.3172</td>
@@ -1921,6 +1909,17 @@ Anova_table(fitness.size.mod.tests) %&gt;% kable()</code></pre>
 <td align="right">0.9590</td>
 <td align="right">0.7046</td>
 <td align="right">0.1043</td>
+</tr>
+<tr class="even">
+<td align="left">flowered</td>
+<td align="right">0</td>
+<td align="right">0.0000</td>
+<td align="right">0.0058</td>
+<td align="right">0.9566</td>
+<td align="right">0.0635</td>
+<td align="right">0.9118</td>
+<td align="right">0.5483</td>
+<td align="right">0.7510</td>
 </tr>
 </tbody>
 </table>
@@ -4307,7 +4306,7 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
                           values=rev(c(1, (treatments %&gt;% group_by(water) %&gt;% summarize(across(precip_est_mm, mean)) %&gt;%
                                              pull(precip_est_mm) %&gt;% scales::rescale(from=range(precip.breaks)))[2],0)),
                           breaks=precip.breaks) + 
-    labs(x=&quot;Snowmelt date&quot;, y=&quot;Standardized trait&quot;, color=&quot;Summer\nprecipitation\n(mm)&quot;, shape=&quot;Year&quot;) + 
+    labs(x=&quot;Snowmelt date (day of year)&quot;, y=&quot;Standardized trait&quot;, color=&quot;Summer\nprecipitation\n(mm)&quot;, shape=&quot;Year&quot;) + 
     scale_y_continuous(position=&quot;right&quot;)+
     theme_minimal() + theme(text=element_text(color=&quot;black&quot;, size=14), axis.text = element_text(color=&quot;black&quot;),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;)) +
@@ -5736,9 +5735,9 @@ mod.selection &lt;- selection.combos  %&gt;%
 <h3>Selection differentials as change in mean</h3>
 <pre class="r"><code>std_selection_differential &lt;- function(set, treatment) {
   seldata &lt;- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %&gt;% ungroup() %&gt;% 
-    select(any_of(c(alltraits, fitnesstraits[1:2])), all_of(treatment), year) %&gt;% 
+    select(any_of(c(alltraits, fitnesstraits[c(1,3)])), all_of(treatment), year) %&gt;% 
     pivot_longer(c(list(lt=leaftraits, pt=phystraits)[[set]]), names_to=&quot;trait&quot;, values_to =&quot;value&quot;) %&gt;% 
-    pivot_longer(fitnesstraits[1:2], names_to=&quot;response&quot;, values_to=&quot;outcome&quot;) %&gt;% 
+    pivot_longer(fitnesstraits[c(1,3)], names_to=&quot;response&quot;, values_to=&quot;outcome&quot;) %&gt;% 
     filter(!is.nan(outcome), !is.na(value)) %&gt;% 
     group_by_at(vars(all_of(treatment), year, trait, response))
   
@@ -5785,9 +5784,9 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_seldiffs, yvar=&quot;seldiff&qu
 <h2>Selection differential as covariance between relative fitness and trait</h2>
 <pre class="r"><code>std_selection_differential_cov &lt;- function(set, treatment) {
   seldata &lt;- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %&gt;% ungroup() %&gt;% 
-    select(any_of(c(alltraits, fitnesstraits[3])), all_of(treatment), year) %&gt;% 
+    select(any_of(c(alltraits, fitnesstraits[2])), all_of(treatment), year) %&gt;% 
     pivot_longer(c(list(lt=leaftraits, pt=phystraits)[[set]]), names_to=&quot;trait&quot;, values_to =&quot;value&quot;) %&gt;% 
-    pivot_longer(fitnesstraits[3], names_to=&quot;response&quot;, values_to=&quot;outcome&quot;) %&gt;% 
+    pivot_longer(fitnesstraits[2], names_to=&quot;response&quot;, values_to=&quot;outcome&quot;) %&gt;% 
     filter(!is.nan(outcome), !is.na(outcome), !is.na(value)) %&gt;% 
     group_by_at(vars(all_of(treatment), year, trait, response)) %&gt;% 
     mutate(relfitness = outcome / mean(outcome, na.rm=T)) %&gt;% 
