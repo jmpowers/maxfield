@@ -74,6 +74,7 @@ treatments <- treatments %>% select(-snow) %>% left_join(meltdates)
 water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,8,1)], levels(treatments$water4))
 water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$water))
 snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
+snow_pal_grey <- setNames(c("black","grey50"), levels(treatments$snow))
 year_pal <- setNames(brewer.pal(8, name="Set2")[c(2,3,6)], levels(treatments$year))
 year.round_pal <- c(set_names(year_pal, paste0(names(year_pal),".2")), 
                     set_names(brewer.pal(6, "Dark2")[c(2,3,6)], paste0(names(year_pal),".1")))
@@ -495,11 +496,11 @@ lt <- lt %>%
 
 lt.plantyr <- lt %>% 
   group_by(year, round, year.round, plot, subplot, plotid, plant, plantid, water, water4, snow) %>% 
-  summarize_if(is.numeric, mean, na.rm=T)
+  summarize(across(where(is.numeric), mean, na.rm=T), .groups="drop")
 
 lt.subplotround <- lt.plantyr %>% 
   group_by(year, round, year.round, plot, subplot, plotid, water, water4, snow) %>% 
-  summarize_if(is.numeric, mean, na.rm=T)
+  summarize(across(where(is.numeric), mean, na.rm=T), .groups="drop")
 
 # licor -------------------------------------------------------------------
 # Parser for LICOR files adapted from https://www.ericrscott.com/post/li-cor-wrangling/
@@ -588,11 +589,11 @@ pt <- pt.raw %>% left_join(pt.sm %>% select(plantid, date, duplicate, date.sm, d
 
 # TODO does not lump leaves from the same plant measured in multiple rounds
 pt.plantyr <- pt %>% group_by(year, round, water, water4, snow, plot, plotid, plant, plantid) %>% 
-  summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  summarize(across(where(is.numeric), mean, na.rm=T), .groups="drop") %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
 pt.subplot <- pt.plantyr %>% group_by(year, water, water4, snow, plot, plotid) %>% 
-  summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  summarize(across(where(is.numeric), mean, na.rm=T), .groups="drop") %>% 
   mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 
 pt.subplot %>% select(year, water4, snow, plotid, photosynthesis, conductance) %>% 
