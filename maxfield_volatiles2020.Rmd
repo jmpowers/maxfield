@@ -494,9 +494,9 @@ calculate_beta <- function(E, slopes) {
              SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %>% rownames_to_column("trait")
 }
 
-selection_pca <- function(year.cluster, water) {
+selection_pca <- function(year, water) {
 vols.std <- bind_cols(volsmeta, vols.good.top) %>% 
-  filter(year.cluster == .env$year.cluster, water %in% .env$water) %>% 
+  filter(year == .env$year, water %in% .env$water) %>% 
   left_join(mnps.plantyr %>% select(year, plotid, plant, seeds_est)) %>% 
   select(all_of(ipogood.top),seeds_est, any_of(names(treatments))) %>% 
   mutate(across(all_of(ipogood.top), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% 
@@ -518,25 +518,49 @@ vols.PCA.slopes <- tidy(vols.PCA.regression) %>% filter(term != "(Intercept)") %
 calculate_beta(vols.PCA.E, vols.PCA.slopes)
 }
 
-plot_beta <- function(betas, colorby="year.cluster") {
+plot_beta <- function(betas, colorby="year") {
   betas %>% mutate(trait = fct_reorder(trait, B)) %>% 
     ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
     geom_vline(xintercept=0)+ geom_pointrange(aes_string(color=colorby), position=position_dodge(width=0.5)) + 
     labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait")
 }
 
-vols.beta.yr <- map_dfr(set_names(unique(volsmeta$year.cluster)), 
-                     ~ selection_pca(.x, names(water_pal)), .id="year.cluster")
+vols.beta.yr <- map_dfr(set_names(unique(volsmeta$year)), 
+                     ~ selection_pca(.x, names(water_pal)), .id="year")
 plot_beta(vols.beta.yr)
 
-vols.beta.water <- expand_grid(year.cluster=unique(volsmeta$year.cluster), water=names(water_pal))  %>% 
+vols.beta.water <- expand_grid(year=unique(volsmeta$year), water=names(water_pal))  %>% 
   mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
-plot_beta(filter(vols.beta.water, year.cluster=="2018"), colorby="water") + 
+plot_beta(filter(vols.beta.water, year=="2018"), colorby="water") + 
   scale_color_manual(values=water_pal) + ggtitle("2018")
 
 plot_beta(filter(vols.beta.water), colorby="water") + 
-  scale_color_manual(values=water_pal) + facet_wrap(vars(year.cluster), nrow=1)
+  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1)
 ```
+
+## Adaptive plasticity
+
+```{r adaptive, fig.height=14, fig.width=10}
+plasticity <- volsmeta.good.top %>% group_by(year, water, name) %>% summarize(value=mean(value)) %>% 
+  pivot_wider(names_from=water, values_from=value) %>% left_join(ipochems) %>% 
+  mutate(A_C = (Addition-Control)/Control, R_C = (Reduction-Control)/Control, .keep="unused")
+
+
+plasticity %>% left_join(vols.beta.water %>% rename(name=trait) %>% filter(water=="Addition")) %>% 
+  ggplot(aes(x=A_C, y=B, color=standard)) + facet_wrap(vars(year), ncol=1)+
+  geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
+  scale_color_discrete("Class", labels=c("monoterpene","sesquiterpene","aliphatic","linalool","benzenoid"))+
+  scale_x_continuous(labels=scales::percent, limits=c(NA,2)) + theme_bw()  + theme(legend.position = "top") +
+  labs(x="Emissions change in Addition vs. Control precipitation", y="Selection gradient (beta) under precipitation addition")
+
+plasticity %>% left_join(vols.beta.water %>% rename(name=trait) %>% filter(water=="Reduction")) %>% 
+  ggplot(aes(x=R_C, y=B, color=standard)) + facet_wrap(vars(year), ncol=1)+
+  geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
+  scale_color_discrete("Class", labels=c("monoterpene","sesquiterpene","aliphatic","linalool","benzenoid"))+
+  scale_x_continuous(labels=scales::percent, limits=c(NA,4)) + theme_bw()  + theme(legend.position = "top") +
+  labs(x="Emissions change in Reduction vs. Control precipitation", y="Selection gradient (beta) under precipitation reduction")
+```
+
 
 # Volatiles vs. floral traits
 

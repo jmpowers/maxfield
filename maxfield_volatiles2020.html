@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-02-10" />
+<meta name="date" content="2022-02-11" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -263,7 +263,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-02-10</h4>
+<h4 class="date">2022-02-11</h4>
 
 </div>
 
@@ -1130,9 +1130,9 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
              SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %&gt;% rownames_to_column(&quot;trait&quot;)
 }
 
-selection_pca &lt;- function(year.cluster, water) {
+selection_pca &lt;- function(year, water) {
 vols.std &lt;- bind_cols(volsmeta, vols.good.top) %&gt;% 
-  filter(year.cluster == .env$year.cluster, water %in% .env$water) %&gt;% 
+  filter(year == .env$year, water %in% .env$water) %&gt;% 
   left_join(mnps.plantyr %&gt;% select(year, plotid, plant, seeds_est)) %&gt;% 
   select(all_of(ipogood.top),seeds_est, any_of(names(treatments))) %&gt;% 
   mutate(across(all_of(ipogood.top), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% 
@@ -1154,25 +1154,47 @@ vols.PCA.slopes &lt;- tidy(vols.PCA.regression) %&gt;% filter(term != &quot;(Int
 calculate_beta(vols.PCA.E, vols.PCA.slopes)
 }
 
-plot_beta &lt;- function(betas, colorby=&quot;year.cluster&quot;) {
+plot_beta &lt;- function(betas, colorby=&quot;year&quot;) {
   betas %&gt;% mutate(trait = fct_reorder(trait, B)) %&gt;% 
     ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
     geom_vline(xintercept=0)+ geom_pointrange(aes_string(color=colorby), position=position_dodge(width=0.5)) + 
     labs(x = &quot;Selection gradient (beta) estimated from gradients on PCs&quot;, y = &quot;Trait&quot;)
 }
 
-vols.beta.yr &lt;- map_dfr(set_names(unique(volsmeta$year.cluster)), 
-                     ~ selection_pca(.x, names(water_pal)), .id=&quot;year.cluster&quot;)
+vols.beta.yr &lt;- map_dfr(set_names(unique(volsmeta$year)), 
+                     ~ selection_pca(.x, names(water_pal)), .id=&quot;year&quot;)
 plot_beta(vols.beta.yr)</code></pre>
 <p><img src="images_volatiles2020/gradients-1.png" width="1344" /></p>
-<pre class="r"><code>vols.beta.water &lt;- expand_grid(year.cluster=unique(volsmeta$year.cluster), water=names(water_pal))  %&gt;% 
+<pre class="r"><code>vols.beta.water &lt;- expand_grid(year=unique(volsmeta$year), water=names(water_pal))  %&gt;% 
   mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-plot_beta(filter(vols.beta.water, year.cluster==&quot;2018&quot;), colorby=&quot;water&quot;) + 
+plot_beta(filter(vols.beta.water, year==&quot;2018&quot;), colorby=&quot;water&quot;) + 
   scale_color_manual(values=water_pal) + ggtitle(&quot;2018&quot;)</code></pre>
 <p><img src="images_volatiles2020/gradients-2.png" width="1344" /></p>
 <pre class="r"><code>plot_beta(filter(vols.beta.water), colorby=&quot;water&quot;) + 
-  scale_color_manual(values=water_pal) + facet_wrap(vars(year.cluster), nrow=1)</code></pre>
+  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1)</code></pre>
 <p><img src="images_volatiles2020/gradients-3.png" width="1344" /></p>
+</div>
+<div id="adaptive-plasticity" class="section level2">
+<h2>Adaptive plasticity</h2>
+<pre class="r"><code>plasticity &lt;- volsmeta.good.top %&gt;% group_by(year, water, name) %&gt;% summarize(value=mean(value)) %&gt;% 
+  pivot_wider(names_from=water, values_from=value) %&gt;% left_join(ipochems) %&gt;% 
+  mutate(A_C = (Addition-Control)/Control, R_C = (Reduction-Control)/Control, .keep=&quot;unused&quot;)
+
+
+plasticity %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;% filter(water==&quot;Addition&quot;)) %&gt;% 
+  ggplot(aes(x=A_C, y=B, color=standard)) + facet_wrap(vars(year), ncol=1)+
+  geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
+  scale_color_discrete(&quot;Class&quot;, labels=c(&quot;monoterpene&quot;,&quot;sesquiterpene&quot;,&quot;aliphatic&quot;,&quot;linalool&quot;,&quot;benzenoid&quot;))+
+  scale_x_continuous(labels=scales::percent, limits=c(NA,2)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
+  labs(x=&quot;Emissions change in Addition vs. Control precipitation&quot;, y=&quot;Selection gradient (beta) under precipitation addition&quot;)</code></pre>
+<p><img src="images_volatiles2020/adaptive-1.png" width="960" /></p>
+<pre class="r"><code>plasticity %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;% filter(water==&quot;Reduction&quot;)) %&gt;% 
+  ggplot(aes(x=R_C, y=B, color=standard)) + facet_wrap(vars(year), ncol=1)+
+  geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
+  scale_color_discrete(&quot;Class&quot;, labels=c(&quot;monoterpene&quot;,&quot;sesquiterpene&quot;,&quot;aliphatic&quot;,&quot;linalool&quot;,&quot;benzenoid&quot;))+
+  scale_x_continuous(labels=scales::percent, limits=c(NA,4)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
+  labs(x=&quot;Emissions change in Reduction vs. Control precipitation&quot;, y=&quot;Selection gradient (beta) under precipitation reduction&quot;)</code></pre>
+<p><img src="images_volatiles2020/adaptive-2.png" width="960" /></p>
 </div>
 </div>
 <div id="volatiles-vs.-floral-traits" class="section level1">
