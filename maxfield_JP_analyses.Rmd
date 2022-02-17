@@ -346,6 +346,7 @@ ggplot(pt, aes(x=VWC.sm.year, y=VWC.plant, shape=year, group=year, color=year)) 
   timings_labels <- c(snowcloth="Snow cloths applied to early plots", 
                      meltdates="Mean early and normal snowmelt timing", 
                      waterdates="Summer precipitation treatments applied",
+                     vt="Volatiles collected",
                      sm="Soil moisture recorded",         ph="Inflorescence height recorded", 
                      mt="Floral morphology recorded",     nt="Nectar traits recorded", 
                      pt= "Physiology traits recorded",    lt="Vegetative traits recorded", 
@@ -362,15 +363,18 @@ ggplot(aes(y=variable, color=year))+
             position = position_dodge2(width=0.8, reverse = T), size=4, hjust=0, show.legend=FALSE)+
   geom_point(aes(x=begin), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2)+
   geom_point(aes(x=end), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2) +
-  scale_color_manual("Year", values=c(year_pal, `2021`=brewer.pal(8, name="Set2")[[4]]), guide=guide_legend(override.aes = list(size=5))) + 
+  scale_color_manual("Year", guide=guide_legend(override.aes = list(size=5)),
+                     values=list(year_pal, c(year_pal, `2021`=brewer.pal(8, name="Set2")[[4]]))[[1 + "2021" %in% data$year]]) + 
   scale_y_discrete("", labels=timings_labels)+
   scale_x_continuous("Day of year", breaks=seq(80,240, by=20)) +
   theme_minimal() + theme(legend.position = "top", text=element_text(size=14, color="black"), axis.text = element_text(color="black"),
                             panel.border = element_rect(fill=NA, colour = "black"))
 }
 
-plot_timings(filter(timings, !variable %in% c("sds","lt","pt","cen")))
-plot_timings(filter(timings, !variable %in% c("sds","mt","nt","ph")))
+experimentvars <- c("snowcloth","meltdates","waterdates","sm")
+plot_timings(filter(timings, variable %in% c(experimentvars, "mt","nt","ph")))
+plot_timings(filter(timings, variable %in% c(experimentvars, "lt","pt","cen")))
+plot_timings(filter(timings, variable %in% c(experimentvars, "vt")))
 
 timings.long <- timings %>% select(-plots) %>% 
   pivot_longer(c(begin,end), names_to="time", values_to="day") 

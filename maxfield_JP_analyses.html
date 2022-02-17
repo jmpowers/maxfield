@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-02-16" />
+<meta name="date" content="2022-02-17" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-02-16</h4>
+<h4 class="date">2022-02-17</h4>
 
 </div>
 
@@ -973,6 +973,7 @@ anova(sm.mod.abs) %&gt;% kable()</code></pre>
 <pre class="r"><code>  timings_labels &lt;- c(snowcloth=&quot;Snow cloths applied to early plots&quot;, 
                      meltdates=&quot;Mean early and normal snowmelt timing&quot;, 
                      waterdates=&quot;Summer precipitation treatments applied&quot;,
+                     vt=&quot;Volatiles collected&quot;,
                      sm=&quot;Soil moisture recorded&quot;,         ph=&quot;Inflorescence height recorded&quot;, 
                      mt=&quot;Floral morphology recorded&quot;,     nt=&quot;Nectar traits recorded&quot;, 
                      pt= &quot;Physiology traits recorded&quot;,    lt=&quot;Vegetative traits recorded&quot;, 
@@ -989,17 +990,21 @@ ggplot(aes(y=variable, color=year))+
             position = position_dodge2(width=0.8, reverse = T), size=4, hjust=0, show.legend=FALSE)+
   geom_point(aes(x=begin), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2)+
   geom_point(aes(x=end), position = position_dodge2(width=0.7, reverse = T), shape=15, size=2) +
-  scale_color_manual(&quot;Year&quot;, values=c(year_pal, `2021`=brewer.pal(8, name=&quot;Set2&quot;)[[4]]), guide=guide_legend(override.aes = list(size=5))) + 
+  scale_color_manual(&quot;Year&quot;, guide=guide_legend(override.aes = list(size=5)),
+                     values=list(year_pal, c(year_pal, `2021`=brewer.pal(8, name=&quot;Set2&quot;)[[4]]))[[1 + &quot;2021&quot; %in% data$year]]) + 
   scale_y_discrete(&quot;&quot;, labels=timings_labels)+
   scale_x_continuous(&quot;Day of year&quot;, breaks=seq(80,240, by=20)) +
   theme_minimal() + theme(legend.position = &quot;top&quot;, text=element_text(size=14, color=&quot;black&quot;), axis.text = element_text(color=&quot;black&quot;),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;))
 }
 
-plot_timings(filter(timings, !variable %in% c(&quot;sds&quot;,&quot;lt&quot;,&quot;pt&quot;,&quot;cen&quot;)))</code></pre>
+experimentvars &lt;- c(&quot;snowcloth&quot;,&quot;meltdates&quot;,&quot;waterdates&quot;,&quot;sm&quot;)
+plot_timings(filter(timings, variable %in% c(experimentvars, &quot;mt&quot;,&quot;nt&quot;,&quot;ph&quot;)))</code></pre>
 <p><img src="images/timings-1.png" width="672" /></p>
-<pre class="r"><code>plot_timings(filter(timings, !variable %in% c(&quot;sds&quot;,&quot;mt&quot;,&quot;nt&quot;,&quot;ph&quot;)))</code></pre>
+<pre class="r"><code>plot_timings(filter(timings, variable %in% c(experimentvars, &quot;lt&quot;,&quot;pt&quot;,&quot;cen&quot;)))</code></pre>
 <p><img src="images/timings-2.png" width="672" /></p>
+<pre class="r"><code>plot_timings(filter(timings, variable %in% c(experimentvars, &quot;vt&quot;)))</code></pre>
+<p><img src="images/timings-3.png" width="672" /></p>
 <pre class="r"><code>timings.long &lt;- timings %&gt;% select(-plots) %&gt;% 
   pivot_longer(c(begin,end), names_to=&quot;time&quot;, values_to=&quot;day&quot;) 
 
@@ -1163,48 +1168,66 @@ timings.long %&gt;%
 <td align="left">84</td>
 </tr>
 <tr class="odd">
+<td align="left">vt</td>
+<td align="left">2018</td>
+<td align="left">54</td>
+<td align="left">95</td>
+</tr>
+<tr class="even">
+<td align="left">vt</td>
+<td align="left">2019</td>
+<td align="left">39</td>
+<td align="left">59</td>
+</tr>
+<tr class="odd">
+<td align="left">vt</td>
+<td align="left">2020</td>
+<td align="left">57</td>
+<td align="left">86</td>
+</tr>
+<tr class="even">
 <td align="left">ph</td>
 <td align="left">2018</td>
 <td align="left">47</td>
 <td align="left">78</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ph</td>
 <td align="left">2019</td>
 <td align="left">33</td>
 <td align="left">60</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">ph</td>
 <td align="left">2020</td>
 <td align="left">45</td>
 <td align="left">94</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">sds</td>
 <td align="left">2020</td>
 <td align="left">80</td>
 <td align="left">120</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">cen</td>
 <td align="left">2018</td>
 <td align="left">37</td>
 <td align="left">45</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">cen</td>
 <td align="left">2019</td>
 <td align="left">11</td>
 <td align="left">46</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">cen</td>
 <td align="left">2020</td>
 <td align="left">38</td>
 <td align="left">49</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">cen</td>
 <td align="left">2021</td>
 <td align="left">NA</td>

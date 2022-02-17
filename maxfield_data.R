@@ -16,7 +16,7 @@ library(googledrive)
 drive_auth(email = T)
 
 # Get file listing for "2020 RMBL Campbell Lab"
-datasheets <- drive_ls(as_id("1xVG466gMSCTfsMbvXudhq-Ruc2TKOZJB"), recursive=TRUE) 
+datasheets <- drive_ls(as_id("1xVG466gMSCTfsMbvXudhq-Ruc2TKOZJB"), recursive=TRUE, type="spreadsheet") 
 
 # hobo --------------------------------------------------------------------
 
@@ -828,6 +828,7 @@ timings <- bind_rows(
   nt = nt %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
   pt = pt %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
   lt = lt %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
+  vt = vt %>% group_by(year) %>% summarize(begin = min(yday(sampledate), na.rm=T), end = max(yday(sampledate), na.rm=T)),
   ph = ph %>% drop_na(height_cm) %>% group_by(year) %>% summarize(begin = min(julian), end = max(julian)),
   sds = sds20.date %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
   cen = cen %>% select(starts_with("date")) %>% pivot_longer(everything(), names_to="census", names_prefix = "date_", values_to="date") %>% 
