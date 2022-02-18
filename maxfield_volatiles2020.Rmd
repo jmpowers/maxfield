@@ -115,6 +115,35 @@ ggplot(vt %>% drop_na(water), aes(x=factor(sampledate), y=VWC, color=water)) + f
   labs(x="Date", y="Soil moisture (%VWC)", color="Precipitation")
 ```
 
+# Sampling
+
+## Time of day
+
+```{r sample_times}
+ggplot(volsmeta, aes(x=bag, fill=year)) + geom_histogram(show.legend = F) + facet_wrap(vars(year), ncol=1) + 
+  scale_fill_manual(values=year_pal) + theme_minimal() + 
+  labs(x="Flower bagged", caption= paste(format(c(min(volsmeta$bag, na.rm=T), max(volsmeta$bag, na.rm=T)), "%H:%M"), collapse=" - "))
+ggplot(volsmeta, aes(x=bag+total_time, fill=year)) + geom_histogram(show.legend = F) + facet_wrap(vars(year), ncol=1) + 
+  scale_fill_manual(values=year_pal) + theme_minimal() + 
+  labs(x="Pump stopped", caption= paste(format(c(min(volsmeta$bag+volsmeta$total_time, na.rm=T), max(volsmeta$bag+volsmeta$total_time, na.rm=T)), "%H:%M"), collapse=" - "))
+
+volsmeta %>% count(beforenoon=hour(bag+total_time) <13)
+
+ggplot(volsmeta, aes(x=end-bag)) + geom_histogram() + labs(x="Equilibration and pumping time (min)")
+```
+
+## Distributed among treatments
+
+```{r random_sampling}
+ggplot(vt, aes(x=sampledate, fill=water)) + geom_bar() + facet_wrap(vars(year), ncol=1, scales="free_x") + scale_fill_manual("Precipitation", values=water_pal) + theme_minimal()
+
+ggplot(vt, aes(x=sampledate, fill=snow)) + geom_bar() + facet_wrap(vars(year), ncol=1, scales="free_x") + scale_fill_manual("Snowmelt", values=snow_pal) + theme_minimal()
+
+list(water=chisq.test(with(vt, table(sampledate, water))),
+     snow=chisq.test(with(vt, table(sampledate, snow)))) %>% 
+  map_dfr(tidy, .id="treatment") %>% kable(caption="Test of randomness of treatments on each sampling date")
+```
+
 # GCMS data checks
 
 ## Filtering

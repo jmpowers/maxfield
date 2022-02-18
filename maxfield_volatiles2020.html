@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-02-11" />
+<meta name="date" content="2022-02-17" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -263,7 +263,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-02-11</h4>
+<h4 class="date">2022-02-17</h4>
 
 </div>
 
@@ -537,6 +537,65 @@ ggplot(vt.volsmeta.count, aes(x=as.Date(sampledate.file),y=n, fill=status))+ geo
   geom_boxplot() + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle=90)) + 
   labs(x=&quot;Date&quot;, y=&quot;Soil moisture (%VWC)&quot;, color=&quot;Precipitation&quot;)</code></pre>
 <p><img src="images_volatiles2020/sm-1.png" width="768" /></p>
+</div>
+<div id="sampling" class="section level1">
+<h1>Sampling</h1>
+<div id="time-of-day" class="section level2">
+<h2>Time of day</h2>
+<pre class="r"><code>ggplot(volsmeta, aes(x=bag, fill=year)) + geom_histogram(show.legend = F) + facet_wrap(vars(year), ncol=1) + 
+  scale_fill_manual(values=year_pal) + theme_minimal() + 
+  labs(x=&quot;Flower bagged&quot;, caption= paste(format(c(min(volsmeta$bag, na.rm=T), max(volsmeta$bag, na.rm=T)), &quot;%H:%M&quot;), collapse=&quot; - &quot;))</code></pre>
+<p><img src="images_volatiles2020/sample_times-1.png" width="768" /></p>
+<pre class="r"><code>ggplot(volsmeta, aes(x=bag+total_time, fill=year)) + geom_histogram(show.legend = F) + facet_wrap(vars(year), ncol=1) + 
+  scale_fill_manual(values=year_pal) + theme_minimal() + 
+  labs(x=&quot;Pump stopped&quot;, caption= paste(format(c(min(volsmeta$bag+volsmeta$total_time, na.rm=T), max(volsmeta$bag+volsmeta$total_time, na.rm=T)), &quot;%H:%M&quot;), collapse=&quot; - &quot;))</code></pre>
+<p><img src="images_volatiles2020/sample_times-2.png" width="768" /></p>
+<pre class="r"><code>volsmeta %&gt;% count(beforenoon=hour(bag+total_time) &lt;13)</code></pre>
+<pre><code>  beforenoon   n
+1      FALSE  33
+2       TRUE 395
+3         NA  31</code></pre>
+<pre class="r"><code>ggplot(volsmeta, aes(x=end-bag)) + geom_histogram() + labs(x=&quot;Equilibration and pumping time (min)&quot;)</code></pre>
+<p><img src="images_volatiles2020/sample_times-3.png" width="768" /></p>
+</div>
+<div id="distributed-among-treatments" class="section level2">
+<h2>Distributed among treatments</h2>
+<pre class="r"><code>ggplot(vt, aes(x=sampledate, fill=water)) + geom_bar() + facet_wrap(vars(year), ncol=1, scales=&quot;free_x&quot;) + scale_fill_manual(&quot;Precipitation&quot;, values=water_pal) + theme_minimal()</code></pre>
+<p><img src="images_volatiles2020/random_sampling-1.png" width="768" /></p>
+<pre class="r"><code>ggplot(vt, aes(x=sampledate, fill=snow)) + geom_bar() + facet_wrap(vars(year), ncol=1, scales=&quot;free_x&quot;) + scale_fill_manual(&quot;Snowmelt&quot;, values=snow_pal) + theme_minimal()</code></pre>
+<p><img src="images_volatiles2020/random_sampling-2.png" width="768" /></p>
+<pre class="r"><code>list(water=chisq.test(with(vt, table(sampledate, water))),
+     snow=chisq.test(with(vt, table(sampledate, snow)))) %&gt;% 
+  map_dfr(tidy, .id=&quot;treatment&quot;) %&gt;% kable(caption=&quot;Test of randomness of treatments on each sampling date&quot;)</code></pre>
+<table>
+<caption>Test of randomness of treatments on each sampling date</caption>
+<thead>
+<tr class="header">
+<th align="left">treatment</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+<th align="right">parameter</th>
+<th align="left">method</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">81.17</td>
+<td align="right">0.0059</td>
+<td align="right">52</td>
+<td align="left">Pearson’s Chi-squared test</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">42.26</td>
+<td align="right">0.0231</td>
+<td align="right">26</td>
+<td align="left">Pearson’s Chi-squared test</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 <div id="gcms-data-checks" class="section level1">
 <h1>GCMS data checks</h1>
