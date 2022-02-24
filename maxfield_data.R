@@ -6,6 +6,7 @@
 library(tidyverse)
 library(lubridate)
 library(RColorBrewer)
+library(colorspace)
 
 # The data is sourced from Google Drive.
 # You will need to authenticate interactively with the gs4_auth() and drive_auth() commands to make this work locally.
@@ -75,6 +76,7 @@ water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,8,1)], levels(treatments$
 water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$water))
 snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
 snow_pal_grey <- setNames(c("black","grey50"), levels(treatments$snow))
+water_snow_pal <- setNames(c(water_pal, colorspace::lighten(water_pal, 0.4)), levels(interaction(treatments$water, treatments$snow, sep=" ")))
 year_pal <- setNames(brewer.pal(8, name="Set2")[c(2,3,6)], levels(treatments$year))
 year.round_pal <- c(set_names(year_pal, paste0(names(year_pal),".2")), 
                     set_names(brewer.pal(6, "Dark2")[c(2,3,6)], paste0(names(year_pal),".1")))
@@ -463,7 +465,9 @@ ph <- bind_rows(list("2018" = ph18, "2019" = ph19, "2020" = ph20), .id="year") %
   mutate(julian=as.integer(as.character(julian))) %>% 
   left_join(sm.subplotyear) 
 
-ph.plantid <- ph %>% group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% summarize_at(c("open","height_cm", "VWC"), mean, na.rm=T) 
+ph.plantyr <- ph %>% group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% 
+  summarize(across(c(open, eggs, height_cm, VWC), mean, na.rm=T)) %>% 
+  mutate(eggs = if_else(is.nan(eggs), 0, eggs))
 
 # leaftraits --------------------------------------------------------------
 
@@ -644,7 +648,7 @@ mt.subplot <- mt.plantyr %>%
 # floralvolatiles ---------------------------------------------------------------
 
 vt_sheets <- gs4_get("1vhJNXeEmffkKFyhtkpMp2bhYcyPPEL-2aRsBAdSYNJY")#TODO temporary for convenience #filter(datasheets, name=="2020 Maxfield Floral Volatiles")
-vt <- map_dfr(sheet_names(vt_sheets), ~ read_sheet(vt_sheets, sheet=.x) %>% 
+vt.ambi <- map_dfr(sheet_names(vt_sheets), ~ read_sheet(vt_sheets, sheet=.x) %>% 
                 mutate(plant.file=as.character(plant.file) %>% na_if("NULL"))) %>% #some read in as a list
   mutate(plotid = paste0(plot, subplot), plot = as.character(plot), plant=as.character(plant),
          type = ifelse(plant == "air", "ambient", "floral"), plant = na_if(plant, "ambient"),
@@ -656,12 +660,12 @@ vt <- map_dfr(sheet_names(vt_sheets), ~ read_sheet(vt_sheets, sheet=.x) %>%
          plot.file =       coalesce(as.character(plot.file), plot),
          subplot.file =    coalesce(subplot.file, subplot),
          plant.file =      coalesce(plant.file, plant)) %>% 
-  filter(type=="floral") %>% 
   select(-index) %>% 
   #TODO get fix_dataset working here
   #group_by(year) %>% group_split() %>% map2_dfr(paste0("volatiles",18:20), fix_dataset) %>% 
   left_join(treatments) %>% #assume that the written metadata is correct not the info in the  .file name
   mutate_if(is.character, as.factor)
+vt <- vt.ambi %>% filter(type=="floral")
 
 # seeds -------------------------------------------------------------------
 

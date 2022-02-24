@@ -105,6 +105,10 @@ ggplot(vt.volsmeta.count, aes(x=as.Date(sampledate.file),y=n, fill=status))+ geo
   scale_x_date(breaks=scales::date_breaks(width = "7 days"), minor_breaks = scales::date_breaks(width = "1 days")) +
   theme_minimal() + theme(legend.position="top") + scale_fill_manual(values=c("red","orange","darkgreen")) +
   labs(x="Sampling date (according to GCfile)", y="Samples", fill="Data status")
+
+ggplot(volsmeta %>% filter(year %in% c(2018, 2020) | sequence.year==year), aes(x=sequence.date - sampledate)) + 
+  geom_histogram() + facet_wrap(vars(year), ncol=1, scales="free_x") + theme_minimal()
+sort(with(volsmeta, sequence.date - sampledate))
 ```
 
 
@@ -136,14 +140,45 @@ ggplot(volsmeta, aes(x=end-bag)) + geom_histogram() + labs(x="Equilibration and 
 ## Distributed among treatments
 
 ```{r random_sampling}
-ggplot(vt, aes(x=sampledate, fill=water)) + geom_bar() + facet_wrap(vars(year), ncol=1, scales="free_x") + scale_fill_manual("Precipitation", values=water_pal) + theme_minimal()
-
-ggplot(vt, aes(x=sampledate, fill=snow)) + geom_bar() + facet_wrap(vars(year), ncol=1, scales="free_x") + scale_fill_manual("Snowmelt", values=snow_pal) + theme_minimal()
+ggplot(volsmeta, aes(x=yday(sampledate), fill=paste(water, snow))) + geom_bar() + facet_wrap(vars(year), ncol=1) + 
+  labs(fill="Precipitation, snowmelt", x="Day of year", y="Samples") + scale_fill_manual(values=water_snow_pal)+ theme_minimal() 
 
 list(water=chisq.test(with(vt, table(sampledate, water))),
-     snow=chisq.test(with(vt, table(sampledate, snow)))) %>% 
+     snow=chisq.test(with(vt, table(sampledate, snow))),
+     water_snow=chisq.test(with(vt, table(sampledate, paste(water, snow))))) %>% 
   map_dfr(tidy, .id="treatment") %>% kable(caption="Test of randomness of treatments on each sampling date")
+
+#TODO investigate dates with only one sample - likely errors
+volsmeta %>% count(year, sampledate) %>% filter(n>1) %>% count(year) %>% kable(caption="More than one sample taken on these dates")
 ```
+
+## Flowers and buds
+
+```{r buds}
+volsmeta %>% count(flowers)
+volsmeta %>% count(buds>0)
+cat(paste("Buds included in", round(sum(volsmeta$buds>0, na.rm=T)/sum(volsmeta$buds>=0, na.rm=T)*100), "% of samples"))
+```
+
+## Ambient controls
+```{r ambients}
+vt.ambi %>% filter(type=="ambient") %>% mutate(year=year(sampledate)) %>% 
+ggplot(aes(x=yday(sampledate))) + geom_bar() + facet_wrap(vars(year), ncol=1) + 
+  labs(x="Day of year", y="Ambient samples") + scale_fill_manual(values=water_snow_pal)+  theme_minimal() 
+
+setdiff(vt.ambi %>% filter(type=="floral") %>% pull(sampledate) %>% unique, 
+        vt.ambi %>% filter(type=="ambient") %>% pull(sampledate) %>% unique) %>% as.Date(origin=ymd("1970-01-01"))
+
+vt.ambi %>% count(type) #TODO check if all of these were run and used for filtering
+volsmeta %>% count(year, type)
+volsmeta %>% count(type)
+
+ggplot(vt.ambi %>% filter(type=="ambient"), aes(x=hour(bag), fill=year)) + 
+  geom_histogram(show.legend = F, binwidth=1) + facet_wrap(vars(year), ncol=1) + 
+  scale_fill_manual(values=year_pal) + theme_minimal() + 
+  labs(x="Ambient control bagged (hr)", caption= paste(format(c(min(volsmeta$bag, na.rm=T), max(volsmeta$bag, na.rm=T)), "%H:%M"), collapse=" - "))
+```
+
 
 # GCMS data checks
 
@@ -201,6 +236,8 @@ ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambie
   arrange(desc(freq.floral)) %>% mutate(across(starts_with("freq."), round, 3)) %>% 
   DT::datatable(caption="Volatile compounds to use for analysis")
 
+ipochems %>% count(verdict)
+
 vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))>81]#occur in more than N samples
 ipogood.top <- names(sort(colSums(vols.good.top), decreasing=T))
 volsmeta.good.top <- bind_cols(volsmeta, vols.good.top) %>%  
@@ -209,7 +246,8 @@ volsmeta.good.top <- bind_cols(volsmeta, vols.good.top) %>%
 
 traits.good.top <- volsmeta.good.top %>% 
   left_join(mnps.plantyr %>% select(year, plotid, plant, all_of(traits))) %>% 
-  mutate(name = fct_relevel(name, ipogood.top))
+  mutate(name = fct_relevel(name, ipogood.top)) %>% 
+  left_join(ph.plantyr %>% select(year, plotid, plant, open, eggs) %>% mutate(eggs_per_open = eggs/open))
 
 vols.drydown <- vols[,c("1,3-Octadiene","Benzyl alcohol", "(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene",".alpha.-Farnesene", "Bicyclo[3.1.1]heptane, 6,6-dimethyl-2-methylene-, (1S)-", ".beta.-Ocimene")]
 volsmeta.drydown <- bind_cols(volsmeta, vols.drydown) %>%  pivot_longer(-all_of(colnames(volsmeta)))
@@ -220,7 +258,8 @@ vols.class <- vols.good %>% t() %>% as.data.frame() %>% rownames_to_column("name
 volsmeta.class <- bind_cols(volsmeta, vols.class) %>%  
   pivot_longer(-all_of(colnames(volsmeta)))
 traits.class <- volsmeta.class %>% 
-  left_join(mnps.plantyr %>% select(year, plotid, plant, all_of(traits)))
+  left_join(mnps.plantyr %>% select(year, plotid, plant, all_of(traits))) %>% 
+  left_join(ph.plantyr %>% select(year, plotid, plant, open, eggs) %>% mutate(eggs_per_open = eggs/open))
 ```
 
 ## Heatmap
@@ -545,12 +584,26 @@ ggplot(traits.good.top %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infe
   theme_bw()+scale_color_manual(values=year_pal) +
   scale_x_sqrt()
 
+ggplot(traits.good.top, aes(x=value, y=eggs_per_open, color=year)) + 
+  geom_point() + geom_smooth(method="loess",span=1,se=F) + 
+  facet_wrap(vars(name), scales="free_x") + 
+  labs(x="Emissions", y="Mean fly eggs / mean open flowers")+
+  theme_bw()+scale_color_manual(values=year_pal) +
+  scale_x_sqrt() + ylim(0,1.2)
+
 ggplot(traits.class %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year)) + 
   geom_point() + geom_smooth(method="loess",span=0.8,se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y=paste(traitnames.units["prop_infested"], "(>4 fruits)"), color="Year")+
   theme_bw()+scale_color_manual(values=year_pal) +
   scale_x_sqrt()
+
+ggplot(traits.class, aes(x=value, y=eggs_per_open, color=year)) + 
+  geom_point() + geom_smooth(method="loess",span=0.8,se=F) + 
+  facet_wrap(vars(name), scales="free_x") + 
+  labs(x="Emissions", y="Mean fly eggs / mean open flowers")+
+  theme_bw()+scale_color_manual(values=year_pal) +
+  scale_x_sqrt() + ylim(0,1.2)
 ```
 
 

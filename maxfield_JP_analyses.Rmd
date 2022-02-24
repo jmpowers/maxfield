@@ -2133,21 +2133,23 @@ ph %>% group_by(year, snow, water, julian) %>% summarize_at("has_egg", mean, na.
 ```
 
 ## Floral display size
+
 ### 2020
+
 ```{r display_size}
-ggplot(ph.plantid, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method="lm", se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
+ggplot(ph.plantyr, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method="lm", se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
   labs(x="Mean inflorescence height (cm)", y="Mean number of open flowers", color="Precipitation")
 
-ggplot(ph.plantid, aes(x=water, color=snow, y = height_cm)) +
+ggplot(ph.plantyr, aes(x=water, color=snow, y = height_cm)) +
     labs(x="Precipitation", y="Mean inflorescence height (cm)", color="Snowmelt") +
     geom_boxplot() + scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1)
-ggplot(ph.plantid, aes(x=VWC, y=height_cm, color=year)) + geom_point() + geom_smooth(se=F) +
+ggplot(ph.plantyr, aes(x=VWC, y=height_cm, color=year)) + geom_point() + geom_smooth(se=F) +
     scale_color_manual(values=year_pal) + labs(x="Mean VWC", y="Mean inflorescence height (cm)") 
     
-ggplot(ph.plantid, aes(x=water, color=snow, y = open)) +
+ggplot(ph.plantyr, aes(x=water, color=snow, y = open)) +
     labs(x="Precipitation", y="Mean number of open flowers", color="Snowmelt") +
     geom_boxplot() + scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1)
-ggplot(ph.plantid, aes(x=VWC, y=open, color=year)) + geom_point() + geom_smooth(se=F)+
+ggplot(ph.plantyr, aes(x=VWC, y=open, color=year)) + geom_point() + geom_smooth(se=F)+
   scale_color_manual(values=year_pal) + labs(x="Mean VWC", y="Mean number of open flowers")
 ```
 

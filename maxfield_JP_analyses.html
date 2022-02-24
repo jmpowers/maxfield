@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-02-17" />
+<meta name="date" content="2022-02-24" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-02-17</h4>
+<h4 class="date">2022-02-24</h4>
 
 </div>
 
@@ -7857,21 +7857,21 @@ map(set_names(leaftraits),
 <h2>Floral display size</h2>
 <div id="section" class="section level3">
 <h3>2020</h3>
-<pre class="r"><code>ggplot(ph.plantid, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
+<pre class="r"><code>ggplot(ph.plantyr, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
   labs(x=&quot;Mean inflorescence height (cm)&quot;, y=&quot;Mean number of open flowers&quot;, color=&quot;Precipitation&quot;)</code></pre>
 <p><img src="images/display_size-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(ph.plantid, aes(x=water, color=snow, y = height_cm)) +
+<pre class="r"><code>ggplot(ph.plantyr, aes(x=water, color=snow, y = height_cm)) +
     labs(x=&quot;Precipitation&quot;, y=&quot;Mean inflorescence height (cm)&quot;, color=&quot;Snowmelt&quot;) +
     geom_boxplot() + scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1)</code></pre>
 <p><img src="images/display_size-2.png" width="672" /></p>
-<pre class="r"><code>ggplot(ph.plantid, aes(x=VWC, y=height_cm, color=year)) + geom_point() + geom_smooth(se=F) +
+<pre class="r"><code>ggplot(ph.plantyr, aes(x=VWC, y=height_cm, color=year)) + geom_point() + geom_smooth(se=F) +
     scale_color_manual(values=year_pal) + labs(x=&quot;Mean VWC&quot;, y=&quot;Mean inflorescence height (cm)&quot;) </code></pre>
 <p><img src="images/display_size-3.png" width="672" /></p>
-<pre class="r"><code>ggplot(ph.plantid, aes(x=water, color=snow, y = open)) +
+<pre class="r"><code>ggplot(ph.plantyr, aes(x=water, color=snow, y = open)) +
     labs(x=&quot;Precipitation&quot;, y=&quot;Mean number of open flowers&quot;, color=&quot;Snowmelt&quot;) +
     geom_boxplot() + scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1)</code></pre>
 <p><img src="images/display_size-4.png" width="672" /></p>
-<pre class="r"><code>ggplot(ph.plantid, aes(x=VWC, y=open, color=year)) + geom_point() + geom_smooth(se=F)+
+<pre class="r"><code>ggplot(ph.plantyr, aes(x=VWC, y=open, color=year)) + geom_point() + geom_smooth(se=F)+
   scale_color_manual(values=year_pal) + labs(x=&quot;Mean VWC&quot;, y=&quot;Mean number of open flowers&quot;)</code></pre>
 <p><img src="images/display_size-5.png" width="672" /></p>
 </div>
