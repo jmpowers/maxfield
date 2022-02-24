@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-02-17" />
+<meta name="date" content="2022-02-24" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -263,7 +263,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-02-17</h4>
+<h4 class="date">2022-02-24</h4>
 
 </div>
 
@@ -1235,10 +1235,13 @@ plot_beta(filter(vols.beta.water, year==&quot;2018&quot;), colorby=&quot;water&q
 </div>
 <div id="adaptive-plasticity" class="section level2">
 <h2>Adaptive plasticity</h2>
+<div id="selection-gradient-vs.-plasticity" class="section level3">
+<h3>Selection gradient vs. plasticity</h3>
 <pre class="r"><code>plasticity &lt;- volsmeta.good.top %&gt;% group_by(year, water, name) %&gt;% summarize(value=mean(value)) %&gt;% 
   pivot_wider(names_from=water, values_from=value) %&gt;% left_join(ipochems) %&gt;% 
-  mutate(A_C = (Addition-Control)/Control, R_C = (Reduction-Control)/Control, .keep=&quot;unused&quot;)
-
+  mutate(A_C = (Addition-Control)/Control, 
+         R_C = (Reduction-Control)/Control, 
+         A_R = (Addition-Reduction)/Reduction, .keep=&quot;unused&quot;)
 
 plasticity %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;% filter(water==&quot;Addition&quot;)) %&gt;% 
   ggplot(aes(x=A_C, y=B, color=standard)) + facet_wrap(vars(year), ncol=1)+
@@ -1254,6 +1257,21 @@ plasticity %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;% fil
   scale_x_continuous(labels=scales::percent, limits=c(NA,4)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
   labs(x=&quot;Emissions change in Reduction vs. Control precipitation&quot;, y=&quot;Selection gradient (beta) under precipitation reduction&quot;)</code></pre>
 <p><img src="images_volatiles2020/adaptive-2.png" width="960" /></p>
+</div>
+<div id="change-in-selection-gradient-vs.-plasticity" class="section level3">
+<h3>Change in selection gradient vs. plasticity</h3>
+<pre class="r"><code>diffbeta &lt;- vols.beta.water %&gt;% rename(name=trait) %&gt;% 
+  pivot_wider(names_from=water, values_from=c(B,SE)) %&gt;% 
+  mutate(B_A_R = B_Addition - B_Reduction)
+
+plasticity %&gt;% left_join(diffbeta) %&gt;% 
+  ggplot(aes(x=A_R, y=B_A_R, color=standard)) + facet_wrap(vars(year), ncol=1)+
+  geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
+  scale_color_discrete(&quot;Class&quot;, labels=c(&quot;monoterpene&quot;,&quot;sesquiterpene&quot;,&quot;aliphatic&quot;,&quot;linalool&quot;,&quot;benzenoid&quot;))+
+  scale_x_continuous(labels=scales::percent, limits=c(NA,2)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
+  labs(x=&quot;Emissions change in precipitation addition vs. reduction&quot;, y=&quot;Change in selection gradient (beta) in precipitation addition vs. reduction&quot;)</code></pre>
+<p><img src="images_volatiles2020/adaptive_diff-1.png" width="960" /></p>
+</div>
 </div>
 </div>
 <div id="volatiles-vs.-floral-traits" class="section level1">

@@ -569,11 +569,14 @@ plot_beta(filter(vols.beta.water), colorby="water") +
 
 ## Adaptive plasticity
 
+### Selection gradient vs. plasticity
+
 ```{r adaptive, fig.height=14, fig.width=10}
 plasticity <- volsmeta.good.top %>% group_by(year, water, name) %>% summarize(value=mean(value)) %>% 
   pivot_wider(names_from=water, values_from=value) %>% left_join(ipochems) %>% 
-  mutate(A_C = (Addition-Control)/Control, R_C = (Reduction-Control)/Control, .keep="unused")
-
+  mutate(A_C = (Addition-Control)/Control, 
+         R_C = (Reduction-Control)/Control, 
+         A_R = (Addition-Reduction)/Reduction, .keep="unused")
 
 plasticity %>% left_join(vols.beta.water %>% rename(name=trait) %>% filter(water=="Addition")) %>% 
   ggplot(aes(x=A_C, y=B, color=standard)) + facet_wrap(vars(year), ncol=1)+
@@ -590,6 +593,20 @@ plasticity %>% left_join(vols.beta.water %>% rename(name=trait) %>% filter(water
   labs(x="Emissions change in Reduction vs. Control precipitation", y="Selection gradient (beta) under precipitation reduction")
 ```
 
+### Change in selection gradient vs. plasticity
+
+```{r adaptive_diff, fig.height=14, fig.width=10}
+diffbeta <- vols.beta.water %>% rename(name=trait) %>% 
+  pivot_wider(names_from=water, values_from=c(B,SE)) %>% 
+  mutate(B_A_R = B_Addition - B_Reduction)
+
+plasticity %>% left_join(diffbeta) %>% 
+  ggplot(aes(x=A_R, y=B_A_R, color=standard)) + facet_wrap(vars(year), ncol=1)+
+  geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
+  scale_color_discrete("Class", labels=c("monoterpene","sesquiterpene","aliphatic","linalool","benzenoid"))+
+  scale_x_continuous(labels=scales::percent, limits=c(NA,2)) + theme_bw()  + theme(legend.position = "top") +
+  labs(x="Emissions change in precipitation addition vs. reduction", y="Change in selection gradient (beta) in precipitation addition vs. reduction")
+```
 
 # Volatiles vs. floral traits
 
