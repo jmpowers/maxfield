@@ -108,7 +108,6 @@ ggplot(vt.volsmeta.count, aes(x=as.Date(sampledate.file),y=n, fill=status))+ geo
 
 ggplot(volsmeta %>% filter(year %in% c(2018, 2020) | sequence.year==year), aes(x=sequence.date - sampledate)) + 
   geom_histogram() + facet_wrap(vars(year), ncol=1, scales="free_x") + theme_minimal()
-sort(with(volsmeta, sequence.date - sampledate))
 ```
 
 
@@ -206,7 +205,7 @@ vols.cut <- vols[,colSums(vols)>3e8]
 
 ipochems <- read_csv("data/volatiles/chemsf_ipo.csv") %>% 
   filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge"),
-         name %in% colnames(vols)[colSums(vols)>0]) %>% #filter empty compounds
+         name %in% colnames(vols)[colSums(vols)>0], name != "Anisole") %>% #filter empty compounds
   mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
          class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
                             Sequiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
@@ -220,7 +219,6 @@ for(yr in unique(volsmeta$sequence.year)) {
   thisyr <- volsmeta$sequence.year==yr
   vols.good[thisyr,] <- sweep(vols.good[thisyr,], 2, pull(ipochems, paste0("area_per_ng",yr)), FUN = '/')# convert areas to nanograms 
 }
-nonzero <- rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
 
 k <- 2 #split into this many k-means cluster per year
 volsmeta$cluster <- 0
@@ -238,9 +236,21 @@ ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambie
   arrange(desc(freq.floral)) %>% mutate(across(starts_with("freq."), round, 3)) %>% 
   DT::datatable(caption="Volatile compounds to use for analysis")
 
-ipochems %>% count(verdict)
+# Cut contaminated samples
+nonzero <-rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
+set.seed(1) # ensures the contaminated samples are in cluster.good = 1
+volsmeta$cluster.good <-factor(kmeans((vols.good)^(1/3), centers=3, nstart=3)$cluster)
+set.seed(1) # ensures the contaminated samples are in cluster.cut = 1
+volsmeta$cluster.cut <-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
 
-vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))>81]#occur in more than N samples
+keep.samples <- unname(nonzero & !(volsmeta$year.cluster %in% c("2019.1", "2020.1")))
+volsmeta <- volsmeta[keep.samples,]
+vols <- vols[keep.samples,]
+vols.cut <- vols.cut[keep.samples,]
+vols.good <- vols.good[keep.samples,]
+
+minsamples <- 70
+vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))> minsamples]#occur in more than minsamples
 ipogood.top <- names(sort(colSums(vols.good.top), decreasing=T))
 volsmeta.good.top <- bind_cols(volsmeta, vols.good.top) %>%  
   pivot_longer(-all_of(colnames(volsmeta))) %>% 
@@ -290,7 +300,7 @@ pheatmap(as.matrix(t(vols.good))^(1/4),
          annotation_colors = annot_pal,
          gaps_col = which(diff(year(volsmeta$sequence.date))>0))
 
-pinene_correlates <- cor(sqrt(vols[,colSums(vols)>3e7])) %>% as.data.frame() %>% filter(`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`>0.15) %>% rownames()
+pinene_correlates <- cor(sqrt(vols[,colSums(vols)>1e7])) %>% as.data.frame() %>% filter(`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`>0.15) %>% rownames()
 pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4), 
          cluster_cols=F, show_colnames=F,
          clustering_method="mcquitty", clustering_distance_rows="correlation",
@@ -312,7 +322,7 @@ pheatmap(as.matrix(t(vols.class))^(1/4),
 
 ### Univariate
 
-```{r gcms_date, fig.height=8, fig.width=7}
+```{r gcms_date, fig.height=8, fig.width=7, eval=FALSE}
 plot_vols_rundate <- function(type, checkvols) {
 volsmeta %>% mutate(yr=year(Desorb.Start.Time)) %>% 
   bind_cols(vols %>% select(checkvols)) %>% pivot_longer(cols=checkvols) %>% 
@@ -330,7 +340,7 @@ plot_vols_rundate("Green leaf volatiles", c("4-Hexen-1-ol, (Z)-", "3-Hexen-1-ol,
 
 ### Multivariate
 
-```{r gcms_sample_date, fig.height=6, fig.width=10}
+```{r gcms_sample_date, fig.height=6, fig.width=10, eval=FALSE}
 for(categories in list(c("water","snow"),"plot","observer","pump_id","sequence.12", "sampledate", c("sampledate", "sequence.12"), c("sampledate.observer", "sequence.12"))) {
   cluster_counts <- volsmeta %>% 
     mutate(sampledate = coalesce(sampledate, sampledate.file),
@@ -358,7 +368,7 @@ ggplot(volsmeta, aes(x=Desorb.Start.Time, y=cluster))  + geom_line() + geom_poin
 ```
 
 
-```{r gcms_date_ord}
+```{r gcms_date_ord, eval=FALSE}
 for(yr in unique(year(volsmeta$sequence.start))) {
   print(yr)
   yrfilter <- year(volsmeta$sequence.start) == yr
@@ -389,21 +399,68 @@ vols.nmds.samples <- vols.nmds.points %>% filter(Score=="sites") %>%
   left_join(volsmeta, by=c("Label"="index"))
 vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
 
-(scents.nmds <- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
+(scents.nmds <- metaMDS(sqrt(vols.good), autotransform=FALSE, trace=F)) #had noshare = FALSE
 nmds.points <-  fortify(scents.nmds) %>% as_tibble()
 nmds.samples <- nmds.points %>% filter(Score=="sites") %>% left_join(volsmeta, by=c("Label"="index"))
-nmds.chems <- nmds.points %>% filter(Score=="species")
+nmds.chems <- nmds.points %>% filter(Score=="species") %>% left_join(ipochems, by=c("Label"="name"))
 
+# By year
 vols.plot <- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
-  geom_point(aes(color=factor(sequence.year))) + 
-  labs(title="Unfiltered NMDS by year", color="Year")
+  geom_point(aes(color=year)) + scale_color_manual(values=year_pal)+
+  labs(title="Unfiltered NMDS", color="Year")
 vols.good.plot <- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
   #geom_text(data=nmds.chems, aes(label=Label)) +
-  geom_point(aes(color=factor(sequence.year)))+ 
+  geom_point(aes(color=year))+ scale_color_manual(values=year_pal)+
   #geom_point(aes(color=water, shape=year)) + scale_color_manual("Precipitation", values=water_pal) +
-  labs(title="Filtered NMDS by year", color="Year")
+  labs(title="Filtered NMDS", color="Year")
 grid.arrange(vols.plot, vols.good.plot)
 
+# By a-Pinene
+vols.plot <- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2, shape=year)) + theme_classic() +
+  geom_point(aes(color=vols.good$`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`^(1/6))) + 
+  labs(title="Unfiltered NMDS", color="a-Pinene", shape="Year") + scale_color_viridis_c()
+vols.good.plot <- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2, shape=year)) + theme_classic() + 
+  geom_point(aes(color=vols.good$`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`^(1/6)))+ 
+  labs(title="Filtered NMDS", color="a-Pinene", shape="Year")+ scale_color_viridis_c()
+grid.arrange(vols.plot, vols.good.plot)
+```
+
+```{r nmds_chems, fig.height=12, fig.width=12}
+ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=year))+ scale_color_manual(values=year_pal)+
+    geom_text(data=nmds.chems, aes(label=Label, alpha=freq.floral^(1/3))) +
+  labs(title="Filtered NMDS", color="Year")
+```
+
+
+```{r nmds_clusters, eval=FALSE}
+#Cluster based on filtered data
+volsmeta %>% count(cluster.good, year) %>% arrange(year) %>% 
+  pivot_wider(names_from="year", values_from="n") %>% 
+  kable(caption = "Contaminated samples cluster = 1 based on filtered data")
+vols.plot <- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=paste(cluster.good, year)))+ 
+  labs(title="Unfiltered NMDS by year", color="Filtered cluster")
+vols.good.plot <- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=paste(cluster.good, year)))+ 
+  labs(title="Filtered NMDS by year", color="Filtered cluster")
+grid.arrange(vols.plot, vols.good.plot)
+
+#cluster based on unfiltered data
+set.seed(1)
+volsmeta$cluster.cut <-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
+volsmeta %>% count(cluster.cut, year) %>% arrange(year) %>% 
+  pivot_wider(names_from="year", values_from="n") %>% 
+  kable(caption = "Contaminated samples cluster = 1 based on unfiltered data")
+vols.plot <- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=paste(cluster.cut, year)))+ 
+  labs(title="Unfiltered NMDS by year", color="Unfiltered cluster")
+vols.good.plot <- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=paste(cluster.cut, year)))+ 
+  labs(title="Filtered NMDS by year", color="Unfiltered cluster")
+grid.arrange(vols.plot, vols.good.plot)
+
+# Ordinations for each year
 for(yr in unique(year(volsmeta$sequence.start))) {
   thisyr <- year(volsmeta$sequence.start)==yr
   (vols.nmds <- metaMDS(sqrt(vols.cut[thisyr,]), autotransform=FALSE, trace=F))
@@ -412,7 +469,7 @@ for(yr in unique(year(volsmeta$sequence.start))) {
     left_join(volsmeta, by=c("Label"="index")) %>% filter(sequence.year == yr)
   vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
   
-  (scents.nmds <- metaMDS(sqrt(vols.good[nonzero & thisyr,]), autotransform=FALSE, trace=F))
+  (scents.nmds <- metaMDS(sqrt(vols.good[thisyr,]), autotransform=FALSE, trace=F))
   nmds.points <-  fortify(scents.nmds) %>% as_tibble()
   nmds.samples <- nmds.points %>% filter(Score=="sites") %>% 
     left_join(volsmeta, by=c("Label"="index")) %>% filter(sequence.year == yr)
@@ -428,57 +485,6 @@ for(yr in unique(year(volsmeta$sequence.start))) {
 }
 ```
 
-```{r nmds_chems, fig.height=14, fig.width=12}
-(vols.nmds <- metaMDS(sqrt(vols.cut), autotransform=FALSE, trace=F))
-vols.nmds.points <-  fortify(vols.nmds) %>% as_tibble()
-vols.nmds.samples <- vols.nmds.points %>% filter(Score=="sites") %>% 
-  left_join(volsmeta, by=c("Label"="index"))
-vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
-
-(scents.nmds <- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
-nmds.points <-  fortify(scents.nmds) %>% as_tibble()
-nmds.samples <- nmds.points %>% filter(Score=="sites") %>% left_join(volsmeta, by=c("Label"="index"))
-nmds.chems <- nmds.points %>% filter(Score=="species")
-
-vols.plot <- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
-  geom_point(aes(color=factor(sequence.year))) + 
-    geom_text(data=vols.nmds.chems, aes(label=Label)) +
-  labs(title="Unfiltered NMDS by year", color="Year")
-vols.good.plot <- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
-  geom_point(aes(color=factor(sequence.year)))+ 
-    geom_text(data=nmds.chems, aes(label=Label)) +
-  #geom_point(aes(color=water, shape=year)) + scale_color_manual("Precipitation", values=water_pal) +
-  labs(title="Filtered NMDS by year", color="Year")
-grid.arrange(vols.plot, vols.good.plot)
-
-
-for(yr in unique(year(volsmeta$sequence.start))) {
-  
-  (vols.nmds <- metaMDS(sqrt(vols.cut[year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F))
-vols.nmds.points <-  fortify(vols.nmds) %>% as_tibble()
-vols.nmds.samples <- vols.nmds.points %>% filter(Score=="sites") %>% 
-  left_join(volsmeta, by=c("Label"="index"))
-vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
-
-(scents.nmds <- metaMDS(sqrt(vols.good[nonzero & year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
-nmds.points <-  fortify(scents.nmds) %>% as_tibble()
-nmds.samples <- nmds.points %>% filter(Score=="sites") %>% left_join(volsmeta, by=c("Label"="index"))
-nmds.chems <- nmds.points %>% filter(Score=="species")
-  
-  
-  vols.plot <- vols.nmds.samples %>% 
-    filter(sequence.year == yr) %>% 
-    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste("Unfiltered NMDS run",yr))+
-    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue("Run date") +
-          geom_text(data=vols.nmds.chems, aes(label=Label))
-  vols.good.plot <- nmds.samples %>% 
-    filter(sequence.year == yr) %>% 
-    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste("Filtered NMDS run",yr))+
-    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue("Run date")+
-          geom_text(data=nmds.chems, aes(label=Label))
-  grid.arrange(vols.plot, vols.good.plot)
-}
-```
 
 # Plasticity analyses
 
@@ -487,13 +493,21 @@ nmds.chems <- nmds.points %>% filter(Score=="species")
 ### CAP
 
 ```{r cap}
-(scents.cap <- capscale(sqrt(vols.good) ~ year.cluster * water * snow, data=volsmeta))
+(scents.cap <- capscale(sqrt(vols.good) ~ year * water * snow, data=volsmeta))
 anova(scents.cap, by="term")
 
-scents.cap <- capscale(sqrt(vols.good) ~ year.cluster + water, data=volsmeta)
+scents.cap <- capscale(sqrt(vols.good) ~ year + water, data=volsmeta)
 plot(scents.cap, type="n")
 points(scents.cap, display = "sites", col=water_pal[volsmeta$water], pch=as.integer(volsmeta$year)+14)
-text(scents.cap, display="cn", labels=c(unique(volsmeta$year.cluster), names(water_pal)), col=c(rep("black",5),water_pal), font=2, cex=1.5)
+text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(water_pal)), col=c(rep("black",5),water_pal), font=2, cex=1.5)
+
+plot(scents.cap, type="n")
+text(scents.cap, display="species", col="black", cex=0.5)
+
+scents.cap <- capscale(sqrt(vols.good) ~ year + snow, data=volsmeta)
+plot(scents.cap, type="n")
+points(scents.cap, display = "sites", col=snow_pal[volsmeta$snow], pch=as.integer(volsmeta$year)+14)
+text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(snow_pal)), col=c(rep("black",5),water_pal), font=2, cex=1.5)
 
 plot(scents.cap, type="n")
 text(scents.cap, display="species", col="black", cex=0.5)
@@ -501,7 +515,7 @@ text(scents.cap, display="species", col="black", cex=0.5)
 
 ### Joint species distribution model
 
-```{r jsdm_sm}
+```{r jsdm_sm, eval=FALSE}
 library(Hmsc)
 
 # model volatile abundance (emission rates) plasticity to year, water, and snow
@@ -514,7 +528,7 @@ model.abu <- Hmsc(Y=vols.good,
                 distr="lognormal poisson")
 
 # Fit model with MCMC
-thin <- 11
+thin <- 1
 (model.abu <- sampleMcmc(model.abu, thin = thin, samples = 100, transient = thin*50, nChains = 3, nParallel = 3,
                         initPar="fixed effects")) #chains start from ML solution to fixed-effects model
 #save(model.abu, file="./data/volatiles/Hmsc_plasticity_thin10.rda")
@@ -539,22 +553,22 @@ postGamma = getPostEstimate(model.abu, parName="Gamma")
 
 ```{r boxplots, fig.width=16, fig.height=10}
 treatment_boxplots <- function(volsmeta.vol, treatment) {
-  ggplot(volsmeta.vol, aes_string(x = "year.cluster", fill = treatment, y = "value")) + 
+  ggplot(volsmeta.vol, aes_string(x = "year", fill = treatment, y = "value")) + 
     facet_wrap(vars(name), scales="free_y") + geom_boxplot(outlier.size=1) + scale_y_sqrt() +
     scale_fill_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + theme_bw() + 
-    labs(x="Year and cluster", y ="Emissions (ng/hr)", fill=c(water="Precipitation",snow="Snowmelt")[[treatment]]) 
+    labs(x="Year", y ="Emissions (ng/hr)", fill=c(water="Precipitation",snow="Snowmelt")[[treatment]]) 
 }
 treatment_boxplots(volsmeta.good.top, "water")
-treatment_boxplots(volsmeta.drydown, "water")
+#treatment_boxplots(volsmeta.drydown, "water")
 treatment_boxplots(volsmeta.class, "water")
 treatment_boxplots(volsmeta.good.top, "snow")
-treatment_boxplots(volsmeta.drydown, "snow")
+#treatment_boxplots(volsmeta.drydown, "snow")
 treatment_boxplots(volsmeta.class, "snow")
 
-ggplot(volsmeta, aes(x=year.cluster, fill=factor(paste(water, snow),levels=names(water_snow_pal)), y=total))  + 
+ggplot(volsmeta, aes(x=year, fill=factor(paste(water, snow),levels=names(water_snow_pal)), y=total))  + 
   geom_boxplot(outlier.size=1) + 
   scale_fill_manual(values=water_snow_pal) + theme_minimal() +
-  labs(x="Year and cluster", y ="Total filtered emissions (ng/hr)", fill="Precipiation, snowmelt")
+  labs(x="Year", y ="Total filtered emissions (ng/hr)", fill="Precipiation, snowmelt")
 ```
 
 ## Plasticity to soil moisture
@@ -570,104 +584,109 @@ anova(scents.cap, by="term")
 ### Scatterplots
 
 ```{r sm_vols, fig.width=16, fig.height=10}
-ggplot(volsmeta.good.top, aes(x = VWC, color = year.cluster, y = value)) +  facet_wrap(vars(name), scales="free_y") + 
+ggplot(volsmeta.good.top, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales="free_y") + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt()  + labs(x="Soil moisture (%VWC)", y ="Emissions (ng/hr)", color="Year")
+  scale_y_sqrt()  + labs(x="Soil moisture (%VWC)", y ="Emissions (ng/hr)", color="Year") +
+  scale_color_manual(values=year_pal)
 
-ggplot(volsmeta.drydown, aes(x = VWC, color = year.cluster, y = value)) +  facet_wrap(vars(name), scales="free_y") + 
+ggplot(volsmeta.drydown, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales="free_y") + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Emissions (ng/hr)", color="Year")
+  scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Emissions (ng/hr)", color="Year")+
+  scale_color_manual(values=year_pal)
 
-ggplot(volsmeta.class, aes(x = VWC, color = year.cluster, y = value)) +  facet_wrap(vars(name), scales="free_y") + 
+ggplot(volsmeta.class, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales="free_y") + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Emissions (ng/hr)", color="Year")
+  scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Emissions (ng/hr)", color="Year")+
+  scale_color_manual(values=year_pal)
 
-ggplot(volsmeta, aes(x = VWC, color = year.cluster, y = total)) + 
+ggplot(volsmeta, aes(x = VWC, color = year, y = total)) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Total filtered emissions (ng/hr)", color="Year")
+  scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Total filtered emissions (ng/hr)", color="Year") +
+  scale_color_manual(values=year_pal)
 ```
 
 # Selection analyses
 
 ## Plots of selection in treatments and years
 ```{r selection, fig.width=16, fig.height=10}
-ggplot(traits.good.top, aes(x=value, y=seeds_est, color=year.cluster)) + 
+ggplot(traits.good.top, aes(x=value, y=seeds_est, color=year)) + 
   geom_point() + geom_smooth(method="lm", se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y="Seed production", color="Year")+
-  theme_bw()+ scale_x_sqrt()
+  theme_bw()+ scale_x_sqrt()+
+  scale_color_manual(values=year_pal)
 
-ggplot(traits.good.top, aes(x=value, y=seeds_est, color=water, linetype=year.cluster)) + 
+ggplot(traits.good.top, aes(x=value, y=seeds_est, color=water, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method="lm",se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
-  labs(x="Emissions", y="Seed production", color="Precipitation", linetype="Year")+
+  labs(x="Emissions", y="Seed production", color="Precipitation", linetype="Year", shape="Year")+
   theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()
 
-ggplot(traits.good.top, aes(x=value, y=seeds_est, color=snow, linetype=year.cluster)) + 
+ggplot(traits.good.top, aes(x=value, y=seeds_est, color=snow, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method="lm",se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
-  labs(x="Emissions", y="Seed production", color="Snowmelt", linetype="Year")+
+  labs(x="Emissions", y="Seed production", color="Snowmelt", linetype="Year", shape="Year")+
   theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()
 
-ggplot(traits.class, aes(x=value, y=seeds_est, color=water, linetype=year.cluster)) + 
+ggplot(traits.class, aes(x=value, y=seeds_est, color=water, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method="lm",se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
-  labs(x="Emissions", y="Seed production", color="Precipitation", linetype="Year")+
+  labs(x="Emissions", y="Seed production", color="Precipitation", linetype="Year", shape="Year")+
   theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()
 
-ggplot(traits.class, aes(x=value, y=seeds_est, color=snow, linetype=year.cluster)) + 
+ggplot(traits.class, aes(x=value, y=seeds_est, color=snow, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method="lm",se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
-  labs(x="Emissions", y="Seed production", color="Snowmelt", linetype="Year")+
+  labs(x="Emissions", y="Seed production", color="Snowmelt", linetype="Year", shape="Year")+
   theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()
 
-ggplot(traits.class, aes(x=total, y=seeds_est, color=water, linetype=year.cluster)) + 
+ggplot(traits.class, aes(x=total, y=seeds_est, color=water, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method="lm",se=F) + 
-  labs(x="Total emissions", y="Seed production", color="Precipitation", linetype="Year")+
+  labs(x="Total emissions", y="Seed production", color="Precipitation", linetype="Year", shape="Year")+
   theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()
 
-ggplot(traits.class, aes(x=total, y=seeds_est, color=snow, linetype=year.cluster)) + 
+ggplot(traits.class, aes(x=total, y=seeds_est, color=snow, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method="lm",se=F) + 
-  labs(x="Total emissions", y="Seed production", color="Snowmelt", linetype="Year")+
+  labs(x="Total emissions", y="Seed production", color="Snowmelt", linetype="Year", shape="Year")+
   theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()
 ```
 
 ## Fly infestation vs. volatiles
 
 ```{r flies, fig.width=16, fig.height=10}
-ggplot(traits.good.top %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year.cluster)) + 
+ggplot(traits.good.top %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year)) + 
   geom_point() + geom_smooth(method="lm", se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y=paste(traitnames.units["prop_infested"], "(>4 fruits)"), color="Year")+
-  theme_bw()+ scale_x_sqrt()
+  theme_bw()+ scale_x_sqrt() + scale_color_manual(values=year_pal)
 
-ggplot(traits.good.top, aes(x=value, y=eggs_per_open, color=year.cluster)) + 
+ggplot(traits.good.top, aes(x=value, y=eggs_per_open, color=year)) + 
   geom_point() + geom_smooth(method="lm",se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y="Mean fly eggs / mean open flowers", color="Year")+
-  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)
+  theme_bw()+ scale_x_sqrt() + ylim(0,1.2) +  scale_color_manual(values=year_pal)
 
-ggplot(traits.class %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year.cluster)) + 
-  geom_point() + geom_smooth(method="lm",se=F) + 
+ggplot(traits.class %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year)) + 
+  geom_point() + geom_smooth(method="loess",se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y=paste(traitnames.units["prop_infested"], "(>4 fruits)"), color="Year")+
-  theme_bw()+  scale_x_sqrt()
+  theme_bw()+  scale_x_sqrt()+  scale_color_manual(values=year_pal)
 
-ggplot(traits.class, aes(x=value, y=eggs_per_open, color=year.cluster)) + 
+ggplot(traits.class, aes(x=value, y=eggs_per_open, color=year)) + 
   geom_point() + geom_smooth(method="loess",span=0.8,se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y="Mean fly eggs / mean open flowers")+
-  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)
+  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)+  scale_color_manual(values=year_pal)
 
-ggplot(traits.class %>% filter(fruits_nonaborted>4), aes(x=total, y=prop_infested, color=year.cluster)) + 
+ggplot(traits.class %>% filter(fruits_nonaborted>4), aes(x=total, y=prop_infested, color=year)) + 
   geom_point() + geom_smooth(method="loess",span=0.8,se=F) + 
   labs(x="Total emissions", y=paste(traitnames.units["prop_infested"], "(>4 fruits)"), color="Year")+
-  theme_bw()+  scale_x_sqrt()
+  theme_bw()+  scale_x_sqrt()+  scale_color_manual(values=year_pal)
 
-ggplot(traits.class, aes(x=total, y=eggs_per_open, color=year.cluster)) + 
+ggplot(traits.class, aes(x=total, y=eggs_per_open, color=year)) + 
   geom_point() + geom_smooth(method="loess",span=0.8,se=F) + 
   labs(x="Emissions", y="Mean fly eggs / mean open flowers", color="Year")+
-  theme_bw()+  scale_x_sqrt() + ylim(0,1.2)
+  theme_bw()+  scale_x_sqrt() + ylim(0,1.2)+  scale_color_manual(values=year_pal)
 ```
 
 
@@ -711,7 +730,10 @@ plot_beta <- function(betas, colorby="year") {
   betas %>% mutate(trait = fct_reorder(trait, B)) %>% 
     ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
     geom_vline(xintercept=0)+ geom_pointrange(aes_string(color=colorby), position=position_dodge(width=0.5)) + 
-    labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait")
+    labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait",
+         color=list(year="Year", water="Precipitation", snow="Snowmelt")[[colorby]]) +
+    scale_color_manual(values=list(year=year_pal, water=water_pal, snow=snow_pal)[[colorby]]) +
+    theme_bw()
 }
 
 vols.beta.yr <- map_dfr(set_names(unique(volsmeta$year)), 
@@ -720,11 +742,8 @@ plot_beta(vols.beta.yr)
 
 vols.beta.water <- expand_grid(year=unique(volsmeta$year), water=names(water_pal))  %>% 
   mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
-plot_beta(filter(vols.beta.water, year=="2018"), colorby="water") + 
-  scale_color_manual(values=water_pal) + ggtitle("2018")
 
-plot_beta(filter(vols.beta.water), colorby="water") + 
-  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1)
+plot_beta(filter(vols.beta.water), colorby="water") + facet_wrap(vars(year), nrow=1)
 ```
 
 ## Adaptive plasticity
@@ -741,13 +760,13 @@ plasticity <- volsmeta.good.top %>% group_by(year, water, name) %>% summarize(va
 plasticity %>% left_join(vols.beta.water %>% rename(name=trait) %>% filter(water=="Addition")) %>% 
   ggplot(aes(x=A_C, y=B, color=class)) + facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
-  scale_x_continuous(labels=scales::percent, limits=c(NA,2)) + theme_bw()  + theme(legend.position = "top") +
+  scale_x_continuous(labels=scales::percent, limits=c(NA,NA)) + theme_bw()  + theme(legend.position = "top") +
   labs(x="Emissions change in Addition vs. Control precipitation", y="Selection gradient (beta) under precipitation addition")
 
 plasticity %>% left_join(vols.beta.water %>% rename(name=trait) %>% filter(water=="Reduction")) %>% 
   ggplot(aes(x=R_C, y=B, color=class)) + facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
-  scale_x_continuous(labels=scales::percent, limits=c(NA,4)) + theme_bw()  + theme(legend.position = "top") +
+  scale_x_continuous(labels=scales::percent, limits=c(NA,NA)) + theme_bw()  + theme(legend.position = "top") +
   labs(x="Emissions change in Reduction vs. Control precipitation", y="Selection gradient (beta) under precipitation reduction")
 ```
 
@@ -761,29 +780,29 @@ diffbeta <- vols.beta.water %>% rename(name=trait) %>%
 plasticity %>% left_join(diffbeta) %>% 
   ggplot(aes(x=A_R, y=B_A_R, color=class)) + facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
-  scale_x_continuous(labels=scales::percent, limits=c(NA,2)) + theme_bw()  + theme(legend.position = "top") +
+  scale_x_continuous(labels=scales::percent, limits=c(NA,NA)) + theme_bw()  + theme(legend.position = "top") +
   labs(x="Emissions change in precipitation addition vs. reduction", y="Change in selection gradient (beta) in precipitation addition vs. reduction")
 ```
 
 # Volatiles vs. floral traits
 
 ```{r flrsize}
-ggplot(traits.class, aes(x=corolla_length, y=value, color=year.cluster)) + 
+ggplot(traits.class, aes(x=corolla_length, y=value, color=year)) + 
   geom_point() + geom_smooth(se=F, span=1) + 
   facet_wrap(vars(name), scales="free_y") + 
   labs(y="Emissions", x=traitnames.units["corolla_length"], color="Year")+
-  theme_bw() + scale_y_sqrt()
+  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)
 
-ggplot(traits.class, aes(x=sepal_width, y=value, color=year.cluster)) + 
+ggplot(traits.class, aes(x=sepal_width, y=value, color=year)) + 
   geom_point() + geom_smooth(se=F, span=1) + 
   facet_wrap(vars(name), scales="free_y") + 
   labs(y="Emissions", x=traitnames.units["sepal_width"], color="Year")+
-  theme_bw() + scale_y_sqrt()
+  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)
 
-ggplot(traits.class, aes(x=nectar_24_h_ul, y=value, color=year.cluster)) + 
+ggplot(traits.class, aes(x=nectar_24_h_ul, y=value, color=year)) + 
   geom_point() + geom_smooth(se=F, span=1) + 
   facet_wrap(vars(name), scales="free_y") + 
   labs(y="Emissions", x=traitnames.units["nectar_24_h_ul"], color="Year")+
-  theme_bw() + scale_y_sqrt()
+  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)
 ```
 

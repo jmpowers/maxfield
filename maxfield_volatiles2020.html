@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-03-09" />
+<meta name="date" content="2022-03-10" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -263,7 +263,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-03-09</h4>
+<h4 class="date">2022-03-10</h4>
 
 </div>
 
@@ -533,32 +533,6 @@ ggplot(vt.volsmeta.count, aes(x=as.Date(sampledate.file),y=n, fill=status))+ geo
 <pre class="r"><code>ggplot(volsmeta %&gt;% filter(year %in% c(2018, 2020) | sequence.year==year), aes(x=sequence.date - sampledate)) + 
   geom_histogram() + facet_wrap(vars(year), ncol=1, scales=&quot;free_x&quot;) + theme_minimal()</code></pre>
 <p><img src="images_volatiles2020/matching-2.svg" width="768" /></p>
-<pre class="r"><code>sort(with(volsmeta, sequence.date - sampledate))</code></pre>
-<pre><code>Time differences in days
-  [1]   0   0   0   0   0   0   0   0   0   0   0   1   1   1   1   1   1   1
- [19]   2   2   2   2   3   3   3   3   3   3   3   3   3   3   3   3   3   3
- [37]   3   3   3   3   4   4   4   4   4   4   4   4   4   4   4   4   4   4
- [55]   4   4   4   4   4   4   4   5   5   6   6   6   6   6   6   6   6   6
- [73]   6   6   6   6   6   6   6   6   6   6   6   6   6   6   6   6   6   6
- [91]   6   6   6   6   6   6   6   6   6   6   6   6   6   6   6   6   6   6
-[109]   7   7   7   7   7   7   7   7   7   7   7   7   7   7   7   7   7   8
-[127]   8   8   8   8   8   8   8   8   8   8   8   8   8   8   8   8   8   9
-[145]   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9  10
-[163]  10  10  10  10  10  10  10  10  10  10  10  10  10  10  10  10  12  12
-[181]  12  17  17  18  18  18  18  18  19  19  19  19  19  19  20  20  20  21
-[199]  21  21  22  23  23  23  23  23  23  23  23  24  24  24  24  24  24  24
-[217]  24  24  24  24  24  24  24  24  24  24  24  24  25  25  25  25  25  26
-[235]  26  26  26  26  26  27  27  27  27  27  27  27  28  28  28  28  29  29
-[253]  29  29  29  29  29  29  29  29  29  29  29  29  29  29  29  30  30  30
-[271]  30  31  31  31  31  31  33  33  34  34  34  34  34  34  34 340 341 341
-[289] 341 341 341 347 347 347 347 347 347 347 347 347 347 347 347 347 347 347
-[307] 348 348 348 348 348 348 348 348 348 348 348 348 348 348 352 352 352 352
-[325] 352 352 354 354 354 354 354 354 354 354 354 354 354 354 354 354 354 354
-[343] 354 354 354 354 354 354 354 354 354 354 354 354 355 355 356 356 356 356
-[361] 356 356 356 356 356 356 356 356 356 356 357 357 357 357 357 357 357 357
-[379] 357 357 357 357 357 357 357 357 357 363 363 363 363 363 363 363 364 364
-[397] 364 364 364 364 364 364 364 364 364 364 365 365 365 365 365 365 365 365
-[415] 365 369 369 369 369 369 369 369 369 369 370 370 371 371</code></pre>
 </div>
 </div>
 <div id="soil-moisture" class="section level1">
@@ -727,7 +701,7 @@ vols.cut &lt;- vols[,colSums(vols)&gt;3e8]
 
 ipochems &lt;- read_csv(&quot;data/volatiles/chemsf_ipo.csv&quot;) %&gt;% 
   filter(verdict %in% c(&quot;bis14&quot;, &quot;fvoc&quot;, &quot;keep&quot;,&quot;keep_leaf&quot;,&quot;merge&quot;),
-         name %in% colnames(vols)[colSums(vols)&gt;0]) %&gt;% #filter empty compounds
+         name %in% colnames(vols)[colSums(vols)&gt;0], name != &quot;Anisole&quot;) %&gt;% #filter empty compounds
   mutate(standard = fct_recode(standard, &quot;Methyl_salicylate&quot;=&quot;Benzaldehyde&quot;), # benzaldehyde regressions not reliable
          class = fct_recode(standard, Aliphatic=&quot;Hexenol&quot;, Benzenoid=&quot;Methyl_salicylate&quot;, Benzenoid=&quot;Indole&quot;, 
                             Sequiterpene=&quot;Caryophyllene&quot;, Monoterpene=&quot;alpha_Pinene&quot;, Monoterpene=&quot;Linalool&quot;)) %&gt;%  
@@ -741,7 +715,6 @@ for(yr in unique(volsmeta$sequence.year)) {
   thisyr &lt;- volsmeta$sequence.year==yr
   vols.good[thisyr,] &lt;- sweep(vols.good[thisyr,], 2, pull(ipochems, paste0(&quot;area_per_ng&quot;,yr)), FUN = &#39;/&#39;)# convert areas to nanograms 
 }
-nonzero &lt;- rowSums(vols.good) &gt; 0 #one sample (&quot;55&quot; on row 44) has no volatiles
 
 k &lt;- 2 #split into this many k-means cluster per year
 volsmeta$cluster &lt;- 0
@@ -759,17 +732,22 @@ ipochems %&gt;% select(verdict, name, RT, mean, max, match, freq.floral, freq.am
   arrange(desc(freq.floral)) %&gt;% mutate(across(starts_with(&quot;freq.&quot;), round, 3)) %&gt;% 
   DT::datatable(caption=&quot;Volatile compounds to use for analysis&quot;)</code></pre>
 <div id="htmlwidget-1469b5ed4906484ed424" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-1469b5ed4906484ed424">{"x":{"filter":"none","vertical":false,"caption":"<caption>Volatile compounds to use for analysis<\/caption>","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65"],["fvoc","merge","merge","keep","keep","keep_leaf","fvoc","fvoc","keep","fvoc","bis14","keep_leaf","keep","fvoc","keep_leaf","keep","keep","fvoc","merge","fvoc","fvoc","fvoc","fvoc","fvoc","fvoc","keep_leaf","fvoc","fvoc","fvoc","fvoc","fvoc","fvoc","keep","fvoc","fvoc","keep","keep","keep","keep","fvoc","keep","keep","keep","keep","bis14","fvoc","keep","merge","bis14","merge","keep","merge","bis14","keep","keep_leaf","bis14","bis14","bis14","bis14","bis14","bis14","bis14","bis14","bis14","bis14"],["(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene",".beta.-Ocimene","Caryophyllene","Benzophenone","Longifolene","(E)-4-Oxohex-2-enal","Petasitene",".beta.-Myrcene","Acetoin",".alpha.-Farnesene","Methyl salicylate","3-Hexen-1-ol, acetate, (E)-","Linalool","E-11,13-Tetradecadien-1-ol","2-Hexenal, (E)-","(1S,5S,6R)-6-Methyl-2-methylene-6-(4-methylpent-3-en-1-yl)bicyclo[3.1.1]heptane","3,5,9-Undecatrien-2-one, 6,10-dimethyl-","1-Butanol, 3-methyl-","trans-.beta.-Ocimene","Octane, 2,4,6-trimethyl-","2,6-Octadien-1-ol, 2,7-dimethyl-","Bicyclo[3.1.1]heptane, 6,6-dimethyl-2-methylene-, (1S)-","Butanoic acid, 2-methyl-, methyl ester","Carveol","Butanoic acid, 3-hexenyl ester, (Z)-","3-Hexen-1-ol, (E)-","1-Pentanol","1,3,8-p-Menthatriene","cis-3-Hexenyl iso-butyrate","1-Tridecene","1,4,7,-Cycloundecatriene, 1,5,9,9-tetramethyl-, Z,Z,Z-","1-Heptanol, 2,4-diethyl-","L-.alpha.-Terpineol","2,4,6-Octatriene, 2,6-dimethyl-, (E,Z)-","2,6-Dimethyl-1,3,5,7-octatetraene, E,E-","Bicyclo[4.1.0]heptan-3-ol, 4,7,7-trimethyl-, (1.alpha.,3.alpha.,4.alpha.,6.alpha.)-","trans-.alpha.-Bergamotene","Acetic acid, (1,2-dimethyl-1-propenyl) ester","Butanal, 3-methyl-, oxime","cis-.alpha.-Bergamotene","Hexanoic acid, 2-ethyl-, methyl ester","cis-3-Hexenyl-.alpha.-methylbutyrate","Copaene","4-Hexen-1-ol, (Z)-","Benzyl alcohol","Benzeneethanol, .alpha.,.beta.-dimethyl-","3,7,7-Trimethylbicyclo[4.1.0]hept-3-ene-2,5-dione","Bicyclo[3.1.1]hept-3-en-2-one, 4,6,6-trimethyl-","d-Menthol","Bicyclo[3.1.1]hept-3-en-2-one, 4,6,6-trimethyl-, (1S)-","Butanoic acid, 3-hexenyl ester, (E)-","Bicyclo[7.2.0]undec-4-ene, 4,11,11-trimethyl-8-methylene-,[1R-(1R*,4Z,9S*)]-","Farnesol isomer a",".alfa.-Copaene","1-Penten-3-ol","1,3-Octadiene","2(3H)-Furanone, 5-ethenyldihydro-5-methyl-","Benzoic acid, methyl ester","Anisole",".beta.-copaene","3-Hexen-1-ol, acetate, (Z)-",".beta.-Humulene","Acetic acid, phenylmethyl ester","Indole","1,7,7-Trimethylbicyclo[2.2.1]heptan-2-ol"],[7.25,9.16,14.83,17.36,14.7,7.6,14.52,8.21,3.34,15.78,11.55,8.43,9.99,12.86,5.71,15.13,16.72,3.71,9,8.35,8.18,8.02,4.43,10.51,10.72,5.76,3.74,10.5,10.7,11.43,15.29,13.21,11.49,10.49,10.39,8.21,15.6,2.94,6.1,14.69,9.09,12.04,14.24,5.81,8.97,6.45,13.4,11.84,11.23,11.81,11,14.85,16.33,14.2,2.97,5.24,9.09,9.95,6.92,15.61,8.43,14.69,11.06,12.99,11.13],[1646032,1707786,438114,158198,223746,34878,284233,240460,35790,1398942,75528,57283,46021,145243,33260,75553,154859,9894,133306,106012,53388,50909,11322,16455,27865,82488,11350,19625,13893,197444,41814,395680,12967,12154,9468,21801,44302,12450,9705,53217,3870,7723,10417,68835,7306,67103,62407,3727,9116,2939,6151,39742,12718,13099,2167,1141,1633,3170,1359,5223,334,1157,888,1530,0],[15246203,22110747,5854096,3962862,2859207,482292,9832069,2665889,1379456,24454715,662714,1030730,849453,2915159,982169,1422861,12028304,186171,2480998,7306759,745240,1213682,217672,517616,942036,2733208,775417,472674,381615,9025549,1289270,16773720,375553,288979,267860,618461,1063735,1091755,577538,5111278,119689,381643,338387,2748424,265989,5945751,4688266,221238,537564,193312,631897,4890376,668659,1401642,78476,70231,88964,375787,197153,1053976,74780,235451,167944,367097,0],[0.96,0.93,0.94,0.81,0.91,0.88,0.96,0.89,0.86,0.91,0.9,0.91,0.9,0.85,0.91,0.89,0.87,0.84,0.94,0.87,0.85,0.87,0.85,0.82,0.88,0.92,0.86,0.88,0.8,0.9,0.89,0.87,0.82,0.91,0.85,0.81,0.8,0.77,0.88,0.91,0.82,0.87,0.86,0.89,0.82,0.81,0.86,0.84,0.84,0.82,0.83,0.82,0.85,0.87,0.93,0.79,0.77,0.8,0.81,0.84,0.78,0.84,0.86,0.93,0.74],[0.95,0.633,0.563,0.513,0.442,0.438,0.429,0.417,0.363,0.358,0.354,0.3,0.267,0.217,0.217,0.204,0.204,0.2,0.188,0.188,0.179,0.163,0.158,0.142,0.133,0.133,0.129,0.121,0.113,0.113,0.104,0.104,0.104,0.1,0.1,0.083,0.083,0.079,0.075,0.071,0.071,0.067,0.067,0.063,0.063,0.058,0.058,0.05,0.05,0.042,0.033,0.033,0.033,0.033,0.033,0.025,0.025,0.017,0.013,0.008,0.008,0.008,0.008,0.004,0],[0.872,0.234,0.149,0.34,0.426,0.17,0.128,0.043,0.255,0.064,0.34,0.149,0.149,0.149,0.106,0.021,0.17,0.021,0,0.085,0.064,0.021,0.043,0,0,0.043,0,0,0,0.128,0,0.106,0.043,0,0,0,0,0,0,0,0,0,0,0,0.043,0,0.021,0,0.106,0,0,0,0.021,0.021,0.021,0,0.043,0.021,0,0,0,0.021,0.021,0,0],[4.4,7.6,7.1,2.5,1.8,3.2,5.5,5.8,2.3,4,0.8,3.3,2.4,5.6,2.1,4.5,3.2,82,null,4,11.1,13.2,7.6,null,null,4.8,null,null,null,4.7,null,5.6,7.6,null,null,null,null,null,null,null,null,null,null,null,1.5,null,22.4,null,0.7,null,null,null,0.6,46.9,1.5,null,0.4,1.2,null,null,null,2.9,0.8,null,0],["OK","OK","OK","OK","tTestFail","OK","tTestFail","OK","tTestFail","tTestFail","tTestFail","tTestFail","tTestFail","OK","tTestFail","tTestFail","tTestFail","OK","OK","tTestFail","OK","OK","OK","OK","OK","tTestFail","OK","OK","OK","tTestFail","OK","tTestFail","tTestFail","OK","OK","OK","OK","OK","OK","OK","OK","OK","OK","OK","tTestFail","OK","tTestFail","OK","tTestFail","OK","OK","OK","tTestFail","tTestFail","tTestFail","OK","tTestFail","tTestFail","OK","OK","OK","tTestFail","tTestFail","OK","tTestZeros"],[7,7,7,4,4,5,6,6,4,6,4,4,4,6,4,5,5,6,6,6,6,6,6,6,6,5,6,6,6,6,6,6,5,6,6,5,5,4,5,6,5,5,5,5,3,6,5,5,3,5,5,6,3,4,3,4,2,3,5,5,4,3,3,5,2],["alpha_Pinene","alpha_Pinene","Caryophyllene","Methyl_salicylate","Caryophyllene","Hexenol","Caryophyllene","alpha_Pinene","Hexenol","Caryophyllene","Methyl_salicylate","Hexenol","Linalool","Hexenol","Hexenol","Caryophyllene","Caryophyllene","Hexenol","alpha_Pinene","Hexenol","Hexenol","alpha_Pinene","Hexenol","alpha_Pinene","Hexenol","Hexenol","Hexenol","alpha_Pinene","Hexenol","Hexenol","Caryophyllene","Hexenol","alpha_Pinene","alpha_Pinene","alpha_Pinene","alpha_Pinene","Caryophyllene","Hexenol","Hexenol","Caryophyllene","Hexenol","Hexenol","Caryophyllene","Hexenol","Methyl_salicylate","Methyl_salicylate","alpha_Pinene","alpha_Pinene","alpha_Pinene","alpha_Pinene","Hexenol","Caryophyllene","Caryophyllene","Caryophyllene","Hexenol","Hexenol","Hexenol","Methyl_salicylate","Methyl_salicylate","Caryophyllene","Hexenol","Caryophyllene","Methyl_salicylate","Indole","alpha_Pinene"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>verdict<\/th>\n      <th>name<\/th>\n      <th>RT<\/th>\n      <th>mean<\/th>\n      <th>max<\/th>\n      <th>match<\/th>\n      <th>freq.floral<\/th>\n      <th>freq.ambient<\/th>\n      <th>ambient_ratio<\/th>\n      <th>filter_ambient_ttest<\/th>\n      <th>filters_passed<\/th>\n      <th>standard<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[3,4,5,6,7,8,9,11]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
-<pre class="r"><code>ipochems %&gt;% count(verdict)</code></pre>
-<pre><code># A tibble: 5 × 2
-  verdict       n
-  &lt;chr&gt;     &lt;int&gt;
-1 bis14        14
-2 fvoc         22
-3 keep         18
-4 keep_leaf     5
-5 merge         6</code></pre>
-<pre class="r"><code>vols.good.top &lt;- vols.good[,colSums(decostand(vols.good,&quot;pa&quot;))&gt;81]#occur in more than N samples
+<script type="application/json" data-for="htmlwidget-1469b5ed4906484ed424">{"x":{"filter":"none","vertical":false,"caption":"<caption>Volatile compounds to use for analysis<\/caption>","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64"],["fvoc","merge","merge","keep","keep","keep_leaf","fvoc","fvoc","keep","fvoc","bis14","keep_leaf","keep","fvoc","keep_leaf","keep","keep","fvoc","merge","fvoc","fvoc","fvoc","fvoc","fvoc","fvoc","keep_leaf","fvoc","fvoc","fvoc","fvoc","fvoc","fvoc","keep","fvoc","fvoc","keep","keep","keep","keep","fvoc","keep","keep","keep","keep","bis14","fvoc","keep","merge","bis14","merge","keep","merge","bis14","keep","keep_leaf","bis14","bis14","bis14","bis14","bis14","bis14","bis14","bis14","bis14"],["(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene",".beta.-Ocimene","Caryophyllene","Benzophenone","Longifolene","(E)-4-Oxohex-2-enal","Petasitene",".beta.-Myrcene","Acetoin",".alpha.-Farnesene","Methyl salicylate","3-Hexen-1-ol, acetate, (E)-","Linalool","E-11,13-Tetradecadien-1-ol","2-Hexenal, (E)-","(1S,5S,6R)-6-Methyl-2-methylene-6-(4-methylpent-3-en-1-yl)bicyclo[3.1.1]heptane","3,5,9-Undecatrien-2-one, 6,10-dimethyl-","1-Butanol, 3-methyl-","trans-.beta.-Ocimene","Octane, 2,4,6-trimethyl-","2,6-Octadien-1-ol, 2,7-dimethyl-","Bicyclo[3.1.1]heptane, 6,6-dimethyl-2-methylene-, (1S)-","Butanoic acid, 2-methyl-, methyl ester","Carveol","Butanoic acid, 3-hexenyl ester, (Z)-","3-Hexen-1-ol, (E)-","1-Pentanol","1,3,8-p-Menthatriene","cis-3-Hexenyl iso-butyrate","1-Tridecene","1,4,7,-Cycloundecatriene, 1,5,9,9-tetramethyl-, Z,Z,Z-","1-Heptanol, 2,4-diethyl-","L-.alpha.-Terpineol","2,4,6-Octatriene, 2,6-dimethyl-, (E,Z)-","2,6-Dimethyl-1,3,5,7-octatetraene, E,E-","Bicyclo[4.1.0]heptan-3-ol, 4,7,7-trimethyl-, (1.alpha.,3.alpha.,4.alpha.,6.alpha.)-","trans-.alpha.-Bergamotene","Acetic acid, (1,2-dimethyl-1-propenyl) ester","Butanal, 3-methyl-, oxime","cis-.alpha.-Bergamotene","Hexanoic acid, 2-ethyl-, methyl ester","cis-3-Hexenyl-.alpha.-methylbutyrate","Copaene","4-Hexen-1-ol, (Z)-","Benzyl alcohol","Benzeneethanol, .alpha.,.beta.-dimethyl-","3,7,7-Trimethylbicyclo[4.1.0]hept-3-ene-2,5-dione","Bicyclo[3.1.1]hept-3-en-2-one, 4,6,6-trimethyl-","d-Menthol","Bicyclo[3.1.1]hept-3-en-2-one, 4,6,6-trimethyl-, (1S)-","Butanoic acid, 3-hexenyl ester, (E)-","Bicyclo[7.2.0]undec-4-ene, 4,11,11-trimethyl-8-methylene-,[1R-(1R*,4Z,9S*)]-","Farnesol isomer a",".alfa.-Copaene","1-Penten-3-ol","1,3-Octadiene","2(3H)-Furanone, 5-ethenyldihydro-5-methyl-","Benzoic acid, methyl ester",".beta.-copaene","3-Hexen-1-ol, acetate, (Z)-",".beta.-Humulene","Acetic acid, phenylmethyl ester","Indole","1,7,7-Trimethylbicyclo[2.2.1]heptan-2-ol"],[7.25,9.16,14.83,17.36,14.7,7.6,14.52,8.21,3.34,15.78,11.55,8.43,9.99,12.86,5.71,15.13,16.72,3.71,9,8.35,8.18,8.02,4.43,10.51,10.72,5.76,3.74,10.5,10.7,11.43,15.29,13.21,11.49,10.49,10.39,8.21,15.6,2.94,6.1,14.69,9.09,12.04,14.24,5.81,8.97,6.45,13.4,11.84,11.23,11.81,11,14.85,16.33,14.2,2.97,5.24,9.09,9.95,15.61,8.43,14.69,11.06,12.99,11.13],[1646032,1707786,438114,158198,223746,34878,284233,240460,35790,1398942,75528,57283,46021,145243,33260,75553,154859,9894,133306,106012,53388,50909,11322,16455,27865,82488,11350,19625,13893,197444,41814,395680,12967,12154,9468,21801,44302,12450,9705,53217,3870,7723,10417,68835,7306,67103,62407,3727,9116,2939,6151,39742,12718,13099,2167,1141,1633,3170,5223,334,1157,888,1530,0],[15246203,22110747,5854096,3962862,2859207,482292,9832069,2665889,1379456,24454715,662714,1030730,849453,2915159,982169,1422861,12028304,186171,2480998,7306759,745240,1213682,217672,517616,942036,2733208,775417,472674,381615,9025549,1289270,16773720,375553,288979,267860,618461,1063735,1091755,577538,5111278,119689,381643,338387,2748424,265989,5945751,4688266,221238,537564,193312,631897,4890376,668659,1401642,78476,70231,88964,375787,1053976,74780,235451,167944,367097,0],[0.96,0.93,0.94,0.81,0.91,0.88,0.96,0.89,0.86,0.91,0.9,0.91,0.9,0.85,0.91,0.89,0.87,0.84,0.94,0.87,0.85,0.87,0.85,0.82,0.88,0.92,0.86,0.88,0.8,0.9,0.89,0.87,0.82,0.91,0.85,0.81,0.8,0.77,0.88,0.91,0.82,0.87,0.86,0.89,0.82,0.81,0.86,0.84,0.84,0.82,0.83,0.82,0.85,0.87,0.93,0.79,0.77,0.8,0.84,0.78,0.84,0.86,0.93,0.74],[0.95,0.633,0.563,0.513,0.442,0.438,0.429,0.417,0.363,0.358,0.354,0.3,0.267,0.217,0.217,0.204,0.204,0.2,0.188,0.188,0.179,0.163,0.158,0.142,0.133,0.133,0.129,0.121,0.113,0.113,0.104,0.104,0.104,0.1,0.1,0.083,0.083,0.079,0.075,0.071,0.071,0.067,0.067,0.063,0.063,0.058,0.058,0.05,0.05,0.042,0.033,0.033,0.033,0.033,0.033,0.025,0.025,0.017,0.008,0.008,0.008,0.008,0.004,0],[0.872,0.234,0.149,0.34,0.426,0.17,0.128,0.043,0.255,0.064,0.34,0.149,0.149,0.149,0.106,0.021,0.17,0.021,0,0.085,0.064,0.021,0.043,0,0,0.043,0,0,0,0.128,0,0.106,0.043,0,0,0,0,0,0,0,0,0,0,0,0.043,0,0.021,0,0.106,0,0,0,0.021,0.021,0.021,0,0.043,0.021,0,0,0.021,0.021,0,0],[4.4,7.6,7.1,2.5,1.8,3.2,5.5,5.8,2.3,4,0.8,3.3,2.4,5.6,2.1,4.5,3.2,82,null,4,11.1,13.2,7.6,null,null,4.8,null,null,null,4.7,null,5.6,7.6,null,null,null,null,null,null,null,null,null,null,null,1.5,null,22.4,null,0.7,null,null,null,0.6,46.9,1.5,null,0.4,1.2,null,null,2.9,0.8,null,0],["OK","OK","OK","OK","tTestFail","OK","tTestFail","OK","tTestFail","tTestFail","tTestFail","tTestFail","tTestFail","OK","tTestFail","tTestFail","tTestFail","OK","OK","tTestFail","OK","OK","OK","OK","OK","tTestFail","OK","OK","OK","tTestFail","OK","tTestFail","tTestFail","OK","OK","OK","OK","OK","OK","OK","OK","OK","OK","OK","tTestFail","OK","tTestFail","OK","tTestFail","OK","OK","OK","tTestFail","tTestFail","tTestFail","OK","tTestFail","tTestFail","OK","OK","tTestFail","tTestFail","OK","tTestZeros"],[7,7,7,4,4,5,6,6,4,6,4,4,4,6,4,5,5,6,6,6,6,6,6,6,6,5,6,6,6,6,6,6,5,6,6,5,5,4,5,6,5,5,5,5,3,6,5,5,3,5,5,6,3,4,3,4,2,3,5,4,3,3,5,2],["alpha_Pinene","alpha_Pinene","Caryophyllene","Methyl_salicylate","Caryophyllene","Hexenol","Caryophyllene","alpha_Pinene","Hexenol","Caryophyllene","Methyl_salicylate","Hexenol","Linalool","Hexenol","Hexenol","Caryophyllene","Caryophyllene","Hexenol","alpha_Pinene","Hexenol","Hexenol","alpha_Pinene","Hexenol","alpha_Pinene","Hexenol","Hexenol","Hexenol","alpha_Pinene","Hexenol","Hexenol","Caryophyllene","Hexenol","alpha_Pinene","alpha_Pinene","alpha_Pinene","alpha_Pinene","Caryophyllene","Hexenol","Hexenol","Caryophyllene","Hexenol","Hexenol","Caryophyllene","Hexenol","Methyl_salicylate","Methyl_salicylate","alpha_Pinene","alpha_Pinene","alpha_Pinene","alpha_Pinene","Hexenol","Caryophyllene","Caryophyllene","Caryophyllene","Hexenol","Hexenol","Hexenol","Methyl_salicylate","Caryophyllene","Hexenol","Caryophyllene","Methyl_salicylate","Indole","alpha_Pinene"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>verdict<\/th>\n      <th>name<\/th>\n      <th>RT<\/th>\n      <th>mean<\/th>\n      <th>max<\/th>\n      <th>match<\/th>\n      <th>freq.floral<\/th>\n      <th>freq.ambient<\/th>\n      <th>ambient_ratio<\/th>\n      <th>filter_ambient_ttest<\/th>\n      <th>filters_passed<\/th>\n      <th>standard<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[3,4,5,6,7,8,9,11]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<pre class="r"><code># Cut contaminated samples
+nonzero &lt;-rowSums(vols.good) &gt; 0 #one sample (&quot;55&quot; on row 44) has no volatiles
+set.seed(1) # ensures the contaminated samples are in cluster.good = 1
+volsmeta$cluster.good &lt;-factor(kmeans((vols.good)^(1/3), centers=3, nstart=3)$cluster)
+set.seed(1) # ensures the contaminated samples are in cluster.cut = 1
+volsmeta$cluster.cut &lt;-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
+
+keep.samples &lt;- unname(nonzero &amp; !(volsmeta$year.cluster %in% c(&quot;2019.1&quot;, &quot;2020.1&quot;)))
+volsmeta &lt;- volsmeta[keep.samples,]
+vols &lt;- vols[keep.samples,]
+vols.cut &lt;- vols.cut[keep.samples,]
+vols.good &lt;- vols.good[keep.samples,]
+
+minsamples &lt;- 70
+vols.good.top &lt;- vols.good[,colSums(decostand(vols.good,&quot;pa&quot;))&gt; minsamples]#occur in more than minsamples
 ipogood.top &lt;- names(sort(colSums(vols.good.top), decreasing=T))
 volsmeta.good.top &lt;- bind_cols(volsmeta, vols.good.top) %&gt;%  
   pivot_longer(-all_of(colnames(volsmeta))) %&gt;% 
@@ -817,7 +795,7 @@ pheatmap(as.matrix(t(vols.cut))^(1/4),
          annotation_colors = annot_pal,
          gaps_col = which(diff(year(volsmeta$sequence.date))&gt;0))</code></pre>
 <p><img src="images_volatiles2020/heatmap-2.svg" width="1536" /></p>
-<pre class="r"><code>pinene_correlates &lt;- cor(sqrt(vols[,colSums(vols)&gt;3e7])) %&gt;% as.data.frame() %&gt;% filter(`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`&gt;0.15) %&gt;% rownames()
+<pre class="r"><code>pinene_correlates &lt;- cor(sqrt(vols[,colSums(vols)&gt;1e7])) %&gt;% as.data.frame() %&gt;% filter(`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`&gt;0.15) %&gt;% rownames()
 pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4), 
          cluster_cols=F, show_colnames=F,
          clustering_method=&quot;mcquitty&quot;, clustering_distance_rows=&quot;correlation&quot;,
@@ -847,12 +825,11 @@ ggplot(aes(x=Desorb.Start.Time)) + facet_grid(name ~ yr, scales=&quot;free&quot;
   guides(color=&quot;none&quot;) + theme_bw() + labs(x=&quot;GCMS run time&quot;, y=&quot;Area&quot;, title=type)
 }
 
-plot_vols_rundate(&quot;Terpenes&quot;, c(&quot;(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene&quot;, &quot;.beta.-Myrcene&quot;,&quot;.beta.-Ocimene&quot;,&quot;Linalool&quot;,&quot;Caryophyllene&quot;, &quot;Longifolene&quot;))</code></pre>
-<p><img src="images_volatiles2020/gcms_date-1.svg" width="672" /></p>
-<pre class="r"><code>plot_vols_rundate(&quot;Benzenoids&quot;, c(&quot;Benzophenone&quot;,&quot;Methyl salicylate&quot;,&quot;Anisole&quot;))</code></pre>
-<p><img src="images_volatiles2020/gcms_date-2.svg" width="672" /></p>
-<pre class="r"><code>plot_vols_rundate(&quot;Green leaf volatiles&quot;, c(&quot;4-Hexen-1-ol, (Z)-&quot;, &quot;3-Hexen-1-ol, (E)-&quot;))</code></pre>
-<p><img src="images_volatiles2020/gcms_date-3.svg" width="672" /></p>
+plot_vols_rundate(&quot;Terpenes&quot;, c(&quot;(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene&quot;, &quot;.beta.-Myrcene&quot;,&quot;.beta.-Ocimene&quot;,&quot;Linalool&quot;,&quot;Caryophyllene&quot;, &quot;Longifolene&quot;))
+
+plot_vols_rundate(&quot;Benzenoids&quot;, c(&quot;Benzophenone&quot;,&quot;Methyl salicylate&quot;,&quot;Anisole&quot;))
+
+plot_vols_rundate(&quot;Green leaf volatiles&quot;, c(&quot;4-Hexen-1-ol, (Z)-&quot;, &quot;3-Hexen-1-ol, (E)-&quot;))</code></pre>
 </div>
 <div id="multivariate" class="section level3">
 <h3>Multivariate</h3>
@@ -875,12 +852,11 @@ plot_vols_rundate(&quot;Terpenes&quot;, c(&quot;(1R)-2,6,6-Trimethylbicyclo[3.1.
       theme(axis.text.x = element_text(angle=90)) + scale_color_manual(values=c(&quot;darkgreen&quot;,&quot;magenta&quot;)))
     print(p2)
   }
-}</code></pre>
-<p><img src="images_volatiles2020/gcms_sample_date-1.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-2.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-3.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-4.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-5.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-6.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-7.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-8.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-9.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-10.svg" width="960" /><img src="images_volatiles2020/gcms_sample_date-11.svg" width="960" /></p>
-<pre class="r"><code>ggplot(volsmeta, aes(x=Desorb.Start.Time, y=cluster))  + geom_line() + geom_point(aes(color=factor(mday(sampledate))))+
+}
+
+ggplot(volsmeta, aes(x=Desorb.Start.Time, y=cluster))  + geom_line() + geom_point(aes(color=factor(mday(sampledate))))+
   facet_wrap(vars(sequence.year), scales=&quot;free_x&quot;, ncol=1) + scale_color_manual(values=sample(rainbow(30)))+
   scale_x_datetime(date_breaks=&quot;1 day&quot;, guide=guide_axis(angle=90)) + scale_y_discrete()</code></pre>
-<p><img src="images_volatiles2020/gcms_sample_date-12.svg" width="960" /></p>
 <pre class="r"><code>for(yr in unique(year(volsmeta$sequence.start))) {
   print(yr)
   yrfilter &lt;- year(volsmeta$sequence.start) == yr
@@ -898,101 +874,6 @@ plot_vols_rundate(&quot;Terpenes&quot;, c(&quot;(1R)-2,6,6-Trimethylbicyclo[3.1.
   #   geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue(&quot;Run date&quot;)
   # print(p)
 }</code></pre>
-<pre><code>[1] 2018
-Call: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~
-factor(date(sequence.start)), data = volsmeta[yrfilter, ])
-
-               Inertia Proportion Rank
-Total         3.58e+07   1.00e+00     
-Constrained   8.48e+06   2.36e-01   11
-Unconstrained 2.74e+07   7.64e-01   88
-Inertia is mean squared Euclidean distance 
-Species scores projected from &#39;sqrt&#39; &#39;vols.cut[yrfilter, ]&#39; 
-
-Eigenvalues for constrained axes:
-   CAP1    CAP2    CAP3    CAP4    CAP5    CAP6    CAP7    CAP8    CAP9   CAP10 
-2846450 2522429 1202386  489275  397185  344120  208923  174562  136896   84490 
-  CAP11 
-  69188 
-
-Eigenvalues for unconstrained axes:
-   MDS1    MDS2    MDS3    MDS4    MDS5    MDS6    MDS7    MDS8 
-6560009 4236095 1782454 1579282 1054984 1007955  856724  702605 
-(Showing 8 of 88 unconstrained eigenvalues)
-
-Permutation test for capscale under reduced model
-Terms added sequentially (first to last)
-Permutation: free
-Number of permutations: 999
-
-Model: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~ factor(date(sequence.start)), data = volsmeta[yrfilter, ])
-                              Df Variance    F Pr(&gt;F)    
-factor(date(sequence.start))  11  8475902 4.39  0.001 ***
-Residual                     156 27369925                
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-[1] 2019
-Call: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~
-factor(date(sequence.start)), data = volsmeta[yrfilter, ])
-
-               Inertia Proportion Rank
-Total         7.77e+07   1.00e+00     
-Constrained   1.37e+07   1.76e-01    6
-Unconstrained 6.40e+07   8.24e-01   89
-Inertia is mean squared Euclidean distance 
-Species scores projected from &#39;sqrt&#39; &#39;vols.cut[yrfilter, ]&#39; 
-
-Eigenvalues for constrained axes:
-   CAP1    CAP2    CAP3    CAP4    CAP5    CAP6 
-9573124 2384418  743376  445601  361725  179629 
-
-Eigenvalues for unconstrained axes:
-    MDS1     MDS2     MDS3     MDS4     MDS5     MDS6     MDS7     MDS8 
-34584419  4002172  2560566  1967341  1476215  1422494  1328896  1241090 
-(Showing 8 of 89 unconstrained eigenvalues)
-
-Permutation test for capscale under reduced model
-Terms added sequentially (first to last)
-Permutation: free
-Number of permutations: 999
-
-Model: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~ factor(date(sequence.start)), data = volsmeta[yrfilter, ])
-                              Df Variance    F Pr(&gt;F)    
-factor(date(sequence.start))   6 13687873 4.92  0.001 ***
-Residual                     138 63996960                
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-[1] 2021
-Call: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~
-factor(date(sequence.start)), data = volsmeta[yrfilter, ])
-
-               Inertia Proportion Rank
-Total         1.35e+08   1.00e+00     
-Constrained   4.62e+07   3.43e-01    6
-Unconstrained 8.85e+07   6.57e-01   90
-Inertia is mean squared Euclidean distance 
-Species scores projected from &#39;sqrt&#39; &#39;vols.cut[yrfilter, ]&#39; 
-
-Eigenvalues for constrained axes:
-    CAP1     CAP2     CAP3     CAP4     CAP5     CAP6 
-41489418  2423189   834628   759488   498655   241430 
-
-Eigenvalues for unconstrained axes:
-    MDS1     MDS2     MDS3     MDS4     MDS5     MDS6     MDS7     MDS8 
-39776235  5939815  4971861  3227157  2883716  2633380  2097703  1963548 
-(Showing 8 of 90 unconstrained eigenvalues)
-
-Permutation test for capscale under reduced model
-Terms added sequentially (first to last)
-Permutation: free
-Number of permutations: 999
-
-Model: capscale(formula = sqrt(vols.cut[yrfilter, ]) ~ factor(date(sequence.start)), data = volsmeta[yrfilter, ])
-                              Df Variance    F Pr(&gt;F)    
-factor(date(sequence.start))   6 46246809 12.1  0.001 ***
-Residual                     139 88510578                
----
-Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
 </div>
 <div id="ordinations" class="section level2">
@@ -1010,9 +891,9 @@ Data:     sqrt(vols.cut)
 Distance: bray 
 
 Dimensions: 2 
-Stress:     0.1344 
+Stress:     0.1699 
 Stress type 1, weak ties
-Two convergent solutions found after 20 tries
+No convergent solutions - best solution after 20 tries
 Scaling: centring, PC rotation, halfchange scaling 
 Species: expanded scores based on &#39;sqrt(vols.cut)&#39; </code></pre>
 <pre class="r"><code>vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
@@ -1020,37 +901,79 @@ vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(Score==&quot;sites&quot;)
   left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
 vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
 
-(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE</code></pre>
+(scents.nmds &lt;- metaMDS(sqrt(vols.good), autotransform=FALSE, trace=F)) #had noshare = FALSE</code></pre>
 <pre><code>
 Call:
-metaMDS(comm = sqrt(vols.good[nonzero, ]), autotransform = FALSE,      trace = F) 
+metaMDS(comm = sqrt(vols.good), autotransform = FALSE, trace = F) 
 
 global Multidimensional Scaling using monoMDS
 
-Data:     sqrt(vols.good[nonzero, ]) 
+Data:     sqrt(vols.good) 
 Distance: bray 
 
 Dimensions: 2 
-Stress:     0.2288 
+Stress:     0.2384 
 Stress type 1, weak ties
 No convergent solutions - best solution after 20 tries
 Scaling: centring, PC rotation, halfchange scaling 
-Species: expanded scores based on &#39;sqrt(vols.good[nonzero, ])&#39; </code></pre>
+Species: expanded scores based on &#39;sqrt(vols.good)&#39; </code></pre>
 <pre class="r"><code>nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
 nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
-nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;)
+nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;) %&gt;% left_join(ipochems, by=c(&quot;Label&quot;=&quot;name&quot;))
 
+# By year
 vols.plot &lt;- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
-  geom_point(aes(color=factor(sequence.year))) + 
-  labs(title=&quot;Unfiltered NMDS by year&quot;, color=&quot;Year&quot;)
+  geom_point(aes(color=year)) + scale_color_manual(values=year_pal)+
+  labs(title=&quot;Unfiltered NMDS&quot;, color=&quot;Year&quot;)
 vols.good.plot &lt;- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
   #geom_text(data=nmds.chems, aes(label=Label)) +
-  geom_point(aes(color=factor(sequence.year)))+ 
+  geom_point(aes(color=year))+ scale_color_manual(values=year_pal)+
   #geom_point(aes(color=water, shape=year)) + scale_color_manual(&quot;Precipitation&quot;, values=water_pal) +
-  labs(title=&quot;Filtered NMDS by year&quot;, color=&quot;Year&quot;)
+  labs(title=&quot;Filtered NMDS&quot;, color=&quot;Year&quot;)
 grid.arrange(vols.plot, vols.good.plot)</code></pre>
 <p><img src="images_volatiles2020/nmds-1.svg" width="576" /></p>
-<pre class="r"><code>for(yr in unique(year(volsmeta$sequence.start))) {
+<pre class="r"><code># By a-Pinene
+vols.plot &lt;- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2, shape=year)) + theme_classic() +
+  geom_point(aes(color=vols.good$`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`^(1/6))) + 
+  labs(title=&quot;Unfiltered NMDS&quot;, color=&quot;a-Pinene&quot;, shape=&quot;Year&quot;) + scale_color_viridis_c()
+vols.good.plot &lt;- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2, shape=year)) + theme_classic() + 
+  geom_point(aes(color=vols.good$`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`^(1/6)))+ 
+  labs(title=&quot;Filtered NMDS&quot;, color=&quot;a-Pinene&quot;, shape=&quot;Year&quot;)+ scale_color_viridis_c()
+grid.arrange(vols.plot, vols.good.plot)</code></pre>
+<p><img src="images_volatiles2020/nmds-2.svg" width="576" /></p>
+<pre class="r"><code>ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=year))+ scale_color_manual(values=year_pal)+
+    geom_text(data=nmds.chems, aes(label=Label, alpha=freq.floral^(1/3))) +
+  labs(title=&quot;Filtered NMDS&quot;, color=&quot;Year&quot;)</code></pre>
+<p><img src="images_volatiles2020/nmds_chems-1.svg" width="1152" /></p>
+<pre class="r"><code>#Cluster based on filtered data
+volsmeta %&gt;% count(cluster.good, year) %&gt;% arrange(year) %&gt;% 
+  pivot_wider(names_from=&quot;year&quot;, values_from=&quot;n&quot;) %&gt;% 
+  kable(caption = &quot;Contaminated samples cluster = 1 based on filtered data&quot;)
+vols.plot &lt;- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=paste(cluster.good, year)))+ 
+  labs(title=&quot;Unfiltered NMDS by year&quot;, color=&quot;Filtered cluster&quot;)
+vols.good.plot &lt;- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=paste(cluster.good, year)))+ 
+  labs(title=&quot;Filtered NMDS by year&quot;, color=&quot;Filtered cluster&quot;)
+grid.arrange(vols.plot, vols.good.plot)
+
+#cluster based on unfiltered data
+set.seed(1)
+volsmeta$cluster.cut &lt;-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
+volsmeta %&gt;% count(cluster.cut, year) %&gt;% arrange(year) %&gt;% 
+  pivot_wider(names_from=&quot;year&quot;, values_from=&quot;n&quot;) %&gt;% 
+  kable(caption = &quot;Contaminated samples cluster = 1 based on unfiltered data&quot;)
+vols.plot &lt;- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=paste(cluster.cut, year)))+ 
+  labs(title=&quot;Unfiltered NMDS by year&quot;, color=&quot;Unfiltered cluster&quot;)
+vols.good.plot &lt;- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
+  geom_point(aes(color=paste(cluster.cut, year)))+ 
+  labs(title=&quot;Filtered NMDS by year&quot;, color=&quot;Unfiltered cluster&quot;)
+grid.arrange(vols.plot, vols.good.plot)
+
+# Ordinations for each year
+for(yr in unique(year(volsmeta$sequence.start))) {
   thisyr &lt;- year(volsmeta$sequence.start)==yr
   (vols.nmds &lt;- metaMDS(sqrt(vols.cut[thisyr,]), autotransform=FALSE, trace=F))
   vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
@@ -1058,7 +981,7 @@ grid.arrange(vols.plot, vols.good.plot)</code></pre>
     left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;)) %&gt;% filter(sequence.year == yr)
   vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
   
-  (scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero &amp; thisyr,]), autotransform=FALSE, trace=F))
+  (scents.nmds &lt;- metaMDS(sqrt(vols.good[thisyr,]), autotransform=FALSE, trace=F))
   nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
   nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
     left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;)) %&gt;% filter(sequence.year == yr)
@@ -1072,86 +995,6 @@ grid.arrange(vols.plot, vols.good.plot)</code></pre>
         geom_text(aes(color=factor(sequence.date), label=cluster), size=4)  + scale_color_hue(&quot;Run date&quot;)
   grid.arrange(vols.plot, vols.good.plot)
 }</code></pre>
-<p><img src="images_volatiles2020/nmds-2.svg" width="576" /><img src="images_volatiles2020/nmds-3.svg" width="576" /><img src="images_volatiles2020/nmds-4.svg" width="576" /></p>
-<pre class="r"><code>(vols.nmds &lt;- metaMDS(sqrt(vols.cut), autotransform=FALSE, trace=F))</code></pre>
-<pre><code>
-Call:
-metaMDS(comm = sqrt(vols.cut), autotransform = FALSE, trace = F) 
-
-global Multidimensional Scaling using monoMDS
-
-Data:     sqrt(vols.cut) 
-Distance: bray 
-
-Dimensions: 2 
-Stress:     0.1344 
-Stress type 1, weak ties
-Two convergent solutions found after 20 tries
-Scaling: centring, PC rotation, halfchange scaling 
-Species: expanded scores based on &#39;sqrt(vols.cut)&#39; </code></pre>
-<pre class="r"><code>vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
-vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
-  left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
-vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
-
-(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero,]), autotransform=FALSE, trace=F)) #had noshare = FALSE</code></pre>
-<pre><code>
-Call:
-metaMDS(comm = sqrt(vols.good[nonzero, ]), autotransform = FALSE,      trace = F) 
-
-global Multidimensional Scaling using monoMDS
-
-Data:     sqrt(vols.good[nonzero, ]) 
-Distance: bray 
-
-Dimensions: 2 
-Stress:     0.2289 
-Stress type 1, weak ties
-No convergent solutions - best solution after 20 tries
-Scaling: centring, PC rotation, halfchange scaling 
-Species: expanded scores based on &#39;sqrt(vols.good[nonzero, ])&#39; </code></pre>
-<pre class="r"><code>nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
-nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
-nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;)
-
-vols.plot &lt;- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
-  geom_point(aes(color=factor(sequence.year))) + 
-    geom_text(data=vols.nmds.chems, aes(label=Label)) +
-  labs(title=&quot;Unfiltered NMDS by year&quot;, color=&quot;Year&quot;)
-vols.good.plot &lt;- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
-  geom_point(aes(color=factor(sequence.year)))+ 
-    geom_text(data=nmds.chems, aes(label=Label)) +
-  #geom_point(aes(color=water, shape=year)) + scale_color_manual(&quot;Precipitation&quot;, values=water_pal) +
-  labs(title=&quot;Filtered NMDS by year&quot;, color=&quot;Year&quot;)
-grid.arrange(vols.plot, vols.good.plot)</code></pre>
-<p><img src="images_volatiles2020/nmds_chems-1.svg" width="1152" /></p>
-<pre class="r"><code>for(yr in unique(year(volsmeta$sequence.start))) {
-  
-  (vols.nmds &lt;- metaMDS(sqrt(vols.cut[year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F))
-vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
-vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
-  left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
-vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
-
-(scents.nmds &lt;- metaMDS(sqrt(vols.good[nonzero &amp; year(volsmeta$sequence.start)==yr,]), autotransform=FALSE, trace=F)) #had noshare = FALSE
-nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
-nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
-nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;)
-  
-  
-  vols.plot &lt;- vols.nmds.samples %&gt;% 
-    filter(sequence.year == yr) %&gt;% 
-    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste(&quot;Unfiltered NMDS run&quot;,yr))+
-    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue(&quot;Run date&quot;) +
-          geom_text(data=vols.nmds.chems, aes(label=Label))
-  vols.good.plot &lt;- nmds.samples %&gt;% 
-    filter(sequence.year == yr) %&gt;% 
-    ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste(&quot;Filtered NMDS run&quot;,yr))+
-    geom_point(aes(color=factor(sequence.date)), size=3) + scale_color_hue(&quot;Run date&quot;)+
-          geom_text(data=nmds.chems, aes(label=Label))
-  grid.arrange(vols.plot, vols.good.plot)
-}</code></pre>
-<p><img src="images_volatiles2020/nmds_chems-2.svg" width="1152" /><img src="images_volatiles2020/nmds_chems-3.svg" width="1152" /><img src="images_volatiles2020/nmds_chems-4.svg" width="1152" /></p>
 </div>
 </div>
 </div>
@@ -1161,55 +1004,61 @@ nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;)
 <h2>Plasticity to treatments</h2>
 <div id="cap" class="section level3">
 <h3>CAP</h3>
-<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ year.cluster * water * snow, data=volsmeta))</code></pre>
-<pre><code>Call: capscale(formula = sqrt(vols.good) ~ year.cluster * water * snow,
-data = volsmeta)
+<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ year * water * snow, data=volsmeta))</code></pre>
+<pre><code>Call: capscale(formula = sqrt(vols.good) ~ year * water * snow, data =
+volsmeta)
 
               Inertia Proportion Rank
-Total          52.619      1.000     
-Constrained    12.858      0.244   29
-Unconstrained  39.761      0.756   65
+Total          43.668      1.000     
+Constrained     7.301      0.167   17
+Unconstrained  36.368      0.833   64
 Inertia is mean squared Euclidean distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good&#39; 
 
 Eigenvalues for constrained axes:
  CAP1  CAP2  CAP3  CAP4  CAP5  CAP6  CAP7  CAP8  CAP9 CAP10 CAP11 CAP12 CAP13 
- 5.99  2.74  1.96  0.56  0.35  0.22  0.17  0.14  0.11  0.10  0.09  0.07  0.07 
-CAP14 CAP15 CAP16 CAP17 CAP18 CAP19 CAP20 CAP21 CAP22 CAP23 CAP24 CAP25 CAP26 
- 0.05  0.04  0.03  0.03  0.03  0.03  0.02  0.02  0.01  0.01  0.01  0.01  0.01 
-CAP27 CAP28 CAP29 
- 0.01  0.00  0.00 
+ 5.51  0.77  0.32  0.15  0.11  0.08  0.07  0.06  0.05  0.04  0.03  0.03  0.03 
+CAP14 CAP15 CAP16 CAP17 
+ 0.02  0.01  0.01  0.01 
 
 Eigenvalues for unconstrained axes:
  MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
-14.86  3.20  2.76  1.70  1.61  1.57  1.30  1.12 
-(Showing 8 of 65 unconstrained eigenvalues)</code></pre>
+15.97  3.32  2.03  1.82  1.48  1.27  1.16  1.04 
+(Showing 8 of 64 unconstrained eigenvalues)</code></pre>
 <pre class="r"><code>anova(scents.cap, by=&quot;term&quot;)</code></pre>
 <pre><code>Permutation test for capscale under reduced model
 Terms added sequentially (first to last)
 Permutation: free
 Number of permutations: 999
 
-Model: capscale(formula = sqrt(vols.good) ~ year.cluster * water * snow, data = volsmeta)
-                         Df Variance     F Pr(&gt;F)    
-year.cluster              4     10.0 26.87  0.001 ***
-water                     2      0.4  2.08  0.027 *  
-snow                      1      0.1  1.50  0.143    
-year.cluster:water        8      0.9  1.26  0.120    
-year.cluster:snow         4      0.5  1.27  0.150    
-water:snow                2      0.3  1.66  0.062 .  
-year.cluster:water:snow   8      0.7  0.89  0.638    
-Residual                429     39.8                 
+Model: capscale(formula = sqrt(vols.good) ~ year * water * snow, data = volsmeta)
+                 Df Variance     F Pr(&gt;F)    
+year              2      5.4 24.81  0.001 ***
+water             2      0.3  1.56  0.116    
+snow              1      0.2  1.99  0.090 .  
+year:water        4      0.5  1.19  0.229    
+year:snow         2      0.3  1.47  0.144    
+water:snow        2      0.2  0.99  0.394    
+year:water:snow   4      0.4  0.81  0.666    
+Residual        337     36.4                 
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ year.cluster + water, data=volsmeta)
+<pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ year + water, data=volsmeta)
 plot(scents.cap, type=&quot;n&quot;)
 points(scents.cap, display = &quot;sites&quot;, col=water_pal[volsmeta$water], pch=as.integer(volsmeta$year)+14)
-text(scents.cap, display=&quot;cn&quot;, labels=c(unique(volsmeta$year.cluster), names(water_pal)), col=c(rep(&quot;black&quot;,5),water_pal), font=2, cex=1.5)</code></pre>
+text(scents.cap, display=&quot;cn&quot;, labels=c(levels(volsmeta$year), names(water_pal)), col=c(rep(&quot;black&quot;,5),water_pal), font=2, cex=1.5)</code></pre>
 <p><img src="images_volatiles2020/cap-1.svg" width="768" /></p>
 <pre class="r"><code>plot(scents.cap, type=&quot;n&quot;)
 text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</code></pre>
 <p><img src="images_volatiles2020/cap-2.svg" width="768" /></p>
+<pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ year + snow, data=volsmeta)
+plot(scents.cap, type=&quot;n&quot;)
+points(scents.cap, display = &quot;sites&quot;, col=snow_pal[volsmeta$snow], pch=as.integer(volsmeta$year)+14)
+text(scents.cap, display=&quot;cn&quot;, labels=c(levels(volsmeta$year), names(snow_pal)), col=c(rep(&quot;black&quot;,5),water_pal), font=2, cex=1.5)</code></pre>
+<p><img src="images_volatiles2020/cap-3.svg" width="768" /></p>
+<pre class="r"><code>plot(scents.cap, type=&quot;n&quot;)
+text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</code></pre>
+<p><img src="images_volatiles2020/cap-4.svg" width="768" /></p>
 </div>
 <div id="joint-species-distribution-model" class="section level3">
 <h3>Joint species distribution model</h3>
@@ -1225,54 +1074,49 @@ model.abu &lt;- Hmsc(Y=vols.good,
                 distr=&quot;lognormal poisson&quot;)
 
 # Fit model with MCMC
-thin &lt;- 11
+thin &lt;- 1
 (model.abu &lt;- sampleMcmc(model.abu, thin = thin, samples = 100, transient = thin*50, nChains = 3, nParallel = 3,
-                        initPar=&quot;fixed effects&quot;)) #chains start from ML solution to fixed-effects model</code></pre>
-<pre><code>Hmsc object with 459 sampling units, 65 species, 8 covariates, 1 traits and 1 random levels
-Posterior MCMC sampling with 3 chains each with 100 samples, thin 11 and transient 550 </code></pre>
-<pre class="r"><code>#save(model.abu, file=&quot;./data/volatiles/Hmsc_plasticity_thin10.rda&quot;)
+                        initPar=&quot;fixed effects&quot;)) #chains start from ML solution to fixed-effects model
+#save(model.abu, file=&quot;./data/volatiles/Hmsc_plasticity_thin10.rda&quot;)
 #load(&quot;./data/volatiles/Hmsc_plasticity_thin10.rda&quot;)
 
 # Model convergence
 mpost &lt;- convertToCodaObject(model.abu)[c(&quot;Beta&quot;,&quot;Gamma&quot;,&quot;V&quot;,&quot;Sigma&quot;)]
 ess &lt;- map(mpost, effectiveSize)
 par(mfrow=c(2,2))
-walk(names(ess), ~hist(ess[[.x]], xlab = expression(&quot;Effective sample size&quot; ~ beta ~ &quot;&quot;), main=.x))</code></pre>
-<p><img src="images_volatiles2020/jsdm_sm-1.svg" width="768" /></p>
-<pre class="r"><code>psrf &lt;- map(mpost, gelman.diag, multivariate=FALSE)
-walk(names(psrf), ~hist(psrf[[.x]]$psrf, xlab = expression(&quot;Potential scale reduction factor&quot;), main=.x))</code></pre>
-<p><img src="images_volatiles2020/jsdm_sm-2.svg" width="768" /></p>
-<pre class="r"><code># Parameters
+walk(names(ess), ~hist(ess[[.x]], xlab = expression(&quot;Effective sample size&quot; ~ beta ~ &quot;&quot;), main=.x))
+psrf &lt;- map(mpost, gelman.diag, multivariate=FALSE)
+walk(names(psrf), ~hist(psrf[[.x]]$psrf, xlab = expression(&quot;Potential scale reduction factor&quot;), main=.x))
+
+# Parameters
 postBeta = getPostEstimate(model.abu, parName=&quot;Beta&quot;)
-plotBeta(model.abu, post=postBeta, param=&quot;Support&quot;, supportLevel = 0.95, spNamesNumbers = c(F,F), covNamesNumbers = c(T,F))</code></pre>
-<p><img src="images_volatiles2020/jsdm_sm-3.svg" width="768" /></p>
-<pre class="r"><code>postGamma = getPostEstimate(model.abu, parName=&quot;Gamma&quot;)</code></pre>
+plotBeta(model.abu, post=postBeta, param=&quot;Support&quot;, supportLevel = 0.95, spNamesNumbers = c(F,F), covNamesNumbers = c(T,F))
+
+postGamma = getPostEstimate(model.abu, parName=&quot;Gamma&quot;)</code></pre>
 </div>
 <div id="boxplots" class="section level3">
 <h3>Boxplots</h3>
 <pre class="r"><code>treatment_boxplots &lt;- function(volsmeta.vol, treatment) {
-  ggplot(volsmeta.vol, aes_string(x = &quot;year.cluster&quot;, fill = treatment, y = &quot;value&quot;)) + 
+  ggplot(volsmeta.vol, aes_string(x = &quot;year&quot;, fill = treatment, y = &quot;value&quot;)) + 
     facet_wrap(vars(name), scales=&quot;free_y&quot;) + geom_boxplot(outlier.size=1) + scale_y_sqrt() +
     scale_fill_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + theme_bw() + 
-    labs(x=&quot;Year and cluster&quot;, y =&quot;Emissions (ng/hr)&quot;, fill=c(water=&quot;Precipitation&quot;,snow=&quot;Snowmelt&quot;)[[treatment]]) 
+    labs(x=&quot;Year&quot;, y =&quot;Emissions (ng/hr)&quot;, fill=c(water=&quot;Precipitation&quot;,snow=&quot;Snowmelt&quot;)[[treatment]]) 
 }
 treatment_boxplots(volsmeta.good.top, &quot;water&quot;)</code></pre>
 <p><img src="images_volatiles2020/boxplots-1.svg" width="1536" /></p>
-<pre class="r"><code>treatment_boxplots(volsmeta.drydown, &quot;water&quot;)</code></pre>
+<pre class="r"><code>#treatment_boxplots(volsmeta.drydown, &quot;water&quot;)
+treatment_boxplots(volsmeta.class, &quot;water&quot;)</code></pre>
 <p><img src="images_volatiles2020/boxplots-2.svg" width="1536" /></p>
-<pre class="r"><code>treatment_boxplots(volsmeta.class, &quot;water&quot;)</code></pre>
-<p><img src="images_volatiles2020/boxplots-3.svg" width="1536" /></p>
 <pre class="r"><code>treatment_boxplots(volsmeta.good.top, &quot;snow&quot;)</code></pre>
+<p><img src="images_volatiles2020/boxplots-3.svg" width="1536" /></p>
+<pre class="r"><code>#treatment_boxplots(volsmeta.drydown, &quot;snow&quot;)
+treatment_boxplots(volsmeta.class, &quot;snow&quot;)</code></pre>
 <p><img src="images_volatiles2020/boxplots-4.svg" width="1536" /></p>
-<pre class="r"><code>treatment_boxplots(volsmeta.drydown, &quot;snow&quot;)</code></pre>
-<p><img src="images_volatiles2020/boxplots-5.svg" width="1536" /></p>
-<pre class="r"><code>treatment_boxplots(volsmeta.class, &quot;snow&quot;)</code></pre>
-<p><img src="images_volatiles2020/boxplots-6.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(volsmeta, aes(x=year.cluster, fill=factor(paste(water, snow),levels=names(water_snow_pal)), y=total))  + 
+<pre class="r"><code>ggplot(volsmeta, aes(x=year, fill=factor(paste(water, snow),levels=names(water_snow_pal)), y=total))  + 
   geom_boxplot(outlier.size=1) + 
   scale_fill_manual(values=water_snow_pal) + theme_minimal() +
-  labs(x=&quot;Year and cluster&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, fill=&quot;Precipiation, snowmelt&quot;)</code></pre>
-<p><img src="images_volatiles2020/boxplots-7.svg" width="1536" /></p>
+  labs(x=&quot;Year&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, fill=&quot;Precipiation, snowmelt&quot;)</code></pre>
+<p><img src="images_volatiles2020/boxplots-5.svg" width="1536" /></p>
 </div>
 </div>
 <div id="plasticity-to-soil-moisture" class="section level2">
@@ -1285,20 +1129,20 @@ treatment_boxplots(volsmeta.good.top, &quot;water&quot;)</code></pre>
 VWC, data = volsmeta[hasVWC, ])
 
               Inertia Proportion Rank
-Total          54.410      1.000     
-Constrained    11.338      0.208    9
-Unconstrained  43.073      0.792   65
+Total          45.515      1.000     
+Constrained     6.544      0.144    5
+Unconstrained  38.970      0.856   64
 Inertia is mean squared Euclidean distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good[hasVWC, ]&#39; 
 
 Eigenvalues for constrained axes:
-CAP1 CAP2 CAP3 CAP4 CAP5 CAP6 CAP7 CAP8 CAP9 
-5.77 2.62 1.95 0.52 0.19 0.14 0.08 0.04 0.03 
+CAP1 CAP2 CAP3 CAP4 CAP5 
+5.47 0.76 0.15 0.10 0.06 
 
 Eigenvalues for unconstrained axes:
  MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
-16.06  3.49  2.82  1.90  1.79  1.67  1.46  1.24 
-(Showing 8 of 65 unconstrained eigenvalues)</code></pre>
+17.21  3.60  2.22  1.89  1.61  1.31  1.23  1.12 
+(Showing 8 of 64 unconstrained eigenvalues)</code></pre>
 <pre class="r"><code>anova(scents.cap, by=&quot;term&quot;)</code></pre>
 <pre><code>Permutation test for capscale under reduced model
 Terms added sequentially (first to last)
@@ -1307,30 +1151,34 @@ Number of permutations: 999
 
 Model: capscale(formula = sqrt(vols.good[hasVWC, ]) ~ year.cluster * VWC, data = volsmeta[hasVWC, ])
                   Df Variance     F Pr(&gt;F)    
-year.cluster       4     10.6 25.04  0.001 ***
-VWC                1      0.0  0.42  0.949    
-year.cluster:VWC   4      0.7  1.71  0.038 *  
-Residual         408     43.1                 
+year.cluster       2      6.0 24.00  0.001 ***
+VWC                1      0.1  0.51  0.815    
+year.cluster:VWC   2      0.5  1.85  0.067 .  
+Residual         311     39.0                 
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
 <div id="scatterplots" class="section level3">
 <h3>Scatterplots</h3>
-<pre class="r"><code>ggplot(volsmeta.good.top, aes(x = VWC, color = year.cluster, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+<pre class="r"><code>ggplot(volsmeta.good.top, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt()  + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)</code></pre>
+  scale_y_sqrt()  + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;) +
+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/sm_vols-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(volsmeta.drydown, aes(x = VWC, color = year.cluster, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+<pre class="r"><code>ggplot(volsmeta.drydown, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)</code></pre>
+  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)+
+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/sm_vols-2.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(volsmeta.class, aes(x = VWC, color = year.cluster, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+<pre class="r"><code>ggplot(volsmeta.class, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)</code></pre>
+  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)+
+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/sm_vols-3.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(volsmeta, aes(x = VWC, color = year.cluster, y = total)) + 
+<pre class="r"><code>ggplot(volsmeta, aes(x = VWC, color = year, y = total)) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, color=&quot;Year&quot;)</code></pre>
+  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, color=&quot;Year&quot;) +
+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/sm_vols-4.svg" width="1536" /></p>
 </div>
 </div>
@@ -1339,82 +1187,83 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 <h1>Selection analyses</h1>
 <div id="plots-of-selection-in-treatments-and-years" class="section level2">
 <h2>Plots of selection in treatments and years</h2>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_est, color=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_est, color=year)) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
   labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Year&quot;)+
-  theme_bw()+ scale_x_sqrt()</code></pre>
+  theme_bw()+ scale_x_sqrt()+
+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/selection-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_est, color=water, linetype=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_est, color=water, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;)+
+  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
   theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
 <p><img src="images_volatiles2020/selection-2.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_est, color=snow, linetype=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_est, color=snow, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;)+
+  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
   theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
 <p><img src="images_volatiles2020/selection-3.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=value, y=seeds_est, color=water, linetype=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=value, y=seeds_est, color=water, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;)+
+  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
   theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
 <p><img src="images_volatiles2020/selection-4.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=value, y=seeds_est, color=snow, linetype=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=value, y=seeds_est, color=snow, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;)+
+  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
   theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
 <p><img src="images_volatiles2020/selection-5.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_est, color=water, linetype=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_est, color=water, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  labs(x=&quot;Total emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;)+
+  labs(x=&quot;Total emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
   theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
 <p><img src="images_volatiles2020/selection-6.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_est, color=snow, linetype=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_est, color=snow, linetype=year, shape=year)) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  labs(x=&quot;Total emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;)+
+  labs(x=&quot;Total emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
   theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
 <p><img src="images_volatiles2020/selection-7.svg" width="1536" /></p>
 </div>
 <div id="fly-infestation-vs.-volatiles" class="section level2">
 <h2>Fly infestation vs. volatiles</h2>
-<pre class="r"><code>ggplot(traits.good.top %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.good.top %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year)) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
   labs(x=&quot;Emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
-  theme_bw()+ scale_x_sqrt()</code></pre>
+  theme_bw()+ scale_x_sqrt() + scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flies-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=eggs_per_open, color=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=eggs_per_open, color=year)) + 
   geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
   labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean open flowers&quot;, color=&quot;Year&quot;)+
-  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)</code></pre>
+  theme_bw()+ scale_x_sqrt() + ylim(0,1.2) +  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flies-2.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year.cluster)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
+<pre class="r"><code>ggplot(traits.class %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year)) + 
+  geom_point() + geom_smooth(method=&quot;loess&quot;,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
   labs(x=&quot;Emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
-  theme_bw()+  scale_x_sqrt()</code></pre>
+  theme_bw()+  scale_x_sqrt()+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flies-3.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=value, y=eggs_per_open, color=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=value, y=eggs_per_open, color=year)) + 
   geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
   labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean open flowers&quot;)+
-  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)</code></pre>
+  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flies-4.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class %&gt;% filter(fruits_nonaborted&gt;4), aes(x=total, y=prop_infested, color=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class %&gt;% filter(fruits_nonaborted&gt;4), aes(x=total, y=prop_infested, color=year)) + 
   geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
   labs(x=&quot;Total emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
-  theme_bw()+  scale_x_sqrt()</code></pre>
+  theme_bw()+  scale_x_sqrt()+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flies-5.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=total, y=eggs_per_open, color=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=total, y=eggs_per_open, color=year)) + 
   geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
   labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean open flowers&quot;, color=&quot;Year&quot;)+
-  theme_bw()+  scale_x_sqrt() + ylim(0,1.2)</code></pre>
+  theme_bw()+  scale_x_sqrt() + ylim(0,1.2)+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flies-6.svg" width="1536" /></p>
 </div>
 <div id="selection-gradients" class="section level2">
@@ -1456,7 +1305,10 @@ plot_beta &lt;- function(betas, colorby=&quot;year&quot;) {
   betas %&gt;% mutate(trait = fct_reorder(trait, B)) %&gt;% 
     ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
     geom_vline(xintercept=0)+ geom_pointrange(aes_string(color=colorby), position=position_dodge(width=0.5)) + 
-    labs(x = &quot;Selection gradient (beta) estimated from gradients on PCs&quot;, y = &quot;Trait&quot;)
+    labs(x = &quot;Selection gradient (beta) estimated from gradients on PCs&quot;, y = &quot;Trait&quot;,
+         color=list(year=&quot;Year&quot;, water=&quot;Precipitation&quot;, snow=&quot;Snowmelt&quot;)[[colorby]]) +
+    scale_color_manual(values=list(year=year_pal, water=water_pal, snow=snow_pal)[[colorby]]) +
+    theme_bw()
 }
 
 vols.beta.yr &lt;- map_dfr(set_names(unique(volsmeta$year)), 
@@ -1465,12 +1317,9 @@ plot_beta(vols.beta.yr)</code></pre>
 <p><img src="images_volatiles2020/gradients-1.svg" width="1344" /></p>
 <pre class="r"><code>vols.beta.water &lt;- expand_grid(year=unique(volsmeta$year), water=names(water_pal))  %&gt;% 
   mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-plot_beta(filter(vols.beta.water, year==&quot;2018&quot;), colorby=&quot;water&quot;) + 
-  scale_color_manual(values=water_pal) + ggtitle(&quot;2018&quot;)</code></pre>
+
+plot_beta(filter(vols.beta.water), colorby=&quot;water&quot;) + facet_wrap(vars(year), nrow=1)</code></pre>
 <p><img src="images_volatiles2020/gradients-2.svg" width="1344" /></p>
-<pre class="r"><code>plot_beta(filter(vols.beta.water), colorby=&quot;water&quot;) + 
-  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1)</code></pre>
-<p><img src="images_volatiles2020/gradients-3.svg" width="1344" /></p>
 </div>
 <div id="adaptive-plasticity" class="section level2">
 <h2>Adaptive plasticity</h2>
@@ -1485,13 +1334,13 @@ plot_beta(filter(vols.beta.water, year==&quot;2018&quot;), colorby=&quot;water&q
 plasticity %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;% filter(water==&quot;Addition&quot;)) %&gt;% 
   ggplot(aes(x=A_C, y=B, color=class)) + facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
-  scale_x_continuous(labels=scales::percent, limits=c(NA,2)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
+  scale_x_continuous(labels=scales::percent, limits=c(NA,NA)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
   labs(x=&quot;Emissions change in Addition vs. Control precipitation&quot;, y=&quot;Selection gradient (beta) under precipitation addition&quot;)</code></pre>
 <p><img src="images_volatiles2020/adaptive-1.svg" width="960" /></p>
 <pre class="r"><code>plasticity %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;% filter(water==&quot;Reduction&quot;)) %&gt;% 
   ggplot(aes(x=R_C, y=B, color=class)) + facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
-  scale_x_continuous(labels=scales::percent, limits=c(NA,4)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
+  scale_x_continuous(labels=scales::percent, limits=c(NA,NA)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
   labs(x=&quot;Emissions change in Reduction vs. Control precipitation&quot;, y=&quot;Selection gradient (beta) under precipitation reduction&quot;)</code></pre>
 <p><img src="images_volatiles2020/adaptive-2.svg" width="960" /></p>
 </div>
@@ -1504,7 +1353,7 @@ plasticity %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;% fil
 plasticity %&gt;% left_join(diffbeta) %&gt;% 
   ggplot(aes(x=A_R, y=B_A_R, color=class)) + facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
-  scale_x_continuous(labels=scales::percent, limits=c(NA,2)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
+  scale_x_continuous(labels=scales::percent, limits=c(NA,NA)) + theme_bw()  + theme(legend.position = &quot;top&quot;) +
   labs(x=&quot;Emissions change in precipitation addition vs. reduction&quot;, y=&quot;Change in selection gradient (beta) in precipitation addition vs. reduction&quot;)</code></pre>
 <p><img src="images_volatiles2020/adaptive_diff-1.svg" width="960" /></p>
 </div>
@@ -1512,23 +1361,23 @@ plasticity %&gt;% left_join(diffbeta) %&gt;%
 </div>
 <div id="volatiles-vs.-floral-traits" class="section level1">
 <h1>Volatiles vs. floral traits</h1>
-<pre class="r"><code>ggplot(traits.class, aes(x=corolla_length, y=value, color=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=corolla_length, y=value, color=year)) + 
   geom_point() + geom_smooth(se=F, span=1) + 
   facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   labs(y=&quot;Emissions&quot;, x=traitnames.units[&quot;corolla_length&quot;], color=&quot;Year&quot;)+
-  theme_bw() + scale_y_sqrt()</code></pre>
+  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flrsize-1.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=sepal_width, y=value, color=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=sepal_width, y=value, color=year)) + 
   geom_point() + geom_smooth(se=F, span=1) + 
   facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   labs(y=&quot;Emissions&quot;, x=traitnames.units[&quot;sepal_width&quot;], color=&quot;Year&quot;)+
-  theme_bw() + scale_y_sqrt()</code></pre>
+  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flrsize-2.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=nectar_24_h_ul, y=value, color=year.cluster)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=nectar_24_h_ul, y=value, color=year)) + 
   geom_point() + geom_smooth(se=F, span=1) + 
   facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   labs(y=&quot;Emissions&quot;, x=traitnames.units[&quot;nectar_24_h_ul&quot;], color=&quot;Year&quot;)+
-  theme_bw() + scale_y_sqrt()</code></pre>
+  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flrsize-3.svg" width="768" /></p>
 </div>
 
