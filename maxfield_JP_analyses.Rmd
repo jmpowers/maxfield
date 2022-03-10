@@ -2068,9 +2068,15 @@ walk(list(ph18.raw, ph19.raw, ph20.raw),
   print(p)})
 ```
 
+# Weekly vs. total fly and flower counts
+
 ```{r phenology_versus_total}
-ggplot(mnps.plantyr, aes(x=flowers_est, y=open)) + geom_point() + facet_wrap(vars(year)) + geom_smooth(method="lm")
-lm(open ~ flowers_est * year, data = mnps.plantyr) %>% emtrends(~year, var="flowers_est") %>% tidy
+ggplot(mnps.plantyr, aes(x=flowers_est, y=open)) + geom_point() + facet_wrap(vars(year)) + geom_smooth(span=0.7) + geom_smooth(method="lm", se=F, col="purple") + theme_minimal()
+lm(open ~ flowers_est * year, data = mnps.plantyr) %>% emtrends(~year, var="flowers_est") %>% tidy %>% 
+  kable(caption="Slope of average open flowers vs. total number of flowers")
+
+ggplot(mnps.plantyr, aes(x=fruits_fly_no_seeds, y=eggs)) + geom_point() + facet_wrap(vars(year)) + geom_smooth(span=0.7) + geom_smooth(method="lm", se=F, col="purple") + theme_minimal() + ylim(c(0,5))
+lm(eggs ~ fruits_fly_no_seeds * year, data = mnps.plantyr) %>% emtrends(~year, var="fruits_fly_no_seeds") %>% tidy
 ```
 
 

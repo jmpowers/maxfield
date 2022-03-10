@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-02-24" />
+<meta name="date" content="2022-03-09" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-02-24</h4>
+<h4 class="date">2022-03-09</h4>
 
 </div>
 
@@ -7789,15 +7789,61 @@ map(set_names(leaftraits),
   labs(x=&quot;Day of year&quot;, y=&quot;Plant (sorted by subplot)&quot;, fill=&quot;Observations&quot;, color=&quot;Plot&quot;, title=paste(y,&quot;phenology&quot;))
   print(p)})</code></pre>
 <p><img src="images/check_phenology-1.png" width="672" /><img src="images/check_phenology-2.png" width="672" /><img src="images/check_phenology-3.png" width="672" /></p>
-<pre class="r"><code>ggplot(mnps.plantyr, aes(x=flowers_est, y=open)) + geom_point() + facet_wrap(vars(year)) + geom_smooth(method=&quot;lm&quot;)</code></pre>
+</div>
+<div id="weekly-vs.-total-fly-and-flower-counts" class="section level1">
+<h1>Weekly vs. total fly and flower counts</h1>
+<pre class="r"><code>ggplot(mnps.plantyr, aes(x=flowers_est, y=open)) + geom_point() + facet_wrap(vars(year)) + geom_smooth(span=0.7) + geom_smooth(method=&quot;lm&quot;, se=F, col=&quot;purple&quot;) + theme_minimal()</code></pre>
 <p><img src="images/phenology_versus_total-1.png" width="672" /></p>
-<pre class="r"><code>lm(open ~ flowers_est * year, data = mnps.plantyr) %&gt;% emtrends(~year, var=&quot;flowers_est&quot;) %&gt;% tidy</code></pre>
+<pre class="r"><code>lm(open ~ flowers_est * year, data = mnps.plantyr) %&gt;% emtrends(~year, var=&quot;flowers_est&quot;) %&gt;% tidy %&gt;% 
+  kable(caption=&quot;Slope of average open flowers vs. total number of flowers&quot;)</code></pre>
+<table>
+<caption>Slope of average open flowers vs. total number of flowers</caption>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="right">flowers_est.trend</th>
+<th align="right">std.error</th>
+<th align="right">df</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="right">0.0343</td>
+<td align="right">0.0061</td>
+<td align="right">520</td>
+<td align="right">5.606</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="right">0.0645</td>
+<td align="right">0.0081</td>
+<td align="right">520</td>
+<td align="right">8.009</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="right">0.0356</td>
+<td align="right">0.0047</td>
+<td align="right">520</td>
+<td align="right">7.636</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>ggplot(mnps.plantyr, aes(x=fruits_fly_no_seeds, y=eggs)) + geom_point() + facet_wrap(vars(year)) + geom_smooth(span=0.7) + geom_smooth(method=&quot;lm&quot;, se=F, col=&quot;purple&quot;) + theme_minimal() + ylim(c(0,5))</code></pre>
+<p><img src="images/phenology_versus_total-2.png" width="672" /></p>
+<pre class="r"><code>lm(eggs ~ fruits_fly_no_seeds * year, data = mnps.plantyr) %&gt;% emtrends(~year, var=&quot;fruits_fly_no_seeds&quot;) %&gt;% tidy</code></pre>
 <pre><code># A tibble: 3 × 6
-  year  flowers_est.trend std.error    df statistic  p.value
-  &lt;chr&gt;             &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
-1 2018             0.0343   0.00612   520      5.61 3.36e- 8
-2 2019             0.0645   0.00805   520      8.01 7.63e-15
-3 2020             0.0356   0.00466   520      7.64 1.08e-13</code></pre>
+  year  fruits_fly_no_seeds.trend std.error    df statistic  p.value
+  &lt;chr&gt;                     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+1 2018                     0.0958    0.0191   517      5.02 7.09e- 7
+2 2019                     0.103     0.0110   517      9.41 1.66e-19
+3 2020                     0.0807    0.0101   517      8.00 8.41e-15</code></pre>
 <pre class="r"><code>ggplot(ph %&gt;% drop_na(height_cm), aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
   facet_wrap(vars(year), ncol=1)+
     geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
