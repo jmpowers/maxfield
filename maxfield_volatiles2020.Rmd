@@ -119,47 +119,7 @@ ggplot(vt %>% drop_na(water), aes(x=factor(sampledate), y=VWC, color=water)) + f
   labs(x="Date", y="Soil moisture (%VWC)", color="Precipitation")
 ```
 
-# Sampling
-
-## Time of day
-
-```{r sample_times}
-ggplot(volsmeta, aes(x=bag, fill=year)) + geom_histogram(show.legend = F) + facet_wrap(vars(year), ncol=1) + 
-  scale_fill_manual(values=year_pal) + theme_minimal() + 
-  labs(x="Flower bagged", caption= paste(format(c(min(volsmeta$bag, na.rm=T), max(volsmeta$bag, na.rm=T)), "%H:%M"), collapse=" - "))
-ggplot(volsmeta, aes(x=bag+total_time, fill=year)) + geom_histogram(show.legend = F) + facet_wrap(vars(year), ncol=1) + 
-  scale_fill_manual(values=year_pal) + theme_minimal() + 
-  labs(x="Pump stopped", caption= paste(format(c(min(volsmeta$bag+volsmeta$total_time, na.rm=T), max(volsmeta$bag+volsmeta$total_time, na.rm=T)), "%H:%M"), collapse=" - "))
-
-volsmeta %>% count(beforenoon=hour(bag+total_time) <13)
-
-ggplot(volsmeta, aes(x=end-bag)) + geom_histogram() + labs(x="Equilibration and pumping time (min)")
-```
-
-## Distributed among treatments
-
-```{r random_sampling}
-ggplot(volsmeta, aes(x=yday(sampledate), fill=paste(water, snow))) + geom_bar() + facet_wrap(vars(year), ncol=1) + 
-  labs(fill="Precipitation, snowmelt", x="Day of year", y="Samples") + scale_fill_manual(values=water_snow_pal)+ theme_minimal() 
-
-list(water=chisq.test(with(vt, table(sampledate, water))),
-     snow=chisq.test(with(vt, table(sampledate, snow))),
-     water_snow=chisq.test(with(vt, table(sampledate, paste(water, snow))))) %>% 
-  map_dfr(tidy, .id="treatment") %>% kable(caption="Test of randomness of treatments on each sampling date")
-
-#TODO investigate dates with only one sample - likely errors
-volsmeta %>% count(year, sampledate) %>% filter(n>1) %>% count(year) %>% kable(caption="More than one sample taken on these dates")
-```
-
-## Flowers and buds
-
-```{r buds}
-volsmeta %>% count(flowers)
-volsmeta %>% count(buds>0)
-cat(paste("Buds included in", round(sum(volsmeta$buds>0, na.rm=T)/sum(volsmeta$buds>=0, na.rm=T)*100), "% of samples"))
-```
-
-## Ambient controls
+# Ambient controls
 ```{r ambients}
 vt.ambi %>% filter(type=="ambient") %>% mutate(year=year(sampledate)) %>% 
 ggplot(aes(x=yday(sampledate))) + geom_bar() + facet_wrap(vars(year), ncol=1) + 
@@ -228,13 +188,14 @@ for(yr in unique(year(volsmeta$sequence.start))) {
   set.seed(1)
   volsmeta$cluster[thisyr] <- kmeans(decostand(vols.cut[thisyr,chems.include], method="log"), k, nstart=3)$cluster
 }
-volsmeta <- volsmeta %>% 
-  mutate(year.cluster = paste0(year, if_else(sequence.year == 2018, "", paste0(".",cluster))),
-         total = rowSums(vols.good))
-
 ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambient, ambient_ratio, filter_ambient_ttest, filters_passed, standard) %>%
   arrange(desc(freq.floral)) %>% mutate(across(starts_with("freq."), round, 3)) %>% 
   DT::datatable(caption="Volatile compounds to use for analysis")
+
+volsmeta <- volsmeta %>% 
+  mutate(year.cluster = paste0(year, if_else(sequence.year == 2018, "", paste0(".",cluster))),
+         total = rowSums(vols.good),
+         sampledate = coalesce(sampledate, sampledate.file))#get sampling date from filename when no metadata
 
 # Cut contaminated samples
 nonzero <-rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
@@ -272,6 +233,56 @@ volsmeta.class <- bind_cols(volsmeta, vols.class) %>%
 traits.class <- volsmeta.class %>% 
   left_join(mnps.plantyr %>% select(year, plotid, plant, all_of(traits))) %>% 
   left_join(ph.plantyr %>% select(year, plotid, plant, open, eggs) %>% mutate(eggs_per_open = eggs/open))
+```
+
+## Sample size after filtering
+
+```{r samplesizes_filtered, fig.width=10, fig.height=5}
+volsmeta %>% count(year) %>% 
+  kable(caption = "Samples sizes by year")
+volsmeta %>% count(year, water, snow) %>% 
+  pivot_wider(names_from=c(year), values_from = n) %>% 
+  kable(caption = "Samples sizes by year and treatment")
+volsmeta %>% count(year, sampledate) %>% 
+  kable(caption = "Samples sizes by date")
+#TODO investigate dates with only one sample - likely errors
+volsmeta %>% count(year, sampledate) %>% filter(n>1) %>% count(year) %>% 
+  kable(caption="More than one sample taken on these dates")
+```
+
+## Time of day
+
+```{r sample_times}
+ggplot(volsmeta, aes(x=bag, fill=year)) + geom_histogram(show.legend = F) + facet_wrap(vars(year), ncol=1) + 
+  scale_fill_manual(values=year_pal) + theme_minimal() + 
+  labs(x="Flower bagged", caption= paste(format(c(min(volsmeta$bag, na.rm=T), max(volsmeta$bag, na.rm=T)), "%H:%M"), collapse=" - "))
+ggplot(volsmeta, aes(x=bag+total_time, fill=year)) + geom_histogram(show.legend = F) + facet_wrap(vars(year), ncol=1) + 
+  scale_fill_manual(values=year_pal) + theme_minimal() + 
+  labs(x="Pump stopped", caption= paste(format(c(min(volsmeta$bag+volsmeta$total_time, na.rm=T), max(volsmeta$bag+volsmeta$total_time, na.rm=T)), "%H:%M"), collapse=" - "))
+
+volsmeta %>% count(beforenoon=hour(bag+total_time) <13)
+
+ggplot(volsmeta, aes(x=end-bag)) + geom_histogram() + labs(x="Equilibration and pumping time (min)")
+```
+
+## Distributed among treatments
+
+```{r random_sampling}
+ggplot(volsmeta, aes(x=yday(sampledate), fill=paste(water, snow))) + geom_bar() + facet_wrap(vars(year), ncol=1) + 
+  labs(fill="Precipitation, snowmelt", x="Day of year", y="Samples") + scale_fill_manual(values=water_snow_pal)+ theme_minimal() 
+
+list(water=chisq.test(with(vt, table(sampledate, water))),
+     snow=chisq.test(with(vt, table(sampledate, snow))),
+     water_snow=chisq.test(with(vt, table(sampledate, paste(water, snow))))) %>% 
+  map_dfr(tidy, .id="treatment") %>% kable(caption="Test of randomness of treatments on each sampling date")
+```
+
+## Flowers and buds
+
+```{r buds}
+volsmeta %>% count(flowers)
+volsmeta %>% count(buds>0)
+cat(paste("Buds included in", round(sum(volsmeta$buds>0, na.rm=T)/sum(volsmeta$buds>=0, na.rm=T)*100), "% of samples"))
 ```
 
 ## Heatmap
