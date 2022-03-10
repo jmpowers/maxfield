@@ -230,7 +230,9 @@ for(yr in unique(year(volsmeta$sequence.start))) {
   set.seed(1)
   volsmeta$cluster[thisyr] <- kmeans(decostand(vols.cut[thisyr,chems.include], method="log"), k, nstart=3)$cluster
 }
-volsmeta <- volsmeta %>% mutate(year.cluster = paste0(year, if_else(sequence.year == 2018, "", paste0(".",cluster))))
+volsmeta <- volsmeta %>% 
+  mutate(year.cluster = paste0(year, if_else(sequence.year == 2018, "", paste0(".",cluster))),
+         total = rowSums(vols.good))
 
 ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambient, ambient_ratio, filter_ambient_ttest, filters_passed, standard) %>%
   arrange(desc(freq.floral)) %>% mutate(across(starts_with("freq."), round, 3)) %>% 
@@ -497,6 +499,42 @@ plot(scents.cap, type="n")
 text(scents.cap, display="species", col="black", cex=0.5)
 ```
 
+### Joint species distribution model
+
+```{r jsdm_sm}
+library(Hmsc)
+
+# model volatile abundance (emission rates) plasticity to year, water, and snow
+# include random effect of plot
+model.abu <- Hmsc(Y=vols.good,
+                XData = volsmeta %>% select(year.cluster, water, snow) %>% mutate_all(as.factor), 
+                XFormula= ~ year.cluster + water + snow, 
+                studyDesign = volsmeta %>% select(plot) %>% mutate_all(as.factor),
+                ranLevels = list(plot = HmscRandomLevel(units = levels(treatments$plot))),
+                distr="lognormal poisson")
+
+# Fit model with MCMC
+thin <- 11
+(model.abu <- sampleMcmc(model.abu, thin = thin, samples = 100, transient = thin*50, nChains = 3, nParallel = 3,
+                        initPar="fixed effects")) #chains start from ML solution to fixed-effects model
+#save(model.abu, file="./data/volatiles/Hmsc_plasticity_thin10.rda")
+#load("./data/volatiles/Hmsc_plasticity_thin10.rda")
+
+# Model convergence
+mpost <- convertToCodaObject(model.abu)[c("Beta","Gamma","V","Sigma")]
+ess <- map(mpost, effectiveSize)
+par(mfrow=c(2,2))
+walk(names(ess), ~hist(ess[[.x]], xlab = expression("Effective sample size" ~ beta ~ ""), main=.x))
+psrf <- map(mpost, gelman.diag, multivariate=FALSE)
+walk(names(psrf), ~hist(psrf[[.x]]$psrf, xlab = expression("Potential scale reduction factor"), main=.x))
+
+# Parameters
+postBeta = getPostEstimate(model.abu, parName="Beta")
+plotBeta(model.abu, post=postBeta, param="Support", supportLevel = 0.95, spNamesNumbers = c(F,F), covNamesNumbers = c(T,F))
+
+postGamma = getPostEstimate(model.abu, parName="Gamma")
+```
+
 ### Boxplots
 
 ```{r boxplots, fig.width=16, fig.height=10}
@@ -512,11 +550,17 @@ treatment_boxplots(volsmeta.class, "water")
 treatment_boxplots(volsmeta.good.top, "snow")
 treatment_boxplots(volsmeta.drydown, "snow")
 treatment_boxplots(volsmeta.class, "snow")
+
+ggplot(volsmeta, aes(x=year.cluster, fill=factor(paste(water, snow),levels=names(water_snow_pal)), y=total))  + 
+  geom_boxplot(outlier.size=1) + 
+  scale_fill_manual(values=water_snow_pal) + theme_minimal() +
+  labs(x="Year and cluster", y ="Total filtered emissions (ng/hr)", fill="Precipiation, snowmelt")
 ```
 
 ## Plasticity to soil moisture
 
 ### CAP
+
 ```{r cap_sm}
 hasVWC <- !is.na(volsmeta$VWC)
 (scents.cap <- capscale(sqrt(vols.good[hasVWC,]) ~ year.cluster * VWC, data=volsmeta[hasVWC,]))
@@ -537,6 +581,10 @@ ggplot(volsmeta.drydown, aes(x = VWC, color = year.cluster, y = value)) +  facet
 ggplot(volsmeta.class, aes(x = VWC, color = year.cluster, y = value)) +  facet_wrap(vars(name), scales="free_y") + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
   scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Emissions (ng/hr)", color="Year")
+
+ggplot(volsmeta, aes(x = VWC, color = year.cluster, y = total)) + 
+  geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
+  scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Total filtered emissions (ng/hr)", color="Year")
 ```
 
 # Selection analyses
@@ -572,38 +620,54 @@ ggplot(traits.class, aes(x=value, y=seeds_est, color=snow, linetype=year.cluster
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y="Seed production", color="Snowmelt", linetype="Year")+
   theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()
+
+ggplot(traits.class, aes(x=total, y=seeds_est, color=water, linetype=year.cluster)) + 
+  geom_point() + geom_smooth(method="lm",se=F) + 
+  labs(x="Total emissions", y="Seed production", color="Precipitation", linetype="Year")+
+  theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()
+
+ggplot(traits.class, aes(x=total, y=seeds_est, color=snow, linetype=year.cluster)) + 
+  geom_point() + geom_smooth(method="lm",se=F) + 
+  labs(x="Total emissions", y="Seed production", color="Snowmelt", linetype="Year")+
+  theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()
 ```
 
 ## Fly infestation vs. volatiles
 
 ```{r flies, fig.width=16, fig.height=10}
-ggplot(traits.good.top %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year)) + 
-  geom_point() + geom_smooth(method="loess",span=1,se=F) + 
+ggplot(traits.good.top %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year.cluster)) + 
+  geom_point() + geom_smooth(method="lm", se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y=paste(traitnames.units["prop_infested"], "(>4 fruits)"), color="Year")+
-  theme_bw()+scale_color_manual(values=year_pal) +
-  scale_x_sqrt()
+  theme_bw()+ scale_x_sqrt()
 
-ggplot(traits.good.top, aes(x=value, y=eggs_per_open, color=year)) + 
-  geom_point() + geom_smooth(method="loess",span=1,se=F) + 
+ggplot(traits.good.top, aes(x=value, y=eggs_per_open, color=year.cluster)) + 
+  geom_point() + geom_smooth(method="lm",se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
-  labs(x="Emissions", y="Mean fly eggs / mean open flowers")+
-  theme_bw()+scale_color_manual(values=year_pal) +
-  scale_x_sqrt() + ylim(0,1.2)
+  labs(x="Emissions", y="Mean fly eggs / mean open flowers", color="Year")+
+  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)
 
-ggplot(traits.class %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year)) + 
-  geom_point() + geom_smooth(method="loess",span=0.8,se=F) + 
+ggplot(traits.class %>% filter(fruits_nonaborted>4), aes(x=value, y=prop_infested, color=year.cluster)) + 
+  geom_point() + geom_smooth(method="lm",se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y=paste(traitnames.units["prop_infested"], "(>4 fruits)"), color="Year")+
-  theme_bw()+scale_color_manual(values=year_pal) +
-  scale_x_sqrt()
+  theme_bw()+  scale_x_sqrt()
 
-ggplot(traits.class, aes(x=value, y=eggs_per_open, color=year)) + 
+ggplot(traits.class, aes(x=value, y=eggs_per_open, color=year.cluster)) + 
   geom_point() + geom_smooth(method="loess",span=0.8,se=F) + 
   facet_wrap(vars(name), scales="free_x") + 
   labs(x="Emissions", y="Mean fly eggs / mean open flowers")+
-  theme_bw()+scale_color_manual(values=year_pal) +
-  scale_x_sqrt() + ylim(0,1.2)
+  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)
+
+ggplot(traits.class %>% filter(fruits_nonaborted>4), aes(x=total, y=prop_infested, color=year.cluster)) + 
+  geom_point() + geom_smooth(method="loess",span=0.8,se=F) + 
+  labs(x="Total emissions", y=paste(traitnames.units["prop_infested"], "(>4 fruits)"), color="Year")+
+  theme_bw()+  scale_x_sqrt()
+
+ggplot(traits.class, aes(x=total, y=eggs_per_open, color=year.cluster)) + 
+  geom_point() + geom_smooth(method="loess",span=0.8,se=F) + 
+  labs(x="Emissions", y="Mean fly eggs / mean open flowers", color="Year")+
+  theme_bw()+  scale_x_sqrt() + ylim(0,1.2)
 ```
 
 

@@ -76,7 +76,7 @@ water4_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,8,1)], levels(treatments$
 water_pal <- setNames(brewer.pal(9,name="Set1")[c(2,9,1)], levels(treatments$water))
 snow_pal <- setNames(brewer.pal(3, name="Dark2")[c(2,1)], levels(treatments$snow))
 snow_pal_grey <- setNames(c("black","grey50"), levels(treatments$snow))
-water_snow_pal <- setNames(c(water_pal, colorspace::lighten(water_pal, 0.4)), levels(interaction(treatments$water, treatments$snow, sep=" ")))
+water_snow_pal <- setNames(c(water_pal, colorspace::lighten(water_pal, 0.4)), levels(interaction(treatments$water, treatments$snow, sep=" ")))[with(expand.grid(rev(levels(treatments$snow)), levels(treatments$water)), paste(Var2, Var1))]
 year_pal <- setNames(brewer.pal(8, name="Set2")[c(2,3,6)], levels(treatments$year))
 year.round_pal <- c(set_names(year_pal, paste0(names(year_pal),".2")), 
                     set_names(brewer.pal(6, "Dark2")[c(2,3,6)], paste0(names(year_pal),".1")))

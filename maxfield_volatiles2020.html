@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-02-24" />
+<meta name="date" content="2022-03-09" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -263,7 +263,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-02-24</h4>
+<h4 class="date">2022-03-09</h4>
 
 </div>
 
@@ -751,7 +751,9 @@ for(yr in unique(year(volsmeta$sequence.start))) {
   set.seed(1)
   volsmeta$cluster[thisyr] &lt;- kmeans(decostand(vols.cut[thisyr,chems.include], method=&quot;log&quot;), k, nstart=3)$cluster
 }
-volsmeta &lt;- volsmeta %&gt;% mutate(year.cluster = paste0(year, if_else(sequence.year == 2018, &quot;&quot;, paste0(&quot;.&quot;,cluster))))
+volsmeta &lt;- volsmeta %&gt;% 
+  mutate(year.cluster = paste0(year, if_else(sequence.year == 2018, &quot;&quot;, paste0(&quot;.&quot;,cluster))),
+         total = rowSums(vols.good))
 
 ipochems %&gt;% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambient, ambient_ratio, filter_ambient_ttest, filters_passed, standard) %&gt;%
   arrange(desc(freq.floral)) %&gt;% mutate(across(starts_with(&quot;freq.&quot;), round, 3)) %&gt;% 
@@ -1209,6 +1211,43 @@ text(scents.cap, display=&quot;cn&quot;, labels=c(unique(volsmeta$year.cluster),
 text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</code></pre>
 <p><img src="images_volatiles2020/cap-2.svg" width="768" /></p>
 </div>
+<div id="joint-species-distribution-model" class="section level3">
+<h3>Joint species distribution model</h3>
+<pre class="r"><code>library(Hmsc)
+
+# model volatile abundance (emission rates) plasticity to year, water, and snow
+# include random effect of plot
+model.abu &lt;- Hmsc(Y=vols.good,
+                XData = volsmeta %&gt;% select(year.cluster, water, snow) %&gt;% mutate_all(as.factor), 
+                XFormula= ~ year.cluster + water + snow, 
+                studyDesign = volsmeta %&gt;% select(plot) %&gt;% mutate_all(as.factor),
+                ranLevels = list(plot = HmscRandomLevel(units = levels(treatments$plot))),
+                distr=&quot;lognormal poisson&quot;)
+
+# Fit model with MCMC
+thin &lt;- 11
+(model.abu &lt;- sampleMcmc(model.abu, thin = thin, samples = 100, transient = thin*50, nChains = 3, nParallel = 3,
+                        initPar=&quot;fixed effects&quot;)) #chains start from ML solution to fixed-effects model</code></pre>
+<pre><code>Hmsc object with 459 sampling units, 65 species, 8 covariates, 1 traits and 1 random levels
+Posterior MCMC sampling with 3 chains each with 100 samples, thin 11 and transient 550 </code></pre>
+<pre class="r"><code>#save(model.abu, file=&quot;./data/volatiles/Hmsc_plasticity_thin10.rda&quot;)
+#load(&quot;./data/volatiles/Hmsc_plasticity_thin10.rda&quot;)
+
+# Model convergence
+mpost &lt;- convertToCodaObject(model.abu)[c(&quot;Beta&quot;,&quot;Gamma&quot;,&quot;V&quot;,&quot;Sigma&quot;)]
+ess &lt;- map(mpost, effectiveSize)
+par(mfrow=c(2,2))
+walk(names(ess), ~hist(ess[[.x]], xlab = expression(&quot;Effective sample size&quot; ~ beta ~ &quot;&quot;), main=.x))</code></pre>
+<p><img src="images_volatiles2020/jsdm_sm-1.svg" width="768" /></p>
+<pre class="r"><code>psrf &lt;- map(mpost, gelman.diag, multivariate=FALSE)
+walk(names(psrf), ~hist(psrf[[.x]]$psrf, xlab = expression(&quot;Potential scale reduction factor&quot;), main=.x))</code></pre>
+<p><img src="images_volatiles2020/jsdm_sm-2.svg" width="768" /></p>
+<pre class="r"><code># Parameters
+postBeta = getPostEstimate(model.abu, parName=&quot;Beta&quot;)
+plotBeta(model.abu, post=postBeta, param=&quot;Support&quot;, supportLevel = 0.95, spNamesNumbers = c(F,F), covNamesNumbers = c(T,F))</code></pre>
+<p><img src="images_volatiles2020/jsdm_sm-3.svg" width="768" /></p>
+<pre class="r"><code>postGamma = getPostEstimate(model.abu, parName=&quot;Gamma&quot;)</code></pre>
+</div>
 <div id="boxplots" class="section level3">
 <h3>Boxplots</h3>
 <pre class="r"><code>treatment_boxplots &lt;- function(volsmeta.vol, treatment) {
@@ -1229,6 +1268,11 @@ treatment_boxplots(volsmeta.good.top, &quot;water&quot;)</code></pre>
 <p><img src="images_volatiles2020/boxplots-5.svg" width="1536" /></p>
 <pre class="r"><code>treatment_boxplots(volsmeta.class, &quot;snow&quot;)</code></pre>
 <p><img src="images_volatiles2020/boxplots-6.svg" width="1536" /></p>
+<pre class="r"><code>ggplot(volsmeta, aes(x=year.cluster, fill=factor(paste(water, snow),levels=names(water_snow_pal)), y=total))  + 
+  geom_boxplot(outlier.size=1) + 
+  scale_fill_manual(values=water_snow_pal) + theme_minimal() +
+  labs(x=&quot;Year and cluster&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, fill=&quot;Precipiation, snowmelt&quot;)</code></pre>
+<p><img src="images_volatiles2020/boxplots-7.svg" width="1536" /></p>
 </div>
 </div>
 <div id="plasticity-to-soil-moisture" class="section level2">
@@ -1284,6 +1328,10 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
   scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)</code></pre>
 <p><img src="images_volatiles2020/sm_vols-3.svg" width="1536" /></p>
+<pre class="r"><code>ggplot(volsmeta, aes(x = VWC, color = year.cluster, y = total)) + 
+  geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
+  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, color=&quot;Year&quot;)</code></pre>
+<p><img src="images_volatiles2020/sm_vols-4.svg" width="1536" /></p>
 </div>
 </div>
 </div>
@@ -1321,37 +1369,53 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
   labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;)+
   theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
 <p><img src="images_volatiles2020/selection-5.svg" width="1536" /></p>
+<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_est, color=water, linetype=year.cluster)) + 
+  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
+  labs(x=&quot;Total emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;)+
+  theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
+<p><img src="images_volatiles2020/selection-6.svg" width="1536" /></p>
+<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_est, color=snow, linetype=year.cluster)) + 
+  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
+  labs(x=&quot;Total emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;)+
+  theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
+<p><img src="images_volatiles2020/selection-7.svg" width="1536" /></p>
 </div>
 <div id="fly-infestation-vs.-volatiles" class="section level2">
 <h2>Fly infestation vs. volatiles</h2>
-<pre class="r"><code>ggplot(traits.good.top %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;loess&quot;,span=1,se=F) + 
+<pre class="r"><code>ggplot(traits.good.top %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year.cluster)) + 
+  geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
   labs(x=&quot;Emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
-  theme_bw()+scale_color_manual(values=year_pal) +
-  scale_x_sqrt()</code></pre>
+  theme_bw()+ scale_x_sqrt()</code></pre>
 <p><img src="images_volatiles2020/flies-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=eggs_per_open, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;loess&quot;,span=1,se=F) + 
+<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=eggs_per_open, color=year.cluster)) + 
+  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean open flowers&quot;)+
-  theme_bw()+scale_color_manual(values=year_pal) +
-  scale_x_sqrt() + ylim(0,1.2)</code></pre>
+  labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean open flowers&quot;, color=&quot;Year&quot;)+
+  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)</code></pre>
 <p><img src="images_volatiles2020/flies-2.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
+<pre class="r"><code>ggplot(traits.class %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year.cluster)) + 
+  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
   labs(x=&quot;Emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
-  theme_bw()+scale_color_manual(values=year_pal) +
-  scale_x_sqrt()</code></pre>
+  theme_bw()+  scale_x_sqrt()</code></pre>
 <p><img src="images_volatiles2020/flies-3.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=value, y=eggs_per_open, color=year)) + 
+<pre class="r"><code>ggplot(traits.class, aes(x=value, y=eggs_per_open, color=year.cluster)) + 
   geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
   facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
   labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean open flowers&quot;)+
-  theme_bw()+scale_color_manual(values=year_pal) +
-  scale_x_sqrt() + ylim(0,1.2)</code></pre>
+  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)</code></pre>
 <p><img src="images_volatiles2020/flies-4.svg" width="1536" /></p>
+<pre class="r"><code>ggplot(traits.class %&gt;% filter(fruits_nonaborted&gt;4), aes(x=total, y=prop_infested, color=year.cluster)) + 
+  geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
+  labs(x=&quot;Total emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
+  theme_bw()+  scale_x_sqrt()</code></pre>
+<p><img src="images_volatiles2020/flies-5.svg" width="1536" /></p>
+<pre class="r"><code>ggplot(traits.class, aes(x=total, y=eggs_per_open, color=year.cluster)) + 
+  geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
+  labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean open flowers&quot;, color=&quot;Year&quot;)+
+  theme_bw()+  scale_x_sqrt() + ylim(0,1.2)</code></pre>
+<p><img src="images_volatiles2020/flies-6.svg" width="1536" /></p>
 </div>
 <div id="selection-gradients" class="section level2">
 <h2>Selection gradients</h2>
