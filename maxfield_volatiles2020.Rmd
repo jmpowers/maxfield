@@ -610,6 +610,54 @@ ggplot(volsmeta, aes(x=year, fill=factor(paste(water, snow),levels=names(water_s
   labs(x="Year", y ="Total filtered emissions (ng/hr)", fill="Precipiation, snowmelt")
 ```
 
+## Plasticity to snowmelt date and precipitation
+
+### CAP
+
+```{r cap_abs}
+(scents.cap <- capscale(sqrt(vols.good) ~ sun_date * precip_est_mm, data=volsmeta))
+anova(scents.cap, by="term")
+
+scents.cap <- capscale(sqrt(vols.good) ~ sun_date + precip_est_mm, data=volsmeta)
+plot(scents.cap, type="n")
+points(scents.cap, display = "sites", col=year_pal[volsmeta$year], pch=19)
+text(scents.cap, display="bp", labels=c("Snowmelt date", "Precipitation"),  font=2)
+legend("topleft", names(year_pal), fill=year_pal, title="Year")
+
+plot(scents.cap, type="n", xlim=c(-1,2), ylim=c(-0.5,0.5))
+text(scents.cap, display="species", col="black", cex=0.5, xpd=T)
+```
+
+### Scatterplots
+
+```{r vols_abs, fig.width=16, fig.height=10}
+precip.breaks <- seq(25,175, by=25)
+water_scale <- scale_fill_gradientn("Summer precipitation (mm)", colors=rev(water_pal), 
+                        values=rev(c(1, (treatments %>% group_by(water) %>% summarize(across(precip_est_mm, mean)) %>%
+                                           pull(precip_est_mm) %>% scales::rescale(from=range(precip.breaks)))[2],0)),
+                        breaks=precip.breaks)
+year_scale <- scale_shape_manual(values=21:23, guide=guide_legend(override.aes=list(fill="black"))) 
+
+ggplot(volsmeta.good.top, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales="free_y") + 
+  geom_point(aes(fill=precip_est_mm, shape=year), color="white", size=2) + 
+  geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
+  labs(x="Snowmelt date", y ="Total filtered emissions (ng/hr)", shape="Year", color="Precipitation") +
+  water_scale + year_scale + scale_color_manual(values=water_pal)
+
+ggplot(volsmeta.class, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales="free_y") + 
+  geom_point(aes(fill=precip_est_mm, shape=year), color="white", size=2) + 
+  geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
+  labs(x="Snowmelt date", y ="Total filtered emissions (ng/hr)", shape="Year", color="Precipitation") +
+  water_scale + year_scale + scale_color_manual(values=water_pal)
+
+ggplot(volsmeta, aes(x = sun_date, y = total)) + 
+  geom_point(aes(fill=precip_est_mm, shape=year), color="white", size=2) + 
+  geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
+  labs(x="Snowmelt date", y ="Total filtered emissions (ng/hr)", shape="Year", color="Precipitation") +
+  water_scale + year_scale + scale_color_manual(values=water_pal)
+```
+
+
 ## Plasticity to soil moisture
 
 ### CAP

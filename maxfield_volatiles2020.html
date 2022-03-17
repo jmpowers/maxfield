@@ -11,11 +11,11 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-03-10" />
+<meta name="date" content="2022-03-17" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
-<script src="libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="libs/header-attrs-2.13/header-attrs.js"></script>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -74,6 +74,7 @@ if (window.hljs) {
 
 
 
+
 <style type = "text/css">
 .main-container {
   max-width: 940px;
@@ -94,6 +95,9 @@ button.code-folding-btn:focus {
 }
 summary {
   display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
 }
 pre code {
   padding: 0;
@@ -252,7 +256,7 @@ div.tocify {
 <div id="header">
 
 <div class="btn-group pull-right float-right">
-<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
 <ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
 <li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
 <li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
@@ -263,7 +267,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-03-10</h4>
+<h4 class="date">2022-03-17</h4>
 
 </div>
 
@@ -1397,6 +1401,51 @@ treatment_boxplots(volsmeta.class, &quot;snow&quot;)</code></pre>
   labs(x=&quot;Year&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, fill=&quot;Precipiation, snowmelt&quot;)</code></pre>
 <p><img src="images_volatiles2020/boxplots-5.svg" width="1536" /></p>
 </div>
+</div>
+<div id="plasticity-to-snowmelt-date-and-precipitation" class="section level2">
+<h2>Plasticity to snowmelt date and precipitation</h2>
+<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ sun_date * precip_est_mm, data=volsmeta))</code></pre>
+<pre><code>Call: capscale(formula = sqrt(vols.good) ~ sun_date * precip_est_mm,
+data = volsmeta)
+
+              Inertia Proportion Rank
+Total         43.6683     1.0000     
+Constrained    4.0457     0.0926    3
+Unconstrained 39.6226     0.9074   64
+Inertia is mean squared Euclidean distance 
+Species scores projected from &#39;sqrt&#39; &#39;vols.good&#39; 
+
+Eigenvalues for constrained axes:
+CAP1 CAP2 CAP3 
+3.83 0.12 0.09 
+
+Eigenvalues for unconstrained axes:
+ MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
+17.51  3.42  2.29  1.97  1.82  1.40  1.21  1.11 
+(Showing 8 of 64 unconstrained eigenvalues)</code></pre>
+<pre class="r"><code>anova(scents.cap, by=&quot;term&quot;)</code></pre>
+<pre><code>Permutation test for capscale under reduced model
+Terms added sequentially (first to last)
+Permutation: free
+Number of permutations: 999
+
+Model: capscale(formula = sqrt(vols.good) ~ sun_date * precip_est_mm, data = volsmeta)
+                        Df Variance     F Pr(&gt;F)    
+sun_date                 1      3.8 33.46  0.001 ***
+precip_est_mm            1      0.2  1.52  0.147    
+sun_date:precip_est_mm   1      0.1  0.85  0.461    
+Residual               351     39.6                 
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ sun_date + precip_est_mm, data=volsmeta)
+plot(scents.cap, type=&quot;n&quot;)
+points(scents.cap, display = &quot;sites&quot;, col=year_pal[volsmeta$year], pch=19)
+text(scents.cap, display=&quot;bp&quot;, labels=c(&quot;Snowmelt date&quot;, &quot;Precipitation&quot;),  font=2)
+legend(&quot;topleft&quot;, names(year_pal), fill=year_pal, title=&quot;Year&quot;)</code></pre>
+<p><img src="images_volatiles2020/cap_abs-1.svg" width="768" /></p>
+<pre class="r"><code>plot(scents.cap, type=&quot;n&quot;, xlim=c(-1,2), ylim=c(-0.5,0.5))
+text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5, xpd=T)</code></pre>
+<p><img src="images_volatiles2020/cap_abs-2.svg" width="768" /></p>
 </div>
 <div id="plasticity-to-soil-moisture" class="section level2">
 <h2>Plasticity to soil moisture</h2>
