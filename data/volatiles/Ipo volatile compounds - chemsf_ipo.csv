@@ -1268,7 +1268,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 1267,3-Tetradecanynoic acid,,,,3,315,75664,NA,0.72,NA,18.12,0,0.000,1.000,0.004,0.000,0.000,0,0,High,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 1268,"3-Tetradecene, (E)-",,,,5,2426,582350,NA,0.85,NA,12.62,0,0.000,1.000,0.004,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 1269,"3-Tetradecene, (Z)-",,,,3,2074,497679,0.0008,0.87,1.30,8.19,2,0.043,1.000,0.004,1.000,0.019,2,0.04255319149,OK,OK,Rare,OK,Low,AmRatioFail,0.1,tTestFail,FALSE
-2081,Copaene,a-copaene,Caryophyllene,keep,5,10417,338387,0.0032,0.86,0.08,14.24,0,0.000,16.000,0.067,2.000,0.038,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
+2081,Copaene,a-copaene,Caryophyllene,merge,5,10417,338387,0.0032,0.86,0.08,14.24,0,0.000,16.000,0.067,2.000,0.038,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 1271,3-Tridecanol,,,,2,6652,1413990,0.0002,0.73,11.59,14.77,1,0.021,5.000,0.021,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,0.4,tTestFail,FALSE
 1272,3-Tridecene,,,,5,167,26673,0.0002,0.80,0.00,10.47,0,0.000,2.000,0.008,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 1273,3-Trifluoroacetoxy-6-ethyldecane,,,,2,3110,269769,0.0045,0.74,3.07,12.35,2,0.043,4.000,0.017,1.000,0.019,2,0.04255319149,OK,Low,Rare,OK,Low,AmRatioFail,0.9,tTestFail,FALSE
@@ -1308,7 +1308,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 1307,"3,5-Hexadien-2-ol, 2-methyl-",,,,4,3594,262762,0.0004,0.76,3.96,12.66,0,0.000,5.000,0.021,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 1308,"3,5-Octadiene, 2,7-dimethyl-, (Z,Z)-",,,,4,128,30617,NA,0.78,NA,10.62,0,0.000,1.000,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 1309,"3,5-Octanedione, 2,2,4,7-tetramethyl-",,,,5,3386,641794,0.0032,0.82,0.33,6.36,0,0.000,7.000,0.029,9.000,0.170,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
-1359,"4-Hexen-1-ol, (Z)-",(Z)-hex-4-en-1-ol,Hexenol,keep,5,68835,2748424,0.0004,0.89,0.00,5.81,0,0.000,15.000,0.063,1.000,0.019,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
+1359,"4-Hexen-1-ol, (Z)-",(E)-hex-3-en-1-ol,Hexenol,merge,5,68835,2748424,0.0004,0.89,0.00,5.81,0,0.000,15.000,0.063,1.000,0.019,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 1311,"3,6-Dimethyl-3,6-dihydro-pyran-2-one oxime",,,,2,0,0,NA,0.78,NA,5.24,1,0.021,0.000,0.000,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
 1312,"3,6-Heptanedione",,,,4,540,64218,0.0021,0.74,0.00,7.12,0,0.000,3.000,0.013,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 1313,"3,6-Undecandione",,,,4,12413,2822574,0.0002,0.75,19.64,15.49,0,0.000,2.000,0.008,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
@@ -5274,7 +5274,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 5273,"Heptane, 3,3,4-trimethyl-",,,,4,365,31979,0.0005,0.73,0.00,8.48,0,0.000,4.000,0.017,2.000,0.038,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 5274,"Heptane, 4-methyl-",,,,3,23120,2801394,0.0007,0.85,0.00,4.18,2,0.043,2.000,0.008,1.000,0.019,2,0.04255319149,OK,OK,Rare,OK,Low,AmRatioFail,0.1,tTestFail,FALSE
 5275,"Heptane, 4,4-dimethyl-",,,,3,1296,260266,0.0040,0.83,0.16,6.08,1,0.021,2.000,0.008,1.000,0.019,1,0.02127659574,OK,OK,Rare,OK,Low,AmRatioFail,0.7,tTestFail,FALSE
-3726,.alfa.-Copaene,a-copaene,Caryophyllene,keep,4,13099,1401642,0.0038,0.87,0.07,14.20,1,0.021,8.000,0.033,7.000,0.132,1,0.02127659574,OK,OK,Rare,OK,Low,OK,46.9,tTestFail,FALSE
+3726,.alfa.-Copaene,a-copaene,Caryophyllene,merge,4,13099,1401642,0.0038,0.87,0.07,14.20,1,0.021,8.000,0.033,7.000,0.132,1,0.02127659574,OK,OK,Rare,OK,Low,OK,46.9,tTestFail,FALSE
 5277,"Heptanoic acid, 2-methylbutyl ester",,,,3,2969,547215,0.0031,0.82,36.25,7.80,2,0.043,2.000,0.008,0.000,0.000,2,0.04255319149,OK,OK,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
 5278,"Heptanoic acid, 3-hexenyl ester, (Z)-",,,,3,0,0,NA,0.84,NA,5.77,1,0.021,0.000,0.000,0.000,0.000,1,0.02127659574,OK,OK,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
 5279,"Heptanoic acid, 4-octyl ester",,,,4,757,181641,NA,0.72,NA,13.15,0,0.000,1.000,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
@@ -5502,7 +5502,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 5501,"Octanoic acid, hexadecyl ester",,,,3,2319,556513,NA,0.72,NA,23.16,0,0.000,1.000,0.004,0.000,0.000,0,0,High,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 5502,"Octanoic acid, octadecyl ester",,,,3,2651,636215,NA,0.77,NA,23.15,0,0.000,1.000,0.004,0.000,0.000,0,0,High,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 5503,"Octanoic acid, octyl ester",,,,3,0,0,NA,0.82,NA,12.70,0,0.000,0.000,0.000,1.000,0.019,0,0,OK,OK,Rare,OK,Low,AmRatioFail,0.0,tTestZeros,FALSE
-1201,"3-Hexen-1-ol, (E)-",(E)-hex-3-en-1-ol,Hexenol,keep_leaf,5,82488,2733208,0.0016,0.92,0.00,5.76,2,0.043,32.000,0.133,41.000,0.774,2,0.04255319149,OK,OK,OK,OK,Low,OK,4.8,tTestFail,FALSE
+1201,"3-Hexen-1-ol, (E)-",(E)-hex-3-en-1-ol,Hexenol,merge,5,82488,2733208,0.0016,0.92,0.00,5.76,2,0.043,32.000,0.133,41.000,0.774,2,0.04255319149,OK,OK,OK,OK,Low,OK,4.8,tTestFail,FALSE
 5505,"Oxa-cycloundec-8-ene-2,7-dione",,,,4,100,23988,NA,0.73,NA,6.74,0,0.000,1.000,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 5506,Oxalic acid,,,,4,515,123619,NA,0.81,NA,1.76,0,0.000,1.000,0.004,0.000,0.000,0,0,Low,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 5507,"Oxalic acid, 6-ethyloct-3-yl isobutyl ester",,,,2,0,0,NA,0.74,NA,14.64,0,0.000,0.000,0.000,1.000,0.019,0,0,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestZeros,FALSE
