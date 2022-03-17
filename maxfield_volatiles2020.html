@@ -662,8 +662,11 @@ vols.class &lt;- vols.good %&gt;% t() %&gt;% as.data.frame() %&gt;% rownames_to_
 volsmeta.class &lt;- bind_cols(volsmeta, vols.class) %&gt;%  
   pivot_longer(-all_of(colnames(volsmeta)))
 traits.class &lt;- volsmeta.class %&gt;% 
-  left_join(mnps.plantyr %&gt;% select(year, plotid, plant, all_of(traits))) %&gt;% 
-  left_join(ph.plantyr %&gt;% select(year, plotid, plant, open, eggs) %&gt;% mutate(eggs_per_open = eggs/open))</code></pre>
+  left_join(mnps.plantyr %&gt;% select(year, plotid, plant, all_of(traits), eggs)) %&gt;% 
+  mutate(eggs_per_open = eggs/open)
+volsmeta.traits &lt;- volsmeta %&gt;% #wide format
+  left_join(mnps.plantyr %&gt;% select(year, plotid, plant, all_of(traits), eggs)) %&gt;% 
+  mutate(eggs_per_open = eggs/open)</code></pre>
 </div>
 <div id="sample-size-after-filtering" class="section level2">
 <h2>Sample size after filtering</h2>
@@ -1302,8 +1305,8 @@ text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</c
 # model volatile abundance (emission rates) plasticity to year, water, and snow
 # include random effect of plot
 model.abu &lt;- Hmsc(Y=vols.good,
-                XData = volsmeta %&gt;% select(year.cluster, water, snow) %&gt;% mutate_all(as.factor), 
-                XFormula= ~ year.cluster + water + snow, 
+                XData = volsmeta %&gt;% select(year, water, snow) %&gt;% mutate_all(as.factor), 
+                XFormula= ~ year + water + snow, 
                 studyDesign = volsmeta %&gt;% select(plot) %&gt;% mutate_all(as.factor),
                 ranLevels = list(plot = HmscRandomLevel(units = levels(treatments$plot))),
                 distr=&quot;lognormal poisson&quot;)
@@ -1311,23 +1314,64 @@ model.abu &lt;- Hmsc(Y=vols.good,
 # Fit model with MCMC
 thin &lt;- 1
 (model.abu &lt;- sampleMcmc(model.abu, thin = thin, samples = 100, transient = thin*50, nChains = 3, nParallel = 3,
-                        initPar=&quot;fixed effects&quot;)) #chains start from ML solution to fixed-effects model
-#save(model.abu, file=&quot;./data/volatiles/Hmsc_plasticity_thin10.rda&quot;)
-#load(&quot;./data/volatiles/Hmsc_plasticity_thin10.rda&quot;)
-
-# Model convergence
+                        initPar=&quot;fixed effects&quot;)) #chains start from ML solution to fixed-effects model</code></pre>
+<pre><code>Hmsc object with 355 sampling units, 64 species, 6 covariates, 1 traits and 1 random levels
+Posterior MCMC sampling with 3 chains each with 100 samples, thin 1 and transient 50 </code></pre>
+<pre class="r"><code># Model convergence
 mpost &lt;- convertToCodaObject(model.abu)[c(&quot;Beta&quot;,&quot;Gamma&quot;,&quot;V&quot;,&quot;Sigma&quot;)]
 ess &lt;- map(mpost, effectiveSize)
 par(mfrow=c(2,2))
-walk(names(ess), ~hist(ess[[.x]], xlab = expression(&quot;Effective sample size&quot; ~ beta ~ &quot;&quot;), main=.x))
-psrf &lt;- map(mpost, gelman.diag, multivariate=FALSE)
-walk(names(psrf), ~hist(psrf[[.x]]$psrf, xlab = expression(&quot;Potential scale reduction factor&quot;), main=.x))
-
-# Parameters
+walk(names(ess), ~hist(ess[[.x]], xlab = expression(&quot;Effective sample size&quot; ~ beta ~ &quot;&quot;), main=.x))</code></pre>
+<p><img src="images_volatiles2020/jsdm_splitplot_results-1.svg" width="768" /></p>
+<pre class="r"><code>psrf &lt;- map(mpost, gelman.diag, multivariate=FALSE)
+walk(names(psrf), ~hist(psrf[[.x]]$psrf, xlab = expression(&quot;Potential scale reduction factor&quot;), main=.x))</code></pre>
+<p><img src="images_volatiles2020/jsdm_splitplot_results-2.svg" width="768" /></p>
+<pre class="r"><code># Parameters
 postBeta = getPostEstimate(model.abu, parName=&quot;Beta&quot;)
-plotBeta(model.abu, post=postBeta, param=&quot;Support&quot;, supportLevel = 0.95, spNamesNumbers = c(F,F), covNamesNumbers = c(T,F))
-
-postGamma = getPostEstimate(model.abu, parName=&quot;Gamma&quot;)</code></pre>
+plotBeta(model.abu, post=postBeta, param=&quot;Support&quot;, supportLevel = 0.95, 
+         spNamesNumbers = c(T,F), covNamesNumbers = c(T,F))</code></pre>
+<p><img src="images_volatiles2020/jsdm_splitplot_results-3.svg" width="768" /></p>
+<pre class="r"><code>Gradient = constructGradient(model.abu,focalVariable = &quot;water&quot;)</code></pre>
+<pre><code># weights:  12 (6 variable)
+initial  value 390.007362 
+iter  10 value 363.666576
+final  value 363.666456 
+converged
+# weights:  4 (3 variable)
+initial  value 246.067249 
+final  value 245.456373 
+converged</code></pre>
+<pre class="r"><code>predY = predict(model.abu,Gradient = Gradient, expected = TRUE)
+prob = c(0.25,0.5,0.75)
+plotGradient(model.abu, Gradient, pred=predY, measure=&quot;S&quot;, showData = TRUE, q = prob, ylabel=&quot;Total emissions&quot;) </code></pre>
+<p><img src="images_volatiles2020/jsdm_splitplot_results-4.svg" width="768" /></p>
+<pre class="r"><code>Gradient = constructGradient(model.abu,focalVariable = &quot;snow&quot;)</code></pre>
+<pre><code># weights:  9 (4 variable)
+initial  value 390.007362 
+final  value 367.136171 
+converged
+# weights:  9 (4 variable)
+initial  value 390.007362 
+final  value 385.559140 
+converged</code></pre>
+<pre class="r"><code>predY = predict(model.abu,Gradient = Gradient, expected = TRUE)
+plotGradient(model.abu, Gradient, pred=predY, measure=&quot;S&quot;, showData = TRUE, q = prob, ylabel=&quot;Total emissions&quot;)</code></pre>
+<p><img src="images_volatiles2020/jsdm_splitplot_results-5.svg" width="768" /></p>
+<pre class="r"><code># Model fit (explanatory power)
+predY = computePredictedValues(model.abu)
+MF = evaluateModelFit(hM=model.abu, predY=predY)
+tibble(name = ipogood, SR2 = MF$SR2) %&gt;% mutate(name=fct_reorder(name, SR2)) %&gt;% 
+  filter(SR2&gt;0.05) %&gt;% 
+  ggplot(aes(y=name, x=SR2))+ geom_point() + xlim(c(0,NA))+
+  labs(x=&quot;squared Spearman correlation between obs and pred values (SR2)&quot;, 
+       title=&quot;Volatiles with highest R2 in plasticity model&quot;) + theme_minimal()</code></pre>
+<p><img src="images_volatiles2020/jsdm_splitplot_results-6.svg" width="768" /></p>
+<pre class="r"><code># cross validation (predictive power)
+partition = createPartition(model.abu, nfolds = 2)
+#predY = computePredictedValues(model.abu, partition = partition, nParallel = 3)
+#MFCV = evaluateModelFit(hM=model.abu, predY=predY)
+#plot(MF$SR2, MFCV$SR2)
+#abline(0,1)</code></pre>
 </div>
 <div id="boxplots" class="section level3">
 <h3>Boxplots</h3>
@@ -1500,6 +1544,52 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
   labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean open flowers&quot;, color=&quot;Year&quot;)+
   theme_bw()+  scale_x_sqrt() + ylim(0,1.2)+  scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/flies-6.svg" width="1536" /></p>
+</div>
+<div id="joint-species-distribution-model-1" class="section level2">
+<h2>Joint species distribution model</h2>
+<pre class="r"><code>library(Hmsc)
+
+# model Y &quot;species&quot; (seeds, seeds per flower, prop fly fruits, fly eggs) 
+# vs. XRRRData &quot;environment&quot; (volatiles) with reduced-rank regression
+
+fitness.matrix &lt;- volsmeta.traits %&gt;% select(seeds_est, seeds_per_flower, prop_infested, eggs_per_open)
+fitness.complete &lt;- !is.na(rowSums(fitness.matrix)) &amp; !is.infinite(rowSums(fitness.matrix))
+  
+(model.sel &lt;- Hmsc(Y = fitness.matrix %&gt;% filter(fitness.complete) %&gt;% as.matrix(),
+                   XData = volsmeta %&gt;% filter(fitness.complete) %&gt;% select(year),
+                   XFormula = ~ year,
+                   XRRRData = vols.good %&gt;% filter(fitness.complete), 
+                   XRRRScale = TRUE, ncRRR = 4, 
+                   studyDesign = volsmeta %&gt;% filter(fitness.complete) %&gt;% select(plot) %&gt;%
+                     mutate_all(as.factor),
+                   ranLevels = list(plot = HmscRandomLevel(units = levels(treatments$plot))),
+                   distr=c(&quot;poisson&quot;, &quot;poisson&quot;, &quot;probit&quot;,&quot;poisson&quot;)))</code></pre>
+<pre><code>Hmsc object with 266 sampling units, 4 species, 7 covariates, 1 traits and 1 random levels</code></pre>
+<pre class="r"><code># Fit model with MCMC
+thin &lt;- 1
+(model.sel &lt;- sampleMcmc(model.sel, thin = thin, samples = 100, transient = thin*50, 
+                         nChains = 3, nParallel = 3)) </code></pre>
+<pre><code>Hmsc object with 266 sampling units, 4 species, 7 covariates, 1 traits and 1 random levels
+Posterior MCMC sampling with 3 chains each with 100 samples, thin 1 and transient 50 </code></pre>
+<pre class="r"><code># Model convergence
+mpost &lt;- convertToCodaObject(model.sel)[c(&quot;Beta&quot;,&quot;Gamma&quot;,&quot;V&quot;,&quot;Sigma&quot;)]
+ess &lt;- map(mpost, effectiveSize)
+par(mfrow=c(2,2))
+walk(names(ess), ~hist(ess[[.x]], xlab = expression(&quot;Effective sample size&quot; ~ beta ~ &quot;&quot;), main=.x))</code></pre>
+<p><img src="images_volatiles2020/jsdm_selection_results-1.svg" width="768" /></p>
+<pre class="r"><code># Parameters
+postBeta = getPostEstimate(model.sel, parName=&quot;Beta&quot;)
+plotBeta(model.sel, post=postBeta, param=&quot;Support&quot;, supportLevel = 0.95, 
+         spNamesNumbers = c(T,F), covNamesNumbers = c(T,F))</code></pre>
+<p><img src="images_volatiles2020/jsdm_selection_results-2.svg" width="768" /></p>
+<pre class="r"><code># Model fit (explanatory power)
+predY = computePredictedValues(model.sel)
+MF = evaluateModelFit(hM=model.sel, predY=predY)
+tibble(name = c(&quot;seeds_est&quot;, &quot;seeds_per_flower&quot;, &quot;prop_infested&quot;, &quot;eggs_per_open&quot;), SR2 = MF$SR2) %&gt;% 
+  ggplot(aes(y=name, x=SR2))+ geom_point() +
+  labs(x=&quot;squared Spearman correlation between obs and pred values (SR2)&quot;, 
+       title=&quot;Model fit (pseudo R2)&quot;) + theme_minimal()</code></pre>
+<p><img src="images_volatiles2020/jsdm_selection_results-3.svg" width="768" /></p>
 </div>
 <div id="selection-gradients" class="section level2">
 <h2>Selection gradients</h2>
