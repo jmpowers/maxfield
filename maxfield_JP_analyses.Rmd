@@ -347,10 +347,10 @@ ggplot(pt, aes(x=VWC.sm.year, y=VWC.plant, shape=year, group=year, color=year)) 
                      meltdates="Mean early and normal snowmelt timing", 
                      waterdates="Summer precipitation treatments applied",
                      vt="Volatiles collected",
-                     sm="Soil moisture recorded",         ph="Inflorescence height recorded", 
+                     sm="Soil moisture recorded",         ph="Fly eggs recorded", #Inflorescence height
                      mt="Floral morphology recorded",     nt="Nectar traits recorded", 
                      pt= "Physiology traits recorded",    lt="Vegetative traits recorded", 
-                     sds="Flower collection period",      cen="Rosette size and survival recorded")
+                     sds="Seed collection period",      cen="Rosette size and survival recorded")#Flower collection
 
 plot_timings <- function(data) {
   data %>% mutate(variable=fct_reorder(variable, begin, na.rm=T, .desc=T),
@@ -374,7 +374,7 @@ ggplot(aes(y=variable, color=year))+
 experimentvars <- c("snowcloth","meltdates","waterdates","sm")
 plot_timings(filter(timings, variable %in% c(experimentvars, "mt","nt","ph")))
 plot_timings(filter(timings, variable %in% c(experimentvars, "lt","pt","cen")))
-plot_timings(filter(timings, variable %in% c(experimentvars, "vt")))
+plot_timings(filter(timings, variable %in% c(experimentvars, "vt", "ph","sds")))
 
 timings.long <- timings %>% select(-plots) %>% 
   pivot_longer(c(begin,end), names_to="time", values_to="day") 
@@ -434,6 +434,9 @@ with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_sta
 ph %>% drop_na(height_cm) %>% group_by(year, plantid) %>% tally() %>% 
   ggplot(aes(x=n, fill=year)) + geom_histogram() + labs(title = "Phenology entries per plant", x="Entries",y="Count")+
   facet_wrap(vars(year), ncol=1) + scale_fill_manual(values=year_pal)
+
+library(pheatmap)
+mnps.plantyr %>% select(all_of(traits)) %>% map(is.na) %>% map(as.integer) %>% as.data.frame() %>% as.matrix() %>% pheatmap(main="red is missing data")
 ```
 
 

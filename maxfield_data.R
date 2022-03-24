@@ -421,7 +421,7 @@ ph18.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
   mutate_if(is.character, as.factor) 
 
 ph18 <- ph18.raw %>% 
-  complete(nesting(plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+  complete(nesting(plant, plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
   mutate(flowering = open + buds > 0,
          has_egg = eggs > 0)
 
@@ -439,7 +439,7 @@ ph19.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
   mutate_if(is.character, as.factor)
 
 ph19 <- ph19.raw %>% 
-  complete(nesting(plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+  complete(nesting(plant, plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
   mutate(flowering = open + buds > 0,
          has_egg = eggs > 0)
 
@@ -457,17 +457,13 @@ ph20.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
   mutate_if(is.character, as.factor) 
 
 ph20 <- ph20.raw %>% 
-  complete(nesting(plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+  complete(nesting(plant, plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
   mutate(flowering = open + buds > 0,
          has_egg = eggs > 0)
 
 ph <- bind_rows(list("2018" = ph18, "2019" = ph19, "2020" = ph20), .id="year") %>% 
   mutate(julian=as.integer(as.character(julian))) %>% 
   left_join(sm.subplotyear) 
-
-ph.plantyr <- ph %>% group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% 
-  summarize(across(c(open, eggs, height_cm, VWC), mean, na.rm=T)) %>% 
-  mutate(eggs = if_else(is.nan(eggs), 0, eggs))
 
 # leaftraits --------------------------------------------------------------
 
@@ -809,8 +805,12 @@ mnps <- bind_rows(mt, ph, sds)
 
 #average by plant and year
 mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>% 
-  group_by(year, water, water4, snow, plot, plotid, plant) %>% summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
-  mutate_if(is.numeric, ~replace(., is.nan(.), NA))
+  drop_na(plant) %>% 
+  mutate(plantid = paste0(plotid, plant)) %>% 
+  group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% 
+  summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA)) %>% 
+  mutate(eggs_per_flower = replace_na(eggs,0)/(open+buds))
 
 #average by plant and year, then by subplot
 mnps.subplot <- mnps.plantyr %>%  
