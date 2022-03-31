@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-03-30" />
+<meta name="date" content="2022-03-31" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -267,7 +267,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-03-30</h4>
+<h4 class="date">2022-03-31</h4>
 
 </div>
 
@@ -288,6 +288,8 @@ library(dendsort)
 library(pheatmap)
 library(RColorBrewer)
 library(DT)
+library(lme4)
+library(lmerTest)
 
 library(knitr)
 knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, 
@@ -1432,26 +1434,94 @@ partition = createPartition(model.abu, nfolds = 2)
 <div id="boxplots" class="section level3">
 <h3>Boxplots</h3>
 <pre class="r"><code>treatment_boxplots &lt;- function(volsmeta.vol, treatment) {
-  ggplot(volsmeta.vol, aes_string(x = &quot;year&quot;, fill = treatment, y = &quot;value&quot;)) + 
-    facet_wrap(vars(name), scales=&quot;free_y&quot;) + geom_boxplot(outlier.size=1) + scale_y_sqrt() +
-    scale_fill_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + theme_bw() + 
-    labs(x=&quot;Year&quot;, y =&quot;Emissions (ng/hr)&quot;, fill=c(water=&quot;Precipitation&quot;,snow=&quot;Snowmelt&quot;)[[treatment]]) 
+  ggplot(volsmeta.vol %&gt;% 
+           mutate(water_snow = factor(paste(water, snow), levels=names(water_snow_pal))),
+         aes_string(x = &quot;year&quot;, fill = treatment, y = &quot;value&quot;)) + 
+    facet_wrap(vars(name), scales=&quot;free_y&quot;) + geom_boxplot(outlier.size=0.2) + scale_y_sqrt() +
+    scale_fill_manual(values=list(water=water_pal, snow=snow_pal,
+                                  water_snow=water_snow_pal)[[treatment]]) + theme_bw() + 
+    labs(x=&quot;Year&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, 
+         fill=c(water=&quot;Precipitation&quot;,snow=&quot;Snowmelt&quot;, 
+                water_snow=&quot;Precipitation, snowmelt&quot;)[[treatment]]) 
 }
-treatment_boxplots(volsmeta.good.top, &quot;water&quot;)</code></pre>
+treatment_boxplots(volsmeta.good.top, &quot;water_snow&quot;)</code></pre>
 <p><img src="images_volatiles2020/boxplots-1.svg" width="1536" /></p>
-<pre class="r"><code>#treatment_boxplots(volsmeta.drydown, &quot;water&quot;)
-treatment_boxplots(volsmeta.class, &quot;water&quot;)</code></pre>
-<p><img src="images_volatiles2020/boxplots-2.svg" width="1536" /></p>
-<pre class="r"><code>treatment_boxplots(volsmeta.good.top, &quot;snow&quot;)</code></pre>
-<p><img src="images_volatiles2020/boxplots-3.svg" width="1536" /></p>
-<pre class="r"><code>#treatment_boxplots(volsmeta.drydown, &quot;snow&quot;)
-treatment_boxplots(volsmeta.class, &quot;snow&quot;)</code></pre>
-<p><img src="images_volatiles2020/boxplots-4.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(volsmeta, aes(x=year, fill=factor(paste(water, snow),levels=names(water_snow_pal)), y=total))  + 
-  geom_boxplot(outlier.size=1) + 
-  scale_fill_manual(values=water_snow_pal) + theme_minimal() +
-  labs(x=&quot;Year&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, fill=&quot;Precipiation, snowmelt&quot;)</code></pre>
-<p><img src="images_volatiles2020/boxplots-5.svg" width="1536" /></p>
+</div>
+<div id="emissions-by-class" class="section level3">
+<h3>Emissions by class</h3>
+<pre class="r"><code>treatment_boxplots(volsmeta.class, &quot;water_snow&quot;)</code></pre>
+<p><img src="images_volatiles2020/boxplots_class-1.svg" width="768" /></p>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+treatment_effects &lt;- function(class) {
+  lmer(sqrt(value) ~ year * water * snow + (1|plot) + (1|plotid), 
+       data = filter(volsmeta.class, name==class))
+}
+
+mod.split &lt;- tibble(class=levels(ipochems$class)) %&gt;% 
+  mutate(model = map(class, treatment_effects),
+         test = map(model, ~ tidy(anova(.x, ddf=&quot;Ken&quot;)))) %&gt;% 
+  select(-model) %&gt;% unnest(test)
+
+mod.split %&gt;% select(class, term, p.value) %&gt;% 
+  pivot_wider(names_from=term, values_from=p.value) %&gt;%
+  kable(caption=&quot;Plasticity of emissions to treatments&quot;)</code></pre>
+<table>
+<caption>Plasticity of emissions to treatments</caption>
+<thead>
+<tr class="header">
+<th align="left">class</th>
+<th align="right">year</th>
+<th align="right">water</th>
+<th align="right">snow</th>
+<th align="right">year:water</th>
+<th align="right">year:snow</th>
+<th align="right">water:snow</th>
+<th align="right">year:water:snow</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Monoterpene</td>
+<td align="right">0.0000</td>
+<td align="right">0.2826</td>
+<td align="right">0.1924</td>
+<td align="right">0.2764</td>
+<td align="right">0.5135</td>
+<td align="right">0.1809</td>
+<td align="right">0.3932</td>
+</tr>
+<tr class="even">
+<td align="left">Benzenoid</td>
+<td align="right">0.0000</td>
+<td align="right">0.6686</td>
+<td align="right">0.5023</td>
+<td align="right">0.6308</td>
+<td align="right">0.5663</td>
+<td align="right">0.6471</td>
+<td align="right">0.6965</td>
+</tr>
+<tr class="odd">
+<td align="left">Sesquiterpene</td>
+<td align="right">0.0705</td>
+<td align="right">0.2534</td>
+<td align="right">0.4450</td>
+<td align="right">0.0828</td>
+<td align="right">0.5643</td>
+<td align="right">0.2872</td>
+<td align="right">0.9201</td>
+</tr>
+<tr class="even">
+<td align="left">Aliphatic</td>
+<td align="right">0.0726</td>
+<td align="right">0.0756</td>
+<td align="right">0.1388</td>
+<td align="right">0.3468</td>
+<td align="right">0.1148</td>
+<td align="right">0.5042</td>
+<td align="right">0.9883</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div id="plasticity-to-snowmelt-date-and-precipitation" class="section level2">
@@ -1519,15 +1589,74 @@ Eigenvalues for unconstrained axes:
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ sun_date + precip_est_mm, data=volsmeta)
-plot(scents.cap, type=&quot;n&quot;)
-points(scents.cap, display = &quot;sites&quot;, col=year_pal[volsmeta$year], pch=19)
-text(scents.cap, display=&quot;bp&quot;, labels=c(&quot;Snowmelt date&quot;, &quot;Precipitation&quot;),  font=2)
-legend(&quot;topleft&quot;, names(year_pal), fill=year_pal, title=&quot;Year&quot;)</code></pre>
+<pre class="r"><code>library(ggvegan)
+cap.df &lt;- fortify(scents.cap) 
+
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
+  geom_point(data=cap.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta), aes(color=year))+
+  geom_segment(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+               arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
+  geom_text(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;) %&gt;% 
+              mutate(Label=c(&quot;Snowmelt&quot;, &quot;Precipitation&quot;, &quot;Snowmelt x Precipitation&quot;)),
+            aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface=&quot;bold&quot;) +
+  geom_text(data=cap.df %&gt;% left_join(ipochems, by=c(&quot;Label&quot;=&quot;name&quot;)) %&gt;% filter(Score==&quot;species&quot;, mean.floral&gt;1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  scale_color_manual(&quot;Year&quot;, values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
+  theme_bw() + theme(panel.grid = element_blank())</code></pre>
 <p><img src="images_volatiles2020/cap_abs-1.svg" width="768" /></p>
-<pre class="r"><code>plot(scents.cap, type=&quot;n&quot;, xlim=c(-1,2), ylim=c(-0.5,0.5))
-text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5, xpd=T)</code></pre>
-<p><img src="images_volatiles2020/cap_abs-2.svg" width="768" /></p>
+</div>
+<div id="emissions-by-class-1" class="section level3">
+<h3>Emissions by class</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+abs_effects &lt;- function(class) {
+  lmer(sqrt(value) ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), 
+       data = filter(volsmeta.class, name==class))
+}
+
+mod.abs &lt;- tibble(class=levels(ipochems$class)) %&gt;% 
+  mutate(model = map(class, abs_effects),
+         test = map(model, ~ tidy(anova(.x, ddf=&quot;Ken&quot;)))) %&gt;% 
+  select(-model) %&gt;% unnest(test)
+
+mod.abs %&gt;% select(class, term, p.value) %&gt;% 
+  pivot_wider(names_from=term, values_from=p.value) %&gt;%
+  kable(caption=&quot;Plasticity of emissions to snowmelt date and estimated precipitation&quot;)</code></pre>
+<table>
+<caption>Plasticity of emissions to snowmelt date and estimated precipitation</caption>
+<thead>
+<tr class="header">
+<th align="left">class</th>
+<th align="right">sun_date</th>
+<th align="right">precip_est_mm</th>
+<th align="right">sun_date:precip_est_mm</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Monoterpene</td>
+<td align="right">0.0155</td>
+<td align="right">0.7449</td>
+<td align="right">0.5158</td>
+</tr>
+<tr class="even">
+<td align="left">Benzenoid</td>
+<td align="right">0.0544</td>
+<td align="right">0.1519</td>
+<td align="right">0.1981</td>
+</tr>
+<tr class="odd">
+<td align="left">Sesquiterpene</td>
+<td align="right">0.6150</td>
+<td align="right">0.4330</td>
+<td align="right">0.3024</td>
+</tr>
+<tr class="even">
+<td align="left">Aliphatic</td>
+<td align="right">0.3551</td>
+<td align="right">0.3962</td>
+<td align="right">0.4370</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="scatterplots" class="section level3">
 <h3>Scatterplots</h3>
@@ -1540,24 +1669,24 @@ water_scale &lt;- scale_fill_gradientn(&quot;Summer precipitation (mm)&quot;, co
                         breaks=precip.breaks)
 year_scale &lt;- scale_shape_manual(values=21:23, guide=guide_legend(override.aes=list(fill=&quot;black&quot;))) 
 
-ggplot(volsmeta.good.top, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+# ggplot(volsmeta.good.top, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+#   geom_point(aes(fill=precip_est_mm, shape=year), color=&quot;white&quot;, size=2) + 
+#   geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
+#   labs(x=&quot;Snowmelt date&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
+#   water_scale + year_scale + scale_color_manual(values=water_pal)
+
+ggplot(volsmeta.class, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   geom_point(aes(fill=precip_est_mm, shape=year), color=&quot;white&quot;, size=2) + 
   geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Snowmelt date&quot;, y =&quot;Emissions (ng/hr)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
+  labs(x=&quot;Snowmelt date&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
   water_scale + year_scale + scale_color_manual(values=water_pal)</code></pre>
-<p><img src="images_volatiles2020/vols_abs-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(volsmeta.class, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  geom_point(aes(fill=precip_est_mm, shape=year), color=&quot;white&quot;, size=2) + 
-  geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Snowmelt date&quot;, y =&quot;Emissions (ng/hr)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
-  water_scale + year_scale + scale_color_manual(values=water_pal)</code></pre>
-<p><img src="images_volatiles2020/vols_abs-2.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/vols_abs-1.svg" width="768" /></p>
 <pre class="r"><code>ggplot(volsmeta, aes(x = sun_date, y = total)) + 
   geom_point(aes(fill=precip_est_mm, shape=year), color=&quot;white&quot;, size=2) + 
   geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Snowmelt date&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
+  labs(x=&quot;Snowmelt date&quot;, y =&quot;Total filtered emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
   water_scale + year_scale + scale_color_manual(values=water_pal)</code></pre>
-<p><img src="images_volatiles2020/vols_abs-3.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/vols_abs-2.svg" width="768" /></p>
 </div>
 <div id="estimated-precipitation" class="section level4">
 <h4>Estimated precipitation</h4>
@@ -1568,24 +1697,24 @@ snow_scale &lt;- scale_fill_gradientn(&quot;Snowmelt date&quot;, colors=snow_pal
                         breaks=snow.breaks)
 year_scale &lt;- scale_shape_manual(values=21:23, guide=guide_legend(override.aes=list(fill=&quot;black&quot;))) 
 
-ggplot(volsmeta.good.top, aes(x = precip_est_mm, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+# ggplot(volsmeta.good.top, aes(x = precip_est_mm, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+#   geom_point(aes(fill=sun_date, shape=year), color=&quot;white&quot;, size=2) + 
+#   geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
+#   labs(x=&quot;Summer precipitation (mm)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Snowmelt&quot;) +
+#   snow_scale + year_scale + scale_color_manual(values=snow_pal)
+
+ggplot(volsmeta.class, aes(x = precip_est_mm, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   geom_point(aes(fill=sun_date, shape=year), color=&quot;white&quot;, size=2) + 
   geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Summer precipitation (mm)&quot;, y =&quot;Emissions (ng/hr)&quot;, shape=&quot;Year&quot;, color=&quot;Snowmelt&quot;) +
+  labs(x=&quot;Summer precipitation (mm)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Snowmelt&quot;) +
   snow_scale + year_scale + scale_color_manual(values=snow_pal)</code></pre>
-<p><img src="images_volatiles2020/vols_abs_precip-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(volsmeta.class, aes(x = precip_est_mm, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  geom_point(aes(fill=sun_date, shape=year), color=&quot;white&quot;, size=2) + 
-  geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Summer precipitation (mm)&quot;, y =&quot;Emissions (ng/hr)&quot;, shape=&quot;Year&quot;, color=&quot;Snowmelt&quot;) +
-  snow_scale + year_scale + scale_color_manual(values=snow_pal)</code></pre>
-<p><img src="images_volatiles2020/vols_abs_precip-2.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/vols_abs_precip-1.svg" width="768" /></p>
 <pre class="r"><code>ggplot(volsmeta, aes(x = precip_est_mm, y = total)) + 
   geom_point(aes(fill=sun_date, shape=year), color=&quot;white&quot;, size=2) + 
   geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Summer precipitation (mm)&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, shape=&quot;Year&quot;, color=&quot;Snowmelt&quot;) +
+  labs(x=&quot;Summer precipitation (mm)&quot;, y =&quot;Total filtered emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Snowmelt&quot;) +
   snow_scale + year_scale + scale_color_manual(values=snow_pal)</code></pre>
-<p><img src="images_volatiles2020/vols_abs_precip-3.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/vols_abs_precip-2.svg" width="768" /></p>
 </div>
 </div>
 </div>
@@ -1656,28 +1785,77 @@ Eigenvalues for unconstrained axes:
 </tbody>
 </table>
 </div>
+<div id="emissions-by-class-2" class="section level3">
+<h3>Emissions by class</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+sm_effects &lt;- function(class) {
+  lmer(sqrt(value) ~ year * VWC + (1|plotid), 
+       data = filter(volsmeta.class, name==class))
+}
+
+mod.sm &lt;- tibble(class=levels(ipochems$class)) %&gt;% 
+  mutate(model = map(class, sm_effects),
+         test = map(model, ~ tidy(anova(.x, ddf=&quot;Ken&quot;)))) %&gt;% 
+  select(-model) %&gt;% unnest(test)
+
+mod.sm %&gt;% select(class, term, p.value) %&gt;% 
+  pivot_wider(names_from=term, values_from=p.value) %&gt;%
+  kable(caption=&quot;Plasticity of emissions to soil moisture&quot;)</code></pre>
+<table>
+<caption>Plasticity of emissions to soil moisture</caption>
+<thead>
+<tr class="header">
+<th align="left">class</th>
+<th align="right">year</th>
+<th align="right">VWC</th>
+<th align="right">year:VWC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Monoterpene</td>
+<td align="right">0.0000</td>
+<td align="right">0.4437</td>
+<td align="right">0.1294</td>
+</tr>
+<tr class="even">
+<td align="left">Benzenoid</td>
+<td align="right">0.0000</td>
+<td align="right">0.4706</td>
+<td align="right">0.0636</td>
+</tr>
+<tr class="odd">
+<td align="left">Sesquiterpene</td>
+<td align="right">0.0112</td>
+<td align="right">0.3457</td>
+<td align="right">0.1166</td>
+</tr>
+<tr class="even">
+<td align="left">Aliphatic</td>
+<td align="right">0.0952</td>
+<td align="right">0.7850</td>
+<td align="right">0.1645</td>
+</tr>
+</tbody>
+</table>
+</div>
 <div id="scatterplots-1" class="section level3">
 <h3>Scatterplots</h3>
-<pre class="r"><code>ggplot(volsmeta.good.top, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+<pre class="r"><code># ggplot(volsmeta.good.top, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+#   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
+#   scale_y_sqrt()  + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;) +
+#   scale_color_manual(values=year_pal)
+
+ggplot(volsmeta.class, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt()  + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;) +
+  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;)+
   scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/sm_vols-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(volsmeta.drydown, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)+
-  scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/sm_vols-2.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(volsmeta.class, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr)&quot;, color=&quot;Year&quot;)+
-  scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/sm_vols-3.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/sm_vols-1.svg" width="768" /></p>
 <pre class="r"><code>ggplot(volsmeta, aes(x = VWC, color = year, y = total)) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Total filtered emissions (ng/hr)&quot;, color=&quot;Year&quot;) +
+  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Total filtered emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;) +
   scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/sm_vols-4.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/sm_vols-2.svg" width="768" /></p>
 </div>
 </div>
 </div>
@@ -1693,131 +1871,32 @@ mnps.plantyr %&gt;% select(all_of(fitnesstraits)) %&gt;%
 </div>
 <div id="plots-of-selection-in-treatments-and-years" class="section level2">
 <h2>Plots of selection in treatments and years</h2>
-<div id="total-seeds" class="section level3">
-<h3>Total seeds</h3>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_est, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Year&quot;)+
-  theme_bw()+ scale_x_sqrt()+
-  scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/selection-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_est, color=water, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection-2.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_est, color=snow, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection-3.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=value, y=seeds_est, color=water, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_class-1.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=value, y=seeds_est, color=snow, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_class-2.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_est, color=water, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  labs(x=&quot;Total emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_class-3.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_est, color=snow, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  labs(x=&quot;Total emissions&quot;, y=&quot;Seed production&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_class-4.svg" width="768" /></p>
-</div>
-<div id="seeds-per-flower" class="section level3">
-<h3>Seeds per flower</h3>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_per_flower, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed per flower&quot;, color=&quot;Year&quot;)+
-  theme_bw()+ scale_x_sqrt()+
-  scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/selection_spf-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_per_flower, color=water, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed per flower&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_spf-2.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=seeds_per_flower, color=snow, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed per flower&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_spf-3.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=value, y=seeds_per_flower, color=water, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed per flower&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_class_spf-1.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=value, y=seeds_per_flower, color=snow, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Seed per flower&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_class_spf-2.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_per_flower, color=water, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  labs(x=&quot;Total emissions&quot;, y=&quot;Seed per flower&quot;, color=&quot;Precipitation&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=water_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_class_spf-3.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=total, y=seeds_per_flower, color=snow, linetype=year, shape=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  labs(x=&quot;Total emissions&quot;, y=&quot;Seed per flower&quot;, color=&quot;Snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-  theme_bw() + scale_color_manual(values=snow_pal)+ scale_x_sqrt()</code></pre>
-<p><img src="images_volatiles2020/selection_class_spf-4.svg" width="768" /></p>
-</div>
-</div>
-<div id="fly-infestation-vs.-volatiles" class="section level2">
-<h2>Fly infestation vs. volatiles</h2>
-<pre class="r"><code>ggplot(traits.good.top %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
-  theme_bw()+ scale_x_sqrt() + scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/flies-1.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.good.top, aes(x=value, y=eggs_per_flower, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean flowers&quot;, color=&quot;Year&quot;)+
-  theme_bw()+ scale_x_sqrt() + ylim(0,1.2) +  scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/flies-2.svg" width="1536" /></p>
-<pre class="r"><code>ggplot(traits.class %&gt;% filter(fruits_nonaborted&gt;4), aes(x=value, y=prop_infested, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;loess&quot;,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
-  theme_bw()+  scale_x_sqrt()+  scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/flies_class-1.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=value, y=eggs_per_flower, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
-  facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean flowers&quot;)+
-  theme_bw()+ scale_x_sqrt() + ylim(0,1.2)+  scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/flies_class-2.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class %&gt;% filter(fruits_nonaborted&gt;4), aes(x=total, y=prop_infested, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
-  labs(x=&quot;Total emissions&quot;, y=paste(traitnames.units[&quot;prop_infested&quot;], &quot;(&gt;4 fruits)&quot;), color=&quot;Year&quot;)+
-  theme_bw()+  scale_x_sqrt()+  scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/flies_class-3.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=total, y=eggs_per_flower, color=year)) + 
-  geom_point() + geom_smooth(method=&quot;loess&quot;,span=0.8,se=F) + 
-  labs(x=&quot;Emissions&quot;, y=&quot;Mean fly eggs / mean flowers&quot;, color=&quot;Year&quot;)+
-  theme_bw()+  scale_x_sqrt() + ylim(0,1.2)+  scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/flies_class-4.svg" width="768" /></p>
+<pre class="r"><code>walk(fitnesstraits, ~ 
+       print(ggplot(traits.good.top %&gt;% filter(ifelse(.x == &quot;prop_infested&quot;, fruits_nonaborted &gt; 4, TRUE)), 
+                    aes_string(y=.x, x=&quot;value&quot;, color=&quot;year&quot;)) + 
+               geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + 
+               facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
+               labs(x=&quot;Emissions (ng/hr/flower)&quot;, y=fitnessnames[.x], color=&quot;Year&quot;)+
+               theme_bw() + scale_x_sqrt() + scale_color_manual(values=year_pal)))</code></pre>
+<p><img src="images_volatiles2020/selection-1.svg" width="1536" /><img src="images_volatiles2020/selection-2.svg" width="1536" /><img src="images_volatiles2020/selection-3.svg" width="1536" /><img src="images_volatiles2020/selection-4.svg" width="1536" /></p>
+<pre class="r"><code>walk(fitnesstraits, ~ 
+       print(ggplot(traits.good.top %&gt;% filter(ifelse(.x == &quot;prop_infested&quot;, fruits_nonaborted &gt; 4, TRUE)), 
+                    aes(x=value, color=paste(water,snow), linetype=year, shape=year)) + 
+               geom_point(aes_string(y=.x)) + geom_smooth(aes_string(y=.x), method=&quot;lm&quot;,se=F) + 
+               facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
+               labs(x=&quot;Emissions (ng/hr/flower)&quot;, y=fitnessnames[.x], 
+                    color=&quot;Precipitation and snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
+               theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))</code></pre>
+<p><img src="images_volatiles2020/selection-5.svg" width="1536" /><img src="images_volatiles2020/selection-6.svg" width="1536" /><img src="images_volatiles2020/selection-7.svg" width="1536" /><img src="images_volatiles2020/selection-8.svg" width="1536" /></p>
+<pre class="r"><code>walk(fitnesstraits, ~ 
+       print(ggplot(traits.class %&gt;% filter(ifelse(.x == &quot;prop_infested&quot;, fruits_nonaborted &gt; 4, TRUE)), 
+                    aes(x=value, color=paste(water,snow), linetype=year, shape=year)) + 
+               geom_point(aes_string(y=.x)) + geom_smooth(aes_string(y=.x), method=&quot;lm&quot;,se=F) + 
+               facet_wrap(vars(name), scales=&quot;free_x&quot;) + 
+               labs(x=&quot;Emissions (ng/hr/flower)&quot;, y=fitnessnames[.x], 
+                    color=&quot;Precipitation and snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
+               theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))</code></pre>
+<p><img src="images_volatiles2020/selection_class-1.svg" width="768" /><img src="images_volatiles2020/selection_class-2.svg" width="768" /><img src="images_volatiles2020/selection_class-3.svg" width="768" /><img src="images_volatiles2020/selection_class-4.svg" width="768" /></p>
 </div>
 <div id="joint-species-distribution-model-1" class="section level2">
 <h2>Joint species distribution model</h2>
@@ -1865,8 +1944,7 @@ tibble(name = fitnesstraits, SR2 = MF$SR2) %&gt;%
 <div id="selection-gradients" class="section level2">
 <h2>Selection gradients</h2>
 <p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong et al. 2018</a> for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.</p>
-<pre class="r"><code>#TODO run for all fitness metrics
-# used to split the data before running PCA - better to run PCA on whole dataset
+<pre class="r"><code># previously split the data before running PCA - now run PCA on the whole dataset
 
 # Run PCA on traits
 vols.PCA &lt;- vols.good.top %&gt;% mutate(across(everything(), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% 
@@ -1995,37 +2073,39 @@ plasticity %&gt;% left_join(diffbeta) %&gt;%
     select(all_of(c(response, trait)), sun_date, precip_est_mm) %&gt;% 
     rename(&quot;trait&quot; = trait, &quot;response&quot; = response) %&gt;% 
     filter(!is.infinite(response), !is.nan(response), !is.na(response)) %&gt;% 
-    mutate(response = response/sd(response), trait = trait/sd(trait))
+    mutate(response = response/mean(response, na.rm=T), trait = trait/sd(trait, na.rm=T))
   options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
   lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
 }
+
 mod.selection.abs &lt;- expand.grid(list(response = fitnesstraits, trait = ipogood)) %&gt;%
   mutate(model = pmap(., selection_mod_abs),
          coefs = map(model, tidy))
 
-mod.selection.abs %&gt;% select(-model) %&gt;% unnest(coefs) %&gt;% 
-  ggplot(aes(x=response, y=estimate)) + facet_wrap(vars(term), scales=&quot;free_y&quot;) +
-  geom_hline(yintercept=0) + geom_boxplot()</code></pre>
-<p><img src="images_volatiles2020/selection_abs-1.svg" width="768" /></p>
-<pre class="r"><code>mod.selection.tests &lt;- mod.selection.abs %&gt;% 
+mod.selection.tests &lt;- mod.selection.abs %&gt;% 
   left_join(ipochems, by=c(&quot;trait&quot;=&quot;name&quot;)) %&gt;% 
   filter(freq.floral&gt;0.1) %&gt;% 
     mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
   select(-model) %&gt;% unnest(coefs) %&gt;% 
-  filter(str_detect(term, &quot;trait&quot;))
+  filter(str_detect(term, &quot;trait&quot;))</code></pre>
+<pre class="r"><code>mod.selection.abs %&gt;% select(-model) %&gt;% unnest(coefs) %&gt;% 
+  ggplot(aes(x=response, y=estimate)) + facet_wrap(vars(term), scales=&quot;free_y&quot;) +
+  geom_hline(yintercept=0) + geom_boxplot()</code></pre>
+<p><img src="images_volatiles2020/selection_abs-1.svg" width="960" /></p>
+<pre class="r"><code>library(ggrepel)
 ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait)) + 
-  facet_wrap(vars(term), labeller = as_labeller(c(trait=&quot;Trait (SD fitness/ SD emissions)&quot;,
+  facet_wrap(vars(term), labeller = as_labeller(c(trait=&quot;Trait (beta)&quot;,
                                                   `trait:precip_est_mm`=
-                                                    &quot;Trait x summer precipitation (SD fitness / SD emissions / mm)&quot;,
+                                                    &quot;Trait x summer precipitation (beta / mm)&quot;,
                                                   `trait:sun_date`=
-                                                    &quot;Trait x snowmelt date (SD fitness / SD emissions / day)&quot;)),
+                                                    &quot;Trait x snowmelt date (beta / day)&quot;)),
              scales=&quot;free_y&quot;, ncol=1) + theme_bw() +
-  geom_point(aes(size=mean.floral)) + scale_size_area()+
-  geom_hline(yintercept=0) + 
-  geom_text(aes(alpha = p.value &lt; 0.05), hjust=0, nudge_x = 0.1) + scale_alpha_discrete(range=c(0,1), guide=&quot;none&quot;) + 
-  labs(x=&quot;Fitness component&quot;, y = &quot;Estimate&quot;, size=&quot;Mean emissions (ng/hr)&quot;, color=&quot;Class&quot;) + 
-  scale_x_discrete(labels=c(&quot;Total seeds&quot;, &quot;Seeds per flower&quot;, &quot;Fly fruits&quot;, &quot;Fly eggs per flower&quot;))</code></pre>
-<p><img src="images_volatiles2020/selection_abs-2.svg" width="768" /></p>
+  geom_point(aes(size=mean.floral)) + geom_hline(yintercept=0) + 
+  geom_text_repel(data = filter(mod.selection.tests, p.value &lt; 0.01), hjust=0, nudge_x = 0.15, show.legend = FALSE) + 
+  scale_size_area(max_size = 10) + scale_x_discrete(labels=fitnessnames) +
+  scale_color_manual(values=class_pal, guide=guide_legend(override.aes = list(size=5))) + 
+  labs(x=&quot;Fitness component&quot;, y = &quot;Estimate&quot;, size=&quot;Mean emissions\n(ng/hr/flower)&quot;, color=&quot;Class&quot;)</code></pre>
+<p><img src="images_volatiles2020/selection_abs-2.svg" width="960" /></p>
 <pre class="r"><code>mod.selection.abs %&gt;% filter(trait==&quot;a-pinene&quot;) %&gt;% 
   mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
   select(-c(model, coefs)) %&gt;% unnest(tests) %&gt;% filter(str_detect(term, &quot;trait&quot;)) %&gt;% kable()</code></pre>
@@ -2046,7 +2126,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">seeds_est</td>
 <td align="left">a-pinene</td>
 <td align="left">trait</td>
-<td align="right">0.0267</td>
+<td align="right">0.0191</td>
 <td align="right">1</td>
 <td align="right">0.0283</td>
 <td align="right">0.8666</td>
@@ -2055,7 +2135,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">seeds_est</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:sun_date</td>
-<td align="right">0.0079</td>
+<td align="right">0.0056</td>
 <td align="right">1</td>
 <td align="right">0.0083</td>
 <td align="right">0.9275</td>
@@ -2064,7 +2144,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">seeds_est</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:precip_est_mm</td>
-<td align="right">0.2800</td>
+<td align="right">0.2002</td>
 <td align="right">1</td>
 <td align="right">0.2959</td>
 <td align="right">0.5869</td>
@@ -2073,7 +2153,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">seeds_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">trait</td>
-<td align="right">7.7412</td>
+<td align="right">3.7313</td>
 <td align="right">1</td>
 <td align="right">9.4506</td>
 <td align="right">0.0023</td>
@@ -2082,7 +2162,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">seeds_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:sun_date</td>
-<td align="right">5.8454</td>
+<td align="right">2.8175</td>
 <td align="right">1</td>
 <td align="right">7.1362</td>
 <td align="right">0.0080</td>
@@ -2091,7 +2171,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">seeds_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:precip_est_mm</td>
-<td align="right">2.1867</td>
+<td align="right">1.0540</td>
 <td align="right">1</td>
 <td align="right">2.6696</td>
 <td align="right">0.1035</td>
@@ -2100,7 +2180,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">prop_infested</td>
 <td align="left">a-pinene</td>
 <td align="left">trait</td>
-<td align="right">11.9775</td>
+<td align="right">10.5437</td>
 <td align="right">1</td>
 <td align="right">13.1398</td>
 <td align="right">0.0003</td>
@@ -2109,7 +2189,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">prop_infested</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:sun_date</td>
-<td align="right">8.3574</td>
+<td align="right">7.3570</td>
 <td align="right">1</td>
 <td align="right">9.1684</td>
 <td align="right">0.0027</td>
@@ -2118,7 +2198,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">prop_infested</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:precip_est_mm</td>
-<td align="right">2.8546</td>
+<td align="right">2.5128</td>
 <td align="right">1</td>
 <td align="right">3.1316</td>
 <td align="right">0.0779</td>
@@ -2127,7 +2207,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">eggs_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">trait</td>
-<td align="right">6.6081</td>
+<td align="right">8.4419</td>
 <td align="right">1</td>
 <td align="right">7.0478</td>
 <td align="right">0.0084</td>
@@ -2136,7 +2216,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">eggs_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:sun_date</td>
-<td align="right">6.7733</td>
+<td align="right">8.6530</td>
 <td align="right">1</td>
 <td align="right">7.2240</td>
 <td align="right">0.0076</td>
@@ -2145,7 +2225,7 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <td align="left">eggs_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:precip_est_mm</td>
-<td align="right">0.0165</td>
+<td align="right">0.0211</td>
 <td align="right">1</td>
 <td align="right">0.0176</td>
 <td align="right">0.8946</td>
@@ -2156,24 +2236,13 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 </div>
 <div id="volatiles-vs.-floral-traits" class="section level1">
 <h1>Volatiles vs. floral traits</h1>
-<pre class="r"><code>ggplot(traits.class, aes(x=corolla_length, y=value, color=year)) + 
+<pre class="r"><code>walk(floraltraits, ~
+print(ggplot(traits.class, aes_string(x=.x, y=&quot;value&quot;, color=&quot;year&quot;)) + 
   geom_point() + geom_smooth(se=F, span=1) + 
   facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  labs(y=&quot;Emissions&quot;, x=traitnames.units[&quot;corolla_length&quot;], color=&quot;Year&quot;)+
-  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/flrsize-1.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=sepal_width, y=value, color=year)) + 
-  geom_point() + geom_smooth(se=F, span=1) + 
-  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  labs(y=&quot;Emissions&quot;, x=traitnames.units[&quot;sepal_width&quot;], color=&quot;Year&quot;)+
-  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/flrsize-2.svg" width="768" /></p>
-<pre class="r"><code>ggplot(traits.class, aes(x=nectar_24_h_ul, y=value, color=year)) + 
-  geom_point() + geom_smooth(se=F, span=1) + 
-  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  labs(y=&quot;Emissions&quot;, x=traitnames.units[&quot;nectar_24_h_ul&quot;], color=&quot;Year&quot;)+
-  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images_volatiles2020/flrsize-3.svg" width="768" /></p>
+  labs(y=&quot;Emissions (ng/hr/flower)&quot;, x=traitnames.units[.x], color=&quot;Year&quot;)+
+  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)))</code></pre>
+<p><img src="images_volatiles2020/flrsize-1.svg" width="768" /><img src="images_volatiles2020/flrsize-2.svg" width="768" /><img src="images_volatiles2020/flrsize-3.svg" width="768" /><img src="images_volatiles2020/flrsize-4.svg" width="768" /><img src="images_volatiles2020/flrsize-5.svg" width="768" /><img src="images_volatiles2020/flrsize-6.svg" width="768" /><img src="images_volatiles2020/flrsize-7.svg" width="768" /><img src="images_volatiles2020/flrsize-8.svg" width="768" /></p>
 </div>
 
 
