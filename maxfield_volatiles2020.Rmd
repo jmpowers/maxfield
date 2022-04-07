@@ -63,8 +63,9 @@ volsmeta <- maxfmeta %>% mutate(sampledate = as.Date(sampledate), year = factor(
 volsmeta <- left_join(volsmeta, volsmeta %>% count(sequence.date, sequence.start) %>% group_by(sequence.date) %>% mutate(sequence.12 = paste(sequence.date, row_number()))) #add the batch number for that day (1 or 2)
 rownames(volsmeta) <- volsmeta$index 
 
-fitnesstraits <- c("seeds_est", "seeds_per_flower", "prop_infested", "eggs_per_flower")
-fitnessnames <- c(traitnames, eggs_per_flower="Fly eggs per flower")[fitnesstraits]
+fitnesstraits <- c("seeds_est", "seeds_per_flower", "prop_uninfested", "eggs_per_flower")
+fitnessnames <- c(traitnames, prop_uninfested = "Prop. nonaborted fruits uninfested",
+                  eggs_per_flower="Fly eggs per flower")[fitnesstraits]
 ```
 
 # Sample size
@@ -241,7 +242,9 @@ volsmeta.good.top <- bind_cols(volsmeta, vols.good.top) %>%
   pivot_longer(-all_of(colnames(volsmeta))) %>% 
   mutate(name = fct_relevel(name, ipogood.top))
 
-mnps.plantyr.traits <- mnps.plantyr %>% select(year, plotid, plant, all_of(traits), eggs_per_flower)
+mnps.plantyr.traits <- mnps.plantyr %>% 
+  select(year, plotid, plant, all_of(traits), eggs_per_flower) %>%
+  mutate(prop_uninfested = 1 - prop_infested)
 
 traits.good.top <- volsmeta.good.top %>% 
   left_join(mnps.plantyr.traits) %>% 
@@ -801,9 +804,10 @@ ggplot(volsmeta, aes(x = VWC, color = year, y = total)) +
 # Selection analyses
 
 ## Fitness measures
+
 ```{r fitness_corr}
 library(GGally)
-mnps.plantyr %>% select(all_of(fitnesstraits)) %>% 
+mnps.plantyr.traits %>% select(all_of(fitnesstraits)) %>% 
   ggpairs(mapping=aes(color=mnps.plantyr$year), lower=list(continuous="smooth_loess")) + 
   scale_color_manual(values=year_pal)+ scale_fill_manual(values=year_pal)
 ```
@@ -812,7 +816,7 @@ mnps.plantyr %>% select(all_of(fitnesstraits)) %>%
 
 ```{r selection, fig.width=16, fig.height=10}
 walk(fitnesstraits, ~ 
-       print(ggplot(traits.good.top %>% filter(ifelse(.x == "prop_infested", fruits_nonaborted > 4, TRUE)), 
+       print(ggplot(traits.good.top %>% filter(ifelse(.x == "prop_uninfested", fruits_nonaborted > 4, TRUE)), 
                     aes_string(y=.x, x="value", color="year")) + 
                geom_point() + geom_smooth(method="lm", se=F) + 
                facet_wrap(vars(name), scales="free_x") + 
@@ -821,7 +825,7 @@ walk(fitnesstraits, ~
 
 
 walk(fitnesstraits, ~ 
-       print(ggplot(traits.good.top %>% filter(ifelse(.x == "prop_infested", fruits_nonaborted > 4, TRUE)), 
+       print(ggplot(traits.good.top %>% filter(ifelse(.x == "prop_uninfested", fruits_nonaborted > 4, TRUE)), 
                     aes(x=value, color=paste(water,snow), linetype=year, shape=year)) + 
                geom_point(aes_string(y=.x)) + geom_smooth(aes_string(y=.x), method="lm",se=F) + 
                facet_wrap(vars(name), scales="free_x") + 
@@ -830,15 +834,49 @@ walk(fitnesstraits, ~
                theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))
 ```
 
+### Emissions by class
+
 ```{r selection_class}
 walk(fitnesstraits, ~ 
-       print(ggplot(traits.class %>% filter(ifelse(.x == "prop_infested", fruits_nonaborted > 4, TRUE)), 
+       print(ggplot(traits.class %>% filter(ifelse(.x == "prop_uninfested", fruits_nonaborted > 4, TRUE)), 
                     aes(x=value, color=paste(water,snow), linetype=year, shape=year)) + 
                geom_point(aes_string(y=.x)) + geom_smooth(aes_string(y=.x), method="lm",se=F) + 
                facet_wrap(vars(name), scales="free_x") + 
                labs(x="Emissions (ng/hr/flower)", y=fitnessnames[.x], 
                     color="Precipitation and snowmelt", linetype="Year", shape="Year")+
                theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))
+
+
+trait.class.wide <- bind_cols(volsmeta, vols.class) %>% left_join(mnps.plantyr.traits) %>% 
+  select(plantid, year, water, snow, all_of(fitnesstraits), all_of(names(class_pal))) %>% 
+  mutate(across(all_of(names(class_pal)), sqrt))
+
+selection_effects <- function(fitnesstrait) {
+  options(contrasts = c("contr.sum", "contr.poly"))
+  lm(fitness ~ year * water * snow + 
+     Monoterpene * snow + Monoterpene * water + Monoterpene * year +
+     Sesquiterpene * snow + Sesquiterpene * water + Sesquiterpene * year + 
+     Benzenoid * snow + Benzenoid * water + Benzenoid * year +
+     Aliphatic * snow + Aliphatic * water + Aliphatic * year,
+       data = rename(trait.class.wide, fitness=fitnesstrait))
+}
+
+mod.selection <- tibble(fitnesstrait=fitnesstraits) %>% 
+  mutate(model = map(fitnesstrait, selection_effects),
+         test = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 
+  select(-model) %>% unnest(test)
+
+stars <- function(p.values) {
+  symnum(p.values, corr = FALSE, na = FALSE, 
+         cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+         symbols = c("***", "**", "*", ".", " "))
+}
+
+mod.selection %>% select(fitnesstrait, term, p.value) %>% 
+  mutate(p.value= paste(format(round(p.value,4),nsmall=4), stars(p.value))) %>% 
+  pivot_wider(names_from=fitnesstrait, values_from=p.value) %>%
+  filter(term!="Residuals") %>% 
+  kable(caption="Selection of emissions in each treatment")
 ```
 
 ## Joint species distribution model
@@ -899,7 +937,6 @@ Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for rec
 # Run PCA on traits
 vols.PCA <- vols.good.top %>% mutate(across(everything(), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% 
   prcomp() 
-plot(vols.PCA)
 summary(vols.PCA) # PCs 1 - 5 explain 56% of the variation, 20 PCs total (20 top volatiles)
 vols.PCA.E <- vols.PCA$rotation[,1:5] #min(4, ncol(vols.PCA$rotation))
 
@@ -911,7 +948,7 @@ calculate_beta <- function(E, slopes) {
 selection_pca <- function(year, water=names(water_pal), snow=names(snow_pal), fitnesstrait = "seeds_est") {
   vols.std.PCA <- volsmeta %>% bind_cols(as.data.frame(vols.PCA$x)) %>% 
     filter(year == .env$year, water %in% .env$water, snow %in% .env$snow) %>% 
-    left_join(mnps.plantyr %>% select(year, plotid, plant, all_of(fitnesstrait))) %>% 
+    left_join(mnps.plantyr.traits %>% select(year, plotid, plant, all_of(fitnesstrait)), by=c("year", "plotid", "plant")) %>% 
     select(all_of(fitnesstrait), any_of(names(treatments)), starts_with("PC")) %>% 
     rename("fitness" = fitnesstrait) %>% 
     group_by(year) %>% mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% ungroup %>% 
@@ -963,34 +1000,67 @@ walk(fitnesstraits, ~print(plot_beta(filter(vols.beta.water.snow, fitnesstrait==
 
 ### Selection gradient vs. plasticity
 
-```{r adaptive, fig.height=8, fig.width=10}
+```{r adaptive, fig.height=7, fig.width=8}
 plasticity.water <- volsmeta.good.top %>% group_by(year, water, name) %>% summarize(value=mean(value)) %>% 
   pivot_wider(names_from=water, values_from=value) %>% left_join(ipochems) %>% 
   mutate(A_C = (Addition-Control)/Control, 
          R_C = (Reduction-Control)/Control, 
-         A_R = (Addition-Reduction)/Reduction, .keep="unused")
+         A_R = (Addition-Reduction)/Reduction,
+         R_A = (Reduction-Addition)/Addition, .keep="unused")
 
 plasticity.snow <- volsmeta.good.top %>% group_by(year, snow, name) %>% summarize(value=mean(value)) %>% 
   pivot_wider(names_from=snow, values_from=value) %>% left_join(ipochems) %>% 
   mutate(E_N = (Early-Normal)/Normal, .keep="unused")
 
 adaptive.plasticity.plots <- list(
-  plasticity.water %>% left_join(vols.beta.water %>% rename(name=trait) %>% filter(water=="Addition")) %>% 
+  plasticity.water %>% left_join(vols.beta.water %>% rename(name=trait) %>% 
+                                   filter(water=="Addition", fitnesstrait!="eggs_per_flower")) %>% 
     ggplot(aes(x=A_C)) + labs(x="Emissions change with additional precipitation", 
                               y="Selection gradient (beta) under additional precipitation"),
-  plasticity.water %>% left_join(vols.beta.water %>% rename(name=trait) %>% filter(water=="Reduction")) %>% 
+  plasticity.water %>% left_join(vols.beta.water %>% rename(name=trait) %>%
+                                   filter(water=="Reduction", fitnesstrait!="eggs_per_flower")) %>% 
     ggplot(aes(x=R_C)) + labs(x="Emissions change with reduced precipitation", 
                               y="Selection gradient (beta) under reduced precipitation"),
-  plasticity.snow %>% left_join(vols.beta.snow %>% rename(name=trait) %>% filter(snow=="Early")) %>% 
+  plasticity.snow %>% left_join(vols.beta.snow %>% rename(name=trait) %>% 
+                                  filter(snow=="Early", fitnesstrait!="eggs_per_flower")) %>% 
     ggplot(aes(x=E_N)) + labs(x="Emissions change with early snowmelt", 
                               y="Selection gradient (beta) under early snowmelt"))
 
 walk(adaptive.plasticity.plots, 
-     ~ print(.x + facet_grid(rows=vars(year), cols=vars(fitnesstrait), scales="free_y", 
+     ~ print(.x + facet_grid(rows=vars(year), cols=vars(fitnesstrait), scales="fixed", 
                              labeller=as_labeller(c(fitnessnames, set_names(levels(treatments$year)))))+
-               geom_vline(xintercept=0) + geom_hline(yintercept=0) + geom_point(aes(y=B, color=class, size=mean.floral)) + 
-               scale_size_area("Mean emissions\n(ng/hr/flower)", max_size=10) + scale_x_continuous(labels=scales::percent) + 
-               scale_color_manual("Compound class", values=class_pal, guide=guide_legend(override.aes = list(size=5))) + theme_bw()))
+               geom_vline(xintercept=0) + geom_hline(yintercept=0) +
+               annotate("rect", xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= "black", alpha=0.1) + 
+               annotate("rect", xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= "black", alpha=0.1) +
+               geom_point(aes(y=B, alpha=name=="a-pinene"), 
+                          color=class_pal["Monoterpene"], shape="X", size=4)+
+               scale_alpha_manual(values=c(0,1), guide="none")+
+               geom_point(aes(y=B, color=class)) + # size=mean.floral
+               #scale_size("Mean emissions\n(ng/hr/flower)", range=c(1,3)) +
+               scale_x_continuous(labels=scales::percent) + 
+               scale_color_manual("Compound class", values=class_pal, 
+                                  guide=guide_legend(override.aes = list(size=5))) + 
+               theme_bw()))
+```
+
+# Plasticity to snowmelt vs. precipitation
+
+```{r snow_v_water}
+ggplot(left_join(plasticity.snow, plasticity.water), aes(x=R_A, y=E_N)) + 
+  facet_wrap(vars(year), ncol=1)+
+  geom_vline(xintercept=0) + geom_hline(yintercept=0) +
+  annotate("rect", xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= "black", alpha=0.1) + 
+  annotate("rect", xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= "black", alpha=0.1) +
+  geom_point(aes(alpha=name=="a-pinene"), color=class_pal["Monoterpene"], shape="X", size=4)+
+  scale_alpha_manual(values=c(0,1), guide="none")+
+  geom_point(aes(color=class)) + # size=mean.floral
+  #scale_size("Mean emissions\n(ng/hr/flower)", range=c(1,5)) +
+  scale_x_continuous(labels=scales::percent) + 
+  scale_y_continuous(labels=scales::percent) + 
+  scale_color_manual("Compound class", values=class_pal, 
+                     guide=guide_legend(override.aes = list(size=5))) + theme_bw() +
+  labs(x="Plasticity to precipitation reduction (vs. addition)",
+       y="Plasticity to early snowmelt (vs. normal)")
 ```
 
 
