@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-04-07" />
+<meta name="date" content="2022-04-14" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -267,7 +267,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-04-07</h4>
+<h4 class="date">2022-04-14</h4>
 
 </div>
 
@@ -547,9 +547,17 @@ ggplot(vt.volsmeta.count, aes(x=as.Date(sampledate.file),y=n, fill=status))+ geo
 </div>
 <div id="soil-moisture" class="section level1">
 <h1>Soil moisture</h1>
-<pre class="r"><code>ggplot(vt %&gt;% drop_na(water), aes(x=factor(sampledate), y=VWC, color=water)) + facet_wrap(vars(year), nrow = 1, scales=&quot;free_x&quot;) +
-  geom_boxplot() + scale_color_manual(values=water_pal) + scale_x_discrete(guide = guide_axis(angle=90)) + 
-  labs(x=&quot;Date&quot;, y=&quot;Soil moisture (%VWC)&quot;, color=&quot;Precipitation&quot;)</code></pre>
+<pre class="r"><code>ggplot(vt %&gt;% drop_na(water) %&gt;% mutate(date=sampledate), aes(x=yday(date))) + 
+  facet_wrap(vars(year), ncol = 1) +
+  scale_x_continuous(limits=c(160, 230)) +
+  geom_col(data=daily_precip_est, aes(y=EPA_NOAA_filled), fill=brewer.pal(7, &quot;Set3&quot;)[7]) +
+  geom_point(aes(y=VWC, color=water), size=0.5) + 
+  geom_line(aes(y=VWC, color=water),
+            data=vt %&gt;% drop_na(water, VWC) %&gt;% group_by(year, water, date=sampledate) %&gt;% summarize(VWC=mean(VWC)), size=1) + 
+  geom_line(aes(y=VWC, color=water),
+            data=sm %&gt;% group_by(year, water, date) %&gt;% summarize(VWC=mean(VWC)), size=0.5, alpha=0.5) + 
+  scale_color_manual(values=water_pal) + 
+  labs(x=&quot;Day of year&quot;, y=&quot;Soil moisture (%VWC) / Daily precipitation (mm)&quot;, color=&quot;Precipitation&quot;) + theme_bw()</code></pre>
 <p><img src="images_volatiles2020/sm-1.svg" width="768" /></p>
 </div>
 <div id="ambient-controls" class="section level1">
@@ -1264,6 +1272,29 @@ for(yr in unique(year(volsmeta$sequence.start))) {
 }</code></pre>
 </div>
 </div>
+<div id="correlations" class="section level2">
+<h2>Correlations</h2>
+<pre class="r"><code>corr.annot &lt;- ipochems %&gt;% select(name, Class=class, `Retention time`=RT, Frequency=freq.floral) %&gt;% 
+  column_to_rownames(&quot;name&quot;) %&gt;%  
+  filter(Frequency&gt;0.1)
+corr.vols &lt;- cor(vols.good[, rownames(corr.annot)], method=&quot;pearson&quot;)
+pheatmap(corr.vols, 
+         scale=&quot;none&quot;, clustering_method = &quot;mcquitty&quot;,
+         color=colorRampPalette(c(&quot;blue&quot;,&quot;white&quot;,&quot;red&quot;))(200), breaks=seq(-1,1,by=0.01),
+         annotation_col=corr.annot, annotation_row=corr.annot, 
+         annotation_colors = list(Class=class_pal))</code></pre>
+<p><img src="images_volatiles2020/corr-1.svg" width="960" /></p>
+<pre class="r"><code>(corr.vols*lower.tri(corr.vols)) %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;name1&quot;) %&gt;% 
+  pivot_longer(cols=-name1, values_to=&quot;cor&quot;) %&gt;% arrange(desc(cor)) %&gt;% filter(cor!=1, cor!=0) %&gt;% 
+  mutate(cor.cut = cut_width(cor, width=0.25, boundary=0)) %&gt;% count(cor.cut)</code></pre>
+<pre><code># A tibble: 4 × 2
+  cor.cut        n
+  &lt;fct&gt;      &lt;int&gt;
+1 [-0.25,0]    115
+2 (0,0.25]     178
+3 (0.25,0.5]    62
+4 (0.5,0.75]    23</code></pre>
+</div>
 </div>
 <div id="plasticity-analyses" class="section level1">
 <h1>Plasticity analyses</h1>
@@ -1593,14 +1624,14 @@ Eigenvalues for unconstrained axes:
 </tbody>
 </table>
 <pre class="r"><code>library(ggvegan)
-cap.df &lt;- fortify(scents.cap) 
+cap.df &lt;- fortify(update(scents.cap, ~ sun_date + precip_est_mm)) #drop non-signif interaction for plotting
 
 ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
   geom_point(data=cap.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta), aes(color=year))+
   geom_segment(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
                arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
   geom_text(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;) %&gt;% 
-              mutate(Label=c(&quot;Snowmelt&quot;, &quot;Precipitation&quot;, &quot;Snowmelt x Precipitation&quot;)),
+              mutate(Label=c(&quot;Snowmelt&quot;, &quot;Precipitation&quot;)),
             aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface=&quot;bold&quot;) +
   geom_text(data=cap.df %&gt;% left_join(ipochems, by=c(&quot;Label&quot;=&quot;name&quot;)) %&gt;% filter(Score==&quot;species&quot;, mean.floral&gt;1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
   scale_color_manual(&quot;Year&quot;, values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
@@ -1721,8 +1752,8 @@ ggplot(volsmeta.class, aes(x = precip_est_mm, y = value)) + facet_wrap(vars(name
 </div>
 </div>
 </div>
-<div id="plasticity-to-soil-moisture" class="section level2">
-<h2>Plasticity to soil moisture</h2>
+<div id="plasticity-to-plant-level-soil-moisture" class="section level2">
+<h2>Plasticity to plant-level soil moisture</h2>
 <div id="cap-2" class="section level3">
 <h3>CAP</h3>
 <pre class="r"><code>hasVWC &lt;- !is.na(volsmeta$VWC)
@@ -1844,12 +1875,12 @@ mod.sm %&gt;% select(class, term, p.value) %&gt;%
 </div>
 <div id="scatterplots-1" class="section level3">
 <h3>Scatterplots</h3>
-<pre class="r"><code># ggplot(volsmeta.good.top, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-#   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
-#   scale_y_sqrt()  + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;) +
-#   scale_color_manual(values=year_pal)
-
-ggplot(volsmeta.class, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+<pre class="r"><code>ggplot(volsmeta.good.top, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) +
+  geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
+  scale_y_sqrt()  + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;) +
+  scale_color_manual(values=year_pal)</code></pre>
+<p><img src="images_volatiles2020/sm_vols_top-1.svg" width="1344" /></p>
+<pre class="r"><code>ggplot(volsmeta.class, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
   scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;)+
   scale_color_manual(values=year_pal)</code></pre>
@@ -1859,6 +1890,146 @@ ggplot(volsmeta.class, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars
   scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Total filtered emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;) +
   scale_color_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/sm_vols-2.svg" width="768" /></p>
+</div>
+</div>
+<div id="plasticity-to-subplot-level-soil-moisture" class="section level2">
+<h2>Plasticity to subplot-level soil moisture</h2>
+<div id="cap-3" class="section level3">
+<h3>CAP</h3>
+<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ year * VWC, data=left_join(select(volsmeta,-VWC), sm.subplotyear)))</code></pre>
+<pre><code>Call: capscale(formula = sqrt(vols.good) ~ year * VWC, data =
+left_join(select(volsmeta, -VWC), sm.subplotyear))
+
+              Inertia Proportion Rank
+Total          42.700      1.000     
+Constrained     5.495      0.129    5
+Unconstrained  37.205      0.871   59
+Inertia is mean squared Euclidean distance 
+Species scores projected from &#39;sqrt&#39; &#39;vols.good&#39; 
+
+Eigenvalues for constrained axes:
+CAP1 CAP2 CAP3 CAP4 CAP5 
+4.39 0.83 0.18 0.05 0.04 
+
+Eigenvalues for unconstrained axes:
+ MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
+16.71  3.92  2.03  1.67  1.58  1.37  1.18  1.12 
+(Showing 8 of 59 unconstrained eigenvalues)</code></pre>
+<pre class="r"><code>anova(scents.cap, by=&quot;term&quot;) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Df</th>
+<th align="right">Variance</th>
+<th align="right">F</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">2</td>
+<td align="right">4.6075</td>
+<td align="right">21.610</td>
+<td align="right">0.001</td>
+</tr>
+<tr class="even">
+<td align="left">VWC</td>
+<td align="right">1</td>
+<td align="right">0.2536</td>
+<td align="right">2.379</td>
+<td align="right">0.050</td>
+</tr>
+<tr class="odd">
+<td align="left">year:VWC</td>
+<td align="right">2</td>
+<td align="right">0.6337</td>
+<td align="right">2.972</td>
+<td align="right">0.008</td>
+</tr>
+<tr class="even">
+<td align="left">Residual</td>
+<td align="right">349</td>
+<td align="right">37.2048</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="emissions-by-class-3" class="section level3">
+<h3>Emissions by class</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+sm_effects &lt;- function(class) {
+  lmer(sqrt(value) ~ year * VWC + (1|plotid), 
+       data = filter(left_join(select(volsmeta.class,-VWC), sm.subplotyear), name==class))
+}
+
+mod.sm &lt;- tibble(class=levels(ipochems$class)) %&gt;% 
+  mutate(model = map(class, sm_effects),
+         test = map(model, ~ tidy(anova(.x, ddf=&quot;Ken&quot;)))) %&gt;% 
+  select(-model) %&gt;% unnest(test)
+
+mod.sm %&gt;% select(class, term, p.value) %&gt;% 
+  pivot_wider(names_from=term, values_from=p.value) %&gt;%
+  kable(caption=&quot;Plasticity of emissions to subplot-level soil moisture&quot;)</code></pre>
+<table>
+<caption>Plasticity of emissions to subplot-level soil moisture</caption>
+<thead>
+<tr class="header">
+<th align="left">class</th>
+<th align="right">year</th>
+<th align="right">VWC</th>
+<th align="right">year:VWC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Monoterpene</td>
+<td align="right">0.1727</td>
+<td align="right">0.0819</td>
+<td align="right">0.0169</td>
+</tr>
+<tr class="even">
+<td align="left">Benzenoid</td>
+<td align="right">0.5956</td>
+<td align="right">0.9615</td>
+<td align="right">0.0373</td>
+</tr>
+<tr class="odd">
+<td align="left">Sesquiterpene</td>
+<td align="right">0.0748</td>
+<td align="right">0.3884</td>
+<td align="right">0.0817</td>
+</tr>
+<tr class="even">
+<td align="left">Aliphatic</td>
+<td align="right">0.2081</td>
+<td align="right">0.6185</td>
+<td align="right">0.0440</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="scatterplots-2" class="section level3">
+<h3>Scatterplots</h3>
+<pre class="r"><code>ggplot(left_join(select(volsmeta.good.top,-VWC), sm.subplotyear), aes(x = VWC, color = year, y = value)) +  facet_wrap(vars(name), scales=&quot;free_y&quot;) +
+  geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ 
+  scale_y_sqrt()  + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;) +
+  scale_color_manual(values=year_pal)</code></pre>
+<p><img src="images_volatiles2020/sm_subplot_vols_top-1.svg" width="1344" /></p>
+<pre class="r"><code>ggplot(left_join(select(volsmeta.class,-VWC), sm.subplotyear), aes(x = VWC, color = year, y = value)) + 
+  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ 
+  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;)+
+  scale_color_manual(values=year_pal)</code></pre>
+<p><img src="images_volatiles2020/sm_subplot_vols-1.svg" width="768" /></p>
+<pre class="r"><code>ggplot(left_join(select(volsmeta,-VWC), sm.subplotyear), aes(x = VWC, color = year, y = total)) + 
+  geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ 
+  scale_y_sqrt() + labs(x=&quot;Soil moisture (%VWC)&quot;, y =&quot;Total filtered emissions (ng/hr/flower)&quot;, color=&quot;Year&quot;) +
+  scale_color_manual(values=year_pal)</code></pre>
+<p><img src="images_volatiles2020/sm_subplot_vols-2.svg" width="768" /></p>
 </div>
 </div>
 </div>
@@ -1891,7 +2062,7 @@ mnps.plantyr.traits %&gt;% select(all_of(fitnesstraits)) %&gt;%
                     color=&quot;Precipitation and snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
                theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))</code></pre>
 <p><img src="images_volatiles2020/selection-5.svg" width="1536" /><img src="images_volatiles2020/selection-6.svg" width="1536" /><img src="images_volatiles2020/selection-7.svg" width="1536" /><img src="images_volatiles2020/selection-8.svg" width="1536" /></p>
-<div id="emissions-by-class-3" class="section level3">
+<div id="emissions-by-class-4" class="section level3">
 <h3>Emissions by class</h3>
 <pre class="r"><code>walk(fitnesstraits, ~ 
        print(ggplot(traits.class %&gt;% filter(ifelse(.x == &quot;prop_uninfested&quot;, fruits_nonaborted &gt; 4, TRUE)), 
@@ -2283,6 +2454,152 @@ walk(adaptive.plasticity.plots,
                                   guide=guide_legend(override.aes = list(size=5))) + 
                theme_bw()))</code></pre>
 <p><img src="images_volatiles2020/adaptive-1.svg" width="768" /><img src="images_volatiles2020/adaptive-2.svg" width="768" /><img src="images_volatiles2020/adaptive-3.svg" width="768" /></p>
+<pre class="r"><code>plasticity.water %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;%
+                                 filter(water==&quot;Reduction&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
+  mutate(adaptive = sign(B) == sign(R_C)) %&gt;% count(adaptive) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="left">adaptive</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="left">FALSE</td>
+<td align="right">29</td>
+</tr>
+<tr class="even">
+<td align="left">2018</td>
+<td align="left">TRUE</td>
+<td align="right">31</td>
+</tr>
+<tr class="odd">
+<td align="left">2019</td>
+<td align="left">FALSE</td>
+<td align="right">30</td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="left">TRUE</td>
+<td align="right">27</td>
+</tr>
+<tr class="odd">
+<td align="left">2019</td>
+<td align="left">NA</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">2020</td>
+<td align="left">FALSE</td>
+<td align="right">32</td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="left">TRUE</td>
+<td align="right">28</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>plasticity.water %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;%
+                                 filter(water==&quot;Reduction&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
+  mutate(adaptive = sign(B) == sign(R_C)) %&gt;% count(adaptive) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="left">adaptive</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="left">FALSE</td>
+<td align="right">29</td>
+</tr>
+<tr class="even">
+<td align="left">2018</td>
+<td align="left">TRUE</td>
+<td align="right">31</td>
+</tr>
+<tr class="odd">
+<td align="left">2019</td>
+<td align="left">FALSE</td>
+<td align="right">30</td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="left">TRUE</td>
+<td align="right">27</td>
+</tr>
+<tr class="odd">
+<td align="left">2019</td>
+<td align="left">NA</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">2020</td>
+<td align="left">FALSE</td>
+<td align="right">32</td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="left">TRUE</td>
+<td align="right">28</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>plasticity.snow %&gt;% left_join(vols.beta.snow %&gt;% rename(name=trait) %&gt;% filter(snow==&quot;Early&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
+  mutate(adaptive = sign(B) == sign(E_N)) %&gt;% count(adaptive) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="left">adaptive</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="left">FALSE</td>
+<td align="right">24</td>
+</tr>
+<tr class="even">
+<td align="left">2018</td>
+<td align="left">TRUE</td>
+<td align="right">36</td>
+</tr>
+<tr class="odd">
+<td align="left">2019</td>
+<td align="left">FALSE</td>
+<td align="right">30</td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="left">TRUE</td>
+<td align="right">27</td>
+</tr>
+<tr class="odd">
+<td align="left">2019</td>
+<td align="left">NA</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">2020</td>
+<td align="left">FALSE</td>
+<td align="right">28</td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="left">TRUE</td>
+<td align="right">32</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
