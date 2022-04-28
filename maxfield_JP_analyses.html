@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-03-24" />
+<meta name="date" content="2022-04-27" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -259,7 +259,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-03-24</h4>
+<h4 class="date">2022-04-27</h4>
 
 </div>
 
@@ -282,8 +282,12 @@ library(lubridate)
 library(lme4)
 library(lmerTest)
 library(MuMIn)
-library(glmmTMB)
-library(emmeans)
+library(glmmTMB)</code></pre>
+<pre><code>## Warning in checkMatrixPackageVersion(): Package version inconsistency detected.
+## TMB was built with Matrix version 1.4.0
+## Current Matrix version is 1.4.1
+## Please re-install &#39;TMB&#39; from source using install.packages(&#39;TMB&#39;, type = &#39;source&#39;) or ask CRAN for a binary version of &#39;TMB&#39; matching CRAN&#39;s &#39;Matrix&#39; package</code></pre>
+<pre class="r"><code>library(emmeans)
 library(broom)
 library(broom.mixed)
 library(vegan)
@@ -1392,10 +1396,10 @@ bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits
 <tr class="odd">
 <td align="left">open</td>
 <td align="right">10143</td>
-<td align="right">818</td>
+<td align="right">746</td>
 <td align="right">746</td>
 <td align="right">723</td>
-<td align="right">12.40</td>
+<td align="right">13.60</td>
 <td align="right">13.60</td>
 <td align="right">14.03</td>
 <td align="right">10.36</td>
@@ -1554,6 +1558,9 @@ with(cen.status, table(flowering_status_18 + flowering_status_19 + flowering_sta
   ggplot(aes(x=n, fill=year)) + geom_histogram() + labs(title = &quot;Phenology entries per plant&quot;, x=&quot;Entries&quot;,y=&quot;Count&quot;)+
   facet_wrap(vars(year), ncol=1) + scale_fill_manual(values=year_pal)</code></pre>
 <p><img src="images/sample_sizes-1.png" width="672" /></p>
+<pre class="r"><code>library(pheatmap)
+mnps.plantyr %&gt;% select(all_of(traits)) %&gt;% map(is.na) %&gt;% map(as.integer) %&gt;% as.data.frame() %&gt;% as.matrix() %&gt;% pheatmap(main=&quot;red is missing data&quot;)</code></pre>
+<p><img src="images/sample_sizes-2.png" width="672" /></p>
 </div>
 </div>
 <div id="census" class="section level1">
@@ -6797,16 +6804,17 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
 </div>
 <div id="selection-plots" class="section level3">
 <h3>Selection plots</h3>
-<pre class="r"><code>plot_selection_facets &lt;- function(response, treatment) {
+<pre class="r"><code>plot_selection_facets &lt;- function(response, treatment, traits=c(leaftraits, phystraits)) {
   emt.selection.filtered &lt;- emt.selection %&gt;% 
     select(!!!treatment, response, year, trait, p.value) %&gt;% 
-    drop_na(!!!treatment) %&gt;% filter(response==!!response) %&gt;% 
+    drop_na(!!!treatment) %&gt;% filter(response==!!response, trait %in% traits) %&gt;% 
     mutate(sig = ifelse(p.value &lt; 0.05,&quot;signif&quot;,&quot;ns&quot;))
   
   p &lt;- bind_rows(lt.plantyr.r2, pt.plantyr) %&gt;% 
     pivot_longer(all_of(c(leaftraits, phystraits)), names_to=&quot;trait&quot;) %&gt;% 
     left_join(emt.selection.filtered) %&gt;% 
     mutate(trait = fct_relevel(trait, c(leaftraits, phystraits))) %&gt;% 
+    filter(trait %in% traits) %&gt;% 
     ggplot(aes_string(y=response, x=&quot;value&quot;, color=treatment, linetype=&quot;year&quot;)) + 
     facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller = as_labeller(traitnames.units))+
     scale_color_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + 
@@ -6842,6 +6850,10 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
 expand_grid(treatment=c(&quot;water&quot;,&quot;snow&quot;), response = fitnesstraits) %&gt;% 
   pwalk(plot_selection_facets)</code></pre>
 <p><img src="images/plot_selection-1.png" width="864" /><img src="images/plot_selection-2.png" width="864" /><img src="images/plot_selection-3.png" width="864" /><img src="images/plot_selection-4.png" width="864" /><img src="images/plot_selection-5.png" width="864" /><img src="images/plot_selection-6.png" width="864" /></p>
+<pre class="r"><code>plot_selection_facets(treatment=&quot;water&quot;, response=&quot;survived&quot;, traits=c(&quot;conductance&quot;, &quot;WUE&quot;))</code></pre>
+<p><img src="images/plot_selection_small-1.png" width="768" /></p>
+<pre class="r"><code>plot_selection_facets(treatment=&quot;snow&quot;, response=&quot;flowered&quot;, traits=c(&quot;conductance&quot;, &quot;WUE&quot;))</code></pre>
+<p><img src="images/plot_selection_small-2.png" width="768" /></p>
 </div>
 <div id="number-of-flowers" class="section level3">
 <h3>Number of flowers</h3>

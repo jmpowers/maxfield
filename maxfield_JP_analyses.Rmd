@@ -1834,16 +1834,17 @@ mod.selection %>% unnest(coefs) %>% filter(effect=="ran_pars") %>%
 ### Selection plots
 
 ```{r plot_selection, fig.width=9, fig.height=6}
-plot_selection_facets <- function(response, treatment) {
+plot_selection_facets <- function(response, treatment, traits=c(leaftraits, phystraits)) {
   emt.selection.filtered <- emt.selection %>% 
     select(!!!treatment, response, year, trait, p.value) %>% 
-    drop_na(!!!treatment) %>% filter(response==!!response) %>% 
+    drop_na(!!!treatment) %>% filter(response==!!response, trait %in% traits) %>% 
     mutate(sig = ifelse(p.value < 0.05,"signif","ns"))
   
   p <- bind_rows(lt.plantyr.r2, pt.plantyr) %>% 
     pivot_longer(all_of(c(leaftraits, phystraits)), names_to="trait") %>% 
     left_join(emt.selection.filtered) %>% 
     mutate(trait = fct_relevel(trait, c(leaftraits, phystraits))) %>% 
+    filter(trait %in% traits) %>% 
     ggplot(aes_string(y=response, x="value", color=treatment, linetype="year")) + 
     facet_wrap(vars(trait), scales="free_x", labeller = as_labeller(traitnames.units))+
     scale_color_manual(values=list(water=water_pal, snow=snow_pal)[[treatment]]) + 
@@ -1878,6 +1879,11 @@ plot_selection_facets <- function(response, treatment) {
 
 expand_grid(treatment=c("water","snow"), response = fitnesstraits) %>% 
   pwalk(plot_selection_facets)
+```
+
+```{r plot_selection_small, fig.width=8, fig.height=4}
+plot_selection_facets(treatment="water", response="survived", traits=c("conductance", "WUE"))
+plot_selection_facets(treatment="snow", response="flowered", traits=c("conductance", "WUE"))
 ```
 
 ### Number of flowers
