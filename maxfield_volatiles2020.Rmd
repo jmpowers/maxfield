@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -269,6 +269,15 @@ volsmeta.class <- bind_cols(volsmeta, vols.class) %>%
 traits.class    <- volsmeta.class %>% left_join(mnps.plantyr.traits)
 volsmeta.traits <- volsmeta %>%       left_join(mnps.plantyr.traits) #wide format
 ```
+
+## Compound relative amounts
+
+```{r relamounts}
+vols.good %>% decostand(method = "tot") %>% summarize(across(everything(), mean)) %>% 
+  t() %>% as.data.frame() %>% rownames_to_column("name") %>% rename(mean_percent = V1) %>% 
+  arrange(desc(mean_percent)) %>% kable(caption = "Mean relative amounts of each volatile")
+```
+
 
 ## Sample size after filtering
 
@@ -725,60 +734,26 @@ mod.abs %>% select(class, term, p.value) %>%
 
 ```{r vols_abs}
 precip.breaks <- seq(25,175, by=25)
-water_scale <- scale_fill_gradientn("Summer precipitation (mm)", colors=rev(water_pal), 
+grid.points <- list(sun_date=range(treatments$sun_date), precip_est_mm=precip.breaks)
+options(contrasts = c("contr.sum", "contr.poly"))
+library(emmeans)
+#TODO this code partially repeats chunk above
+mod.class.abs <- volsmeta.class %>% group_by(name) %>% nest() %>% 
+  mutate(model = map(data, ~lmer(value ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=.)),
+         test = map(model, ~tidy(anova(.x))),
+         emm.grid = map(model, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date, at=grid.points))))
+
+ggplot(volsmeta.class, aes(x = sun_date, y = value, color=precip_est_mm)) + facet_wrap(vars(name), scales="free_y") + 
+  geom_point(aes(shape=year), size=2) + 
+    geom_line(data = select(mod.class.abs, name, emm.grid) %>% unnest(emm.grid),
+            aes(y=emmean, group=precip_est_mm))+
+  theme_minimal()+ scale_y_sqrt()  + 
+  labs(x="Snowmelt date", y ="Emissions (ng/hr/flower)", shape="Year", color="Precipitation") +
+  scale_color_gradientn("Summer precipitation (mm)", colors=rev(water_pal), 
                         values=rev(c(1, (treatments %>% group_by(water) %>% summarize(across(precip_est_mm, mean)) %>%
                                            pull(precip_est_mm) %>% scales::rescale(from=range(precip.breaks)))[2],0)),
                         breaks=precip.breaks)
-year_scale <- scale_shape_manual(values=21:23, guide=guide_legend(override.aes=list(fill="black"))) 
-
-# ggplot(volsmeta.good.top, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales="free_y") + 
-#   geom_point(aes(fill=precip_est_mm, shape=year), color="white", size=2) + 
-#   geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-#   labs(x="Snowmelt date", y ="Emissions (ng/hr/flower)", shape="Year", color="Precipitation") +
-#   water_scale + year_scale + scale_color_manual(values=water_pal)
-
-ggplot(volsmeta.class, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales="free_y") + 
-  geom_point(aes(fill=precip_est_mm, shape=year), color="white", size=2) + 
-  geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x="Snowmelt date", y ="Emissions (ng/hr/flower)", shape="Year", color="Precipitation") +
-  water_scale + year_scale + scale_color_manual(values=water_pal)
-
-ggplot(volsmeta, aes(x = sun_date, y = total)) + 
-  geom_point(aes(fill=precip_est_mm, shape=year), color="white", size=2) + 
-  geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x="Snowmelt date", y ="Total filtered emissions (ng/hr/flower)", shape="Year", color="Precipitation") +
-  water_scale + year_scale + scale_color_manual(values=water_pal)
 ```
-
-#### Estimated precipitation
-
-```{r vols_abs_precip}
-snow.breaks <- seq(110,160, by=10)
-snow_scale <- scale_fill_gradientn("Snowmelt date", colors=snow_pal, 
-                        values=rev(c(1, (treatments %>% group_by(snow) %>% summarize(across(sun_date, mean)) %>%
-                                           pull(sun_date) %>% scales::rescale(from=range(snow.breaks)))[2],0)),
-                        breaks=snow.breaks)
-year_scale <- scale_shape_manual(values=21:23, guide=guide_legend(override.aes=list(fill="black"))) 
-
-# ggplot(volsmeta.good.top, aes(x = precip_est_mm, y = value)) + facet_wrap(vars(name), scales="free_y") + 
-#   geom_point(aes(fill=sun_date, shape=year), color="white", size=2) + 
-#   geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-#   labs(x="Summer precipitation (mm)", y ="Emissions (ng/hr/flower)", shape="Year", color="Snowmelt") +
-#   snow_scale + year_scale + scale_color_manual(values=snow_pal)
-
-ggplot(volsmeta.class, aes(x = precip_est_mm, y = value)) + facet_wrap(vars(name), scales="free_y") + 
-  geom_point(aes(fill=sun_date, shape=year), color="white", size=2) + 
-  geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x="Summer precipitation (mm)", y ="Emissions (ng/hr/flower)", shape="Year", color="Snowmelt") +
-  snow_scale + year_scale + scale_color_manual(values=snow_pal)
-
-ggplot(volsmeta, aes(x = precip_est_mm, y = total)) + 
-  geom_point(aes(fill=sun_date, shape=year), color="white", size=2) + 
-  geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x="Summer precipitation (mm)", y ="Total filtered emissions (ng/hr/flower)", shape="Year", color="Snowmelt") +
-  snow_scale + year_scale + scale_color_manual(values=snow_pal)
-```
-
 
 ## Plasticity to plant-level soil moisture
 
@@ -1081,30 +1056,45 @@ walk(fitnesstraits, ~print(plot_beta(filter(vols.beta.water.snow, fitnesstrait==
 
 ### Selection gradient vs. plasticity
 
-```{r adaptive, fig.height=7, fig.width=8}
+```{r adaptive, fig.height=7, fig.width=9, cache=F}
+#TODO change 1|plot to 1|snow:plot throughout?
+#TODO not knitting signif  size right, but output here OK
+mod.top.split <- volsmeta.good.top %>% group_by(name) %>% nest() %>% 
+  mutate(model = map(data, ~lmer(value ~ year * snow * water + (1|plot) + (1|plotid), data=.)),
+         test =  map(model, ~tidy(multcomp::glht(.x, 
+                           linfct = multcomp::mcp(water = c("Addition - Control = 0",
+                                                            "Reduction - Control = 0"),
+                                                  snow = c("Early - Normal = 0")))))) %>% 
+  select(name, test) %>% unnest(test) %>% select(name, contrast, adj.p.value) %>%
+  mutate(signif = adj.p.value < 0.05, .keep="unused") %>% 
+  pivot_wider(names_from=contrast, values_from=signif)
+
+
 plasticity.water <- volsmeta.good.top %>% group_by(year, water, name) %>% summarize(value=mean(value)) %>% 
   pivot_wider(names_from=water, values_from=value) %>% left_join(ipochems) %>% 
   mutate(A_C = (Addition-Control)/Control, 
          R_C = (Reduction-Control)/Control, 
          A_R = (Addition-Reduction)/Reduction,
-         R_A = (Reduction-Addition)/Addition, .keep="unused")
+         R_A = (Reduction-Addition)/Addition, .keep="unused") %>% 
+  left_join(mod.top.split)
 
 plasticity.snow <- volsmeta.good.top %>% group_by(year, snow, name) %>% summarize(value=mean(value)) %>% 
   pivot_wider(names_from=snow, values_from=value) %>% left_join(ipochems) %>% 
-  mutate(E_N = (Early-Normal)/Normal, .keep="unused")
+  mutate(E_N = (Early-Normal)/Normal, .keep="unused")%>% 
+  left_join(mod.top.split)
 
 adaptive.plasticity.plots <- list(
   plasticity.water %>% left_join(vols.beta.water %>% rename(name=trait) %>% 
                                    filter(water=="Addition", fitnesstrait!="eggs_per_flower")) %>% 
-    ggplot(aes(x=A_C)) + labs(x="Emissions change with additional precipitation", 
+    ggplot(aes(x=A_C, size=`Addition - Control`)) + labs(x="Emissions change with additional precipitation", 
                               y="Selection gradient (beta) under additional precipitation"),
   plasticity.water %>% left_join(vols.beta.water %>% rename(name=trait) %>%
                                    filter(water=="Reduction", fitnesstrait!="eggs_per_flower")) %>% 
-    ggplot(aes(x=R_C)) + labs(x="Emissions change with reduced precipitation", 
+    ggplot(aes(x=R_C, size=`Reduction - Control`)) + labs(x="Emissions change with reduced precipitation", 
                               y="Selection gradient (beta) under reduced precipitation"),
   plasticity.snow %>% left_join(vols.beta.snow %>% rename(name=trait) %>% 
                                   filter(snow=="Early", fitnesstrait!="eggs_per_flower")) %>% 
-    ggplot(aes(x=E_N)) + labs(x="Emissions change with early snowmelt", 
+    ggplot(aes(x=E_N, size=`Early - Normal`)) + labs(x="Emissions change with early snowmelt", 
                               y="Selection gradient (beta) under early snowmelt"))
 
 walk(adaptive.plasticity.plots, 
@@ -1113,15 +1103,17 @@ walk(adaptive.plasticity.plots,
                geom_vline(xintercept=0) + geom_hline(yintercept=0) +
                annotate("rect", xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= "black", alpha=0.1) + 
                annotate("rect", xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= "black", alpha=0.1) +
+               geom_smooth(aes(y=B, group=1), color="grey30", method="lm", se=F)+
                geom_point(aes(y=B, alpha=name=="a-pinene"), 
                           color=class_pal["Monoterpene"], shape="X", size=4)+
                scale_alpha_manual(values=c(0,1), guide="none")+
                geom_point(aes(y=B, color=class)) + # size=mean.floral
                #scale_size("Mean emissions\n(ng/hr/flower)", range=c(1,3)) +
-               scale_x_continuous(labels=scales::percent) + 
+               scale_size_manual(values=c(1,2), labels=c("NS", "Signif."))+
+               scale_x_continuous(labels=scales::percent, limits=c(-1.5,NA), breaks=c(-2:5)) + 
                scale_color_manual("Compound class", values=class_pal, 
                                   guide=guide_legend(override.aes = list(size=5))) + 
-               theme_bw()))
+               theme_bw() + theme(axis.text = element_text(size=7))))
 ```
 
 ```{r adaptive_quadrants}

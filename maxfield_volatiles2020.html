@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-04-14" />
+<meta name="date" content="2022-04-29" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -267,7 +267,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-04-14</h4>
+<h4 class="date">2022-04-29</h4>
 
 </div>
 
@@ -703,6 +703,259 @@ volsmeta.class &lt;- bind_cols(volsmeta, vols.class) %&gt;%
   pivot_longer(-all_of(colnames(volsmeta)))
 traits.class    &lt;- volsmeta.class %&gt;% left_join(mnps.plantyr.traits)
 volsmeta.traits &lt;- volsmeta %&gt;%       left_join(mnps.plantyr.traits) #wide format</code></pre>
+</div>
+<div id="compound-relative-amounts" class="section level2">
+<h2>Compound relative amounts</h2>
+<pre class="r"><code>vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% summarize(across(everything(), mean)) %&gt;% 
+  t() %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;name&quot;) %&gt;% rename(mean_percent = V1) %&gt;% 
+  arrange(desc(mean_percent)) %&gt;% kable(caption = &quot;Mean relative amounts of each volatile&quot;)</code></pre>
+<table>
+<caption>Mean relative amounts of each volatile</caption>
+<thead>
+<tr class="header">
+<th align="left">name</th>
+<th align="right">mean_percent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a-pinene</td>
+<td align="right">0.4304</td>
+</tr>
+<tr class="even">
+<td align="left">methyl salicylate</td>
+<td align="right">0.0630</td>
+</tr>
+<tr class="odd">
+<td align="left">(E)-hex-3-en-1-ol</td>
+<td align="right">0.0580</td>
+</tr>
+<tr class="even">
+<td align="left">b-ocimene</td>
+<td align="right">0.0438</td>
+</tr>
+<tr class="odd">
+<td align="left">2,4,6-trimethyloctane</td>
+<td align="right">0.0404</td>
+</tr>
+<tr class="even">
+<td align="left">b-caryophyllene</td>
+<td align="right">0.0360</td>
+</tr>
+<tr class="odd">
+<td align="left">b-myrcene</td>
+<td align="right">0.0336</td>
+</tr>
+<tr class="even">
+<td align="left">petasitene</td>
+<td align="right">0.0313</td>
+</tr>
+<tr class="odd">
+<td align="left">tetradeca-11,13-dien-1-ol</td>
+<td align="right">0.0257</td>
+</tr>
+<tr class="even">
+<td align="left">benzophenone</td>
+<td align="right">0.0250</td>
+</tr>
+<tr class="odd">
+<td align="left">b-pinene</td>
+<td align="right">0.0230</td>
+</tr>
+<tr class="even">
+<td align="left">4-caranol</td>
+<td align="right">0.0221</td>
+</tr>
+<tr class="odd">
+<td align="left">[(E)-hex-3-enyl] acetate</td>
+<td align="right">0.0216</td>
+</tr>
+<tr class="even">
+<td align="left">longifolene</td>
+<td align="right">0.0215</td>
+</tr>
+<tr class="odd">
+<td align="left">linalool</td>
+<td align="right">0.0106</td>
+</tr>
+<tr class="even">
+<td align="left">car-3-ene-2,5-dione</td>
+<td align="right">0.0102</td>
+</tr>
+<tr class="odd">
+<td align="left">a-terpineol</td>
+<td align="right">0.0097</td>
+</tr>
+<tr class="even">
+<td align="left">(E)-4-oxohex-2-enal</td>
+<td align="right">0.0089</td>
+</tr>
+<tr class="odd">
+<td align="left">tridec-1-ene</td>
+<td align="right">0.0072</td>
+</tr>
+<tr class="even">
+<td align="left">(2E)-2,7-dimethylocta-2,6-dien-1-ol</td>
+<td align="right">0.0063</td>
+</tr>
+<tr class="odd">
+<td align="left">[(Z)-hex-3-enyl] butanoate</td>
+<td align="right">0.0062</td>
+</tr>
+<tr class="even">
+<td align="left">(E)-hex-2-enal</td>
+<td align="right">0.0056</td>
+</tr>
+<tr class="odd">
+<td align="left">pseudoionone</td>
+<td align="right">0.0054</td>
+</tr>
+<tr class="even">
+<td align="left">[(Z)-hex-3-enyl] 2-methylbutanoate</td>
+<td align="right">0.0048</td>
+</tr>
+<tr class="odd">
+<td align="left">acetoin</td>
+<td align="right">0.0046</td>
+</tr>
+<tr class="even">
+<td align="left">menthol</td>
+<td align="right">0.0045</td>
+</tr>
+<tr class="odd">
+<td align="left">verbenone</td>
+<td align="right">0.0042</td>
+</tr>
+<tr class="even">
+<td align="left">a-copaene</td>
+<td align="right">0.0028</td>
+</tr>
+<tr class="odd">
+<td align="left">benzyl alcohol</td>
+<td align="right">0.0028</td>
+</tr>
+<tr class="even">
+<td align="left">2,4-diethylheptan-1-ol</td>
+<td align="right">0.0026</td>
+</tr>
+<tr class="odd">
+<td align="left">[(Z)-hex-3-enyl] 2-methylpropanoate</td>
+<td align="right">0.0025</td>
+</tr>
+<tr class="even">
+<td align="left">indole</td>
+<td align="right">0.0024</td>
+</tr>
+<tr class="odd">
+<td align="left">a-farnesene</td>
+<td align="right">0.0023</td>
+</tr>
+<tr class="even">
+<td align="left">pentan-1-ol</td>
+<td align="right">0.0022</td>
+</tr>
+<tr class="odd">
+<td align="left">3-methylbut-2-en-2-yl acetate</td>
+<td align="right">0.0021</td>
+</tr>
+<tr class="even">
+<td align="left">3-methylbutan-1-ol</td>
+<td align="right">0.0018</td>
+</tr>
+<tr class="odd">
+<td align="left">lavender lactone</td>
+<td align="right">0.0018</td>
+</tr>
+<tr class="even">
+<td align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
+<td align="right">0.0017</td>
+</tr>
+<tr class="odd">
+<td align="left">benzyl acetate</td>
+<td align="right">0.0015</td>
+</tr>
+<tr class="even">
+<td align="left">farnesol</td>
+<td align="right">0.0014</td>
+</tr>
+<tr class="odd">
+<td align="left">3-phenylbutan-2-ol</td>
+<td align="right">0.0013</td>
+</tr>
+<tr class="even">
+<td align="left">3-methylbutanal oxime</td>
+<td align="right">0.0012</td>
+</tr>
+<tr class="odd">
+<td align="left">methyl 2-methylbutanoate</td>
+<td align="right">0.0008</td>
+</tr>
+<tr class="even">
+<td align="left">[(Z)-hex-3-enyl] acetate</td>
+<td align="right">0.0008</td>
+</tr>
+<tr class="odd">
+<td align="left">[(E)-hex-3-enyl] butanoate</td>
+<td align="right">0.0008</td>
+</tr>
+<tr class="even">
+<td align="left">1,3-octadiene</td>
+<td align="right">0.0007</td>
+</tr>
+<tr class="odd">
+<td align="left">methyl benzoate</td>
+<td align="right">0.0005</td>
+</tr>
+<tr class="even">
+<td align="left">1-penten-3-ol</td>
+<td align="right">0.0005</td>
+</tr>
+<tr class="odd">
+<td align="left">borneol</td>
+<td align="right">0.0004</td>
+</tr>
+<tr class="even">
+<td align="left">trans-a-bergamotene</td>
+<td align="right">0.0004</td>
+</tr>
+<tr class="odd">
+<td align="left">b-humulene</td>
+<td align="right">0.0003</td>
+</tr>
+<tr class="even">
+<td align="left">cis-a-bergamotene</td>
+<td align="right">0.0003</td>
+</tr>
+<tr class="odd">
+<td align="left">b-copaene</td>
+<td align="right">0.0002</td>
+</tr>
+<tr class="even">
+<td align="left">(4E,6Z)-alloocimene</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="odd">
+<td align="left">carveol</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="even">
+<td align="left">cosmene</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="odd">
+<td align="left">bergamotene</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="even">
+<td align="left">p-mentha-1,3,8-triene</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="odd">
+<td align="left">methyl 2-ethylhexanoate</td>
+<td align="right">0.0001</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="sample-size-after-filtering" class="section level2">
 <h2>Sample size after filtering</h2>
@@ -1697,58 +1950,26 @@ mod.abs %&gt;% select(class, term, p.value) %&gt;%
 <div id="snowmelt-date" class="section level4">
 <h4>Snowmelt date</h4>
 <pre class="r"><code>precip.breaks &lt;- seq(25,175, by=25)
-water_scale &lt;- scale_fill_gradientn(&quot;Summer precipitation (mm)&quot;, colors=rev(water_pal), 
+grid.points &lt;- list(sun_date=range(treatments$sun_date), precip_est_mm=precip.breaks)
+options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+library(emmeans)
+#TODO this code partially repeats chunk above
+mod.class.abs &lt;- volsmeta.class %&gt;% group_by(name) %&gt;% nest() %&gt;% 
+  mutate(model = map(data, ~lmer(value ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=.)),
+         test = map(model, ~tidy(anova(.x))),
+         emm.grid = map(model, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date, at=grid.points))))
+
+ggplot(volsmeta.class, aes(x = sun_date, y = value, color=precip_est_mm)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  geom_point(aes(shape=year), size=2) + 
+    geom_line(data = select(mod.class.abs, name, emm.grid) %&gt;% unnest(emm.grid),
+            aes(y=emmean, group=precip_est_mm))+
+  theme_minimal()+ scale_y_sqrt()  + 
+  labs(x=&quot;Snowmelt date&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
+  scale_color_gradientn(&quot;Summer precipitation (mm)&quot;, colors=rev(water_pal), 
                         values=rev(c(1, (treatments %&gt;% group_by(water) %&gt;% summarize(across(precip_est_mm, mean)) %&gt;%
                                            pull(precip_est_mm) %&gt;% scales::rescale(from=range(precip.breaks)))[2],0)),
-                        breaks=precip.breaks)
-year_scale &lt;- scale_shape_manual(values=21:23, guide=guide_legend(override.aes=list(fill=&quot;black&quot;))) 
-
-# ggplot(volsmeta.good.top, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-#   geom_point(aes(fill=precip_est_mm, shape=year), color=&quot;white&quot;, size=2) + 
-#   geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-#   labs(x=&quot;Snowmelt date&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
-#   water_scale + year_scale + scale_color_manual(values=water_pal)
-
-ggplot(volsmeta.class, aes(x = sun_date, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  geom_point(aes(fill=precip_est_mm, shape=year), color=&quot;white&quot;, size=2) + 
-  geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Snowmelt date&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
-  water_scale + year_scale + scale_color_manual(values=water_pal)</code></pre>
+                        breaks=precip.breaks)</code></pre>
 <p><img src="images_volatiles2020/vols_abs-1.svg" width="768" /></p>
-<pre class="r"><code>ggplot(volsmeta, aes(x = sun_date, y = total)) + 
-  geom_point(aes(fill=precip_est_mm, shape=year), color=&quot;white&quot;, size=2) + 
-  geom_smooth(aes(color=water), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Snowmelt date&quot;, y =&quot;Total filtered emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Precipitation&quot;) +
-  water_scale + year_scale + scale_color_manual(values=water_pal)</code></pre>
-<p><img src="images_volatiles2020/vols_abs-2.svg" width="768" /></p>
-</div>
-<div id="estimated-precipitation" class="section level4">
-<h4>Estimated precipitation</h4>
-<pre class="r"><code>snow.breaks &lt;- seq(110,160, by=10)
-snow_scale &lt;- scale_fill_gradientn(&quot;Snowmelt date&quot;, colors=snow_pal, 
-                        values=rev(c(1, (treatments %&gt;% group_by(snow) %&gt;% summarize(across(sun_date, mean)) %&gt;%
-                                           pull(sun_date) %&gt;% scales::rescale(from=range(snow.breaks)))[2],0)),
-                        breaks=snow.breaks)
-year_scale &lt;- scale_shape_manual(values=21:23, guide=guide_legend(override.aes=list(fill=&quot;black&quot;))) 
-
-# ggplot(volsmeta.good.top, aes(x = precip_est_mm, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-#   geom_point(aes(fill=sun_date, shape=year), color=&quot;white&quot;, size=2) + 
-#   geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-#   labs(x=&quot;Summer precipitation (mm)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Snowmelt&quot;) +
-#   snow_scale + year_scale + scale_color_manual(values=snow_pal)
-
-ggplot(volsmeta.class, aes(x = precip_est_mm, y = value)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  geom_point(aes(fill=sun_date, shape=year), color=&quot;white&quot;, size=2) + 
-  geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Summer precipitation (mm)&quot;, y =&quot;Emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Snowmelt&quot;) +
-  snow_scale + year_scale + scale_color_manual(values=snow_pal)</code></pre>
-<p><img src="images_volatiles2020/vols_abs_precip-1.svg" width="768" /></p>
-<pre class="r"><code>ggplot(volsmeta, aes(x = precip_est_mm, y = total)) + 
-  geom_point(aes(fill=sun_date, shape=year), color=&quot;white&quot;, size=2) + 
-  geom_smooth(aes(color=snow), se=F)+ theme_minimal()+ scale_y_sqrt()  + 
-  labs(x=&quot;Summer precipitation (mm)&quot;, y =&quot;Total filtered emissions (ng/hr/flower)&quot;, shape=&quot;Year&quot;, color=&quot;Snowmelt&quot;) +
-  snow_scale + year_scale + scale_color_manual(values=snow_pal)</code></pre>
-<p><img src="images_volatiles2020/vols_abs_precip-2.svg" width="768" /></p>
 </div>
 </div>
 </div>
@@ -2413,29 +2634,44 @@ walk(fitnesstraits, ~print(plot_beta(filter(vols.beta.water.snow, fitnesstrait==
 <h2>Adaptive plasticity</h2>
 <div id="selection-gradient-vs.-plasticity" class="section level3">
 <h3>Selection gradient vs. plasticity</h3>
-<pre class="r"><code>plasticity.water &lt;- volsmeta.good.top %&gt;% group_by(year, water, name) %&gt;% summarize(value=mean(value)) %&gt;% 
+<pre class="r"><code>#TODO change 1|plot to 1|snow:plot throughout?
+#TODO not knitting signif  size right, but output here OK
+mod.top.split &lt;- volsmeta.good.top %&gt;% group_by(name) %&gt;% nest() %&gt;% 
+  mutate(model = map(data, ~lmer(value ~ year * snow * water + (1|plot) + (1|plotid), data=.)),
+         test =  map(model, ~tidy(multcomp::glht(.x, 
+                           linfct = multcomp::mcp(water = c(&quot;Addition - Control = 0&quot;,
+                                                            &quot;Reduction - Control = 0&quot;),
+                                                  snow = c(&quot;Early - Normal = 0&quot;)))))) %&gt;% 
+  select(name, test) %&gt;% unnest(test) %&gt;% select(name, contrast, adj.p.value) %&gt;%
+  mutate(signif = adj.p.value &lt; 0.05, .keep=&quot;unused&quot;) %&gt;% 
+  pivot_wider(names_from=contrast, values_from=signif)
+
+
+plasticity.water &lt;- volsmeta.good.top %&gt;% group_by(year, water, name) %&gt;% summarize(value=mean(value)) %&gt;% 
   pivot_wider(names_from=water, values_from=value) %&gt;% left_join(ipochems) %&gt;% 
   mutate(A_C = (Addition-Control)/Control, 
          R_C = (Reduction-Control)/Control, 
          A_R = (Addition-Reduction)/Reduction,
-         R_A = (Reduction-Addition)/Addition, .keep=&quot;unused&quot;)
+         R_A = (Reduction-Addition)/Addition, .keep=&quot;unused&quot;) %&gt;% 
+  left_join(mod.top.split)
 
 plasticity.snow &lt;- volsmeta.good.top %&gt;% group_by(year, snow, name) %&gt;% summarize(value=mean(value)) %&gt;% 
   pivot_wider(names_from=snow, values_from=value) %&gt;% left_join(ipochems) %&gt;% 
-  mutate(E_N = (Early-Normal)/Normal, .keep=&quot;unused&quot;)
+  mutate(E_N = (Early-Normal)/Normal, .keep=&quot;unused&quot;)%&gt;% 
+  left_join(mod.top.split)
 
 adaptive.plasticity.plots &lt;- list(
   plasticity.water %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;% 
                                    filter(water==&quot;Addition&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
-    ggplot(aes(x=A_C)) + labs(x=&quot;Emissions change with additional precipitation&quot;, 
+    ggplot(aes(x=A_C, size=`Addition - Control`)) + labs(x=&quot;Emissions change with additional precipitation&quot;, 
                               y=&quot;Selection gradient (beta) under additional precipitation&quot;),
   plasticity.water %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;%
                                    filter(water==&quot;Reduction&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
-    ggplot(aes(x=R_C)) + labs(x=&quot;Emissions change with reduced precipitation&quot;, 
+    ggplot(aes(x=R_C, size=`Reduction - Control`)) + labs(x=&quot;Emissions change with reduced precipitation&quot;, 
                               y=&quot;Selection gradient (beta) under reduced precipitation&quot;),
   plasticity.snow %&gt;% left_join(vols.beta.snow %&gt;% rename(name=trait) %&gt;% 
                                   filter(snow==&quot;Early&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
-    ggplot(aes(x=E_N)) + labs(x=&quot;Emissions change with early snowmelt&quot;, 
+    ggplot(aes(x=E_N, size=`Early - Normal`)) + labs(x=&quot;Emissions change with early snowmelt&quot;, 
                               y=&quot;Selection gradient (beta) under early snowmelt&quot;))
 
 walk(adaptive.plasticity.plots, 
@@ -2444,16 +2680,18 @@ walk(adaptive.plasticity.plots,
                geom_vline(xintercept=0) + geom_hline(yintercept=0) +
                annotate(&quot;rect&quot;, xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= &quot;black&quot;, alpha=0.1) + 
                annotate(&quot;rect&quot;, xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= &quot;black&quot;, alpha=0.1) +
+               geom_smooth(aes(y=B, group=1), color=&quot;grey30&quot;, method=&quot;lm&quot;, se=F)+
                geom_point(aes(y=B, alpha=name==&quot;a-pinene&quot;), 
                           color=class_pal[&quot;Monoterpene&quot;], shape=&quot;X&quot;, size=4)+
                scale_alpha_manual(values=c(0,1), guide=&quot;none&quot;)+
                geom_point(aes(y=B, color=class)) + # size=mean.floral
                #scale_size(&quot;Mean emissions\n(ng/hr/flower)&quot;, range=c(1,3)) +
-               scale_x_continuous(labels=scales::percent) + 
+               scale_size_manual(values=c(1,2), labels=c(&quot;NS&quot;, &quot;Signif.&quot;))+
+               scale_x_continuous(labels=scales::percent, limits=c(-1.5,NA), breaks=c(-2:5)) + 
                scale_color_manual(&quot;Compound class&quot;, values=class_pal, 
                                   guide=guide_legend(override.aes = list(size=5))) + 
-               theme_bw()))</code></pre>
-<p><img src="images_volatiles2020/adaptive-1.svg" width="768" /><img src="images_volatiles2020/adaptive-2.svg" width="768" /><img src="images_volatiles2020/adaptive-3.svg" width="768" /></p>
+               theme_bw() + theme(axis.text = element_text(size=7))))</code></pre>
+<p><img src="images_volatiles2020/adaptive-1.svg" width="864" /><img src="images_volatiles2020/adaptive-2.svg" width="864" /><img src="images_volatiles2020/adaptive-3.svg" width="864" /></p>
 <pre class="r"><code>plasticity.water %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;%
                                  filter(water==&quot;Reduction&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
   mutate(adaptive = sign(B) == sign(R_C)) %&gt;% count(adaptive) %&gt;% kable()</code></pre>
