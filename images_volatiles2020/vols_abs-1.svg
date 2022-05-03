@@ -9,6 +9,9 @@
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
     }
+    .svglite text {
+      white-space: pre;
+    }
   ]]></style>
 </defs>
 <rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
@@ -1582,7 +1585,7 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMzguNjB8MjE0LjU4fDI3Ny40NnwyOTQuNjc=)'>
-<text x='126.59' y='289.27' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: Arial;'>Monoterpene</text>
+<text x='126.59' y='289.27' text-anchor='middle' style='font-size: 8.80px;fill: #1A1A1A; font-family: "Arial";'>Monoterpene</text>
 </g>
 <g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw1NzYuMDA=)'>
 </g>
@@ -1592,7 +1595,7 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMjQwLjAwfDQxNS45OHwyNzcuNDZ8Mjk0LjY3)'>
-<text x='327.99' y='289.27' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: Arial;'>Sesquiterpene</text>
+<text x='327.99' y='289.27' text-anchor='middle' style='font-size: 8.80px;fill: #1A1A1A; font-family: "Arial";'>Sesquiterpene</text>
 </g>
 <g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw1NzYuMDA=)'>
 </g>
@@ -1602,7 +1605,7 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMzguNjB8MjE0LjU4fDUuNDh8MjIuNjk=)'>
-<text x='126.59' y='17.29' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: Arial;'>Aliphatic</text>
+<text x='126.59' y='17.29' text-anchor='middle' style='font-size: 8.80px;fill: #1A1A1A; font-family: "Arial";'>Aliphatic</text>
 </g>
 <g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw1NzYuMDA=)'>
 </g>
@@ -1612,44 +1615,44 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMjQwLjAwfDQxNS45OHw1LjQ4fDIyLjY5)'>
-<text x='327.99' y='17.29' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: Arial;'>Benzenoid</text>
+<text x='327.99' y='17.29' text-anchor='middle' style='font-size: 8.80px;fill: #1A1A1A; font-family: "Arial";'>Benzenoid</text>
 </g>
 <g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw1NzYuMDA=)'>
-<text x='67.47' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>120</text>
-<text x='102.25' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>130</text>
-<text x='137.02' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>140</text>
-<text x='171.80' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>150</text>
-<text x='206.58' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>160</text>
-<text x='268.87' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>120</text>
-<text x='303.64' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>130</text>
-<text x='338.42' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>140</text>
-<text x='373.20' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>150</text>
-<text x='407.98' y='555.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>160</text>
-<text x='235.07' y='157.48' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>10</text>
-<text x='235.07' y='113.42' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>20</text>
-<text x='235.07' y='79.60' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>30</text>
-<text x='235.07' y='51.10' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>40</text>
-<text x='235.07' y='25.99' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>50</text>
-<text x='235.07' y='393.90' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>50</text>
-<text x='235.07' y='335.10' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>100</text>
-<text x='33.67' y='146.41' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>30</text>
-<text x='33.67' y='97.77' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>60</text>
-<text x='33.67' y='60.44' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>90</text>
-<text x='33.67' y='28.97' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>120</text>
-<text x='33.67' y='404.25' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>200</text>
-<text x='33.67' y='349.74' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>400</text>
-<text x='33.67' y='307.92' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>600</text>
-<text x='227.29' y='568.10' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>Snowmelt date</text>
-<text transform='translate(13.50,283.33) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>Emissions (ng/hr/flower)</text>
+<text x='67.47' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>120</text>
+<text x='102.25' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>130</text>
+<text x='137.02' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>140</text>
+<text x='171.80' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>150</text>
+<text x='206.58' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>160</text>
+<text x='268.87' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>120</text>
+<text x='303.64' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>130</text>
+<text x='338.42' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>140</text>
+<text x='373.20' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>150</text>
+<text x='407.98' y='555.31' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>160</text>
+<text x='235.07' y='157.48' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>10</text>
+<text x='235.07' y='113.42' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>20</text>
+<text x='235.07' y='79.60' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>30</text>
+<text x='235.07' y='51.10' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>40</text>
+<text x='235.07' y='25.99' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>50</text>
+<text x='235.07' y='393.90' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>50</text>
+<text x='235.07' y='335.10' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>100</text>
+<text x='33.67' y='146.41' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>30</text>
+<text x='33.67' y='97.77' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>60</text>
+<text x='33.67' y='60.44' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>90</text>
+<text x='33.67' y='28.97' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>120</text>
+<text x='33.67' y='404.25' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>200</text>
+<text x='33.67' y='349.74' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>400</text>
+<text x='33.67' y='307.92' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>600</text>
+<text x='227.29' y='568.10' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";'>Snowmelt date</text>
+<text transform='translate(13.50,283.33) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";'>Emissions (ng/hr/flower)</text>
 <image width='17.28' height='86.40' x='432.41' y='203.25' preserveAspectRatio='none' xlink:href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAEsCAYAAAACUNnVAAAA0klEQVQ4jZVSQRIDIQgLfKq/67v6uAo9rKuCwZ1enGhCgIx4vT+uAmA5AIeKhLdOzKvfb1JKhhXQ/TY2Wk02iheXqJvNa8nitzfakJPmDBU6NvM65N6NL1NJqnDokPIsieGUkq7bJXSjY34plzLdtEcZ3UHnxaTkM/D8HveFnFzOkdB9pbSKjfJXIWNkKxJYtjruS9IQd6i6QdUdKhnZKhEiYawkA9uJGtkfLMoKG2yUgAwEI2UW2VEBC6bXNaKrrN1l0+BCLaJmUGnj+jWofDv6AUTgyXC1OMixAAAAAElFTkSuQmCC'/>
-<text x='454.29' y='291.02' style='font-size: 8.80px; font-family: Arial;'>25</text>
-<text x='454.29' y='277.26' style='font-size: 8.80px; font-family: Arial;'>50</text>
-<text x='454.29' y='263.50' style='font-size: 8.80px; font-family: Arial;'>75</text>
-<text x='454.29' y='249.74' style='font-size: 8.80px; font-family: Arial;'>100</text>
-<text x='454.29' y='235.98' style='font-size: 8.80px; font-family: Arial;'>125</text>
-<text x='454.29' y='222.22' style='font-size: 8.80px; font-family: Arial;'>150</text>
-<text x='454.29' y='208.46' style='font-size: 8.80px; font-family: Arial;'>175</text>
-<text x='432.41' y='196.62' style='font-size: 11.00px; font-family: Arial;'>Summer precipitation (mm)</text>
+<text x='454.29' y='291.02' style='font-size: 8.80px; font-family: "Arial";'>25</text>
+<text x='454.29' y='277.26' style='font-size: 8.80px; font-family: "Arial";'>50</text>
+<text x='454.29' y='263.50' style='font-size: 8.80px; font-family: "Arial";'>75</text>
+<text x='454.29' y='249.74' style='font-size: 8.80px; font-family: "Arial";'>100</text>
+<text x='454.29' y='235.98' style='font-size: 8.80px; font-family: "Arial";'>125</text>
+<text x='454.29' y='222.22' style='font-size: 8.80px; font-family: "Arial";'>150</text>
+<text x='454.29' y='208.46' style='font-size: 8.80px; font-family: "Arial";'>175</text>
+<text x='432.41' y='196.62' style='font-size: 11.00px; font-family: "Arial";'>Summer precipitation (mm)</text>
 <line x1='432.41' y1='287.81' x2='435.87' y2='287.81' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <line x1='432.41' y1='274.05' x2='435.87' y2='274.05' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <line x1='432.41' y1='260.29' x2='435.87' y2='260.29' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
@@ -1664,12 +1667,12 @@
 <line x1='446.24' y1='232.77' x2='449.69' y2='232.77' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <line x1='446.24' y1='219.01' x2='449.69' y2='219.01' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <line x1='446.24' y1='205.25' x2='449.69' y2='205.25' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<text x='432.41' y='320.74' style='font-size: 11.00px; font-family: Arial;'>Year</text>
+<text x='432.41' y='320.74' style='font-size: 11.00px; font-family: "Arial";'>Year</text>
 <circle cx='441.05' cy='336.00' r='2.49' style='stroke-width: 0.71; stroke: none; fill: #000000;' />
 <polygon points='441.05,349.41 444.41,355.22 437.70,355.22 ' style='stroke-width: 0.71; stroke: none; fill: #000000;' />
 <polygon points='438.57,373.05 443.54,373.05 443.54,368.08 438.57,368.08 ' style='stroke-width: 0.71; stroke: none; fill: #000000;' />
-<text x='455.17' y='339.21' style='font-size: 8.80px; font-family: Arial;'>2018</text>
-<text x='455.17' y='356.49' style='font-size: 8.80px; font-family: Arial;'>2019</text>
-<text x='455.17' y='373.77' style='font-size: 8.80px; font-family: Arial;'>2020</text>
+<text x='455.17' y='339.21' style='font-size: 8.80px; font-family: "Arial";'>2018</text>
+<text x='455.17' y='356.49' style='font-size: 8.80px; font-family: "Arial";'>2019</text>
+<text x='455.17' y='373.77' style='font-size: 8.80px; font-family: "Arial";'>2020</text>
 </g>
 </svg>

@@ -9,6 +9,9 @@
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
     }
+    .svglite text {
+      white-space: pre;
+    }
   ]]></style>
 </defs>
 <rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
@@ -109,7 +112,7 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMjguNjB8NTcwLjUyfDM1OC44N3wzNzYuMDg=)'>
-<text x='299.56' y='370.69' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: Arial;'>2020</text>
+<text x='299.56' y='370.69' text-anchor='middle' style='font-size: 8.80px;fill: #1A1A1A; font-family: "Arial";'>2020</text>
 </g>
 <g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw1NzYuMDA=)'>
 </g>
@@ -119,7 +122,7 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMjguNjB8NTcwLjUyfDE4Mi4xOHwxOTkuMzk=)'>
-<text x='299.56' y='193.99' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: Arial;'>2019</text>
+<text x='299.56' y='193.99' text-anchor='middle' style='font-size: 8.80px;fill: #1A1A1A; font-family: "Arial";'>2019</text>
 </g>
 <g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw1NzYuMDA=)'>
 </g>
@@ -129,26 +132,26 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMjguNjB8NTcwLjUyfDUuNDh8MjIuNjk=)'>
-<text x='299.56' y='17.29' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: Arial;'>2018</text>
+<text x='299.56' y='17.29' text-anchor='middle' style='font-size: 8.80px;fill: #1A1A1A; font-family: "Arial";'>2018</text>
 </g>
 <g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHw1NzYuMDA=)'>
-<text x='176.39' y='541.44' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>10</text>
-<text x='340.61' y='541.44' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>12</text>
-<text x='504.83' y='541.44' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>14</text>
-<text x='23.66' y='172.90' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>0</text>
-<text x='23.66' y='126.24' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>2</text>
-<text x='23.66' y='79.57' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>4</text>
-<text x='23.66' y='32.90' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>6</text>
-<text x='23.66' y='349.60' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>0</text>
-<text x='23.66' y='302.93' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>2</text>
-<text x='23.66' y='256.26' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>4</text>
-<text x='23.66' y='209.59' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>6</text>
-<text x='23.66' y='526.30' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>0</text>
-<text x='23.66' y='479.63' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>2</text>
-<text x='23.66' y='432.96' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>4</text>
-<text x='23.66' y='386.29' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>6</text>
-<text x='299.56' y='554.23' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>Ambient control bagged (hr)</text>
-<text transform='translate(13.50,276.39) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>count</text>
-<text x='570.52' y='568.54' text-anchor='end' style='font-size: 8.80px; font-family: Arial;'>08:53 - 14:20</text>
+<text x='176.39' y='541.44' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>10</text>
+<text x='340.61' y='541.44' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>12</text>
+<text x='504.83' y='541.44' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>14</text>
+<text x='23.66' y='172.90' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>0</text>
+<text x='23.66' y='126.24' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>2</text>
+<text x='23.66' y='79.57' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>4</text>
+<text x='23.66' y='32.90' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>6</text>
+<text x='23.66' y='349.60' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>0</text>
+<text x='23.66' y='302.93' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>2</text>
+<text x='23.66' y='256.26' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>4</text>
+<text x='23.66' y='209.59' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>6</text>
+<text x='23.66' y='526.30' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>0</text>
+<text x='23.66' y='479.63' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>2</text>
+<text x='23.66' y='432.96' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>4</text>
+<text x='23.66' y='386.29' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";'>6</text>
+<text x='299.56' y='554.23' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";'>Ambient control bagged (hr)</text>
+<text transform='translate(13.50,276.39) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";'>count</text>
+<text x='570.52' y='568.54' text-anchor='end' style='font-size: 8.80px; font-family: "Arial";'>08:53 - 14:20</text>
 </g>
 </svg>

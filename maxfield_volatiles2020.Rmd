@@ -428,7 +428,8 @@ ggplot(volsmeta, aes(x=Desorb.Start.Time, y=cluster))  + geom_line() + geom_poin
 for(yr in unique(year(volsmeta$sequence.start))) {
   print(yr)
   yrfilter <- year(volsmeta$sequence.start) == yr
-  vols.cap <- capscale(sqrt(vols.cut[yrfilter,]) ~ factor(date(sequence.start)), data=volsmeta[yrfilter,])
+  vols.cap <- capscale(sqrt(vols.cut[yrfilter,]) ~ factor(date(sequence.start)), data=volsmeta[yrfilter,],
+                       distance="bray")
   print(vols.cap)
   print(anova(vols.cap, by="term"))
   # vols.cap.points <-  fortify(vols.cap) %>% as_tibble()
@@ -568,10 +569,10 @@ pheatmap(corr.vols,
 ### CAP
 
 ```{r cap}
-(scents.cap <- capscale(sqrt(vols.good) ~ year * water * snow, data=volsmeta))
+(scents.cap <- capscale(sqrt(vols.good) ~ year * water * snow, data=volsmeta, distance="bray"))
 anova(scents.cap, by="term") %>% kable()
 
-scents.cap <- capscale(sqrt(vols.good) ~ year + water, data=volsmeta)
+scents.cap <- capscale(sqrt(vols.good) ~ year + water, data=volsmeta, distance="bray")
 plot(scents.cap, type="n")
 points(scents.cap, display = "sites", col=water_pal[volsmeta$water], pch=as.integer(volsmeta$year)+14)
 text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(water_pal)), col=c(rep("black",5),water_pal), font=2, cex=1.5)
@@ -579,7 +580,7 @@ text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(water_pal))
 plot(scents.cap, type="n")
 text(scents.cap, display="species", col="black", cex=0.5)
 
-scents.cap <- capscale(sqrt(vols.good) ~ year + snow, data=volsmeta)
+scents.cap <- capscale(sqrt(vols.good) ~ year + snow, data=volsmeta, distance="bray")
 plot(scents.cap, type="n")
 points(scents.cap, display = "sites", col=snow_pal[volsmeta$snow], pch=as.integer(volsmeta$year)+14)
 text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(snow_pal)), col=c(rep("black",5),water_pal), font=2, cex=1.5)
@@ -691,7 +692,7 @@ mod.split %>% select(class, term, p.value) %>%
 ### CAP
 
 ```{r cap_abs}
-(scents.cap <- capscale(sqrt(vols.good) ~ sun_date * precip_est_mm, data=volsmeta))
+(scents.cap <- capscale(sqrt(vols.good) ~ sun_date * precip_est_mm, data=volsmeta, distance="bray"))
 anova(scents.cap, by="term") %>% kable()
 
 library(ggvegan)
@@ -761,7 +762,7 @@ ggplot(volsmeta.class, aes(x = sun_date, y = value, color=precip_est_mm)) + face
 
 ```{r cap_sm}
 hasVWC <- !is.na(volsmeta$VWC)
-(scents.cap <- capscale(sqrt(vols.good[hasVWC,]) ~ year * VWC, data=volsmeta[hasVWC,]))
+(scents.cap <- capscale(sqrt(vols.good[hasVWC,]) ~ year * VWC, data=volsmeta[hasVWC,], distance="bray"))
 anova(scents.cap, by="term") %>% kable()
 ```
 
@@ -811,7 +812,8 @@ ggplot(volsmeta, aes(x = VWC, color = year, y = total)) +
 ### CAP
 
 ```{r cap_sm_subplot}
-(scents.cap <- capscale(sqrt(vols.good) ~ year * VWC, data=left_join(select(volsmeta,-VWC), sm.subplotyear)))
+(scents.cap <- capscale(sqrt(vols.good) ~ year * VWC, data=left_join(select(volsmeta,-VWC), sm.subplotyear),
+                        distance="bray"))
 anova(scents.cap, by="term") %>% kable()
 ```
 

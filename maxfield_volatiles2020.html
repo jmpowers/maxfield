@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-04-29" />
+<meta name="date" content="2022-05-03" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -40,7 +40,7 @@
 <script src="libs/highlightjs-9.12.0/highlight.js"></script>
 <script src="libs/htmlwidgets-1.5.4/htmlwidgets.js"></script>
 <link href="libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
-<script src="libs/datatables-binding-0.20/datatables.js"></script>
+<script src="libs/datatables-binding-0.22/datatables.js"></script>
 <link href="libs/dt-core-1.11.3/css/jquery.dataTables.min.css" rel="stylesheet" />
 <link href="libs/dt-core-1.11.3/css/jquery.dataTables.extra.css" rel="stylesheet" />
 <script src="libs/dt-core-1.11.3/js/jquery.dataTables.min.js"></script>
@@ -266,8 +266,9 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
-<h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-04-29</h4>
+<h4 class="author"><a href="http://sites.uci.edu/powers/">John
+Powers</a></h4>
+<h4 class="date">2022-05-03</h4>
 
 </div>
 
@@ -325,7 +326,8 @@ fitnessnames &lt;- c(traitnames, prop_uninfested = &quot;Prop. nonaborted fruits
                   eggs_per_flower=&quot;Fly eggs per flower&quot;)[fitnesstraits]</code></pre>
 <div id="sample-size" class="section level1">
 <h1>Sample size</h1>
-<p>Calculated from two datasets that will eventually match: datasheets from sampling and GC-MS filenames.</p>
+<p>Calculated from two datasets that will eventually match: datasheets
+from sampling and GC-MS filenames.</p>
 <pre class="r"><code>bind_rows(sampling=vt %&gt;% group_by(year, type) %&gt;% tally(),
   filenames=maxfmeta %&gt;% mutate(year=factor(year(sampledate))) %&gt;% group_by(year, type) %&gt;% tally(), .id=&quot;source&quot;) %&gt;% 
   pivot_wider(names_from=c(year,type), values_from = n) %&gt;% kable()</code></pre>
@@ -597,16 +599,24 @@ ggplot(aes(x=yday(sampledate))) + geom_bar() + facet_wrap(vars(year), ncol=1) +
 <ul>
 <li>Present in 10% of samples</li>
 <li>Maximum peak area is at least 4000000</li>
-<li>Passes t-test against ambient controls with FDR correction OR mean exceeds 4x mean of controls</li>
-<li>Not a known contaminant (Oxybenzone, Ethanol, 2,2’-oxybis-, Butylated Hydroxytoluene, Caprolactam, [1,1’-Bicyclopentyl]-2-one, L-Lactic acid, Pentadecane, 8-hexyl-, Decane, 2,8,8-trimethyl-, 2-Methyltetradecan-2-ol)</li>
+<li>Passes t-test against ambient controls with FDR correction OR mean
+exceeds 4x mean of controls</li>
+<li>Not a known contaminant (Oxybenzone, Ethanol, 2,2’-oxybis-,
+Butylated Hydroxytoluene, Caprolactam, [1,1’-Bicyclopentyl]-2-one,
+L-Lactic acid, Pentadecane, 8-hexyl-, Decane, 2,8,8-trimethyl-,
+2-Methyltetradecan-2-ol)</li>
 </ul>
-<p>Note that these potential floral compounds did not meet the tests against ambient controls: 2-phenylacetaldehyde, 3-carene, D-limonene, camphene, benzaldehyde, a-thujene, sabinene, abietadiene, 2-ethylhexan-1-ol</p>
+<p>Note that these potential floral compounds did not meet the tests
+against ambient controls: 2-phenylacetaldehyde, 3-carene, D-limonene,
+camphene, benzaldehyde, a-thujene, sabinene, abietadiene,
+2-ethylhexan-1-ol</p>
 <p>Plus (verdict other than “fvoc”):</p>
 <ul>
 <li>bis14: compounds included in Bischoff et al. (2014)</li>
 <li>keep: kept since they are known floral volatiles</li>
 <li>keep_leaf: kept since they are known leaf volatiles</li>
-<li>merge: a compound that is a synonym of one of the floral volatiles (b-caryophyllene, b-ocimene, verbenone)</li>
+<li>merge: a compound that is a synonym of one of the floral volatiles
+(b-caryophyllene, b-ocimene, verbenone)</li>
 </ul>
 <pre class="r"><code>vols &lt;- maxf[volsmeta$index,]
 vols.cut &lt;- vols[,colSums(vols)&gt;3e8]
@@ -867,7 +877,8 @@ volsmeta.traits &lt;- volsmeta %&gt;%       left_join(mnps.plantyr.traits) #wide
 <td align="right">0.0018</td>
 </tr>
 <tr class="even">
-<td align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
+<td
+align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
 <td align="right">0.0017</td>
 </tr>
 <tr class="odd">
@@ -1247,7 +1258,8 @@ volsmeta %&gt;% count(year, sampledate) %&gt;% filter(n&gt;1) %&gt;% count(year)
      water_snow=chisq.test(with(vt, table(sampledate, paste(water, snow))))) %&gt;% 
   map_dfr(tidy, .id=&quot;treatment&quot;) %&gt;% kable(caption=&quot;Test of randomness of treatments on each sampling date&quot;)</code></pre>
 <table>
-<caption>Test of randomness of treatments on each sampling date</caption>
+<caption>Test of randomness of treatments on each sampling
+date</caption>
 <thead>
 <tr class="header">
 <th align="left">treatment</th>
@@ -1388,7 +1400,8 @@ ggplot(volsmeta, aes(x=Desorb.Start.Time, y=cluster))  + geom_line() + geom_poin
 <pre class="r"><code>for(yr in unique(year(volsmeta$sequence.start))) {
   print(yr)
   yrfilter &lt;- year(volsmeta$sequence.start) == yr
-  vols.cap &lt;- capscale(sqrt(vols.cut[yrfilter,]) ~ factor(date(sequence.start)), data=volsmeta[yrfilter,])
+  vols.cap &lt;- capscale(sqrt(vols.cut[yrfilter,]) ~ factor(date(sequence.start)), data=volsmeta[yrfilter,],
+                       distance=&quot;bray&quot;)
   print(vols.cap)
   print(anova(vols.cap, by=&quot;term&quot;))
   # vols.cap.points &lt;-  fortify(vols.cap) %&gt;% as_tibble()
@@ -1555,34 +1568,35 @@ pheatmap(corr.vols,
 <h2>Plasticity to treatments</h2>
 <div id="cap" class="section level3">
 <h3>CAP</h3>
-<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ year * water * snow, data=volsmeta))</code></pre>
+<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ year * water * snow, data=volsmeta, distance=&quot;bray&quot;))</code></pre>
 <pre><code>Call: capscale(formula = sqrt(vols.good) ~ year * water * snow, data =
-volsmeta)
+volsmeta, distance = &quot;bray&quot;)
 
               Inertia Proportion Rank
-Total          42.700      1.000     
-Constrained     6.512      0.153   17
-Unconstrained  36.187      0.847   59
-Inertia is mean squared Euclidean distance 
+Total          82.325      1.000     
+Constrained    16.797      0.204   17
+Unconstrained  94.944      1.153  106
+Imaginary     -29.415     -0.357  247
+Inertia is squared Bray distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good&#39; 
 
 Eigenvalues for constrained axes:
  CAP1  CAP2  CAP3  CAP4  CAP5  CAP6  CAP7  CAP8  CAP9 CAP10 CAP11 CAP12 CAP13 
- 4.73  0.86  0.25  0.16  0.11  0.08  0.07  0.06  0.05  0.04  0.03  0.02  0.02 
+10.46  2.49  1.14  0.43  0.41  0.31  0.27  0.23  0.18  0.16  0.15  0.14  0.11 
 CAP14 CAP15 CAP16 CAP17 
- 0.02  0.01  0.01  0.01 
+ 0.11  0.09  0.06  0.05 
 
 Eigenvalues for unconstrained axes:
  MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
-16.33  3.84  2.00  1.63  1.50  1.33  1.15  1.09 
-(Showing 8 of 59 unconstrained eigenvalues)</code></pre>
+15.45  6.20  5.41  5.14  4.00  3.67  3.35  3.26 
+(Showing 8 of 106 unconstrained eigenvalues)</code></pre>
 <pre class="r"><code>anova(scents.cap, by=&quot;term&quot;) %&gt;% kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left"></th>
 <th align="right">Df</th>
-<th align="right">Variance</th>
+<th align="right">SumOfSqs</th>
 <th align="right">F</th>
 <th align="right">Pr(&gt;F)</th>
 </tr>
@@ -1591,62 +1605,62 @@ Eigenvalues for unconstrained axes:
 <tr class="odd">
 <td align="left">year</td>
 <td align="right">2</td>
-<td align="right">4.6075</td>
-<td align="right">21.4540</td>
+<td align="right">12.4505</td>
+<td align="right">22.0963</td>
 <td align="right">0.001</td>
 </tr>
 <tr class="even">
 <td align="left">water</td>
 <td align="right">2</td>
-<td align="right">0.3539</td>
-<td align="right">1.6480</td>
-<td align="right">0.099</td>
+<td align="right">0.8627</td>
+<td align="right">1.5311</td>
+<td align="right">0.032</td>
 </tr>
 <tr class="odd">
 <td align="left">snow</td>
 <td align="right">1</td>
-<td align="right">0.1988</td>
-<td align="right">1.8510</td>
-<td align="right">0.107</td>
+<td align="right">0.2735</td>
+<td align="right">0.9706</td>
+<td align="right">0.437</td>
 </tr>
 <tr class="even">
 <td align="left">year:water</td>
 <td align="right">4</td>
-<td align="right">0.4690</td>
-<td align="right">1.0919</td>
-<td align="right">0.316</td>
+<td align="right">1.0520</td>
+<td align="right">0.9335</td>
+<td align="right">0.610</td>
 </tr>
 <tr class="odd">
 <td align="left">year:snow</td>
 <td align="right">2</td>
-<td align="right">0.3131</td>
-<td align="right">1.4578</td>
-<td align="right">0.149</td>
+<td align="right">0.7197</td>
+<td align="right">1.2773</td>
+<td align="right">0.116</td>
 </tr>
 <tr class="even">
 <td align="left">water:snow</td>
 <td align="right">2</td>
-<td align="right">0.2245</td>
-<td align="right">1.0451</td>
-<td align="right">0.356</td>
+<td align="right">0.5909</td>
+<td align="right">1.0486</td>
+<td align="right">0.339</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water:snow</td>
 <td align="right">4</td>
-<td align="right">0.3454</td>
-<td align="right">0.8041</td>
-<td align="right">0.673</td>
+<td align="right">0.8476</td>
+<td align="right">0.7522</td>
+<td align="right">0.946</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>
 <td align="right">337</td>
-<td align="right">36.1875</td>
+<td align="right">94.9439</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ year + water, data=volsmeta)
+<pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ year + water, data=volsmeta, distance=&quot;bray&quot;)
 plot(scents.cap, type=&quot;n&quot;)
 points(scents.cap, display = &quot;sites&quot;, col=water_pal[volsmeta$water], pch=as.integer(volsmeta$year)+14)
 text(scents.cap, display=&quot;cn&quot;, labels=c(levels(volsmeta$year), names(water_pal)), col=c(rep(&quot;black&quot;,5),water_pal), font=2, cex=1.5)</code></pre>
@@ -1654,7 +1668,7 @@ text(scents.cap, display=&quot;cn&quot;, labels=c(levels(volsmeta$year), names(w
 <pre class="r"><code>plot(scents.cap, type=&quot;n&quot;)
 text(scents.cap, display=&quot;species&quot;, col=&quot;black&quot;, cex=0.5)</code></pre>
 <p><img src="images_volatiles2020/cap-2.svg" width="768" /></p>
-<pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ year + snow, data=volsmeta)
+<pre class="r"><code>scents.cap &lt;- capscale(sqrt(vols.good) ~ year + snow, data=volsmeta, distance=&quot;bray&quot;)
 plot(scents.cap, type=&quot;n&quot;)
 points(scents.cap, display = &quot;sites&quot;, col=snow_pal[volsmeta$snow], pch=as.integer(volsmeta$year)+14)
 text(scents.cap, display=&quot;cn&quot;, labels=c(levels(volsmeta$year), names(snow_pal)), col=c(rep(&quot;black&quot;,5),water_pal), font=2, cex=1.5)</code></pre>
@@ -1754,6 +1768,16 @@ mod.split %&gt;% select(class, term, p.value) %&gt;%
   kable(caption=&quot;Plasticity of emissions to treatments&quot;)</code></pre>
 <table>
 <caption>Plasticity of emissions to treatments</caption>
+<colgroup>
+<col width="16%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="13%" />
+<col width="12%" />
+<col width="13%" />
+<col width="19%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">class</th>
@@ -1811,36 +1835,38 @@ mod.split %&gt;% select(class, term, p.value) %&gt;%
 </table>
 </div>
 </div>
-<div id="plasticity-to-snowmelt-date-and-precipitation" class="section level2">
+<div id="plasticity-to-snowmelt-date-and-precipitation"
+class="section level2">
 <h2>Plasticity to snowmelt date and precipitation</h2>
 <div id="cap-1" class="section level3">
 <h3>CAP</h3>
-<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ sun_date * precip_est_mm, data=volsmeta))</code></pre>
+<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ sun_date * precip_est_mm, data=volsmeta, distance=&quot;bray&quot;))</code></pre>
 <pre><code>Call: capscale(formula = sqrt(vols.good) ~ sun_date * precip_est_mm,
-data = volsmeta)
+data = volsmeta, distance = &quot;bray&quot;)
 
-              Inertia Proportion Rank
-Total         42.6996     1.0000     
-Constrained    3.3645     0.0788    3
-Unconstrained 39.3351     0.9212   59
-Inertia is mean squared Euclidean distance 
+               Inertia Proportion Rank
+Total          82.3255     1.0000     
+Constrained     7.3917     0.0898    3
+Unconstrained 104.3490     1.2675  106
+Imaginary     -29.4153    -0.3573  247
+Inertia is squared Bray distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good&#39; 
 
 Eigenvalues for constrained axes:
- CAP1  CAP2  CAP3 
-3.146 0.129 0.090 
+CAP1 CAP2 CAP3 
+6.60 0.53 0.26 
 
 Eigenvalues for unconstrained axes:
  MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
-17.80  4.00  2.28  1.87  1.64  1.36  1.34  1.12 
-(Showing 8 of 59 unconstrained eigenvalues)</code></pre>
+17.01  8.41  6.21  5.36  4.49  4.02  3.52  3.51 
+(Showing 8 of 106 unconstrained eigenvalues)</code></pre>
 <pre class="r"><code>anova(scents.cap, by=&quot;term&quot;) %&gt;% kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left"></th>
 <th align="right">Df</th>
-<th align="right">Variance</th>
+<th align="right">SumOfSqs</th>
 <th align="right">F</th>
 <th align="right">Pr(&gt;F)</th>
 </tr>
@@ -1849,28 +1875,28 @@ Eigenvalues for unconstrained axes:
 <tr class="odd">
 <td align="left">sun_date</td>
 <td align="right">1</td>
-<td align="right">3.1012</td>
-<td align="right">27.6728</td>
+<td align="right">6.4966</td>
+<td align="right">21.8527</td>
 <td align="right">0.001</td>
 </tr>
 <tr class="even">
 <td align="left">precip_est_mm</td>
 <td align="right">1</td>
-<td align="right">0.1657</td>
-<td align="right">1.4782</td>
-<td align="right">0.164</td>
+<td align="right">0.6204</td>
+<td align="right">2.0868</td>
+<td align="right">0.009</td>
 </tr>
 <tr class="odd">
 <td align="left">sun_date:precip_est_mm</td>
 <td align="right">1</td>
-<td align="right">0.0977</td>
-<td align="right">0.8714</td>
-<td align="right">0.441</td>
+<td align="right">0.2747</td>
+<td align="right">0.9241</td>
+<td align="right">0.530</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>
 <td align="right">351</td>
-<td align="right">39.3351</td>
+<td align="right">104.3490</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
@@ -1908,7 +1934,8 @@ mod.abs %&gt;% select(class, term, p.value) %&gt;%
   pivot_wider(names_from=term, values_from=p.value) %&gt;%
   kable(caption=&quot;Plasticity of emissions to snowmelt date and estimated precipitation&quot;)</code></pre>
 <table>
-<caption>Plasticity of emissions to snowmelt date and estimated precipitation</caption>
+<caption>Plasticity of emissions to snowmelt date and estimated
+precipitation</caption>
 <thead>
 <tr class="header">
 <th align="left">class</th>
@@ -1973,37 +2000,39 @@ ggplot(volsmeta.class, aes(x = sun_date, y = value, color=precip_est_mm)) + face
 </div>
 </div>
 </div>
-<div id="plasticity-to-plant-level-soil-moisture" class="section level2">
+<div id="plasticity-to-plant-level-soil-moisture"
+class="section level2">
 <h2>Plasticity to plant-level soil moisture</h2>
 <div id="cap-2" class="section level3">
 <h3>CAP</h3>
 <pre class="r"><code>hasVWC &lt;- !is.na(volsmeta$VWC)
-(scents.cap &lt;- capscale(sqrt(vols.good[hasVWC,]) ~ year * VWC, data=volsmeta[hasVWC,]))</code></pre>
+(scents.cap &lt;- capscale(sqrt(vols.good[hasVWC,]) ~ year * VWC, data=volsmeta[hasVWC,], distance=&quot;bray&quot;))</code></pre>
 <pre><code>Call: capscale(formula = sqrt(vols.good[hasVWC, ]) ~ year * VWC, data =
-volsmeta[hasVWC, ])
+volsmeta[hasVWC, ], distance = &quot;bray&quot;)
 
               Inertia Proportion Rank
-Total          44.637      1.000     
-Constrained     5.867      0.131    5
-Unconstrained  38.770      0.869   59
-Inertia is mean squared Euclidean distance 
+Total          73.994      1.000     
+Constrained    13.168      0.178    5
+Unconstrained  86.058      1.163   98
+Imaginary     -25.232     -0.341  217
+Inertia is squared Bray distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good[hasVWC, ]&#39; 
 
 Eigenvalues for constrained axes:
 CAP1 CAP2 CAP3 CAP4 CAP5 
-4.75 0.83 0.14 0.09 0.06 
+9.82 2.06 0.73 0.38 0.18 
 
 Eigenvalues for unconstrained axes:
  MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
-17.55  4.07  2.19  1.78  1.53  1.43  1.23  1.11 
-(Showing 8 of 59 unconstrained eigenvalues)</code></pre>
+14.02  5.26  4.88  4.70  3.64  3.40  3.19  2.86 
+(Showing 8 of 98 unconstrained eigenvalues)</code></pre>
 <pre class="r"><code>anova(scents.cap, by=&quot;term&quot;) %&gt;% kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left"></th>
 <th align="right">Df</th>
-<th align="right">Variance</th>
+<th align="right">SumOfSqs</th>
 <th align="right">F</th>
 <th align="right">Pr(&gt;F)</th>
 </tr>
@@ -2012,28 +2041,28 @@ Eigenvalues for unconstrained axes:
 <tr class="odd">
 <td align="left">year</td>
 <td align="right">2</td>
-<td align="right">5.3743</td>
-<td align="right">21.5557</td>
+<td align="right">11.8272</td>
+<td align="right">21.3710</td>
 <td align="right">0.001</td>
 </tr>
 <tr class="even">
 <td align="left">VWC</td>
 <td align="right">1</td>
-<td align="right">0.0633</td>
-<td align="right">0.5082</td>
-<td align="right">0.786</td>
+<td align="right">0.2727</td>
+<td align="right">0.9853</td>
+<td align="right">0.460</td>
 </tr>
 <tr class="odd">
 <td align="left">year:VWC</td>
 <td align="right">2</td>
-<td align="right">0.4296</td>
-<td align="right">1.7231</td>
-<td align="right">0.083</td>
+<td align="right">1.0686</td>
+<td align="right">1.9308</td>
+<td align="right">0.004</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>
 <td align="right">311</td>
-<td align="right">38.7699</td>
+<td align="right">86.0577</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
@@ -2113,36 +2142,39 @@ mod.sm %&gt;% select(class, term, p.value) %&gt;%
 <p><img src="images_volatiles2020/sm_vols-2.svg" width="768" /></p>
 </div>
 </div>
-<div id="plasticity-to-subplot-level-soil-moisture" class="section level2">
+<div id="plasticity-to-subplot-level-soil-moisture"
+class="section level2">
 <h2>Plasticity to subplot-level soil moisture</h2>
 <div id="cap-3" class="section level3">
 <h3>CAP</h3>
-<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ year * VWC, data=left_join(select(volsmeta,-VWC), sm.subplotyear)))</code></pre>
+<pre class="r"><code>(scents.cap &lt;- capscale(sqrt(vols.good) ~ year * VWC, data=left_join(select(volsmeta,-VWC), sm.subplotyear),
+                        distance=&quot;bray&quot;))</code></pre>
 <pre><code>Call: capscale(formula = sqrt(vols.good) ~ year * VWC, data =
-left_join(select(volsmeta, -VWC), sm.subplotyear))
+left_join(select(volsmeta, -VWC), sm.subplotyear), distance = &quot;bray&quot;)
 
               Inertia Proportion Rank
-Total          42.700      1.000     
-Constrained     5.495      0.129    5
-Unconstrained  37.205      0.871   59
-Inertia is mean squared Euclidean distance 
+Total          82.325      1.000     
+Constrained    13.758      0.167    5
+Unconstrained  97.983      1.190  106
+Imaginary     -29.415     -0.357  247
+Inertia is squared Bray distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good&#39; 
 
 Eigenvalues for constrained axes:
-CAP1 CAP2 CAP3 CAP4 CAP5 
-4.39 0.83 0.18 0.05 0.04 
+ CAP1  CAP2  CAP3  CAP4  CAP5 
+10.39  2.22  0.76  0.22  0.17 
 
 Eigenvalues for unconstrained axes:
  MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
-16.71  3.92  2.03  1.67  1.58  1.37  1.18  1.12 
-(Showing 8 of 59 unconstrained eigenvalues)</code></pre>
+15.99  6.29  5.59  5.19  4.10  3.77  3.48  3.29 
+(Showing 8 of 106 unconstrained eigenvalues)</code></pre>
 <pre class="r"><code>anova(scents.cap, by=&quot;term&quot;) %&gt;% kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left"></th>
 <th align="right">Df</th>
-<th align="right">Variance</th>
+<th align="right">SumOfSqs</th>
 <th align="right">F</th>
 <th align="right">Pr(&gt;F)</th>
 </tr>
@@ -2151,28 +2183,28 @@ Eigenvalues for unconstrained axes:
 <tr class="odd">
 <td align="left">year</td>
 <td align="right">2</td>
-<td align="right">4.6075</td>
-<td align="right">21.610</td>
+<td align="right">12.4505</td>
+<td align="right">22.173</td>
 <td align="right">0.001</td>
 </tr>
 <tr class="even">
 <td align="left">VWC</td>
 <td align="right">1</td>
-<td align="right">0.2536</td>
-<td align="right">2.379</td>
-<td align="right">0.050</td>
+<td align="right">0.3776</td>
+<td align="right">1.345</td>
+<td align="right">0.132</td>
 </tr>
 <tr class="odd">
 <td align="left">year:VWC</td>
 <td align="right">2</td>
-<td align="right">0.6337</td>
-<td align="right">2.972</td>
-<td align="right">0.008</td>
+<td align="right">0.9297</td>
+<td align="right">1.656</td>
+<td align="right">0.016</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>
 <td align="right">349</td>
-<td align="right">37.2048</td>
+<td align="right">97.9830</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
@@ -2196,7 +2228,8 @@ mod.sm %&gt;% select(class, term, p.value) %&gt;%
   pivot_wider(names_from=term, values_from=p.value) %&gt;%
   kable(caption=&quot;Plasticity of emissions to subplot-level soil moisture&quot;)</code></pre>
 <table>
-<caption>Plasticity of emissions to subplot-level soil moisture</caption>
+<caption>Plasticity of emissions to subplot-level soil
+moisture</caption>
 <thead>
 <tr class="header">
 <th align="left">class</th>
@@ -2264,7 +2297,8 @@ mnps.plantyr.traits %&gt;% select(all_of(fitnesstraits)) %&gt;%
   scale_color_manual(values=year_pal)+ scale_fill_manual(values=year_pal)</code></pre>
 <p><img src="images_volatiles2020/fitness_corr-1.svg" width="768" /></p>
 </div>
-<div id="plots-of-selection-in-treatments-and-years" class="section level2">
+<div id="plots-of-selection-in-treatments-and-years"
+class="section level2">
 <h2>Plots of selection in treatments and years</h2>
 <pre class="r"><code>walk(fitnesstraits, ~ 
        print(ggplot(traits.good.top %&gt;% filter(ifelse(.x == &quot;prop_uninfested&quot;, fruits_nonaborted &gt; 4, TRUE)), 
@@ -2326,6 +2360,13 @@ mod.selection %&gt;% select(fitnesstrait, term, p.value) %&gt;%
   kable(caption=&quot;Selection of emissions in each treatment&quot;)</code></pre>
 <table>
 <caption>Selection of emissions in each treatment</caption>
+<colgroup>
+<col width="25%" />
+<col width="13%" />
+<col width="21%" />
+<col width="20%" />
+<col width="20%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">term</th>
@@ -2553,7 +2594,9 @@ tibble(name = fitnesstraits, SR2 = MF$SR2) %&gt;%
 </div>
 <div id="selection-gradients" class="section level2">
 <h2>Selection gradients</h2>
-<p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong et al. 2018</a> for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.</p>
+<p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong
+et al. 2018</a> for reconstructing selection estimates from estimates of
+selection on PCs: Beta = E * A.</p>
 <pre class="r"><code># previously split the data before running PCA - now run PCA on the whole dataset
 
 # Run PCA on traits
@@ -2841,7 +2884,8 @@ walk(adaptive.plasticity.plots,
 </div>
 </div>
 </div>
-<div id="plasticity-to-snowmelt-vs.-precipitation" class="section level1">
+<div id="plasticity-to-snowmelt-vs.-precipitation"
+class="section level1">
 <h1>Plasticity to snowmelt vs. precipitation</h1>
 <pre class="r"><code>ggplot(left_join(plasticity.snow, plasticity.water), aes(x=R_A, y=E_N)) + 
   facet_wrap(vars(year), ncol=1)+
@@ -2912,7 +2956,16 @@ ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait
 <pre class="r"><code>mod.selection.abs %&gt;% filter(trait==&quot;a-pinene&quot;) %&gt;% 
   mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
   select(-c(model, coefs)) %&gt;% unnest(tests) %&gt;% filter(str_detect(term, &quot;trait&quot;)) %&gt;% kable()</code></pre>
-<table>
+<table style="width:100%;">
+<colgroup>
+<col width="22%" />
+<col width="12%" />
+<col width="27%" />
+<col width="9%" />
+<col width="4%" />
+<col width="13%" />
+<col width="10%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">response</th>
