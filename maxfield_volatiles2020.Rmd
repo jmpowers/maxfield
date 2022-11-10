@@ -1,4 +1,4 @@
---- 
+---
 title: "Maxfield Meadow Ipomopsis Volatiles"
 author: "[John Powers](http://sites.uci.edu/powers/)"
 date: "`r Sys.Date()`"
@@ -764,6 +764,17 @@ ggplot(volsmeta.class, aes(x = sun_date, y = value, color=precip_est_mm)) + face
 hasVWC <- !is.na(volsmeta$VWC)
 (scents.cap <- capscale(sqrt(vols.good[hasVWC,]) ~ year * VWC, data=volsmeta[hasVWC,], distance="bray"))
 anova(scents.cap, by="term") %>% kable()
+
+cap.df <- fortify(scents.cap)
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
+  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta[hasVWC,]), aes(color=year))+
+  geom_segment(data=cap.df %>% filter(Score=="biplot"), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+               arrow=arrow(length=unit(0.5, "lines")))+
+  geom_text(data=cap.df %>% filter(Score=="biplot") ,
+            aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface="bold") +
+  geom_text(data=cap.df %>% left_join(ipochems, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  scale_color_manual("Year", values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
+  theme_bw() + theme(panel.grid = element_blank())
 ```
 
 ### Emissions by class
@@ -815,6 +826,16 @@ ggplot(volsmeta, aes(x = VWC, color = year, y = total)) +
 (scents.cap <- capscale(sqrt(vols.good) ~ year * VWC, data=left_join(select(volsmeta,-VWC), sm.subplotyear),
                         distance="bray"))
 anova(scents.cap, by="term") %>% kable()
+cap.df <- fortify(scents.cap)
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
+  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta), aes(color=year))+
+  geom_segment(data=cap.df %>% filter(Score=="biplot"), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+               arrow=arrow(length=unit(0.5, "lines")))+
+  geom_text(data=cap.df %>% filter(Score=="biplot") ,
+            aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface="bold") +
+  geom_text(data=cap.df %>% left_join(ipochems, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  scale_color_manual("Year", values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
+  theme_bw() + theme(panel.grid = element_blank())
 ```
 
 ### Emissions by class

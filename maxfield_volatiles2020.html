@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-11-09" />
+<meta name="date" content="2022-11-10" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -268,7 +268,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2022-11-09</h4>
+<h4 class="date">2022-11-10</h4>
 
 </div>
 
@@ -2068,6 +2068,17 @@ Eigenvalues for unconstrained axes:
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>cap.df &lt;- fortify(scents.cap)
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
+  geom_point(data=cap.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta[hasVWC,]), aes(color=year))+
+  geom_segment(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+               arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
+  geom_text(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;) ,
+            aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface=&quot;bold&quot;) +
+  geom_text(data=cap.df %&gt;% left_join(ipochems, by=c(&quot;Label&quot;=&quot;name&quot;)) %&gt;% filter(Score==&quot;species&quot;, mean.floral&gt;1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  scale_color_manual(&quot;Year&quot;, values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
+  theme_bw() + theme(panel.grid = element_blank())</code></pre>
+<p><img src="images_volatiles2020/cap_sm-1.svg" width="768" /></p>
 </div>
 <div id="emissions-by-class-2" class="section level3">
 <h3>Emissions by class</h3>
@@ -2210,6 +2221,17 @@ Eigenvalues for unconstrained axes:
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>cap.df &lt;- fortify(scents.cap)
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
+  geom_point(data=cap.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta), aes(color=year))+
+  geom_segment(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+               arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
+  geom_text(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;) ,
+            aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface=&quot;bold&quot;) +
+  geom_text(data=cap.df %&gt;% left_join(ipochems, by=c(&quot;Label&quot;=&quot;name&quot;)) %&gt;% filter(Score==&quot;species&quot;, mean.floral&gt;1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  scale_color_manual(&quot;Year&quot;, values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
+  theme_bw() + theme(panel.grid = element_blank())</code></pre>
+<p><img src="images_volatiles2020/cap_sm_subplot-1.svg" width="768" /></p>
 </div>
 <div id="emissions-by-class-3" class="section level3">
 <h3>Emissions by class</h3>
