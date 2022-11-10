@@ -332,7 +332,7 @@ cat(paste("Buds included in", round(sum(volsmeta$buds>0, na.rm=T)/sum(volsmeta$b
 
 ## Heatmap
 
-```{r heatmap, fig.width=16, fig.height=12}
+```{r heatmap, dev="png", dev.args=list(),fig.width=16, fig.height=12}
 annot_pal <- list(
   sequence.date = volsmeta %>% mutate(yr = sequence.year) %>% group_by(yr) %>% summarize(n = length(unique(sequence.date))) %>% 
     pull(n) %>% map(scales::hue_pal()) %>% unlist() %>% set_names(unique(volsmeta$sequence.date)),

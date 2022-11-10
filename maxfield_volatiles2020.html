@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-05-19" />
+<meta name="date" content="2022-11-09" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -268,7 +268,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2022-05-19</h4>
+<h4 class="date">2022-11-09</h4>
 
 </div>
 
@@ -282,6 +282,7 @@ td, th { padding : 6px }
 library(lubridate)
 library(vegan)
 library(broom)
+library(emmeans)
 library(viridis)
 library(ggvegan)
 library(gridExtra)
@@ -1324,7 +1325,7 @@ pheatmap(as.matrix(t(vols.cut))^(1/4),
          annotation_col=volsmeta %&gt;% select(sequence.date, cluster) %&gt;% mutate(across(everything(), factor)),
          annotation_colors =  annot_pal,
          gaps_col = which(diff(year(volsmeta$sequence.date))&gt;0))</code></pre>
-<p><img src="images_volatiles2020/heatmap-1.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/heatmap-1.png" width="1536" /></p>
 <pre class="r"><code>pheatmap(as.matrix(t(vols.good))^(1/4), 
          cluster_cols=F, show_colnames=F,
          clustering_method=&quot;mcquitty&quot;, clustering_distance_rows=&quot;correlation&quot;,
@@ -1333,7 +1334,7 @@ pheatmap(as.matrix(t(vols.cut))^(1/4),
          annotation_col=volsmeta %&gt;% select(sequence.date, cluster) %&gt;% mutate(across(everything(), factor)),
          annotation_colors = annot_pal,
          gaps_col = which(diff(year(volsmeta$sequence.date))&gt;0))</code></pre>
-<p><img src="images_volatiles2020/heatmap-2.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/heatmap-2.png" width="1536" /></p>
 <pre class="r"><code>pinene_correlates &lt;- cor(sqrt(vols[,colSums(vols)&gt;1e7])) %&gt;% as.data.frame() %&gt;%
   filter(`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`&gt;0.15) %&gt;% rownames()
 pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4), 
@@ -1344,14 +1345,14 @@ pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4),
                   annotation_col=volsmeta %&gt;% select(sequence.date, cluster) %&gt;% mutate(across(everything(), factor)),
          annotation_colors = annot_pal,
          gaps_col = which(diff(year(volsmeta$sequence.date))&gt;0), main=&quot;Volatiles that correlate with alpha-pinene&quot;)</code></pre>
-<p><img src="images_volatiles2020/heatmap-3.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/heatmap-3.png" width="1536" /></p>
 <pre class="r"><code>pheatmap(as.matrix(t(vols.class))^(1/4), 
          cluster_cols=F, cluster_rows=F, show_colnames=F,
          scale=&quot;none&quot;, color=mako(512),main=&quot;Filtered volatiles classes&quot;,
          annotation_col=volsmeta %&gt;% select(sequence.date, cluster) %&gt;% mutate(across(everything(), factor)),
          annotation_colors =  annot_pal,
          gaps_col = which(diff(year(volsmeta$sequence.date))&gt;0))</code></pre>
-<p><img src="images_volatiles2020/heatmap-4.svg" width="1536" /></p>
+<p><img src="images_volatiles2020/heatmap-4.png" width="1536" /></p>
 </div>
 <div id="chromatograms-by-gcms-run-date" class="section level2">
 <h2>Chromatograms by GCMS run date</h2>
@@ -1979,7 +1980,6 @@ precipitation</caption>
 <pre class="r"><code>precip.breaks &lt;- seq(25,175, by=25)
 grid.points &lt;- list(sun_date=range(treatments$sun_date), precip_est_mm=precip.breaks)
 options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-library(emmeans)
 #TODO this code partially repeats chunk above
 mod.class.abs &lt;- volsmeta.class %&gt;% group_by(name) %&gt;% nest() %&gt;% 
   mutate(model = map(data, ~lmer(value ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=.)),
@@ -2334,17 +2334,19 @@ class="section level2">
 
 selection_effects &lt;- function(fitnesstrait) {
   options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-  lm(fitness ~ year * water * snow + 
+  lm(relfitness ~ year * water * snow + 
      Monoterpene * snow + Monoterpene * water + Monoterpene * year +
      Sesquiterpene * snow + Sesquiterpene * water + Sesquiterpene * year + 
      Benzenoid * snow + Benzenoid * water + Benzenoid * year +
      Aliphatic * snow + Aliphatic * water + Aliphatic * year,
-       data = rename(trait.class.wide, fitness=fitnesstrait))
+       data = trait.class.wide %&gt;% rename(fitness=fitnesstrait) %&gt;% 
+       mutate(relfitness = fitness/mean(fitness, na.rm=T)))
 }
 
 fitnesstraits.sd &lt;- map_dbl(fitnesstraits, ~sd(mnps.plantyr.traits[[.x]], na.rm=T)) %&gt;% set_names(fitnesstraits)
+class.sd &lt;- map_dbl(names(class_pal), ~sd(trait.class.wide[[.x]], na.rm=T)) %&gt;% set_names(names(class_pal)) 
+#note this is after sqrt transformation
 
-library(emmeans)
 get_emt_class &lt;- function(mod) {
   map_dfr(set_names(names(class_pal)), ~emtrends(mod, c(&quot;year&quot;,&quot;water&quot;,&quot;snow&quot;), var=.x) %&gt;% 
             summary %&gt;% as_tibble %&gt;% rename(&quot;trend&quot; = ends_with(&quot;trend&quot;)), .id=&quot;class&quot;)
@@ -2556,10 +2558,10 @@ mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&g
 </tbody>
 </table>
 <pre class="r"><code>mod.selection %&gt;% select(fitnesstrait, emt) %&gt;% unnest(emt) %&gt;% 
-  mutate(fitsd = fitnesstraits.sd[fitnesstrait],
-         trend.std = trend/fitsd,
-         uSE = (trend + SE)/fitsd,
-         lSE = (trend - SE)/fitsd,
+  mutate(classsd = class.sd[class],
+         trend.std = trend * classsd,
+         uSE = (trend + SE) * classsd,
+         lSE = (trend - SE) * classsd,
          water_snow = factor(paste(water, snow), levels=names(water_snow_pal))) %&gt;% 
   ggplot(aes(x=class, color=water_snow, y=trend.std, ymin=lSE, ymax=uSE)) +
   facet_grid(cols=vars(fitnesstrait), rows=vars(year), labeller=as_labeller(c(set_names(2018:2020), fitnessnames))) +
@@ -2569,7 +2571,6 @@ mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&g
   labs(x=&quot;Compound class&quot;, y = &quot;Standardized selection gradient&quot;, color=&quot;Precipitation, snow&quot;) +
   theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1))</code></pre>
 <p><img src="images_volatiles2020/selection_class_gradient-1.svg" width="1056" /></p>
-<pre class="r"><code>#TODO is this the right way to calculate a standarized selection gradient?</code></pre>
 </div>
 </div>
 <div id="joint-species-distribution-model-1" class="section level2">
@@ -2706,17 +2707,22 @@ walk(fitnesstraits, ~print(plot_beta(filter(vols.beta.water.snow, fitnesstrait==
 #TODO not knitting signif  size right, but output here OK (not anymore - nothing significant)
 # TODO include interactions btn snow and water?
 # TODO this is wrong, for labelling the graph we want models within each year, but those don&#39;t all run
-mod.top.split &lt;- volsmeta.good.top %&gt;% group_by(name) %&gt;% nest() %&gt;% 
-  mutate(model = map(data, ~lmer(value ~ year + snow + water + (1|snow:plot) + (1|plotid), data=.)),
-         test =  map(model, ~tidy(multcomp::glht(.x, 
+mod.top.split &lt;- volsmeta.good.top %&gt;% group_by(name, year) %&gt;% nest() %&gt;% 
+  mutate(model = map(data, ~lm(value ~ snow + water, data=.)), # + (1|plotid) + (1|plot)
+         emm = map(model, ~ summary(emmeans(.x, ~ snow + water))%&gt;% filter(water==&quot;Control&quot;, snow==&quot;Normal&quot;)), 
+         test =  map(model, ~tidy(multcomp:::summary.glht(multcomp::glht(.x, 
                            linfct = multcomp::mcp(water = c(&quot;Addition - Control = 0&quot;,
                                                             &quot;Reduction - Control = 0&quot;),
-                                                  snow = c(&quot;Early - Normal = 0&quot;)))))) %&gt;% 
-  select(name, test) %&gt;% unnest(test) %&gt;% select(name, contrast, adj.p.value) %&gt;%
+                                                  snow = c(&quot;Early - Normal = 0&quot;))), multcomp::adjusted(type=&quot;fdr&quot;))))) %&gt;% 
+  select(name, emm, test) %&gt;% unnest(c(emm, test)) %&gt;% 
+  mutate(estimate=estimate/emmean, std.error=std.error/emmean)#divide estimated difference in means by emm in Normal Control subplots
+  #select(year, name, contrast, adj.p.value) %&gt;%
   mutate(signif = adj.p.value &lt; 0.05, .keep=&quot;unused&quot;) %&gt;% 
   pivot_wider(names_from=contrast, values_from=signif)
 
-
+ggplot(mod.top.split, aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=name, color=year, alpha=adj.p.value &lt; 0.05)) +
+  geom_pointrange() +  facet_wrap(vars(contrast))
+  
 plasticity.water &lt;- volsmeta.good.top %&gt;% group_by(year, water, name) %&gt;% summarize(value=mean(value)) %&gt;% 
   pivot_wider(names_from=water, values_from=value) %&gt;% left_join(ipochems) %&gt;% 
   mutate(A_C = (Addition-Control)/Control, 
