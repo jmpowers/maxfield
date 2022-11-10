@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -24,6 +24,7 @@ library(tidyverse)
 library(lubridate)
 library(vegan)
 library(broom)
+library(emmeans)
 library(viridis)
 library(ggvegan)
 library(gridExtra)
@@ -737,7 +738,6 @@ mod.abs %>% select(class, term, p.value) %>%
 precip.breaks <- seq(25,175, by=25)
 grid.points <- list(sun_date=range(treatments$sun_date), precip_est_mm=precip.breaks)
 options(contrasts = c("contr.sum", "contr.poly"))
-library(emmeans)
 #TODO this code partially repeats chunk above
 mod.class.abs <- volsmeta.class %>% group_by(name) %>% nest() %>% 
   mutate(model = map(data, ~lmer(value ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=.)),
@@ -903,26 +903,37 @@ walk(fitnesstraits, ~
                labs(x="Emissions (ng/hr/flower)", y=fitnessnames[.x], 
                     color="Precipitation and snowmelt", linetype="Year", shape="Year")+
                theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))
+```
 
-
+```{r selection_class_gradient, fig.width=11, fig.height=8}
 trait.class.wide <- bind_cols(volsmeta, vols.class) %>% left_join(mnps.plantyr.traits) %>% 
   select(plantid, year, water, snow, all_of(fitnesstraits), all_of(names(class_pal))) %>% 
   mutate(across(all_of(names(class_pal)), sqrt))
 
 selection_effects <- function(fitnesstrait) {
   options(contrasts = c("contr.sum", "contr.poly"))
-  lm(fitness ~ year * water * snow + 
+  lm(relfitness ~ year * water * snow + 
      Monoterpene * snow + Monoterpene * water + Monoterpene * year +
      Sesquiterpene * snow + Sesquiterpene * water + Sesquiterpene * year + 
      Benzenoid * snow + Benzenoid * water + Benzenoid * year +
      Aliphatic * snow + Aliphatic * water + Aliphatic * year,
-       data = rename(trait.class.wide, fitness=fitnesstrait))
+       data = trait.class.wide %>% rename(fitness=fitnesstrait) %>% 
+       mutate(relfitness = fitness/mean(fitness, na.rm=T)))
 }
 
+fitnesstraits.sd <- map_dbl(fitnesstraits, ~sd(mnps.plantyr.traits[[.x]], na.rm=T)) %>% set_names(fitnesstraits)
+class.sd <- map_dbl(names(class_pal), ~sd(trait.class.wide[[.x]], na.rm=T)) %>% set_names(names(class_pal)) 
+#note this is after sqrt transformation
+
+get_emt_class <- function(mod) {
+  map_dfr(set_names(names(class_pal)), ~emtrends(mod, c("year","water","snow"), var=.x) %>% 
+            summary %>% as_tibble %>% rename("trend" = ends_with("trend")), .id="class")
+}
+ 
 mod.selection <- tibble(fitnesstrait=fitnesstraits) %>% 
   mutate(model = map(fitnesstrait, selection_effects),
-         test = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 
-  select(-model) %>% unnest(test)
+         emt = map(model, get_emt_class),
+         test = map(model, ~ tidy(car::Anova(.x, type=3))))
 
 stars <- function(p.values) {
   symnum(p.values, corr = FALSE, na = FALSE, 
@@ -930,12 +941,27 @@ stars <- function(p.values) {
          symbols = c("***", "**", "*", ".", " "))
 }
 
-mod.selection %>% select(fitnesstrait, term, p.value) %>% 
+mod.selection %>% unnest(test) %>% select(fitnesstrait, term, p.value) %>% 
   mutate(p.value= paste(format(round(p.value,4),nsmall=4), stars(p.value))) %>% 
   pivot_wider(names_from=fitnesstrait, values_from=p.value) %>%
   filter(term!="Residuals") %>% 
   kable(caption="Selection of emissions in each treatment")
+
+mod.selection %>% select(fitnesstrait, emt) %>% unnest(emt) %>% 
+  mutate(classsd = class.sd[class],
+         trend.std = trend * classsd,
+         uSE = (trend + SE) * classsd,
+         lSE = (trend - SE) * classsd,
+         water_snow = factor(paste(water, snow), levels=names(water_snow_pal))) %>% 
+  ggplot(aes(x=class, color=water_snow, y=trend.std, ymin=lSE, ymax=uSE)) +
+  facet_grid(cols=vars(fitnesstrait), rows=vars(year), labeller=as_labeller(c(set_names(2018:2020), fitnessnames))) +
+  geom_hline(yintercept=0)+
+  geom_pointrange(position=position_dodge(width=0.5), size=0.2) +
+  scale_color_manual(values=water_snow_pal) +
+  labs(x="Compound class", y = "Standardized selection gradient", color="Precipitation, snow") +
+  theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1))
 ```
+
 
 ## Joint species distribution model
 
@@ -1000,7 +1026,9 @@ vols.PCA.E <- vols.PCA$rotation[,1:5] #min(4, ncol(vols.PCA$rotation))
 
 calculate_beta <- function(E, slopes) {
   data.frame(B = E %*% slopes$A,
-             SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %>% rownames_to_column("trait")
+             SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %>% 
+    mutate(not_zero = abs(B) - SE > 0) %>% 
+    rownames_to_column("trait")
 }
 
 selection_pca <- function(year, water=names(water_pal), snow=names(snow_pal), fitnesstrait = "seeds_est") {
@@ -1058,20 +1086,27 @@ walk(fitnesstraits, ~print(plot_beta(filter(vols.beta.water.snow, fitnesstrait==
 
 ### Selection gradient vs. plasticity
 
-```{r adaptive, fig.height=7, fig.width=9, cache=F}
+```{r adaptive, fig.height=7, fig.width=9, eval=F}
 #TODO change 1|plot to 1|snow:plot throughout?
-#TODO not knitting signif  size right, but output here OK
-mod.top.split <- volsmeta.good.top %>% group_by(name) %>% nest() %>% 
-  mutate(model = map(data, ~lmer(value ~ year * snow * water + (1|plot) + (1|plotid), data=.)),
-         test =  map(model, ~tidy(multcomp::glht(.x, 
+#TODO not knitting signif  size right, but output here OK (not anymore - nothing significant)
+# TODO include interactions btn snow and water?
+# TODO this is wrong, for labelling the graph we want models within each year, but those don't all run
+mod.top.split <- volsmeta.good.top %>% group_by(name, year) %>% nest() %>% 
+  mutate(model = map(data, ~lm(value ~ snow + water, data=.)), # + (1|plotid) + (1|plot)
+         emm = map(model, ~ summary(emmeans(.x, ~ snow + water))%>% filter(water=="Control", snow=="Normal")), 
+         test =  map(model, ~tidy(multcomp:::summary.glht(multcomp::glht(.x, 
                            linfct = multcomp::mcp(water = c("Addition - Control = 0",
                                                             "Reduction - Control = 0"),
-                                                  snow = c("Early - Normal = 0")))))) %>% 
-  select(name, test) %>% unnest(test) %>% select(name, contrast, adj.p.value) %>%
+                                                  snow = c("Early - Normal = 0"))), multcomp::adjusted(type="fdr"))))) %>% 
+  select(name, emm, test) %>% unnest(c(emm, test)) %>% 
+  mutate(estimate=estimate/emmean, std.error=std.error/emmean)#divide estimated difference in means by emm in Normal Control subplots
+  #select(year, name, contrast, adj.p.value) %>%
   mutate(signif = adj.p.value < 0.05, .keep="unused") %>% 
   pivot_wider(names_from=contrast, values_from=signif)
 
-
+ggplot(mod.top.split, aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=name, color=year, alpha=adj.p.value < 0.05)) +
+  geom_pointrange() +  facet_wrap(vars(contrast))
+  
 plasticity.water <- volsmeta.good.top %>% group_by(year, water, name) %>% summarize(value=mean(value)) %>% 
   pivot_wider(names_from=water, values_from=value) %>% left_join(ipochems) %>% 
   mutate(A_C = (Addition-Control)/Control, 
@@ -1105,16 +1140,16 @@ walk(adaptive.plasticity.plots,
                geom_vline(xintercept=0) + geom_hline(yintercept=0) +
                annotate("rect", xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= "black", alpha=0.1) + 
                annotate("rect", xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= "black", alpha=0.1) +
-               geom_smooth(aes(y=B, group=1), color="grey30", method="lm", se=F)+
+               geom_smooth(aes(y=B, group=1), color="grey30", method="lm", se=F, size=1)+
                geom_point(aes(y=B, alpha=name=="a-pinene"), 
                           color=class_pal["Monoterpene"], shape="X", size=4)+
                scale_alpha_manual(values=c(0,1), guide="none")+
-               geom_point(aes(y=B, color=class)) + # size=mean.floral
+               geom_pointrange(aes(y=B, color=class, ymin=B-SE, ymax=B+SE), size=0.2) + # size=mean.floral
                #scale_size("Mean emissions\n(ng/hr/flower)", range=c(1,3)) +
                scale_size_manual(values=c(1,2), labels=c("NS", "Signif."))+
                scale_x_continuous(labels=scales::percent, limits=c(-1.5,NA), breaks=c(-2:5)) + 
                scale_color_manual("Compound class", values=class_pal, 
-                                  guide=guide_legend(override.aes = list(size=5))) + 
+                                  guide=guide_legend(override.aes = list(size=1))) + 
                theme_bw() + theme(axis.text = element_text(size=7))))
 ```
 

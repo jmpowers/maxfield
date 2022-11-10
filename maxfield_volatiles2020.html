@@ -11,11 +11,11 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-05-03" />
+<meta name="date" content="2022-05-19" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
-<script src="libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="libs/header-attrs-2.14/header-attrs.js"></script>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -268,7 +268,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2022-05-03</h4>
+<h4 class="date">2022-05-19</h4>
 
 </div>
 
@@ -2342,10 +2342,18 @@ selection_effects &lt;- function(fitnesstrait) {
        data = rename(trait.class.wide, fitness=fitnesstrait))
 }
 
+fitnesstraits.sd &lt;- map_dbl(fitnesstraits, ~sd(mnps.plantyr.traits[[.x]], na.rm=T)) %&gt;% set_names(fitnesstraits)
+
+library(emmeans)
+get_emt_class &lt;- function(mod) {
+  map_dfr(set_names(names(class_pal)), ~emtrends(mod, c(&quot;year&quot;,&quot;water&quot;,&quot;snow&quot;), var=.x) %&gt;% 
+            summary %&gt;% as_tibble %&gt;% rename(&quot;trend&quot; = ends_with(&quot;trend&quot;)), .id=&quot;class&quot;)
+}
+ 
 mod.selection &lt;- tibble(fitnesstrait=fitnesstraits) %&gt;% 
   mutate(model = map(fitnesstrait, selection_effects),
-         test = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
-  select(-model) %&gt;% unnest(test)
+         emt = map(model, get_emt_class),
+         test = map(model, ~ tidy(car::Anova(.x, type=3))))
 
 stars &lt;- function(p.values) {
   symnum(p.values, corr = FALSE, na = FALSE, 
@@ -2353,7 +2361,7 @@ stars &lt;- function(p.values) {
          symbols = c(&quot;***&quot;, &quot;**&quot;, &quot;*&quot;, &quot;.&quot;, &quot; &quot;))
 }
 
-mod.selection %&gt;% select(fitnesstrait, term, p.value) %&gt;% 
+mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&gt;% 
   mutate(p.value= paste(format(round(p.value,4),nsmall=4), stars(p.value))) %&gt;% 
   pivot_wider(names_from=fitnesstrait, values_from=p.value) %&gt;%
   filter(term!=&quot;Residuals&quot;) %&gt;% 
@@ -2547,6 +2555,21 @@ mod.selection %&gt;% select(fitnesstrait, term, p.value) %&gt;%
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>mod.selection %&gt;% select(fitnesstrait, emt) %&gt;% unnest(emt) %&gt;% 
+  mutate(fitsd = fitnesstraits.sd[fitnesstrait],
+         trend.std = trend/fitsd,
+         uSE = (trend + SE)/fitsd,
+         lSE = (trend - SE)/fitsd,
+         water_snow = factor(paste(water, snow), levels=names(water_snow_pal))) %&gt;% 
+  ggplot(aes(x=class, color=water_snow, y=trend.std, ymin=lSE, ymax=uSE)) +
+  facet_grid(cols=vars(fitnesstrait), rows=vars(year), labeller=as_labeller(c(set_names(2018:2020), fitnessnames))) +
+  geom_hline(yintercept=0)+
+  geom_pointrange(position=position_dodge(width=0.5), size=0.2) +
+  scale_color_manual(values=water_snow_pal) +
+  labs(x=&quot;Compound class&quot;, y = &quot;Standardized selection gradient&quot;, color=&quot;Precipitation, snow&quot;) +
+  theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1))</code></pre>
+<p><img src="images_volatiles2020/selection_class_gradient-1.svg" width="1056" /></p>
+<pre class="r"><code>#TODO is this the right way to calculate a standarized selection gradient?</code></pre>
 </div>
 </div>
 <div id="joint-species-distribution-model-1" class="section level2">
@@ -2620,7 +2643,9 @@ Cumulative Proportion  0.971 0.9825 0.99172 1.00000</code></pre>
 
 calculate_beta &lt;- function(E, slopes) {
   data.frame(B = E %*% slopes$A,
-             SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %&gt;% rownames_to_column(&quot;trait&quot;)
+             SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %&gt;% 
+    mutate(not_zero = abs(B) - SE &gt; 0) %&gt;% 
+    rownames_to_column(&quot;trait&quot;)
 }
 
 selection_pca &lt;- function(year, water=names(water_pal), snow=names(snow_pal), fitnesstrait = &quot;seeds_est&quot;) {
@@ -2678,9 +2703,11 @@ walk(fitnesstraits, ~print(plot_beta(filter(vols.beta.water.snow, fitnesstrait==
 <div id="selection-gradient-vs.-plasticity" class="section level3">
 <h3>Selection gradient vs. plasticity</h3>
 <pre class="r"><code>#TODO change 1|plot to 1|snow:plot throughout?
-#TODO not knitting signif  size right, but output here OK
+#TODO not knitting signif  size right, but output here OK (not anymore - nothing significant)
+# TODO include interactions btn snow and water?
+# TODO this is wrong, for labelling the graph we want models within each year, but those don&#39;t all run
 mod.top.split &lt;- volsmeta.good.top %&gt;% group_by(name) %&gt;% nest() %&gt;% 
-  mutate(model = map(data, ~lmer(value ~ year * snow * water + (1|plot) + (1|plotid), data=.)),
+  mutate(model = map(data, ~lmer(value ~ year + snow + water + (1|snow:plot) + (1|plotid), data=.)),
          test =  map(model, ~tidy(multcomp::glht(.x, 
                            linfct = multcomp::mcp(water = c(&quot;Addition - Control = 0&quot;,
                                                             &quot;Reduction - Control = 0&quot;),
@@ -2723,18 +2750,17 @@ walk(adaptive.plasticity.plots,
                geom_vline(xintercept=0) + geom_hline(yintercept=0) +
                annotate(&quot;rect&quot;, xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= &quot;black&quot;, alpha=0.1) + 
                annotate(&quot;rect&quot;, xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= &quot;black&quot;, alpha=0.1) +
-               geom_smooth(aes(y=B, group=1), color=&quot;grey30&quot;, method=&quot;lm&quot;, se=F)+
+               geom_smooth(aes(y=B, group=1), color=&quot;grey30&quot;, method=&quot;lm&quot;, se=F, size=1)+
                geom_point(aes(y=B, alpha=name==&quot;a-pinene&quot;), 
                           color=class_pal[&quot;Monoterpene&quot;], shape=&quot;X&quot;, size=4)+
                scale_alpha_manual(values=c(0,1), guide=&quot;none&quot;)+
-               geom_point(aes(y=B, color=class)) + # size=mean.floral
+               geom_pointrange(aes(y=B, color=class, ymin=B-SE, ymax=B+SE), size=0.2) + # size=mean.floral
                #scale_size(&quot;Mean emissions\n(ng/hr/flower)&quot;, range=c(1,3)) +
                scale_size_manual(values=c(1,2), labels=c(&quot;NS&quot;, &quot;Signif.&quot;))+
                scale_x_continuous(labels=scales::percent, limits=c(-1.5,NA), breaks=c(-2:5)) + 
                scale_color_manual(&quot;Compound class&quot;, values=class_pal, 
-                                  guide=guide_legend(override.aes = list(size=5))) + 
+                                  guide=guide_legend(override.aes = list(size=1))) + 
                theme_bw() + theme(axis.text = element_text(size=7))))</code></pre>
-<p><img src="images_volatiles2020/adaptive-1.svg" width="864" /><img src="images_volatiles2020/adaptive-2.svg" width="864" /><img src="images_volatiles2020/adaptive-3.svg" width="864" /></p>
 <pre class="r"><code>plasticity.water %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;%
                                  filter(water==&quot;Reduction&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
   mutate(adaptive = sign(B) == sign(R_C)) %&gt;% count(adaptive) %&gt;% kable()</code></pre>
