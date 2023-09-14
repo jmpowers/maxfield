@@ -11,11 +11,11 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-11-10" />
+<meta name="date" content="2023-02-02" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
-<script src="libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="libs/header-attrs-2.20/header-attrs.js"></script>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -118,8 +118,8 @@ pre code {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -127,16 +127,9 @@ pre code {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -268,7 +261,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2022-11-10</h4>
+<h4 class="date">2023-02-02</h4>
 
 </div>
 
@@ -323,7 +316,7 @@ volsmeta &lt;- left_join(volsmeta, volsmeta %&gt;% count(sequence.date, sequence
 rownames(volsmeta) &lt;- volsmeta$index 
 
 fitnesstraits &lt;- c(&quot;seeds_est&quot;, &quot;seeds_per_flower&quot;, &quot;prop_uninfested&quot;, &quot;eggs_per_flower&quot;)
-fitnessnames &lt;- c(traitnames, prop_uninfested = &quot;Prop. nonaborted fruits uninfested&quot;,
+fitnessnames &lt;- c(traitnames, prop_uninfested = &quot;Prop. uneaten fruits&quot;,
                   eggs_per_flower=&quot;Fly eggs per flower&quot;)[fitnesstraits]</code></pre>
 <div id="sample-size" class="section level1">
 <h1>Sample size</h1>
@@ -1230,6 +1223,13 @@ volsmeta %&gt;% count(year, sampledate) %&gt;% filter(n&gt;1) %&gt;% count(year)
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>volsmeta %&gt;% count(year, plantid) %&gt;% ggplot(aes(x=n)) + facet_wrap(vars(year), ncol=1) +geom_histogram(binwidth=1)</code></pre>
+<p><img src="images_volatiles2020/samplesizes_filtered-1.svg" width="960" /></p>
+<pre class="r"><code>volsmeta %&gt;% count(year, plantid) %&gt;% count(year)</code></pre>
+<pre><code>  year   n
+1 2018 112
+2 2019 110
+3 2020  72</code></pre>
 </div>
 <div id="time-of-day" class="section level2">
 <h2>Time of day</h2>
@@ -2737,13 +2737,14 @@ mod.top.split &lt;- volsmeta.good.top %&gt;% group_by(name, year) %&gt;% nest() 
                                                             &quot;Reduction - Control = 0&quot;),
                                                   snow = c(&quot;Early - Normal = 0&quot;))), multcomp::adjusted(type=&quot;fdr&quot;))))) %&gt;% 
   select(name, emm, test) %&gt;% unnest(c(emm, test)) %&gt;% 
-  mutate(estimate=estimate/emmean, std.error=std.error/emmean)#divide estimated difference in means by emm in Normal Control subplots
-  #select(year, name, contrast, adj.p.value) %&gt;%
+  mutate(estimate=estimate/emmean, std.error=std.error/emmean) %&gt;% #divide estimated difference in means by emm in Normal Control subplots
+  select(year, name, contrast, adj.p.value) %&gt;%
   mutate(signif = adj.p.value &lt; 0.05, .keep=&quot;unused&quot;) %&gt;% 
   pivot_wider(names_from=contrast, values_from=signif)
 
-ggplot(mod.top.split, aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=name, color=year, alpha=adj.p.value &lt; 0.05)) +
-  geom_pointrange() +  facet_wrap(vars(contrast))
+#TODO fix this ggplot?
+#ggplot(mod.top.split, aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=name, color=year, alpha=adj.p.value &lt; 0.05)) +
+#  geom_pointrange() +  facet_wrap(vars(contrast))
   
 plasticity.water &lt;- volsmeta.good.top %&gt;% group_by(year, water, name) %&gt;% summarize(value=mean(value)) %&gt;% 
   pivot_wider(names_from=water, values_from=value) %&gt;% left_join(ipochems) %&gt;% 
@@ -2758,20 +2759,75 @@ plasticity.snow &lt;- volsmeta.good.top %&gt;% group_by(year, snow, name) %&gt;%
   mutate(E_N = (Early-Normal)/Normal, .keep=&quot;unused&quot;)%&gt;% 
   left_join(mod.top.split)
 
-adaptive.plasticity.plots &lt;- list(
+adaptive.plasticity.data &lt;- list(  
   plasticity.water %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;% 
-                                   filter(water==&quot;Addition&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
-    ggplot(aes(x=A_C, size=`Addition - Control`)) + labs(x=&quot;Emissions change with additional precipitation&quot;, 
-                              y=&quot;Selection gradient (beta) under additional precipitation&quot;),
+                                   filter(water==&quot;Addition&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)),
   plasticity.water %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;%
-                                   filter(water==&quot;Reduction&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
-    ggplot(aes(x=R_C, size=`Reduction - Control`)) + labs(x=&quot;Emissions change with reduced precipitation&quot;, 
-                              y=&quot;Selection gradient (beta) under reduced precipitation&quot;),
+                                   filter(water==&quot;Reduction&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)),
   plasticity.snow %&gt;% left_join(vols.beta.snow %&gt;% rename(name=trait) %&gt;% 
-                                  filter(snow==&quot;Early&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
-    ggplot(aes(x=E_N, size=`Early - Normal`)) + labs(x=&quot;Emissions change with early snowmelt&quot;, 
-                              y=&quot;Selection gradient (beta) under early snowmelt&quot;))
+                                  filter(snow==&quot;Early&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)))
 
+adaptive.plasticity.data[[1]] %&gt;% group_by(year, fitnesstrait) %&gt;%
+  summarize(adaptive.cor = cor(A_C, B, use=&quot;complete&quot;),
+            adaptive.P = cor.test(A_C, B, use=&quot;complete&quot;)$p.value,n=n())</code></pre>
+<pre><code># A tibble: 9 × 5
+# Groups:   year [3]
+  year  fitnesstrait     adaptive.cor adaptive.P     n
+  &lt;fct&gt; &lt;chr&gt;                   &lt;dbl&gt;      &lt;dbl&gt; &lt;int&gt;
+1 2018  prop_uninfested       0.362      0.117      20
+2 2018  seeds_est             0.294      0.208      20
+3 2018  seeds_per_flower     -0.00510    0.983      20
+4 2019  prop_uninfested      -0.321      0.180      20
+5 2019  seeds_est            -0.0149     0.952      20
+6 2019  seeds_per_flower     -0.280      0.246      20
+7 2020  prop_uninfested       0.593      0.00586    20
+8 2020  seeds_est             0.153      0.521      20
+9 2020  seeds_per_flower      0.0998     0.675      20</code></pre>
+<pre class="r"><code>adaptive.plasticity.data[[2]] %&gt;% group_by(year, fitnesstrait) %&gt;%
+  summarize(adaptive.cor = cor(R_C, B, use=&quot;complete&quot;),
+            adaptive.P = cor.test(R_C, B, use=&quot;complete&quot;)$p.value,n=n())</code></pre>
+<pre><code># A tibble: 9 × 5
+# Groups:   year [3]
+  year  fitnesstrait     adaptive.cor adaptive.P     n
+  &lt;fct&gt; &lt;chr&gt;                   &lt;dbl&gt;      &lt;dbl&gt; &lt;int&gt;
+1 2018  prop_uninfested       0.460       0.0411    20
+2 2018  seeds_est            -0.196       0.406     20
+3 2018  seeds_per_flower      0.154       0.517     20
+4 2019  prop_uninfested      -0.319       0.183     20
+5 2019  seeds_est            -0.483       0.0364    20
+6 2019  seeds_per_flower     -0.466       0.0445    20
+7 2020  prop_uninfested       0.0484      0.839     20
+8 2020  seeds_est             0.00475     0.984     20
+9 2020  seeds_per_flower      0.0403      0.866     20</code></pre>
+<pre class="r"><code>adaptive.plasticity.data[[3]] %&gt;% group_by(year, fitnesstrait) %&gt;%
+  summarize(adaptive.cor = cor(E_N, B, use=&quot;complete&quot;),
+            adaptive.P = cor.test(E_N, B, use=&quot;complete&quot;)$p.value,n=n())</code></pre>
+<pre><code># A tibble: 9 × 5
+# Groups:   year [3]
+  year  fitnesstrait     adaptive.cor adaptive.P     n
+  &lt;fct&gt; &lt;chr&gt;                   &lt;dbl&gt;      &lt;dbl&gt; &lt;int&gt;
+1 2018  prop_uninfested        0.281       0.230    20
+2 2018  seeds_est              0.0714      0.765    20
+3 2018  seeds_per_flower       0.229       0.331    20
+4 2019  prop_uninfested        0.293       0.223    20
+5 2019  seeds_est             -0.157       0.520    20
+6 2019  seeds_per_flower      -0.388       0.101    20
+7 2020  prop_uninfested       -0.213       0.368    20
+8 2020  seeds_est              0.354       0.126    20
+9 2020  seeds_per_flower       0.195       0.411    20</code></pre>
+<pre class="r"><code>adaptive.plasticity.plots &lt;- list(
+  ggplot(adaptive.plasticity.data[[1]], aes(x=A_C, size=`Addition - Control`)) + 
+    labs(x=&quot;Emissions change with additional precipitation&quot;, 
+         y=&quot;Selection gradient (beta) under additional precipitation&quot;), 
+  ggplot(adaptive.plasticity.data[[2]], aes(x=R_C, size=`Reduction - Control`)) + 
+    labs(x=&quot;Emissions change with reduced precipitation&quot;, 
+         y=&quot;Selection gradient (beta) under reduced precipitation&quot;), 
+  ggplot(adaptive.plasticity.data[[3]], aes(x=E_N, size=`Early - Normal`)) + 
+    labs(x=&quot;Emissions change with early snowmelt&quot;, 
+         y=&quot;Selection gradient (beta) under early snowmelt&quot;))
+#TODO Early-Normal is just TRUE/FALSE, should be a number?
+
+library(ggpubr)
 walk(adaptive.plasticity.plots, 
      ~ print(.x + facet_grid(rows=vars(year), cols=vars(fitnesstrait), scales=&quot;fixed&quot;, 
                              labeller=as_labeller(c(fitnessnames, set_names(levels(treatments$year)))))+
@@ -2784,11 +2840,13 @@ walk(adaptive.plasticity.plots,
                scale_alpha_manual(values=c(0,1), guide=&quot;none&quot;)+
                geom_pointrange(aes(y=B, color=class, ymin=B-SE, ymax=B+SE), size=0.2) + # size=mean.floral
                #scale_size(&quot;Mean emissions\n(ng/hr/flower)&quot;, range=c(1,3)) +
+               stat_cor(aes(y=B), size=3, label.x=0.1)+
                scale_size_manual(values=c(1,2), labels=c(&quot;NS&quot;, &quot;Signif.&quot;))+
                scale_x_continuous(labels=scales::percent, limits=c(-1.5,NA), breaks=c(-2:5)) + 
                scale_color_manual(&quot;Compound class&quot;, values=class_pal, 
                                   guide=guide_legend(override.aes = list(size=1))) + 
                theme_bw() + theme(axis.text = element_text(size=7))))</code></pre>
+<p><img src="images_volatiles2020/adaptive-1.svg" width="864" /><img src="images_volatiles2020/adaptive-2.svg" width="864" /><img src="images_volatiles2020/adaptive-3.svg" width="864" /></p>
 <pre class="r"><code>plasticity.water %&gt;% left_join(vols.beta.water %&gt;% rename(name=trait) %&gt;%
                                  filter(water==&quot;Reduction&quot;, fitnesstrait!=&quot;eggs_per_flower&quot;)) %&gt;% 
   mutate(adaptive = sign(B) == sign(R_C)) %&gt;% count(adaptive) %&gt;% kable()</code></pre>
@@ -2948,6 +3006,7 @@ class="section level1">
   annotate(&quot;rect&quot;, xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= &quot;black&quot;, alpha=0.1) +
   geom_point(aes(alpha=name==&quot;a-pinene&quot;), color=class_pal[&quot;Monoterpene&quot;], shape=&quot;X&quot;, size=4)+
   scale_alpha_manual(values=c(0,1), guide=&quot;none&quot;)+
+  #eom_smooth(method=&quot;lm&quot;, color=&quot;black&quot;, se=F, size=0.5)+
   geom_point(aes(color=class)) + # size=mean.floral
   #scale_size(&quot;Mean emissions\n(ng/hr/flower)&quot;, range=c(1,5)) +
   scale_x_continuous(labels=scales::percent) + 
@@ -2957,6 +3016,16 @@ class="section level1">
   labs(x=&quot;Plasticity to precipitation reduction (vs. addition)&quot;,
        y=&quot;Plasticity to early snowmelt (vs. normal)&quot;)</code></pre>
 <p><img src="images_volatiles2020/snow_v_water-1.svg" width="768" /></p>
+<pre class="r"><code>left_join(plasticity.snow, plasticity.water) %&gt;% filter(!is.infinite(R_A)) %&gt;% 
+  group_by(year) %&gt;%   summarize(snow_water_cor = cor(R_A, E_N, use=&quot;complete&quot;),
+                                 snow_water_p = cor.test(R_A, E_N, use=&quot;complete&quot;)$p.value,
+                                 n=n())</code></pre>
+<pre><code># A tibble: 3 × 4
+  year  snow_water_cor snow_water_p     n
+  &lt;fct&gt;          &lt;dbl&gt;        &lt;dbl&gt; &lt;int&gt;
+1 2018          -0.419       0.0661    20
+2 2019          -0.172       0.481     20
+3 2020           0.455       0.0662    17</code></pre>
 <pre class="r"><code>### Change in selection gradient vs. plasticity
 diffbeta &lt;- vols.beta.water %&gt;% rename(name=trait) %&gt;% 
   pivot_wider(names_from=water, values_from=c(B,SE)) %&gt;% 
@@ -2995,17 +3064,17 @@ mod.selection.tests &lt;- mod.selection.abs %&gt;%
 <p><img src="images_volatiles2020/selection_abs-1.svg" width="960" /></p>
 <pre class="r"><code>library(ggrepel)
 ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait)) + 
-  facet_wrap(vars(term), labeller = as_labeller(c(trait=&quot;Trait (beta)&quot;,
+  facet_wrap(vars(term), labeller = as_labeller(c(trait=&quot;A. Trait (beta)&quot;,
                                                   `trait:precip_est_mm`=
-                                                    &quot;Trait x summer precipitation (beta / mm)&quot;,
+                                                    &quot;B. Trait x summer precipitation (beta / mm)&quot;,
                                                   `trait:sun_date`=
-                                                    &quot;Trait x snowmelt date (beta / day)&quot;)),
+                                                    &quot;C. Trait x snowmelt date (beta / day)&quot;)),
              scales=&quot;free_y&quot;, ncol=1) + theme_bw() +
   geom_point(aes(size=mean.floral)) + geom_hline(yintercept=0) + 
   geom_text_repel(data = filter(mod.selection.tests, p.value &lt; 0.01), hjust=0, nudge_x = 0.15, show.legend = FALSE) + 
   scale_size_area(max_size = 10) + scale_x_discrete(labels=fitnessnames) +
   scale_color_manual(values=class_pal, guide=guide_legend(override.aes = list(size=5))) + 
-  labs(x=&quot;Fitness component&quot;, y = &quot;Estimate&quot;, size=&quot;Mean emissions\n(ng/hr/flower)&quot;, color=&quot;Class&quot;)</code></pre>
+  labs(x=&quot;Aspect of fitness&quot;, y = &quot;Estimate&quot;, size=&quot;Mean emissions\n(ng/hr/flower)&quot;, color=&quot;Class&quot;)</code></pre>
 <p><img src="images_volatiles2020/selection_abs-2.svg" width="960" /></p>
 <pre class="r"><code>mod.selection.abs %&gt;% filter(trait==&quot;a-pinene&quot;) %&gt;% 
   mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
