@@ -40,6 +40,27 @@ knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F,
                       fig.path = "images_volatiles2020/", dev="svglite", dev.args=list(fix_text_size=FALSE), fig.height=8, fig.width=8)
 options(digits=4) # for kables
 
+# load short names and standard regessions
+ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %>% 
+  select(name, shortname, standard, verdict) %>%  filter(verdict != "") %>% 
+  mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
+         class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
+                            Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
+  left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
+              pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
+class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
+
+#shorten chemical names and merge compounds with multiple names
+shortnames <- ipochems %>% select(name, shortname) %>% filter(shortname!="") %>% deframe()
+#shortnames[shortnames %in% shortnames[duplicated(shortnames)]]
+
+greekify <- function(names) {
+  names %>% 
+    str_replace("^a-","\U03B1-") %>% str_replace("-a-","-\U03B1-") %>% 
+    str_replace("^b-","\U03B2-") %>% str_replace("-b-","-\U03B2-") %>% 
+    str_replace("^g-","\U03B3-") %>% str_replace("-g-","-\U03B3-")
+}
+
 load("data/volatiles/maxfield_volatiles.rda")
 load("data/maxfield_data.rda")
 
@@ -172,30 +193,6 @@ ggplot(vt.ambi %>% filter(type=="ambient"), aes(x=hour(bag), fill=year)) +
 # GCMS data checks
 
 ## Bouquet
-
-```{r read_scents}
-# load short names and standard regessions
-ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %>% 
-  select(name, shortname, standard, verdict) %>%  filter(verdict != "") %>% 
-  mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
-         class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
-                            Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
-  left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
-              pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
-class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
-
-#shorten chemical names and merge compounds with multiple names
-shortnames <- ipochems %>% select(name, shortname) %>% filter(shortname!="") %>% deframe()
-#shortnames[shortnames %in% shortnames[duplicated(shortnames)]]
-
-greekify <- function(names) {
-  names %>% 
-    str_replace("^a-","\U03B1-") %>% str_replace("-a-","-\U03B1-") %>% 
-    str_replace("^b-","\U03B2-") %>% str_replace("-b-","-\U03B2-") %>% 
-    str_replace("^g-","\U03B3-") %>% str_replace("-g-","-\U03B3-")
-}
-```
-
 
 ```{r bouquet}
 library(bouquet)
@@ -1029,7 +1026,7 @@ walk(fitnesstraits, ~
                theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))
 ```
 
-```{r selection_class_gradient, fig.width=11, fig.height=8}
+```{r selection_class_gradient, fig.width=11, fig.height=8, eval=FALSE}
 trait.class.wide <- bind_cols(volsmeta, vols.class) %>% left_join(mnps.plantyr.traits) %>% 
   select(plantid, year, water, snow, all_of(fitnesstraits), all_of(names(class_pal))) %>% 
   mutate(across(all_of(names(class_pal)), sqrt))
@@ -1053,7 +1050,8 @@ get_emt_class <- function(mod) {
   map_dfr(set_names(names(class_pal)), ~emtrends(mod, c("year","water","snow"), var=.x) %>% 
             summary %>% as_tibble %>% rename("trend" = ends_with("trend")), .id="class")
 }
- 
+
+#TODO "mailthere are aliased coefficients in the model"
 mod.selection <- tibble(fitnesstrait=fitnesstraits) %>% 
   mutate(model = map(fitnesstrait, selection_effects),
          emt = map(model, get_emt_class),
@@ -1310,7 +1308,7 @@ plasticity.snow %>% left_join(vols.beta.snow %>% rename(name=trait) %>% filter(s
 
 # Plasticity to snowmelt vs. precipitation
 
-```{r snow_v_water}
+```{r snow_v_water, eval=FALSE}
 ggplot(left_join(plasticity.snow, plasticity.water), aes(x=R_A, y=E_N)) + 
   facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0) + geom_hline(yintercept=0) +
@@ -1328,6 +1326,7 @@ ggplot(left_join(plasticity.snow, plasticity.water), aes(x=R_A, y=E_N)) +
   labs(x="Plasticity to precipitation reduction (vs. addition)",
        y="Plasticity to early snowmelt (vs. normal)")
 
+#TODO "no complete element pairs"
 left_join(plasticity.snow, plasticity.water) %>% filter(!is.infinite(R_A)) %>% 
   group_by(year) %>%   summarize(snow_water_cor = cor(R_A, E_N, use="complete"),
                                  snow_water_p = cor.test(R_A, E_N, use="complete")$p.value,
