@@ -43,6 +43,21 @@ options(digits=4) # for kables
 load("data/volatiles/maxfield_volatiles.rda")
 load("data/maxfield_data.rda")
 
+#TODO checking on duplicate filenames
+maxfmeta.dupes <- which(duplicated(maxfmeta$FileName))
+maxfmeta$FileName[maxfmeta.dupes]#two are duplicated
+#2D218_July17_08042018.qgd matched to two Markes tubes desorbed 17 min apart, second verdict="mismatch"
+#4B955_29_210709_792021_27.qgd matched to two Markes tubes desorbed 15 min apart, one matched floral other ambient, also has verdict="mismatch" - this row not in volsmeta though
+maxf <- maxf[!duplicated(maxfmeta$FileName),]
+maxfmeta <- maxfmeta[!duplicated(maxfmeta$FileName),]
+
+load("data/volatiles/maxfield210827.Rdata")
+maxf.data.cut <- maxf.data[maxf.data$Filename %in% maxfmeta$FileName,] #load long data
+maxf.data.cut <- distinct(select(maxf.data.cut, -batch)) #TODO knock off a few files entered twice (see maxfield_gc_
+#maxf.data.cut %>% group_by(Filename) %>% count() #540
+maxf.data.cut$Name <- recode(maxf.data.cut$Name, !!!shortnames)
+
+
 #check for duplicates
 #View(vt %>% filter(!exclude %in% c("flowers", "incomplete", "resample")) %>% count(sampledate.file, plot.file, subplot.file, plant.file) %>% filter(n>1) %>% left_join(vt)) #exclude="resample"
 #View(maxfmeta %>% count(sampledate,plantid) %>% filter(n>1) %>% left_join(maxfmeta))
@@ -65,7 +80,7 @@ volsmeta <- left_join(volsmeta, volsmeta %>% count(sequence.date, sequence.start
 rownames(volsmeta) <- volsmeta$index 
 
 fitnesstraits <- c("seeds_est", "seeds_per_flower", "prop_uninfested", "eggs_per_flower")
-fitnessnames <- c(traitnames, prop_uninfested = "Prop. nonaborted fruits uninfested",
+fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
                   eggs_per_flower="Fly eggs per flower")[fitnesstraits]
 ```
 
@@ -156,6 +171,79 @@ ggplot(vt.ambi %>% filter(type=="ambient"), aes(x=hour(bag), fill=year)) +
 
 # GCMS data checks
 
+## Bouquet
+
+```{r read_scents}
+# load short names and standard regessions
+ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %>% 
+  select(name, shortname, standard, verdict) %>%  filter(verdict != "") %>% 
+  mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
+         class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
+                            Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
+  left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
+              pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
+class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
+
+#shorten chemical names and merge compounds with multiple names
+shortnames <- ipochems %>% select(name, shortname) %>% filter(shortname!="") %>% deframe()
+#shortnames[shortnames %in% shortnames[duplicated(shortnames)]]
+
+greekify <- function(names) {
+  names %>% 
+    str_replace("^a-","\U03B1-") %>% str_replace("-a-","-\U03B1-") %>% 
+    str_replace("^b-","\U03B2-") %>% str_replace("-b-","-\U03B2-") %>% 
+    str_replace("^g-","\U03B3-") %>% str_replace("-g-","-\U03B3-")
+}
+```
+
+
+```{r bouquet}
+library(bouquet)
+maxf.data.cut <- maxf.data.cut[maxf.data.cut$Name != "", ] #drop unidentified peaks
+maxf.data.cut$Name <- droplevels(maxf.data.cut$Name)
+longdata <- load_longdata(maxf.data.cut, sample="Filename", RT="Ret.Time", name="Name", area="Area", match = "SI", maxmatch=100)
+metadata <- maxfmeta %>% as.data.frame() %>% #tibbles break bouquet's add_count_freqs
+  rename(thesample=sample) %>% #name conflict with bouquet
+  load_metadata(date="Date", sample="FileName", type="type")
+vol.all <- make_sampletable(longdata, metadata)
+chems <- make_chemtable(longdata, metadata)
+
+chemsf <- chems %>%
+  filter_RT(2, 17) %>% 
+  filter_match(0.8) %>% 
+  filter_freq(0.1) %>% 
+  filter_contaminant(cont.list = c("Hexyl chloroformate", "Trichloroacetic acid, 6-ethyl-3-octyl ester",
+                                   "Carbonic acid, decyl undecyl ester","11-Methyldodecanol",
+                                   "3-Ethyl-3-methylheptane", "2-Pentanone, 4-hydroxy-4-methyl-",
+                                   "1-Octanol, 2-butyl-", "L-Lactic acid","2-Oxepanone, 7-methyl-",
+                                   "1-Decanol, 2-octyl-","Ethylbenzene","Tritetracontane",
+                                   "Cyclopentanone, 2-ethyl-","Ethanol, 2-(hexyloxy)-",
+                                   "8-Hexadecenal, 14-methyl-, (Z)-")) %>%
+  filter_area(min_maximum = 1e6) %>% 
+  filter_ambient_ratio(vol.all, metadata, ratio = 4) %>%
+  combine_filters() 
+
+chemsf$filter_final <- with(chemsf, (filter_RT == "OK" & filter_match =="OK" & 
+                                       filter_freq.floral == "OK" &
+                              filter_area == "OK" & filter_contaminant == "OK"))
+
+#now run t-tests after rarity filtering
+#don't filter by ambient ratio first, see paper on problems: https://doi.org/10.1186/1471-2105-11-450
+chemsf <- bind_rows(chemsf %>% filter(filter_final) %>% 
+  filter_ambient_ttest(prune_sampletable(vol.all, chemsf, metadata), 
+                       metadata, alpha = 0.05, adjust = "fdr"), 
+  chemsf %>% filter(!filter_final)) %>% 
+  mutate(filter_ambient_ttest=fct_na_value_to_level(filter_ambient_ttest, "notchecked"),
+         filter_final = filter_final & filter_ambient_ratio =="OK") %>% 
+  arrange(match(name, colnames(vol.all)))
+
+bouquet::plot_filters(chemsf, option="rarity", yrange=3.5)
+bouquet::plot_filters(chemsf, option="ambient", yrange=2.5)
+bouquet::plot_filters(chemsf, option="volcano", yrange=2.5, alpha_excluded = 0.5)
+bouquet::plot_filters(chemsf, option="prop")
+```
+
+
 ## Filtering
 
 Filtering criteria (verdict="fvoc" in the table below):
@@ -175,47 +263,57 @@ Plus (verdict other than "fvoc"):
 * merge: a compound that is a synonym of one of the floral volatiles (b-caryophyllene, b-ocimene, verbenone)
 
 ```{r filtering}
-vols <- maxf[volsmeta$index,]
+#vols <- maxf[volsmeta$index,]
+vols <- vol.all[volsmeta$FileName,]
 vols.cut <- vols[,colSums(vols)>3e8]
+rownames(vols.cut) <- volsmeta$index
+vol <- vols[volsmeta$FileName, chemsf$name[chemsf$filter_final]]#don't cut ambients yet
+rownames(vol) <- volsmeta$index
 
-ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %>% 
-  filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge"),
-         name %in% colnames(vols)[colSums(vols)>0], name != "Anisole") %>% #filter empty compounds
-  mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
-         class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
-                            Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
-  left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
-              pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
-class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
+# ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %>% 
+#   filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge"),
+#          name %in% colnames(vols)[colSums(vols)>0], name != "Anisole") %>% #filter empty compounds
+#   mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
+#          class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
+#                             Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
+#   left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
+#               pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
+# class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
+# 
+# ipochems %>% select(verdict, name, Ret.Time, mean, max, match, freq.floral, freq.ambient, ambient_ratio, filter_ambient_ttest, filters_passed, standard) %>%
+#   arrange(desc(freq.floral)) %>% mutate(across(starts_with("freq."), round, 3)) %>% 
+#   DT::datatable(caption="Volatile compounds to use for analysis")
 
-ipochems %>% select(verdict, name, RT, mean, max, match, freq.floral, freq.ambient, ambient_ratio, filter_ambient_ttest, filters_passed, standard) %>%
-  arrange(desc(freq.floral)) %>% mutate(across(starts_with("freq."), round, 3)) %>% 
-  DT::datatable(caption="Volatile compounds to use for analysis")
-
-ipogood <- ipochems$name
-vols.good <- vols[,ipogood] %>% 
+#ipogood <- ipochems$name
+ipogood <- colnames(vol)
+#vols.good <- vols[,ipogood] %>% 
+vols.good <- vol %>% 
   #sweep(2, ipochems$area_per_ng, FUN = '/') %>%  # convert areas to nanograms 
   sweep(1, as.numeric(volsmeta$total_time, units="hours"),  FUN = '/') #divide by equilibration + pumping time
+ipochemsf <- ipochems[match(colnames(vols.good), ipochems$shortname),]
 for(yr in unique(volsmeta$sequence.year)) {
   thisyr <- volsmeta$sequence.year==yr
-  vols.good[thisyr,] <- sweep(vols.good[thisyr,], 2, pull(ipochems, paste0("area_per_ng",yr)), FUN = '/')# convert areas to nanograms 
+  #TODO these slopes are leading to most of the year effects. try using one year for now. 
+  vols.good[thisyr,] <- sweep(vols.good[thisyr,], 2, pull(ipochemsf, paste0("area_per_ng","2019")), FUN = '/')# convert areas to nanograms 
 }
 
 # merge peaks identified as multiple compounds
 # give volatiles shorter names too
-vols.good <- left_join(ipochems %>% select(name, shortname), 
-         vols.good %>% t %>% as.data.frame %>% rownames_to_column("name")) %>% 
-  select(-name) %>% group_by(shortname) %>% 
-  summarize(across(everything(), sum)) %>% 
-  column_to_rownames("shortname") %>% t %>% as.data.frame
+# vols.good <- left_join(ipochems %>% select(name, shortname), 
+#          vols.good %>% t %>% as.data.frame %>% rownames_to_column("name")) %>% 
+#   select(-name) %>% group_by(shortname) %>% 
+#   summarize(across(everything(), sum)) %>% 
+#   column_to_rownames("shortname") %>% t %>% as.data.frame
 
-ipochems <- ipochems %>% group_by(name=shortname, verdict, standard, class) %>% 
-  summarize(RT = mean(RT), .groups = "drop") %>% 
-  left_join(tibble(name = colnames(vols.good), # the following values are new, computed on the filtered dataset
-                            freq.floral = map_dbl(as.data.frame(vols.good>0), mean), 
+ipochemsf <- ipochemsf %>% #group_by(name=shortname, verdict, standard, class) %>%
+  #summarize(.groups = "drop") %>%
+  left_join(tibble(shortname = colnames(vols.good), # the following values are new, computed on the filtered dataset
+                            freq.floral = map_dbl(as.data.frame(vols.good>0), mean),
                             mean.floral = map_dbl(vols.good, mean),
-                            max.floral =  map_dbl(vols.good, max)))
-ipogood <- ipochems$name
+                            max.floral =  map_dbl(vols.good, max))) %>% 
+  select(-name) %>% rename(name=shortname)
+rownames(ipochemsf) <- ipochemsf$name
+#ipogood == ipochemsf$name
 
 k <- 2 #split into this many k-means cluster per year
 volsmeta$cluster <- 0
@@ -232,13 +330,14 @@ volsmeta <- volsmeta %>%
          sampledate = coalesce(sampledate, sampledate.file))#get sampling date from filename when no metadata
 
 # Cut contaminated samples
+#TODO now this is up to 45 samples with zeros!
 nonzero <-rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
 set.seed(1) # ensures the contaminated samples are in cluster.good = 1
 volsmeta$cluster.good <-factor(kmeans((vols.good)^(1/3), centers=3, nstart=3)$cluster)
 set.seed(1) # ensures the contaminated samples are in cluster.cut = 1
 volsmeta$cluster.cut <-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
 
-keep.samples <- unname(nonzero & !(volsmeta$year.cluster %in% c("2019.1", "2020.1")))
+keep.samples <- nonzero#unname(nonzero & !(volsmeta$year.cluster %in% c("2019.1", "2020.1")))
 volsmeta <- volsmeta[keep.samples,]
 vols <- vols[keep.samples,]
 vols.cut <- vols.cut[keep.samples,]
@@ -259,17 +358,18 @@ traits.good.top <- volsmeta.good.top %>%
   left_join(mnps.plantyr.traits) %>% 
   mutate(name = fct_relevel(name, ipogood.top))
 
-vols.drydown <- vols.good[,c("1,3-octadiene","benzyl alcohol", "a-pinene","a-farnesene", "b-pinene", "b-ocimene")]
-volsmeta.drydown <- bind_cols(volsmeta, vols.drydown) %>%  pivot_longer(-all_of(colnames(volsmeta)))
+#vols.drydown <- vols.good[,c("1,3-octadiene","benzyl alcohol", "a-pinene","a-farnesene", "b-pinene", "b-ocimene")]
+#volsmeta.drydown <- bind_cols(volsmeta, vols.drydown) %>%  pivot_longer(-all_of(colnames(volsmeta)))
 
 vols.class <- vols.good %>% t() %>% as.data.frame() %>% rownames_to_column("name") %>% 
-  left_join(select(ipochems, name, class)) %>% 
+  left_join(select(ipochemsf, name=name, class)) %>% 
   group_by(class) %>% summarize(across(-name, sum)) %>% column_to_rownames("class") %>%  t() %>% as.data.frame()
 volsmeta.class <- bind_cols(volsmeta, vols.class) %>%  
   pivot_longer(-all_of(colnames(volsmeta)))
 traits.class    <- volsmeta.class %>% left_join(mnps.plantyr.traits)
 volsmeta.traits <- volsmeta %>%       left_join(mnps.plantyr.traits) #wide format
 ```
+
 
 ## Compound relative amounts
 
@@ -293,6 +393,9 @@ volsmeta %>% count(year, sampledate) %>%
 #TODO investigate dates with only one sample - likely errors
 volsmeta %>% count(year, sampledate) %>% filter(n>1) %>% count(year) %>% 
   kable(caption="More than one sample taken on these dates")
+
+volsmeta %>% count(year, plantid) %>% ggplot(aes(x=n)) + facet_wrap(vars(year), ncol=1) +geom_histogram(binwidth=1)
+volsmeta %>% count(year, plantid) %>% count(year)
 ```
 
 ## Time of day
@@ -357,7 +460,7 @@ pheatmap(as.matrix(t(vols.good))^(1/4),
          gaps_col = which(diff(year(volsmeta$sequence.date))>0))
 
 pinene_correlates <- cor(sqrt(vols[,colSums(vols)>1e7])) %>% as.data.frame() %>%
-  filter(`(1R)-2,6,6-Trimethylbicyclo[3.1.1]hept-2-ene`>0.15) %>% rownames()
+  filter(`a-pinene`>0.15) %>% rownames()
 pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4), 
          cluster_cols=F, show_colnames=F,
          clustering_method="mcquitty", clustering_distance_rows="correlation",
@@ -388,7 +491,7 @@ ggplot(aes(x=Desorb.Start.Time)) + facet_grid(name ~ yr, scales="free") +
   guides(color="none") + theme_bw() + labs(x="GCMS run time", y="Area", title=type)
 }
 
-plot_vols_rundate("Terpenes", c("a-pinene", "b-myrcene","b-ocimene","linalool","caryophyllene", "longifolene"))
+plot_vols_rundate("Terpenes", c("a-pinene", "b-myrcene","(E)-b-ocimene","b-caryophyllene","linalool","longifolene"))
 
 plot_vols_rundate("Benzenoids", c("benzophenone","methyl salicylate","anisole"))
 
@@ -460,7 +563,7 @@ vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
 (scents.nmds <- metaMDS(sqrt(vols.good), autotransform=FALSE, trace=F)) #had noshare = FALSE
 nmds.points <-  fortify(scents.nmds) %>% as_tibble()
 nmds.samples <- nmds.points %>% filter(Score=="sites") %>% left_join(volsmeta, by=c("Label"="index"))
-nmds.chems <- nmds.points %>% filter(Score=="species") %>% left_join(ipochems, by=c("Label"="name"))
+nmds.chems <- nmds.points %>% filter(Score=="species") %>% left_join(ipochemsf, by=c("Label"="name"))
 
 # By year
 vols.plot <- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
@@ -546,7 +649,7 @@ for(yr in unique(year(volsmeta$sequence.start))) {
 ## Correlations
 
 ```{r corr, fig.height=8, fig.width=10}
-corr.annot <- ipochems %>% select(name, Class=class, `Retention time`=RT, Frequency=freq.floral) %>% 
+corr.annot <- ipochemsf %>% select(name, Class=class, Frequency=freq.floral) %>% #`Retention time`=RT,
   column_to_rownames("name") %>%  
   filter(Frequency>0.1)
 corr.vols <- cor(vols.good[, rownames(corr.annot)], method="pearson")
@@ -576,7 +679,7 @@ anova(scents.cap, by="term") %>% kable()
 scents.cap <- capscale(sqrt(vols.good) ~ year + water, data=volsmeta, distance="bray")
 plot(scents.cap, type="n")
 points(scents.cap, display = "sites", col=water_pal[volsmeta$water], pch=as.integer(volsmeta$year)+14)
-text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(water_pal)), col=c(rep("black",5),water_pal), font=2, cex=1.5)
+text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(water_pal)), col=c(rep("black",3),water_pal), font=2, cex=1.5)
 
 plot(scents.cap, type="n")
 text(scents.cap, display="species", col="black", cex=0.5)
@@ -584,7 +687,7 @@ text(scents.cap, display="species", col="black", cex=0.5)
 scents.cap <- capscale(sqrt(vols.good) ~ year + snow, data=volsmeta, distance="bray")
 plot(scents.cap, type="n")
 points(scents.cap, display = "sites", col=snow_pal[volsmeta$snow], pch=as.integer(volsmeta$year)+14)
-text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(snow_pal)), col=c(rep("black",5),water_pal), font=2, cex=1.5)
+text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(snow_pal)), col=c(rep("black",3),snow_pal), font=2, cex=1.5)
 
 plot(scents.cap, type="n")
 text(scents.cap, display="species", col="black", cex=0.5)
@@ -678,7 +781,7 @@ treatment_effects <- function(class) {
        data = filter(volsmeta.class, name==class))
 }
 
-mod.split <- tibble(class=levels(ipochems$class)) %>% 
+mod.split <- tibble(class=levels(ipochemsf$class)) %>% 
   mutate(model = map(class, treatment_effects),
          test = map(model, ~ tidy(anova(.x, ddf="Ken")))) %>% 
   select(-model) %>% unnest(test)
@@ -706,7 +809,7 @@ ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) +
   geom_text(data=cap.df %>% filter(Score=="biplot") %>% 
               mutate(Label=c("Snowmelt", "Precipitation")),
             aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface="bold") +
-  geom_text(data=cap.df %>% left_join(ipochems, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
   scale_color_manual("Year", values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
   theme_bw() + theme(panel.grid = element_blank())
 ```
@@ -720,7 +823,7 @@ abs_effects <- function(class) {
        data = filter(volsmeta.class, name==class))
 }
 
-mod.abs <- tibble(class=levels(ipochems$class)) %>% 
+mod.abs <- tibble(class=levels(ipochemsf$class)) %>% 
   mutate(model = map(class, abs_effects),
          test = map(model, ~ tidy(anova(.x, ddf="Ken")))) %>% 
   select(-model) %>% unnest(test)
@@ -772,7 +875,7 @@ ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) +
                arrow=arrow(length=unit(0.5, "lines")))+
   geom_text(data=cap.df %>% filter(Score=="biplot") ,
             aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface="bold") +
-  geom_text(data=cap.df %>% left_join(ipochems, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
   scale_color_manual("Year", values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
   theme_bw() + theme(panel.grid = element_blank())
 ```
@@ -786,7 +889,7 @@ sm_effects <- function(class) {
        data = filter(volsmeta.class, name==class))
 }
 
-mod.sm <- tibble(class=levels(ipochems$class)) %>% 
+mod.sm <- tibble(class=levels(ipochemsf$class)) %>% 
   mutate(model = map(class, sm_effects),
          test = map(model, ~ tidy(anova(.x, ddf="Ken")))) %>% 
   select(-model) %>% unnest(test)
@@ -833,7 +936,7 @@ ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) +
                arrow=arrow(length=unit(0.5, "lines")))+
   geom_text(data=cap.df %>% filter(Score=="biplot") ,
             aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface="bold") +
-  geom_text(data=cap.df %>% left_join(ipochems, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
   scale_color_manual("Year", values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
   theme_bw() + theme(panel.grid = element_blank())
 ```
@@ -847,7 +950,7 @@ sm_effects <- function(class) {
        data = filter(left_join(select(volsmeta.class,-VWC), sm.subplotyear), name==class))
 }
 
-mod.sm <- tibble(class=levels(ipochems$class)) %>% 
+mod.sm <- tibble(class=levels(ipochemsf$class)) %>% 
   mutate(model = map(class, sm_effects),
          test = map(model, ~ tidy(anova(.x, ddf="Ken")))) %>% 
   select(-model) %>% unnest(test)
@@ -1071,7 +1174,7 @@ selection_pca <- function(year, water=names(water_pal), snow=names(snow_pal), fi
 }
 
 plot_beta <- function(betas, colorby="year") {
-  bs <- betas %>% left_join(ipochems, by=c("trait"="name")) %>% 
+  bs <- betas %>% left_join(ipochemsf, by=c("trait"="name")) %>% 
     mutate(trait = fct_reorder(trait, mean.floral))#order graph by mean emissions
   if(colorby=="water_snow")  bs <- bs %>%  mutate(water_snow = paste(water, snow))
   ggplot(bs, aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
@@ -1107,7 +1210,7 @@ walk(fitnesstraits, ~print(plot_beta(filter(vols.beta.water.snow, fitnesstrait==
 
 ### Selection gradient vs. plasticity
 
-```{r adaptive, fig.height=7, fig.width=9, eval=F}
+```{r adaptive, fig.height=7, fig.width=9}
 #TODO change 1|plot to 1|snow:plot throughout?
 #TODO not knitting signif  size right, but output here OK (not anymore - nothing significant)
 # TODO include interactions btn snow and water?
@@ -1120,16 +1223,17 @@ mod.top.split <- volsmeta.good.top %>% group_by(name, year) %>% nest() %>%
                                                             "Reduction - Control = 0"),
                                                   snow = c("Early - Normal = 0"))), multcomp::adjusted(type="fdr"))))) %>% 
   select(name, emm, test) %>% unnest(c(emm, test)) %>% 
-  mutate(estimate=estimate/emmean, std.error=std.error/emmean)#divide estimated difference in means by emm in Normal Control subplots
-  #select(year, name, contrast, adj.p.value) %>%
+  mutate(estimate=estimate/emmean, std.error=std.error/emmean) %>% #divide estimated difference in means by emm in Normal Control subplots
+  select(year, name, contrast, adj.p.value) %>%
   mutate(signif = adj.p.value < 0.05, .keep="unused") %>% 
   pivot_wider(names_from=contrast, values_from=signif)
 
-ggplot(mod.top.split, aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=name, color=year, alpha=adj.p.value < 0.05)) +
-  geom_pointrange() +  facet_wrap(vars(contrast))
+#TODO fix this ggplot?
+#ggplot(mod.top.split, aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=name, color=year, alpha=adj.p.value < 0.05)) +
+#  geom_pointrange() +  facet_wrap(vars(contrast))
   
 plasticity.water <- volsmeta.good.top %>% group_by(year, water, name) %>% summarize(value=mean(value)) %>% 
-  pivot_wider(names_from=water, values_from=value) %>% left_join(ipochems) %>% 
+  pivot_wider(names_from=water, values_from=value) %>% left_join(ipochemsf) %>% 
   mutate(A_C = (Addition-Control)/Control, 
          R_C = (Reduction-Control)/Control, 
          A_R = (Addition-Reduction)/Reduction,
@@ -1141,20 +1245,37 @@ plasticity.snow <- volsmeta.good.top %>% group_by(year, snow, name) %>% summariz
   mutate(E_N = (Early-Normal)/Normal, .keep="unused")%>% 
   left_join(mod.top.split)
 
-adaptive.plasticity.plots <- list(
+adaptive.plasticity.data <- list(  
   plasticity.water %>% left_join(vols.beta.water %>% rename(name=trait) %>% 
-                                   filter(water=="Addition", fitnesstrait!="eggs_per_flower")) %>% 
-    ggplot(aes(x=A_C, size=`Addition - Control`)) + labs(x="Emissions change with additional precipitation", 
-                              y="Selection gradient (beta) under additional precipitation"),
+                                   filter(water=="Addition", fitnesstrait!="eggs_per_flower")),
   plasticity.water %>% left_join(vols.beta.water %>% rename(name=trait) %>%
-                                   filter(water=="Reduction", fitnesstrait!="eggs_per_flower")) %>% 
-    ggplot(aes(x=R_C, size=`Reduction - Control`)) + labs(x="Emissions change with reduced precipitation", 
-                              y="Selection gradient (beta) under reduced precipitation"),
+                                   filter(water=="Reduction", fitnesstrait!="eggs_per_flower")),
   plasticity.snow %>% left_join(vols.beta.snow %>% rename(name=trait) %>% 
-                                  filter(snow=="Early", fitnesstrait!="eggs_per_flower")) %>% 
-    ggplot(aes(x=E_N, size=`Early - Normal`)) + labs(x="Emissions change with early snowmelt", 
-                              y="Selection gradient (beta) under early snowmelt"))
+                                  filter(snow=="Early", fitnesstrait!="eggs_per_flower")))
 
+adaptive.plasticity.data[[1]] %>% group_by(year, fitnesstrait) %>%
+  summarize(adaptive.cor = cor(A_C, B, use="complete"),
+            adaptive.P = cor.test(A_C, B, use="complete")$p.value,n=n())
+adaptive.plasticity.data[[2]] %>% group_by(year, fitnesstrait) %>%
+  summarize(adaptive.cor = cor(R_C, B, use="complete"),
+            adaptive.P = cor.test(R_C, B, use="complete")$p.value,n=n())
+adaptive.plasticity.data[[3]] %>% group_by(year, fitnesstrait) %>%
+  summarize(adaptive.cor = cor(E_N, B, use="complete"),
+            adaptive.P = cor.test(E_N, B, use="complete")$p.value,n=n())
+
+adaptive.plasticity.plots <- list(
+  ggplot(adaptive.plasticity.data[[1]], aes(x=A_C, size=`Addition - Control`)) + 
+    labs(x="Emissions change with additional precipitation", 
+         y="Selection gradient (beta) under additional precipitation"), 
+  ggplot(adaptive.plasticity.data[[2]], aes(x=R_C, size=`Reduction - Control`)) + 
+    labs(x="Emissions change with reduced precipitation", 
+         y="Selection gradient (beta) under reduced precipitation"), 
+  ggplot(adaptive.plasticity.data[[3]], aes(x=E_N, size=`Early - Normal`)) + 
+    labs(x="Emissions change with early snowmelt", 
+         y="Selection gradient (beta) under early snowmelt"))
+#TODO Early-Normal is just TRUE/FALSE, should be a number?
+
+library(ggpubr)
 walk(adaptive.plasticity.plots, 
      ~ print(.x + facet_grid(rows=vars(year), cols=vars(fitnesstrait), scales="fixed", 
                              labeller=as_labeller(c(fitnessnames, set_names(levels(treatments$year)))))+
@@ -1167,6 +1288,7 @@ walk(adaptive.plasticity.plots,
                scale_alpha_manual(values=c(0,1), guide="none")+
                geom_pointrange(aes(y=B, color=class, ymin=B-SE, ymax=B+SE), size=0.2) + # size=mean.floral
                #scale_size("Mean emissions\n(ng/hr/flower)", range=c(1,3)) +
+               stat_cor(aes(y=B), size=3, label.x=0.1)+
                scale_size_manual(values=c(1,2), labels=c("NS", "Signif."))+
                scale_x_continuous(labels=scales::percent, limits=c(-1.5,NA), breaks=c(-2:5)) + 
                scale_color_manual("Compound class", values=class_pal, 
@@ -1196,6 +1318,7 @@ ggplot(left_join(plasticity.snow, plasticity.water), aes(x=R_A, y=E_N)) +
   annotate("rect", xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= "black", alpha=0.1) +
   geom_point(aes(alpha=name=="a-pinene"), color=class_pal["Monoterpene"], shape="X", size=4)+
   scale_alpha_manual(values=c(0,1), guide="none")+
+  #eom_smooth(method="lm", color="black", se=F, size=0.5)+
   geom_point(aes(color=class)) + # size=mean.floral
   #scale_size("Mean emissions\n(ng/hr/flower)", range=c(1,5)) +
   scale_x_continuous(labels=scales::percent) + 
@@ -1204,6 +1327,11 @@ ggplot(left_join(plasticity.snow, plasticity.water), aes(x=R_A, y=E_N)) +
                      guide=guide_legend(override.aes = list(size=5))) + theme_bw() +
   labs(x="Plasticity to precipitation reduction (vs. addition)",
        y="Plasticity to early snowmelt (vs. normal)")
+
+left_join(plasticity.snow, plasticity.water) %>% filter(!is.infinite(R_A)) %>% 
+  group_by(year) %>%   summarize(snow_water_cor = cor(R_A, E_N, use="complete"),
+                                 snow_water_p = cor.test(R_A, E_N, use="complete")$p.value,
+                                 n=n())
 ```
 
 
@@ -1238,7 +1366,7 @@ mod.selection.abs <- expand.grid(list(response = fitnesstraits, trait = ipogood)
          coefs = map(model, tidy))
 
 mod.selection.tests <- mod.selection.abs %>% 
-  left_join(ipochems, by=c("trait"="name")) %>% 
+  left_join(ipochemsf, by=c("trait"="name")) %>% 
   filter(freq.floral>0.1) %>% 
     mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 
   select(-model) %>% unnest(coefs) %>% 
@@ -1252,17 +1380,17 @@ mod.selection.abs %>% select(-model) %>% unnest(coefs) %>%
 
 library(ggrepel)
 ggplot(mod.selection.tests, aes(x=response, y=estimate, color=class, label=trait)) + 
-  facet_wrap(vars(term), labeller = as_labeller(c(trait="Trait (beta)",
+  facet_wrap(vars(term), labeller = as_labeller(c(trait="A. Trait (beta)",
                                                   `trait:precip_est_mm`=
-                                                    "Trait x summer precipitation (beta / mm)",
+                                                    "B. Trait x summer precipitation (beta / mm)",
                                                   `trait:sun_date`=
-                                                    "Trait x snowmelt date (beta / day)")),
+                                                    "C. Trait x snowmelt date (beta / day)")),
              scales="free_y", ncol=1) + theme_bw() +
   geom_point(aes(size=mean.floral)) + geom_hline(yintercept=0) + 
   geom_text_repel(data = filter(mod.selection.tests, p.value < 0.01), hjust=0, nudge_x = 0.15, show.legend = FALSE) + 
   scale_size_area(max_size = 10) + scale_x_discrete(labels=fitnessnames) +
   scale_color_manual(values=class_pal, guide=guide_legend(override.aes = list(size=5))) + 
-  labs(x="Fitness component", y = "Estimate", size="Mean emissions\n(ng/hr/flower)", color="Class")
+  labs(x="Aspect of fitness", y = "Estimate", size="Mean emissions\n(ng/hr/flower)", color="Class")
 
 mod.selection.abs %>% filter(trait=="a-pinene") %>% 
   mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 
