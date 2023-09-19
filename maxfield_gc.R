@@ -1,7 +1,5 @@
 library(tidyverse)
 library(reshape2)
-library(vegan)
-library(ggvegan)
 
 # Read chromatograms ------------------------------------------------------
 
@@ -85,18 +83,21 @@ write_csv(maxfgc, "data/volatiles/maxfield_all210827_updated.csv")#used to outpu
 # #range_write(ss=data_inventory, sheet="maxfield_meta",range="A:N") #output to sheet - do not uncomment!
 
 #get hand-split filename metadata
+#join with maxfgc is very fragile (by index) so can't ever change maxfgc order
 #some of these only have vial numbers, but it doesn't matter since they were sampled in 2021 OTC experiment
 #index is from maxfield_all210827annot, sample accounts for skips
 #FIXED maxfgc and maxfield_meta gsheet index columns do not line up so this join is broken - 
 # looks like it broke with the maxfield_all210827_updated.csv (versus maxfield_all210827.csv)
-maxfmeta <- read_sheet(data_inventory, sheet="maxfield_meta", guess_max=2000, col_types="c") %>% 
+#read_sheet(data_inventory, sheet="maxfield_meta", guess_max=2000, col_types="c") %>% 
+maxfmeta <- read_tsv("data/volatiles/RMBL GC-MS Data Inventory - maxfield_meta.tsv") %>% 
   select(index, sample, type:vial) %>% as.data.frame %>% #added sample (renamed)
   drop_na(type) %>% # exclude files that don't have a manual "type" entry - blanks, leaks, skips, OTC experiment
   distinct(index, .keep_all = T) %>% # TODO investigate these dupes with two Shimadzu batches
-  left_join(maxfgc %>% distinct(index, .keep_all = T) %>% mutate(index=as.character(index)) %>% select(-sample)) %>% #took off sample (empty)
+  left_join(maxfgc %>% distinct(index, .keep_all = T) %>% select(-sample)) %>% #took off sample (empty)
   mutate(plotid=ifelse(type=="floral", str_sub(plantid, 1,2),NA),
          plant= ifelse(type=="floral", str_sub(plantid, 3),NA),
-         sampledate=ymd(ifelse(year(sequence.start)==2018, paste0("2018",sampledate), sampledate)))
+         sampledate=ymd(ifelse(year(sequence.start)==2018, paste0("2018",sampledate), sampledate)),
+         index=as.character(index))
 
 # #testing differences between these versions, decided that oldseq will work
 # origpath <- "~/MyDocs/MEGA/UCI/Schiedea/Analysis/scent/rmbl/Maxfield/"
@@ -122,33 +123,34 @@ maxfmeta <- read_sheet(data_inventory, sheet="maxfield_meta", guess_max=2000, co
 #subset wide data to only Maxfield samples with an annotated type (floral/ambient) from maxfmeta
 maxf <- maxf.all[maxfmeta$FileName,]
 rownames(maxf) <- rownames(maxfmeta) <- maxfmeta$index
-save(maxf, maxfmeta, file=paste0(proj_dir, "data/volatiles/maxfield_volatiles.rda"))
-#TODO do the same for long data
+save(maxf, maxfmeta, file="data/volatiles/maxfield_volatiles.rda")
 
-# NMDS of blanks and all samples --------------------------------------------------------------------
-ggplot(maxfgc, aes(x=n_peaks, fill=paste(nameBlank,kBlank))) + geom_histogram() + facet_wrap(vars(year(eithertime)))
-
-nmds.maxf <- metaMDS(sqrt(maxf.cut), dist="bray", autotransform = FALSE, try=1, trymax=1)
-nmds.points <- fortify(nmds.maxf) %>% as_tibble() %>% 
-  filter(Score=="sites") %>% left_join(maxf.km, by=c("Label"="FileName"))
-
-ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, color=log(rowSum))) + 
-  geom_point() + scale_color_viridis_c() + theme_dark()
-
-ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, color=Cluster, shape=Type)) + geom_point() +
-  scale_color_gradientn(colors=turbo(k)) + theme_dark()
-
-ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, color=nameBlank, shape=Type)) + geom_point()
-
-ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, label=Cluster, color=Type)) + geom_text(size=3)
-
-ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, color=runYear, alpha=nameBlank)) + geom_point() +
-  scale_alpha_manual(values=c(0.2,1))
-
-# CAP of blanks vs all samples ---------------------------------------------------------------------
-
-maxf.cap <- capscale(maxf.cut ~ kBlank * runYear, distance="bray", metaMDSdist = F, data=maxf.km)
-maxf.cap.points <-  fortify(maxf.cap) %>% as_tibble() %>% 
-  filter(Score=="sites") %>% left_join(maxf.km, by=c("Label"="FileName"))
-ggplot(maxf.cap.points, aes(x=CAP1, y=CAP2, color=runYear, alpha=nameBlank)) + geom_point() +
-  scale_alpha_manual(values=c(0.2,1))
+# # NMDS of blanks and all samples --------------------------------------------------------------------
+# ggplot(maxfgc, aes(x=n_peaks, fill=paste(nameBlank,kBlank))) + geom_histogram() + facet_wrap(vars(year(eithertime)))
+# 
+# library(vegan)
+# library(ggvegan)
+# nmds.maxf <- metaMDS(sqrt(maxf.cut), dist="bray", autotransform = FALSE, try=1, trymax=1)
+# nmds.points <- fortify(nmds.maxf) %>% as_tibble() %>% 
+#   filter(Score=="sites") %>% left_join(maxf.km, by=c("Label"="FileName"))
+# 
+# ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, color=log(rowSum))) + 
+#   geom_point() + scale_color_viridis_c() + theme_dark()
+# 
+# ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, color=Cluster, shape=Type)) + geom_point() +
+#   scale_color_gradientn(colors=turbo(k)) + theme_dark()
+# 
+# ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, color=nameBlank, shape=Type)) + geom_point()
+# 
+# ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, label=Cluster, color=Type)) + geom_text(size=3)
+# 
+# ggplot(nmds.points, aes(x=NMDS1, y=NMDS2, color=runYear, alpha=nameBlank)) + geom_point() +
+#   scale_alpha_manual(values=c(0.2,1))
+# 
+# # CAP of blanks vs all samples ---------------------------------------------------------------------
+# 
+# maxf.cap <- capscale(maxf.cut ~ kBlank * runYear, distance="bray", metaMDSdist = F, data=maxf.km)
+# maxf.cap.points <-  fortify(maxf.cap) %>% as_tibble() %>% 
+#   filter(Score=="sites") %>% left_join(maxf.km, by=c("Label"="FileName"))
+# ggplot(maxf.cap.points, aes(x=CAP1, y=CAP2, color=runYear, alpha=nameBlank)) + geom_point() +
+#   scale_alpha_manual(values=c(0.2,1))
