@@ -168,7 +168,7 @@ ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %
                             Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
   left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
               pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
-class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
+class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))[-2]#no more
 
 #shorten chemical names and merge compounds with multiple names
 shortnames <- ipochems %>% select(name, shortname) %>% filter(shortname!="") %>% deframe()
@@ -309,7 +309,8 @@ ipochemsf <- ipochemsf %>% #group_by(name=shortname, verdict, standard, class) %
                             freq.floral = map_dbl(as.data.frame(vols.good>0), mean),
                             mean.floral = map_dbl(vols.good, mean),
                             max.floral =  map_dbl(vols.good, max))) %>% 
-  select(-name) %>% rename(name=shortname)
+  select(-name) %>% rename(name=shortname) %>%
+  mutate(class=droplevels(class))#no benzenoids
 rownames(ipochemsf) <- ipochemsf$name
 #ipogood == ipochemsf$name
 
@@ -778,7 +779,7 @@ treatment_effects <- function(class) {
   lmer(sqrt(value) ~ year * water * snow + (1|plot) + (1|plotid), 
        data = filter(volsmeta.class, name==class))
 }
-#TODO broken since there aren't benzenoids anymore
+
 mod.split <- tibble(class=levels(ipochemsf$class)) %>% 
   mutate(model = map(class, treatment_effects),
          test = map(model, ~ tidy(anova(.x, ddf="Ken")))) %>% 
@@ -1041,7 +1042,7 @@ selection_effects <- function(fitnesstrait) {
   lm(relfitness ~ year * water * snow + 
      Monoterpene * snow + Monoterpene * water + Monoterpene * year +
      Sesquiterpene * snow + Sesquiterpene * water + Sesquiterpene * year + 
-     Benzenoid * snow + Benzenoid * water + Benzenoid * year +
+     #Benzenoid * snow + Benzenoid * water + Benzenoid * year +
      Aliphatic * snow + Aliphatic * water + Aliphatic * year,
        data = trait.class.wide %>% rename(fitness=fitnesstrait) %>% 
        mutate(relfitness = fitness/mean(fitness, na.rm=T)))
@@ -1056,7 +1057,6 @@ get_emt_class <- function(mod) {
             summary %>% as_tibble %>% rename("trend" = ends_with("trend")), .id="class")
 }
 
-#TODO "mailthere are aliased coefficients in the model"
 mod.selection <- tibble(fitnesstrait=fitnesstraits) %>% 
   mutate(model = map(fitnesstrait, selection_effects),
          emt = map(model, get_emt_class),
@@ -1244,7 +1244,7 @@ plasticity.water <- volsmeta.good.top %>% group_by(year, water, name) %>% summar
   left_join(mod.top.split)
 
 plasticity.snow <- volsmeta.good.top %>% group_by(year, snow, name) %>% summarize(value=mean(value)) %>% 
-  pivot_wider(names_from=snow, values_from=value) %>% left_join(ipochems) %>% 
+  pivot_wider(names_from=snow, values_from=value) %>% left_join(ipochemsf) %>% 
   mutate(E_N = (Early-Normal)/Normal, .keep="unused")%>% 
   left_join(mod.top.split)
 
@@ -1331,7 +1331,6 @@ ggplot(left_join(plasticity.snow, plasticity.water), aes(x=R_A, y=E_N)) +
   labs(x="Plasticity to precipitation reduction (vs. addition)",
        y="Plasticity to early snowmelt (vs. normal)")
 
-#TODO "no complete element pairs"
 left_join(plasticity.snow, plasticity.water) %>% filter(!is.infinite(R_A)) %>% 
   group_by(year) %>%   summarize(snow_water_cor = cor(R_A, E_N, use="complete"),
                                  snow_water_p = cor.test(R_A, E_N, use="complete")$p.value,
@@ -1345,7 +1344,7 @@ diffbeta <- vols.beta.water %>% rename(name=trait) %>%
   pivot_wider(names_from=water, values_from=c(B,SE)) %>% 
   mutate(B_A_R = B_Addition - B_Reduction)
 
-plasticity %>% left_join(diffbeta) %>% 
+plasticity.water %>% left_join(diffbeta) %>% 
   ggplot(aes(x=A_R, y=B_A_R, color=class)) + facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0)+geom_hline(yintercept=0) + geom_text(aes(label=name)) + 
   scale_x_continuous(labels=scales::percent, limits=c(NA,NA)) + theme_bw()  + theme(legend.position = "top") +
