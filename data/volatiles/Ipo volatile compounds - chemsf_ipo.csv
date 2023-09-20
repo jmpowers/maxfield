@@ -193,7 +193,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 192,1-Cyclopropyl-1-methyl-ethylamine,,,,4,1028,148154,0.0001,0.77,0.00,12.92,0,0.000,2,0.008,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 193,1-Decanol,,,,5,135114,4390997,0.0027,0.89,0.20,12.58,20,0.426,113,0.471,38.000,0.717,20,0.4255319149,OK,OK,OK,OK,OK,AmRatioFail,1.8,tTestFail,FALSE
 194,"1-Decanol, 2-ethyl-",,,,3,14484,2010056,0.0012,0.80,4.95,10.54,3,0.064,7,0.029,1.000,0.019,3,0.06382978723,OK,OK,Rare,OK,Low,AmRatioFail,3.1,tTestFail,FALSE
-195,"1-Decanol, 2-hexyl-",2-hexyldecan-1-ol,Hexenol,cont,4,46076,3957180,0.0011,0.85,5.21,14.95,1,0.021,15,0.063,2.000,0.038,1,0.02127659574,OK,OK,Rare,OK,Low,OK,11.1,tTestFail,FALSE
+195,"1-Decanol, 2-hexyl-",,,cont,4,46076,3957180,0.0011,0.85,5.21,14.95,1,0.021,15,0.063,2.000,0.038,1,0.02127659574,OK,OK,Rare,OK,Low,OK,11.1,tTestFail,FALSE
 196,"1-Decanol, 2-methyl-",,,,4,5840,600912,0.0030,0.81,2.20,11.78,2,0.043,8,0.033,1.000,0.019,2,0.04255319149,OK,OK,Rare,OK,Low,OK,5.2,tTestFail,FALSE
 197,"1-Decanol, 2-octyl-",,,,5,149438,4268946,0.0019,0.88,1.44,15.25,6,0.128,35,0.146,0.000,0.000,6,0.1276595745,OK,OK,OK,OK,OK,AmRatioFail,2.1,tTestFail,FALSE
 198,1-Decene,,,,4,378,90811,NA,0.78,NA,12.80,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
@@ -290,7 +290,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 289,1-Octadecanesulphonyl chloride,,,,2,57960,3183804,0.0008,0.76,6.89,15.23,3,0.064,15,0.063,0.000,0.000,3,0.06382978723,OK,Low,Rare,OK,Low,AmRatioFail,3.7,tTestFail,FALSE
 290,1-Octadecanol,,,,4,3790,909719,0.001900,0.81,1.6887,19.67,0,0.000,1,0.004,2.000,0.038,0,0,High,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 291,"1-Octanamine, N-methyl-N-nitro-",,,,2,0,0,NA,0.78,NA,9.98,1,0.021,0,0.000,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
-292,"1-Octanol, 2-butyl-",,,,3,26000,1166591,0.0013,0.85,3.50,9.37,7,0.149,13,0.054,2.000,0.038,7,0.1489361702,OK,OK,Rare,OK,Low,AmRatioFail,0.5,tTestFail,FALSE
+292,"1-Octanol, 2-butyl-",2-butyloctan-1-ol,Hexenol,maxfieldnew,3,26000,1166591,0.0013,0.85,3.50,9.37,7,0.149,13,0.054,2.000,0.038,7,0.1489361702,OK,OK,Rare,OK,Low,AmRatioFail,0.5,tTestFail,FALSE
 293,"1-Octanol, 2-methyl-",,,,4,18560,2365152,0.0019,0.80,1.46,11.76,1,0.021,13,0.054,2.000,0.038,1,0.02127659574,OK,OK,Rare,OK,Low,OK,25.0,tTestFail,FALSE
 294,"1-Octanol, 2,2-dimethyl-",,,,3,23444,1428260,0.0013,0.80,8.35,10.25,4,0.085,11,0.046,1.000,0.019,4,0.08510638298,OK,OK,Rare,OK,Low,AmRatioFail,0.3,tTestFail,FALSE
 295,"1-Octanol, 2,7-dimethyl-",,,,4,18776,381615,0.0020,0.90,0.95,12.61,6,0.128,25,0.104,2.000,0.038,6,0.1276595745,OK,OK,OK,OK,Low,AmRatioFail,0.5,tTestFail,FALSE
@@ -553,7 +553,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 552,"10,18-Bisnorabieta-8,11,13-triene",,,,3,17541,1697523,0.000300,0.7,0.0000,21.02,0,0.000,3,0.013,0.000,0.000,0,0,High,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 553,11-Dodecen-1-yl acetate,,,,4,1265,303616,NA,0.75,NA,14.01,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 554,"11-Dodecen-2-one, 7,7-dimethyl-",,,,2,2001,275534,0.0001,0.75,0.00,11.45,2,0.043,2,0.008,0.000,0.000,2,0.04255319149,OK,Low,Rare,OK,Low,AmRatioFail,0.2,tTestFail,FALSE
-555,11-Methyldodecanol,,,,2,30884,1411186,0.0022,0.78,22.27,15.96,8,0.170,13,0.054,6.000,0.113,8,0.170212766,OK,Low,Rare,OK,Low,AmRatioFail,0.6,tTestFail,FALSE
+555,11-Methyldodecanol,,,cont,2,30884,1411186,0.0022,0.78,22.27,15.96,8,0.170,13,0.054,6.000,0.113,8,0.170212766,OK,Low,Rare,OK,Low,AmRatioFail,0.6,tTestFail,FALSE
 556,"11-Methylene-tricyclo[4.3.1.1(2,5)]undecane",,,,4,561,134620,NA,0.75,NA,13.27,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 557,11-Methyltricosane,,,,3,217937,4290200,0.002376,0.78,7.4805,17.21,9,0.191,55,0.229,14.000,0.264,9,0.1914893617,High,Low,OK,OK,OK,AmRatioFail,1.7,tTestFail,FALSE
 558,11-Tridecen-1-ol,,,,2,560,82683,0.0012,0.79,1.26,14.05,1,0.021,2,0.008,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,0.1,tTestFail,FALSE
@@ -1167,7 +1167,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 1166,"3-Eicosene, (E)-",,,,3,13292,1051942,0.0031,0.85,6.49,16.55,3,0.064,9,0.038,3.000,0.057,3,0.06382978723,OK,OK,Rare,OK,Low,AmRatioFail,1.2,tTestFail,FALSE
 1167,3-Ethyl-3-methyl-2-pentanol,,,,2,1743,155103,0.0012,0.75,3.55,9.67,1,0.021,4,0.017,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,2.1,tTestFail,FALSE
 1168,3-Ethyl-3-methylheptadecane,,,,5,323080,7985950,0.0031,0.88,0.49,16.27,16,0.340,58,0.242,2.000,0.038,16,0.3404255319,OK,OK,OK,OK,OK,AmRatioFail,1.9,tTestFail,FALSE
-1169,3-Ethyl-3-methylheptane,,,,4,27494,3775887,0.0048,0.82,2.50,9.40,8,0.170,27,0.113,14.000,0.264,8,0.170212766,OK,OK,OK,OK,Low,AmRatioFail,1.1,tTestFail,FALSE
+1169,3-Ethyl-3-methylheptane,,,cont,4,27494,3775887,0.0048,0.82,2.50,9.40,8,0.170,27,0.113,14.000,0.264,8,0.170212766,OK,OK,OK,OK,Low,AmRatioFail,1.1,tTestFail,FALSE
 1170,3-Ethyl-3-methylnonadecane,,,,2,2718,287991,0.0009,0.76,1.53,16.25,2,0.043,4,0.017,1.000,0.019,2,0.04255319149,OK,Low,Rare,OK,Low,AmRatioFail,0.5,tTestFail,FALSE
 1171,3-Ethyl-4-hydroxy-dihydro-furan-2-one,,,,2,9810,542886,0.0010,0.73,21.09,16.14,7,0.149,11,0.046,0.000,0.000,7,0.1489361702,OK,Low,Rare,OK,Low,AmRatioFail,0.4,tTestFail,FALSE
 1172,3-Ethyl-6-trifluoroacetoxyoctane,,,,2,721,145317,0.0020,0.79,4.55,8.70,1,0.021,3,0.013,1.000,0.019,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,2.1,tTestFail,FALSE
@@ -1590,7 +1590,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 1589,"8-(2-Octanoylcyclopropyl)octanoic acid, methyl ester",,,,4,171,40923,NA,0.71,NA,12.55,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 1590,"8-[2-[N-Aziridyl]ethyl]amino-2,6-dimethyl-2,6-octadiene",,,,4,476,114153,NA,0.77,NA,10.29,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 1591,8-Cyclohexadecen-1-one,,,,2,0,0,NA,0.73,NA,10.62,1,0.021,0,0.000,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
-1592,"8-Hexadecenal, 14-methyl-, (Z)-",,,,2,28072,3051186,0.0041,0.78,6.05,14.88,4,0.085,11,0.046,1.000,0.019,4,0.08510638298,OK,Low,Rare,OK,Low,AmRatioFail,0.3,tTestFail,FALSE
+1592,"8-Hexadecenal, 14-methyl-, (Z)-",,,cont,2,28072,3051186,0.0041,0.78,6.05,14.88,4,0.085,11,0.046,1.000,0.019,4,0.08510638298,OK,Low,Rare,OK,Low,AmRatioFail,0.3,tTestFail,FALSE
 1593,8-Hexadecyne,,,,4,43,10414,NA,0.74,NA,10.63,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 1594,8-Hydroxy-2-octanone,,,,5,329,78977,NA,0.84,NA,6.43,0,0.000,1,0.004,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 1595,"8-Hydroxy-2,2-dimethyl-dec-5-en-3-one",,,,4,286,68620,NA,0.71,NA,6.71,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
@@ -2021,7 +2021,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 2020,"Carbonic acid, methyl octyl ester",,,,4,20209,1855283,0.0002,0.79,0.00,9.53,0,0.000,4,0.017,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 2021,"Carbonic acid, neopentyl 2-ethylhexyl ester",,,,5,2142,344547,0.0022,0.81,15.94,10.52,0,0.000,4,0.017,2.000,0.038,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 2022,"Carbonic acid, neopentyl phenyl ester",,,,4,265,63494,NA,0.71,NA,11.95,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
-2023,"Carbonic acid, nonyl prop-1-en-2-yl ester",nonyl prop-1-en-2-yl carbonate,Hexenol,cont,4,46582,775185,0.0008,0.81,0.49,6.43,4,0.085,33,0.138,22.000,0.415,4,0.08510638298,OK,OK,OK,OK,Low,AmRatioFail,3.8,tTestFail,FALSE
+2023,"Carbonic acid, nonyl prop-1-en-2-yl ester",,,cont,4,46582,775185,0.0008,0.81,0.49,6.43,4,0.085,33,0.138,22.000,0.415,4,0.08510638298,OK,OK,OK,OK,Low,AmRatioFail,3.8,tTestFail,FALSE
 2024,"Carbonic acid, nonyl vinyl ester",,,,3,12100,1548319,0.0013,0.83,9.23,10.25,2,0.043,6,0.025,1.000,0.019,2,0.04255319149,OK,OK,Rare,OK,Low,AmRatioFail,0.4,tTestFail,FALSE
 2025,"Carbonic acid, octadecyl 2,2,2-trichloroethyl ester",,,,3,7456,975558,0.000133,0.73,2.2303,21.70,0,0.000,2,0.008,1.000,0.019,0,0,High,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 2026,"Carbonic acid, octadecyl phenyl ester",,,,2,4928,569159,0.0004,0.75,0.00,11.93,1,0.021,3,0.013,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,1.4,tTestFail,FALSE
@@ -2328,7 +2328,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 2327,"Cyclopropane, 1,2,3-trimethyl-",,,,5,774,185667,NA,0.82,NA,2.44,0,0.000,1,0.004,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 2328,"Cyclopropane, 2-(1,1-dimethyl-2-propenyl)-1,1-dimethyl-",,,,4,283,52058,0.0001,0.74,3.89,12.76,0,0.000,2,0.008,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 2329,"Cyclopropane, butyl-",,,,4,97,23203,NA,0.75,NA,3.83,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
-2330,"Cyclopropane, nonyl-",nonylcyclopropane,Hexenol,cont,4,11476,628163,0.0009,0.87,1.61,11.43,1,0.021,12,0.050,1.000,0.019,1,0.02127659574,OK,OK,Rare,OK,Low,OK,13.6,tTestFail,FALSE
+2330,"Cyclopropane, nonyl-",,,cont,4,11476,628163,0.0009,0.87,1.61,11.43,1,0.021,12,0.050,1.000,0.019,1,0.02127659574,OK,OK,Rare,OK,Low,OK,13.6,tTestFail,FALSE
 2331,"Cyclopropane, octyl-",,,,3,915,153556,0.0004,0.85,2.78,12.86,1,0.021,2,0.008,0.000,0.000,1,0.02127659574,OK,OK,Rare,OK,Low,AmRatioFail,0.5,tTestFail,FALSE
 2332,"Cyclopropane, tetramethylpropylidene-",,,,3,13732,1334550,0.0004,0.82,0.00,8.22,2,0.043,4,0.017,0.000,0.000,2,0.04255319149,OK,OK,Rare,OK,Low,AmRatioFail,1.4,tTestFail,FALSE
 2333,"Cyclopropane, trimethyl(2-methyl-1-propenylidene)-",,,,5,2153,363518,0.0008,0.84,0.00,10.68,0,0.000,2,0.008,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
@@ -2897,8 +2897,8 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 2896,Lavandulyl isobutyrate,,,,4,266,63804,NA,0.76,NA,12.39,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 2897,"Limonen-6-ol, pivalate",,,,4,19998,2076718,0.0007,0.77,0.80,14.85,0,0.000,5,0.021,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 2952,Methyl salicylate,methyl salicylate,Methyl_salicylate,bis14,4,75528,662714,0.0024,0.90,0.00,11.55,16,0.340,85,0.354,22.000,0.415,16,0.3404255319,OK,OK,OK,OK,Low,AmRatioFail,0.8,tTestFail,FALSE
-2899,Linalyl acetate,,,,3,12635,1756250,0.0013,0.82,5.07,8.60,2,0.043,11,0.046,3.000,0.057,2,0.04255319149,OK,OK,Rare,OK,Low,AmRatioFail,2.5,tTestFail,FALSE
-846,2-Oxepanone,caprolactone,,cont,4,32079,856128,0.0027,0.81,2.31,10.70,14,0.298,53,0.221,16.000,0.302,14,0.2978723404,OK,OK,OK,OK,Low,AmRatioFail,1.0,tTestFail,FALSE
+2899,Linalyl acetate,linalyl acetate,Linalool,maxfieldnew,3,12635,1756250,0.0013,0.82,5.07,8.60,2,0.043,11,0.046,3.000,0.057,2,0.04255319149,OK,OK,Rare,OK,Low,AmRatioFail,2.5,tTestFail,FALSE
+846,2-Oxepanone,,,cont,4,32079,856128,0.0027,0.81,2.31,10.70,14,0.298,53,0.221,16.000,0.302,14,0.2978723404,OK,OK,OK,OK,Low,AmRatioFail,1.0,tTestFail,FALSE
 2901,Longifolene-(V4),,,,3,2672,457338,0.0032,0.81,0.00,14.68,1,0.021,3,0.013,1.000,0.019,1,0.02127659574,OK,OK,Rare,OK,Low,AmRatioFail,0.1,tTestFail,FALSE
 2902,m-Aminophenylacetylene,,,,2,23026,1204733,0.0010,0.75,4.27,12.08,2,0.043,13,0.054,0.000,0.000,2,0.04255319149,OK,Low,Rare,OK,Low,AmRatioFail,1.0,tTestFail,FALSE
 2903,"m-Anisic acid, tridec-2-ynyl ester",,,,3,489,117423,NA,0.72,NA,18.68,0,0.000,1,0.004,0.000,0.000,0,0,High,Low,Rare,OK,Low,OK,Inf,OK,FALSE
@@ -3323,7 +3323,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 3322,"Pentasiloxane, 1,1,3,3,5,5,7,7,9,9-decamethyl-",,,,2,133,31842,0.0000,0.71,0.00,13.23,2,0.043,1,0.004,0.000,0.000,2,0.04255319149,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
 3323,"Pentatriacontane, 1-bromo-",,,,4,1929,462875,NA,0.76,NA,15.41,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 1683,"Acetic acid, phenylmethyl ester",benzyl acetate,Methyl_salicylate,bis14,3,888,167944,0.0021,0.86,0.00,11.06,1,0.021,2,0.008,0.000,0.000,1,0.02127659574,OK,OK,Rare,OK,Low,AmRatioFail,0.8,tTestFail,FALSE
-3217,Oxybenzone,oxybenzone sunscreen,,cont,4,1742719,13004923,0.003697,0.86,0.0015,20.93,34,0.723,163,0.679,48.000,0.906,34,0.7234042553,High,OK,OK,OK,OK,AmRatioFail,1.0,tTestFail,FALSE
+3217,Oxybenzone,,,cont,4,1742719,13004923,0.003697,0.86,0.0015,20.93,34,0.723,163,0.679,48.000,0.906,34,0.7234042553,High,OK,OK,OK,OK,AmRatioFail,1.0,tTestFail,FALSE
 3326,"Phenanthrene, 7-ethenyl-1,2,3,4,4a,4b,5,6,7,9,10,10a-dodecahydro-1,1,4a,7-tetramethyl-, [4aS-(4a.alpha.,4b.beta.,7.beta.,10a.be",,,,3,3377,810396,0.000533,0.77,0.0103,18.97,0,0.000,1,0.004,2.000,0.038,0,0,High,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 3327,"Phenethylamine, N-hexyl-",,,,2,0,0,NA,0.75,NA,9.99,1,0.021,0,0.000,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
 3328,Phenol,,,,3,162422,3100246,0.0014,0.79,0.00,8.00,4,0.085,26,0.108,3.000,0.057,4,0.08510638298,OK,Low,OK,OK,Low,AmRatioFail,1.7,tTestFail,FALSE
@@ -3575,8 +3575,8 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 3574,Tibolone,,,,3,9121,2189122,NA,0.72,NA,19.40,0,0.000,1,0.004,0.000,0.000,0,0,High,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 3575,Tiglic acid,,,,5,420,100719,NA,0.88,NA,6.16,0,0.000,1,0.004,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 3576,Toluene,,,,5,801935,13338402,0.0017,0.88,0.00,4.25,28,0.596,134,0.558,14.000,0.264,28,0.5957446809,OK,OK,OK,OK,OK,AmRatioFail,1.2,tTestFail,FALSE
-1967,Caprolactam,caprolactam,,cont,4,1604724,21489518,0.0056,0.94,0.17,12.39,29,0.617,143,0.596,48.000,0.906,29,0.6170212766,OK,OK,OK,Contaminant,OK,AmRatioFail,2.1,tTestFail,FALSE
-125,"[1,1'-Bicyclopentyl]-2-one",2-cyclopentylcyclopentan-1-one,,cont,4,114280,3431594,0.0013,0.85,0.00,12.91,11,0.234,81,0.338,34.000,0.642,11,0.2340425532,OK,OK,OK,OK,Low,AmRatioFail,2.1,tTestFail,FALSE
+1967,Caprolactam,,,cont,4,1604724,21489518,0.0056,0.94,0.17,12.39,29,0.617,143,0.596,48.000,0.906,29,0.6170212766,OK,OK,OK,Contaminant,OK,AmRatioFail,2.1,tTestFail,FALSE
+125,"[1,1'-Bicyclopentyl]-2-one",,,cont,4,114280,3431594,0.0013,0.85,0.00,12.91,11,0.234,81,0.338,34.000,0.642,11,0.2340425532,OK,OK,OK,OK,Low,AmRatioFail,2.1,tTestFail,FALSE
 3579,trans-.beta.-Terpinyl benzoate,,,,4,651,156229,NA,0.75,NA,14.41,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 3580,"trans-1,2-Cyclohexanediamine",,,,4,1167,203425,0.0002,0.75,0.00,7.56,0,0.000,2,0.008,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 3581,"trans-1,2-Diethyl cyclopentane",,,,2,0,0,NA,0.76,NA,6.81,1,0.021,0,0.000,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
@@ -3724,7 +3724,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 3723,Z-5-Nonadecene,,,,4,18346,2464819,0.001825,0.805,1.4713,21.40,0,0.000,3,0.013,1.000,0.019,0,0,High,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 3724,"Z,E-2,13-Octadecadien-1-ol",,,,1,0,0,NA,0.79,NA,18.18,1,0.021,0,0.000,0.000,0.000,1,0.02127659574,High,Low,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
 3725,"Z,Z-2,5-Pentadecadien-1-ol",,,,4,281,47273,0.0008,0.74,3.63,10.04,0,0.000,2,0.008,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
-2563,"Ethanol, 2,2'-oxybis-",2-(2-hydroxyethoxy)ethanol,,cont,4,18161,382771,0.0014,0.90,0.00,7.71,9,0.191,53,0.221,36.000,0.679,9,0.1914893617,OK,OK,OK,OK,Low,AmRatioFail,1.6,tTestFail,FALSE
+2563,"Ethanol, 2,2'-oxybis-",,,cont,4,18161,382771,0.0014,0.90,0.00,7.71,9,0.191,53,0.221,36.000,0.679,9,0.1914893617,OK,OK,OK,OK,Low,AmRatioFail,1.6,tTestFail,FALSE
 3727,.alpha. Ionyl acetate,,,,4,961,126559,0.0018,0.73,0.00,16.45,0,0.000,2,0.008,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 3728,.alpha.-Acetobutyrolactone,,,,5,778,186779,NA,0.83,NA,4.56,0,0.000,1,0.004,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 3729,.alpha.-Bisabolol,,,,4,4031,697303,0.0025,0.77,0.75,16.19,0,0.000,2,0.008,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
@@ -4166,7 +4166,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 4165,"2-Decene, 5-methyl-, (Z)-",,,,5,585,140491,NA,0.82,NA,13.39,0,0.000,1,0.004,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 4166,2-Dimethylsilyloxytridecane,,,,4,417,100047,NA,0.75,NA,3.52,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 4167,2-Dodecanol,,,,4,693,166356,NA,0.73,NA,11.92,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
-3111,"Octane, 2,4,6-trimethyl-","2,4,6-trimethyloctane  ",Hexenol,cont,6,106012,7306759,0.0018,0.87,0.59,8.35,4,0.085,45,0.188,4.000,0.075,4,0.08510638298,OK,OK,OK,OK,OK,OK,4.0,tTestFail,TRUE
+3111,"Octane, 2,4,6-trimethyl-",,,cont,6,106012,7306759,0.0018,0.87,0.59,8.35,4,0.085,45,0.188,4.000,0.075,4,0.08510638298,OK,OK,OK,OK,OK,OK,4.0,tTestFail,TRUE
 4169,"2-Dodecene, 4-methyl-",,,,2,0,0,NA,0.78,NA,8.93,0,0.000,0,0.000,1.000,0.019,0,0,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestZeros,FALSE
 4170,2-Eicosanol,,,,2,0,0,0.000433,0.82,0.0000,23.41,0,0.000,0,0.000,3.000,0.057,0,0,High,OK,Rare,OK,Low,AmRatioFail,0.0,tTestZeros,FALSE
 4171,2-endo-5-exo-Protoadamanediol,,,,4,690,165526,NA,0.71,NA,13.70,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE

@@ -1,5 +1,6 @@
 library(tidyverse)
 library(reshape2)
+library(vegan)
 
 # Read chromatograms ------------------------------------------------------
 

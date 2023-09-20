@@ -34,55 +34,22 @@ library(RColorBrewer)
 library(DT)
 library(lme4)
 library(lmerTest)
-
+library(bouquet)
 library(knitr)
 knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, 
                       fig.path = "images_volatiles2020/", dev="svglite", dev.args=list(fix_text_size=FALSE), fig.height=8, fig.width=8)
 options(digits=4) # for kables
+```
 
-# load short names and standard regessions
-ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %>% 
-  select(name, shortname, standard, verdict) %>%  filter(verdict != "") %>% 
-  mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
-         class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
-                            Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
-  left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
-              pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
-class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
+```{r loadscents}
+load("data/maxfield_data.rda") #load trait measurements, etc
+load("data/volatiles/maxfield_volatiles_lessdupes.rda") # from maxfield_gc.R, loads maxfmeta and maxf (wide GC data)
 
-#shorten chemical names and merge compounds with multiple names
-shortnames <- ipochems %>% select(name, shortname) %>% filter(shortname!="") %>% deframe()
-#shortnames[shortnames %in% shortnames[duplicated(shortnames)]]
-
-greekify <- function(names) {
-  names %>% 
-    str_replace("^a-","\U03B1-") %>% str_replace("-a-","-\U03B1-") %>% 
-    str_replace("^b-","\U03B2-") %>% str_replace("-b-","-\U03B2-") %>% 
-    str_replace("^g-","\U03B3-") %>% str_replace("-g-","-\U03B3-")
-}
-
-load("data/volatiles/maxfield_volatiles.rda")
-load("data/maxfield_data.rda")
-
-#TODO checking on duplicate filenames
-maxfmeta.dupes <- which(duplicated(maxfmeta$FileName))
-maxfmeta$FileName[maxfmeta.dupes]#two are duplicated
-#2D218_July17_08042018.qgd matched to two Markes tubes desorbed 17 min apart, second verdict="mismatch"
-#4B955_29_210709_792021_27.qgd matched to two Markes tubes desorbed 15 min apart, one matched floral other ambient, also has verdict="mismatch" - this row not in volsmeta though
-maxf <- maxf[!duplicated(maxfmeta$FileName),]
-maxfmeta <- maxfmeta[!duplicated(maxfmeta$FileName),]
-
-load("data/volatiles/maxfield210827.Rdata")
-maxf.data.cut <- maxf.data[maxf.data$Filename %in% maxfmeta$FileName,] #load long data
-maxf.data.cut <- distinct(select(maxf.data.cut, -batch)) #TODO knock off a few files entered twice (see maxfield_gc_
-#maxf.data.cut %>% group_by(Filename) %>% count() #540
-maxf.data.cut$Name <- recode(maxf.data.cut$Name, !!!shortnames)
-
-
-#check for duplicates
-#View(vt %>% filter(!exclude %in% c("flowers", "incomplete", "resample")) %>% count(sampledate.file, plot.file, subplot.file, plant.file) %>% filter(n>1) %>% left_join(vt)) #exclude="resample"
-#View(maxfmeta %>% count(sampledate,plantid) %>% filter(n>1) %>% left_join(maxfmeta))
-#TODO fix these GCMS filename duplicates
+#check for duplicates in vt and maxfmeta
+#vt %>% filter(!exclude %in% c("flowers", "incomplete", "resample")) %>% count(sampledate.file, plot.file, subplot.file, plant.file) %>% filter(n>1)  #exclude="resample" #no duplicates in vt
+#I think these plantid duplicates are all just two samples taken on the same day, except maybe 3D858
+# maxfmeta %>% count(sampledate,plantid) %>% filter(n>1)
+# maxfmeta %>% count(sampledate,plantid, other) %>% filter(n>1)# other column has info on vial, run position, etc
 
 volsmeta <- maxfmeta %>% mutate(sampledate = as.Date(sampledate), year = factor(year(sampledate))) %>% 
   drop_na(plotid) %>% #cut out ambients, leaving 459 chromatograms
@@ -99,11 +66,8 @@ volsmeta <- maxfmeta %>% mutate(sampledate = as.Date(sampledate), year = factor(
          pump_id=as.character(pump_id))
 volsmeta <- left_join(volsmeta, volsmeta %>% count(sequence.date, sequence.start) %>% group_by(sequence.date) %>% mutate(sequence.12 = paste(sequence.date, row_number()))) #add the batch number for that day (1 or 2)
 rownames(volsmeta) <- volsmeta$index 
-
-fitnesstraits <- c("seeds_est", "seeds_per_flower", "prop_uninfested", "eggs_per_flower")
-fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
-                  eggs_per_flower="Fly eggs per flower")[fitnesstraits]
 ```
+
 
 # Sample size
 
@@ -176,6 +140,7 @@ vt.ambi %>% filter(type=="ambient") %>% mutate(year=year(sampledate)) %>%
 ggplot(aes(x=yday(sampledate))) + geom_bar() + facet_wrap(vars(year), ncol=1) + 
   labs(x="Day of year", y="Ambient samples") + scale_fill_manual(values=water_snow_pal)+  theme_minimal() 
 
+print("dates missing ambient controls")
 setdiff(vt.ambi %>% filter(type=="floral") %>% pull(sampledate) %>% unique, 
         vt.ambi %>% filter(type=="ambient") %>% pull(sampledate) %>% unique) %>% as.Date(origin=ymd("1970-01-01"))
 
@@ -194,48 +159,82 @@ ggplot(vt.ambi %>% filter(type=="ambient"), aes(x=hour(bag), fill=year)) +
 
 ## Bouquet
 
-```{r bouquet}
-library(bouquet)
-maxf.data.cut <- maxf.data.cut[maxf.data.cut$Name != "", ] #drop unidentified peaks
-maxf.data.cut$Name <- droplevels(maxf.data.cut$Name)
-longdata <- load_longdata(maxf.data.cut, sample="Filename", RT="Ret.Time", name="Name", area="Area", match = "SI", maxmatch=100)
-metadata <- maxfmeta %>% as.data.frame() %>% #tibbles break bouquet's add_count_freqs
-  rename(thesample=sample) %>% #name conflict with bouquet
-  load_metadata(date="Date", sample="FileName", type="type")
+```{r bouquetprep}
+# load short names and standard regessions
+ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %>% 
+  select(name, shortname, standard, verdict) %>%  filter(verdict != "") %>% 
+  mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
+         class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
+                            Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
+  left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
+              pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
+class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
+
+#shorten chemical names and merge compounds with multiple names
+shortnames <- ipochems %>% select(name, shortname) %>% filter(shortname!="") %>% deframe()
+#shortnames[shortnames %in% shortnames[duplicated(shortnames)]]
+
+greekify <- function(names) {
+  names %>% 
+    str_replace("^a-","\U03B1-") %>% str_replace("-a-","-\U03B1-") %>% 
+    str_replace("^b-","\U03B2-") %>% str_replace("-b-","-\U03B2-") %>% 
+    str_replace("^g-","\U03B3-") %>% str_replace("-g-","-\U03B3-")
+}
+
+metadata <- maxfmeta %>% 
+  mutate(sampledate = as.Date(sampledate), year = year(sampledate)) %>% 
+  filter(year != 2021) %>% mutate(year=factor(year)) %>% #drop samples collected in 2021
+  as.data.frame() %>% #tibbles break bouquet's add_count_freqs
+  select(-sample) %>% #name conflict with bouquet
+  load_metadata(date="Date", sample="FileName", type="type")#group="year"
+
+load("data/volatiles/maxfield210827.Rdata") #load long maxf.data
+longdata <- maxf.data %>% 
+  filter(batch != "heather_maxfield190813_new.txt", #duplicates - subset of heather_maxfield190813_new001.txt
+         Filename %in% metadata$sample, #match list in metadata
+         Name != "") %>% #drop unidentified peaks
+  mutate(Name = droplevels(recode(Name, !!!shortnames))) %>% 
+  load_longdata(sample="Filename", RT="Ret.Time", name="Name", area="Area", match = "SI", maxmatch=100)
+remove(maxf.data)
+
 vol.all <- make_sampletable(longdata, metadata)
 chems <- make_chemtable(longdata, metadata)
+```
 
+```{r bouquet}
 chemsf <- chems %>%
   filter_RT(2, 17) %>% 
   filter_match(0.8) %>% 
   filter_freq(0.1) %>% 
-  filter_contaminant(cont.list = c("Hexyl chloroformate", "Trichloroacetic acid, 6-ethyl-3-octyl ester",
-                                   "Carbonic acid, decyl undecyl ester","11-Methyldodecanol",
-                                   "3-Ethyl-3-methylheptane", "2-Pentanone, 4-hydroxy-4-methyl-",
-                                   "1-Octanol, 2-butyl-", "L-Lactic acid","2-Oxepanone, 7-methyl-",
-                                   "1-Decanol, 2-octyl-","Ethylbenzene","Tritetracontane",
-                                   "Cyclopentanone, 2-ethyl-","Ethanol, 2-(hexyloxy)-",
-                                   "8-Hexadecenal, 14-methyl-, (Z)-")) %>%
-  filter_area(min_maximum = 1e6) %>% 
+  filter_contaminant(cont.list = c("Butanenitrile, 2-methyl-","2-Oxepanone, 7-methyl-", #RT order
+                                   "Ethylbenzene", "Hexyl chloroformate", "L-Lactic acid",
+                                   "1,5-Dimethyl-6-oxa-bicyclo[3.1.0]hexane","Cyclopentanone, 2-ethyl-",
+                                   "trisiloxane, 1,1,1,5,5,5-hexamethyl-3-[(trimethylsilyl)oxy]-",
+                                   "Cyclobutane, 1,2-bis(1-methylethenyl)-, trans-",
+                                   "N-.alpha.,N-.omega.-Di-cbz-L-arginine", "3-Ethyl-3-methylheptane",
+                                   "Trichloroacetic acid, 6-ethyl-3-octyl ester", "11-Methyldodecanol",
+                                   "8-Hexadecenal, 14-methyl-, (Z)-",
+                                   "Tritetracontane","Carbonic acid, decyl undecyl ester",
+                                   "Eicosane, 2,4-dimethyl-", "1-Decanol, 2-octyl-")) %>%
+  filter_area(min_maximum = 1e5) %>% #not used for final filtering
   filter_ambient_ratio(vol.all, metadata, ratio = 4) %>%
   combine_filters() 
 
-chemsf$filter_final <- with(chemsf, (filter_RT == "OK" & filter_match =="OK" & 
-                                       filter_freq.floral == "OK" &
-                              filter_area == "OK" & filter_contaminant == "OK"))
+chemsf$filter_final <- with(chemsf, filter_RT=="OK" & filter_match=="OK" & 
+                              filter_freq.floral=="OK" & filter_contaminant=="OK")
 
 #now run t-tests after rarity filtering
 #don't filter by ambient ratio first, see paper on problems: https://doi.org/10.1186/1471-2105-11-450
 chemsf <- bind_rows(chemsf %>% filter(filter_final) %>% 
   filter_ambient_ttest(prune_sampletable(vol.all, chemsf, metadata), 
-                       metadata, alpha = 0.05, adjust = "fdr"), 
+                       metadata, alpha = 0.05, adjust = "fdr"), #not used for final filtering
   chemsf %>% filter(!filter_final)) %>% 
   mutate(filter_ambient_ttest=fct_na_value_to_level(filter_ambient_ttest, "notchecked"),
          filter_final = filter_final & filter_ambient_ratio =="OK") %>% 
   arrange(match(name, colnames(vol.all)))
 
 bouquet::plot_filters(chemsf, option="rarity", yrange=3.5)
-bouquet::plot_filters(chemsf, option="ambient", yrange=2.5)
+bouquet::plot_filters(chemsf, option="ambient", yrange=3.5)
 bouquet::plot_filters(chemsf, option="volcano", yrange=2.5, alpha_excluded = 0.5)
 bouquet::plot_filters(chemsf, option="prop")
 ```
@@ -243,7 +242,9 @@ bouquet::plot_filters(chemsf, option="prop")
 
 ## Filtering
 
-Filtering criteria (verdict="fvoc" in the table below):
+This section is outdated, see bouquet filters above.
+
+OLD Filtering criteria (verdict="fvoc" in the table below):
 
 * Present in 10% of samples
 * Maximum peak area is at least 4000000
@@ -327,12 +328,12 @@ volsmeta <- volsmeta %>%
          sampledate = coalesce(sampledate, sampledate.file))#get sampling date from filename when no metadata
 
 # Cut contaminated samples
-#TODO now this is up to 45 samples with zeros!
-nonzero <-rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
-set.seed(1) # ensures the contaminated samples are in cluster.good = 1
-volsmeta$cluster.good <-factor(kmeans((vols.good)^(1/3), centers=3, nstart=3)$cluster)
-set.seed(1) # ensures the contaminated samples are in cluster.cut = 1
-volsmeta$cluster.cut <-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
+#TODO now this is up to 24 samples with zeros after bouquet filtering!
+nonzero <-rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles 
+# set.seed(1) # ensures the contaminated samples are in cluster.good = 1
+# volsmeta$cluster.good <-factor(kmeans((vols.good)^(1/3), centers=3, nstart=3)$cluster)
+# set.seed(1) # ensures the contaminated samples are in cluster.cut = 1
+# volsmeta$cluster.cut <-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
 
 keep.samples <- nonzero#unname(nonzero & !(volsmeta$year.cluster %in% c("2019.1", "2020.1")))
 volsmeta <- volsmeta[keep.samples,]
@@ -340,7 +341,7 @@ vols <- vols[keep.samples,]
 vols.cut <- vols.cut[keep.samples,]
 vols.good <- vols.good[keep.samples,]
 
-minsamples <- 70
+minsamples <- nrow(vol) * 0.15 #15% of samples (was 70 samples)
 vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))> minsamples]#occur in more than minsamples
 ipogood.top <- names(sort(colSums(vols.good.top), decreasing=T))
 volsmeta.good.top <- bind_cols(volsmeta, vols.good.top) %>%  
@@ -380,19 +381,19 @@ vols.good %>% decostand(method = "tot") %>% summarize(across(everything(), mean)
 ## Sample size after filtering
 
 ```{r samplesizes_filtered, fig.width=10, fig.height=5}
-volsmeta %>% count(year) %>% 
-  kable(caption = "Samples sizes by year")
+volsmeta %>% count(year, name="samples") %>% 
+  left_join(volsmeta %>% count(year, plantid) %>% count(year, name="plants")) %>% 
+  kable(caption = "Samples and plants by year")
 volsmeta %>% count(year, water, snow) %>% 
   pivot_wider(names_from=c(year), values_from = n) %>% 
-  kable(caption = "Samples sizes by year and treatment")
+  kable(caption = "Samples by year and treatment")
 volsmeta %>% count(year, sampledate) %>% 
-  kable(caption = "Samples sizes by date")
-#TODO investigate dates with only one sample - likely errors
-volsmeta %>% count(year, sampledate) %>% filter(n>1) %>% count(year) %>% 
-  kable(caption="More than one sample taken on these dates")
+  kable(caption = "Samples by date")
+volsmeta %>% count(year, sampledate) %>% count(year) %>% 
+  kable(caption="Number of sampling dates")
 
-volsmeta %>% count(year, plantid) %>% ggplot(aes(x=n)) + facet_wrap(vars(year), ncol=1) +geom_histogram(binwidth=1)
-volsmeta %>% count(year, plantid) %>% count(year)
+volsmeta %>% count(year, plantid) %>% ggplot(aes(x=n, fill=year)) + facet_wrap(vars(year), ncol=1) +geom_histogram(binwidth=1) +
+  xlab("samples per plant") + scale_fill_manual(values=year_pal, guide="none") + theme_minimal()
 ```
 
 ## Time of day
@@ -457,7 +458,7 @@ pheatmap(as.matrix(t(vols.good))^(1/4),
          gaps_col = which(diff(year(volsmeta$sequence.date))>0))
 
 pinene_correlates <- cor(sqrt(vols[,colSums(vols)>1e7])) %>% as.data.frame() %>%
-  filter(`a-pinene`>0.15) %>% rownames()
+  filter(`a-pinene`>0.2) %>% rownames()
 pheatmap(as.matrix(t(vols[,pinene_correlates]))^(1/4), 
          cluster_cols=F, show_colnames=F,
          clustering_method="mcquitty", clustering_distance_rows="correlation",
@@ -777,7 +778,7 @@ treatment_effects <- function(class) {
   lmer(sqrt(value) ~ year * water * snow + (1|plot) + (1|plotid), 
        data = filter(volsmeta.class, name==class))
 }
-
+#TODO broken since there aren't benzenoids anymore
 mod.split <- tibble(class=levels(ipochemsf$class)) %>% 
   mutate(model = map(class, treatment_effects),
          test = map(model, ~ tidy(anova(.x, ddf="Ken")))) %>% 
@@ -985,6 +986,10 @@ ggplot(left_join(select(volsmeta,-VWC), sm.subplotyear), aes(x = VWC, color = ye
 ## Fitness measures
 
 ```{r fitness_corr}
+fitnesstraits <- c("seeds_est", "seeds_per_flower", "prop_uninfested", "eggs_per_flower")
+fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
+                  eggs_per_flower="Fly eggs per flower")[fitnesstraits]
+
 library(GGally)
 mnps.plantyr.traits %>% select(all_of(fitnesstraits)) %>% 
   ggpairs(mapping=aes(color=mnps.plantyr$year), lower=list(continuous="smooth_loess")) + 
@@ -1026,7 +1031,7 @@ walk(fitnesstraits, ~
                theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))
 ```
 
-```{r selection_class_gradient, fig.width=11, fig.height=8, eval=FALSE}
+```{r selection_class_gradient, fig.width=11, fig.height=8}
 trait.class.wide <- bind_cols(volsmeta, vols.class) %>% left_join(mnps.plantyr.traits) %>% 
   select(plantid, year, water, snow, all_of(fitnesstraits), all_of(names(class_pal))) %>% 
   mutate(across(all_of(names(class_pal)), sqrt))
@@ -1308,7 +1313,7 @@ plasticity.snow %>% left_join(vols.beta.snow %>% rename(name=trait) %>% filter(s
 
 # Plasticity to snowmelt vs. precipitation
 
-```{r snow_v_water, eval=FALSE}
+```{r snow_v_water}
 ggplot(left_join(plasticity.snow, plasticity.water), aes(x=R_A, y=E_N)) + 
   facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0) + geom_hline(yintercept=0) +
@@ -1334,7 +1339,7 @@ left_join(plasticity.snow, plasticity.water) %>% filter(!is.infinite(R_A)) %>%
 ```
 
 
-```{r adaptive_diff, fig.height=14, fig.width=10, eval=FALSE}
+```{r adaptive_diff, fig.height=14, fig.width=10}
 ### Change in selection gradient vs. plasticity
 diffbeta <- vols.beta.water %>% rename(name=trait) %>% 
   pivot_wider(names_from=water, values_from=c(B,SE)) %>% 
