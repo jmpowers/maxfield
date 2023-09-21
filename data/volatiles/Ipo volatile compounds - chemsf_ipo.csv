@@ -309,7 +309,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 308,1-Pentadecanethiol,,,,2,0,0,NA,0.71,NA,12.89,1,0.021,0,0.000,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
 309,"1-Pentadecene, 2-methyl-",,,,4,19657,1779594,0.0013,0.80,1.19,13.22,0,0.000,8,0.033,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 310,1-Pentadecyne,,,,3,1048,152792,0.0008,0.80,8.17,15.95,2,0.043,3,0.013,0.000,0.000,2,0.04255319149,OK,OK,Rare,OK,Low,AmRatioFail,0.1,tTestFail,FALSE
-162,"1-Butanol, 3-methyl-",3-methylbutan-1-ol  ,Hexenol,fvoc,6,9894,186171,0.0046,0.84,0.00,3.71,1,0.021,48,0.200,28.000,0.528,1,0.02127659574,OK,OK,OK,OK,Low,OK,82.0,OK,TRUE
+162,"1-Butanol, 3-methyl-",3-methylbutan-1-ol  ,Hexenol,merge,6,9894,186171,0.0046,0.84,0.00,3.71,1,0.021,48,0.200,28.000,0.528,1,0.02127659574,OK,OK,OK,OK,Low,OK,82.0,OK,TRUE
 312,"1-Pentanol, 2-ethyl-",,,,3,3311,633375,0.0007,0.84,9.57,4.72,1,0.021,3,0.013,0.000,0.000,1,0.02127659574,OK,OK,Rare,OK,Low,AmRatioFail,0.6,tTestFail,FALSE
 313,"1-Pentanol, 2-ethyl-4-methyl-",,,,5,5148,880248,0.0008,0.84,8.76,7.41,0,0.000,3,0.013,1.000,0.019,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 314,"1-Pentanol, 2-methyl-",,,,5,3161,248410,0.0001,0.85,0.00,4.63,0,0.000,5,0.021,3.000,0.057,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
@@ -698,7 +698,7 @@ n,name,shortname,standard,verdict,filters_passed,mean,max,match.var,match,RT.var
 697,2-Ethoxyethyl isobutyrate,,,,4,310,74332,NA,0.72,NA,2.12,0,0.000,1,0.004,0.000,0.000,0,0,OK,Low,Rare,OK,Low,OK,Inf,OK,FALSE
 698,2-Ethoxypentane,,,,5,165,39673,NA,0.81,NA,5.37,0,0.000,1,0.004,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE
 699,2-Ethyl-1-dodecanol,,,,3,5389,590529,0.0008,0.85,10.52,12.35,1,0.021,4,0.017,1.000,0.019,1,0.02127659574,OK,OK,Rare,OK,Low,AmRatioFail,2.6,tTestFail,FALSE
-311,1-Pentanol,pentan-1-ol  ,Hexenol,fvoc,6,11350,775417,0.0027,0.86,0.05,3.74,0,0.000,31,0.129,15.000,0.283,0,0,OK,OK,OK,OK,Low,OK,Inf,OK,TRUE
+311,1-Pentanol,3-methylbutan-1-ol,Hexenol,merge,6,11350,775417,0.0027,0.86,0.05,3.74,0,0.000,31,0.129,15.000,0.283,0,0,OK,OK,OK,OK,Low,OK,Inf,OK,TRUE
 701,"2-Ethyl-1-hexanol, methyl ether",,,,2,1035,93348,0.0013,0.78,0.00,11.43,2,0.043,3,0.013,0.000,0.000,2,0.04255319149,OK,Low,Rare,OK,Low,AmRatioFail,0.2,tTestFail,FALSE
 702,"2-Ethyl-1-hexanol, pentafluoropropionate",,,,2,0,0,NA,0.72,NA,9.70,1,0.021,0,0.000,0.000,0.000,1,0.02127659574,OK,Low,Rare,OK,Low,AmRatioFail,0.0,tTestFail,FALSE
 703,"2-Ethyl-1-hexanol, trifluoroacetate",,,,5,969,94042,0.0009,0.80,4.76,9.93,0,0.000,3,0.013,0.000,0.000,0,0,OK,OK,Rare,OK,Low,OK,Inf,OK,FALSE

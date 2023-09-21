@@ -168,7 +168,7 @@ ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %
                             Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
   left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
               pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
-class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))[-2]#no more
+class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
 
 #shorten chemical names and merge compounds with multiple names
 shortnames <- ipochems %>% select(name, shortname) %>% filter(shortname!="") %>% deframe()
@@ -215,13 +215,24 @@ chemsf <- chems %>%
                                    "Trichloroacetic acid, 6-ethyl-3-octyl ester", "11-Methyldodecanol",
                                    "8-Hexadecenal, 14-methyl-, (Z)-",
                                    "Tritetracontane","Carbonic acid, decyl undecyl ester",
-                                   "Eicosane, 2,4-dimethyl-", "1-Decanol, 2-octyl-")) %>%
+                                   "Eicosane, 2,4-dimethyl-", "1-Decanol, 2-octyl-",
+                                   "linalyl acetate", #kovats doesn't match
+                                   "[(Z)-hex-3-enyl] 2-methylpropanoate",  #merge into [(E/Z)-hex-3-enyl] butanoate
+                                   "[(E)-hex-4-enyl] butanoate", #merge into [(E/Z)-hex-3-enyl] butanoate
+                                   "[(Z)-hex-3-enyl] 2-methylbutanoate", #passed filters, only in 50 samples after quant
+                                   "2-butyloctan-1-ol",#absent in 2019
+                                   "(2E)-2,7-dimethylocta-2,6-dien-1-ol" #a quant integration that coelutes with b-myrcene
+                                   )) %>%
   filter_area(min_maximum = 1e5) %>% #not used for final filtering
   filter_ambient_ratio(vol.all, metadata, ratio = 4) %>%
   combine_filters() 
 
+#see below for add_quant1 and add_quant2 to generate this list
+add_quant2 <- c("(4E,6Z)-alloocimene", "methyl benzoate", "2-methylbenzonitrile", "(Z)-b-ocimene", "(2E)-2,7-dimethylocta-2,6-dien-1-ol", "cis-a-bergamotene", "g-terpinene", "trans-b-bergamotene", "(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene", "pseudoionone")
+
 chemsf$filter_final <- with(chemsf, filter_RT=="OK" & filter_match=="OK" & 
-                              filter_freq.floral=="OK" & filter_contaminant=="OK")
+                              filter_freq.floral=="OK" & filter_contaminant=="OK" |
+                             name %in% c("[(E)-hex-3-enyl] butanoate", add_quant2)) #include as counterpart to Z isomer
 
 #now run t-tests after rarity filtering
 #don't filter by ambient ratio first, see paper on problems: https://doi.org/10.1186/1471-2105-11-450
@@ -247,24 +258,38 @@ rownames(vols.cut) <- volsmeta$index
 vol <- vols[volsmeta$FileName, chemsf$name[chemsf$filter_final]]#don't cut ambients yet
 rownames(vol) <- volsmeta$index
 
-#load quantitative integrations
-quant <- read_tsv("../ipomopsis-temp/data/volatiles/quant.tsv") %>%
-  mutate(Name = recode(Name, !!!shortnames)) %>% 
-  pivot_wider(names_from = "Name", values_from="Area") %>% as.data.frame()
+# Shimadzu Quantitative Table ---------------------------------------------
+# source("read_shimadzu.R")
+# quantpath <- "~/MyDocs/MEGA/UCI/Schiedea/Analysis/scent/rmbl/RMBL Batches/quant_round4/"
+# bfiles <-  list.files(quantpath)
+# quant.full <- map_dfr(set_names(paste0(quantpath, bfiles), bfiles), read.shimadzu.quant, .id="batch") %>% 
+#   mutate(Name = trimws(Name), Area=replace_na(Area, 0)) %>% 
+#   distinct(Filename, Name, .keep_all=T)
 
-quant.meta <- quant %>% select(batch, Dirname, Filename) %>% 
-  mutate(isblank = str_detect(Filename, "lank"),
-         Year = as.integer(str_match(Filename, "(201[7-9]|202[1-2])[_.]")[,2]),
-         GCOrder = as.integer(str_match(Filename, "_([0-9][0-9]).qgd")[,2]),
-         RunDate = str_remove(str_extract(Filename, paste0("_[0-9]{2,4}",Year)), "_[0]*"),
-         RunDate = ymd(paste(str_sub(RunDate, -4,-1), str_sub(RunDate,1,1), str_sub(RunDate, 2, -5))))
+# quant <- quant.full %>% select(batch, Dirname, Filename, Name, Area) %>% 
+#   mutate(Dirname = fct_relabel(Dirname, str_remove, "C:/GCMSsolution/Data/Project1_190815/")) %>% 
+#   filter(!Name %in% c("1,6,10-Dodecatrien-3-ol, 3,7,11-trimethyl-", 
+#          "4,7-Methano-1H-indene, 2,4,5,6,7,7a-hexahydro-",
+#          "Tricyclo[3.1.0.0(2,4)]hexane, 3,6-diethyl-3,6-dimethyl-, trans-")) %>% 
+#   mutate(Name = recode(Name, !!!shortnames)) %>% 
+#   pivot_wider(names_from = "Name", values_from="Area") %>% as.data.frame()
+# 
+# rownames(quant) <- quant$Filename
+# quant[,c("batch","Dirname","Filename")] <- NULL
+# quant.all <- quant[rownames(vols),]
+# write_tsv(quant.all %>% rownames_to_column("Filename"), "data/volatiles/quant_all.tsv")
+quant.all <- read_tsv("data/volatiles/quant_all.tsv") %>% column_to_rownames("Filename")
 
-rownames(quant) <- quant$Filename
-quant[,c("batch","Dirname","Filename")] <- NULL
-quant.all <- quant[rownames(vols),]
+#add_quant1 <- chemsf %>% filter(name %in% setdiff(colnames(quant.all), colnames(vol)), 
+#                  ambient_ratio > 4) %>% pull(name) 
+# setdiff(colnames(quant.all), colnames(vol))
+# setdiff(colnames(vol), colnames(quant.all)) 
 
-setdiff(colnames(quant.all), colnames(vol)) #TODO include any of these from temp paper?
-setdiff(colnames(vol), colnames(quant.all)) #TODO set up quant integrations for these
+# pheatmap(as.matrix(t(quant.all))^(1/4), 
+#          show_colnames=F,
+#          clustering_method="mcquitty", clustering_distance_rows="correlation",
+#          clustering_callback = function(hc, ...){dendsort(hc, type="average")},
+#          scale="none", color=mako(512),main="Quant volatiles")
 
 quant.slopes <- set_names(rep(0,ncol(quant.all)), colnames(quant.all))
 for(compvol in colnames(quant.all)) {
@@ -291,6 +316,10 @@ quant.scaled.vol <- quant.scaled[volsmeta$FileName,
 #swap in scaled quant integrations
 #plot(unlist(vol[,colnames(quant.scaled.vol)]), unlist(quant.scaled.vol))
 vol[,colnames(quant.scaled.vol)] <- quant.scaled.vol
+
+#do this after swapping in add_quant1 integrations, exclude those <100
+# add_quant2 <- left_join(chemsf, sort(colSums(decostand(vol, "pa"))) %>% enframe()) %>% drop_na(value) %>%
+#   filter(value>100, !filter_final) %>% pull(name)
 ```
 
 ```{r retention, fig.width=12}
@@ -306,12 +335,12 @@ RT.year %>% filter(name %in% setdiff(colnames(vol), colnames(quant.all))) %>% ar
 RT.tol <- 0.17  # 10 seconds before or after in quantitative params
 ggplot(longdata.RT, aes(x=RT, y=name,color=RT.sd)) + geom_point(position=position_jitter(width=0, height=0.5)) + 
   scale_color_viridis_c(option="magma") + theme_dark()+
-  geom_text(aes(x=4.5, label=n), color="grey80") +
-  stat_summary(fun="median", fun.max=~median(.x)+RT.tol, fun.min=~median(.x)-RT.tol, geom="pointrange", color="white", size=0.5, shape=15)
+  geom_text(aes(x=4.5, label=n), color="grey80") #+
+  #stat_summary(fun="median", fun.max=~median(.x)+RT.tol, fun.min=~median(.x)-RT.tol, geom="pointrange", color="white", size=0.5, shape=15)
 
 ggplot(longdata.RT,  aes(y=RT, x=factor(year), color=RT.sd)) + 
-  facet_wrap(vars(name), scales="free_y") + geom_boxplot() + scale_color_viridis_c(option="magma") + theme_dark() +
-  geom_pointrange(data=RT.year, aes(y=mean1821, ymin=mean1821-0.1, ymax=mean1821+0.1, x="2019"), color="blue")
+  facet_wrap(vars(name), scales="free_y") + geom_boxplot() + scale_color_viridis_c(option="magma") + theme_dark() #+
+#  geom_pointrange(data=RT.year, aes(y=mean1821, ymin=mean1821-0.1, ymax=mean1821+0.1, x="2019"), color="blue")
 
 #RT fixes
 longdata.butanoate <- longdata %>% filter(str_detect(name , "\\)-hex-3-enyl\\] (2-methylpropa|buta)noate")) %>% 
@@ -320,6 +349,11 @@ ggplot(longdata.butanoate, aes(x=RT, fill=factor(year))) + geom_histogram(binwid
   facet_wrap(vars(name), ncol=1) + scale_x_continuous(limits=c(NA,NA))
 longdata.butanoate %>% mutate(EZ=ifelse(RT>11, "Z","E")) %>% group_by(EZ, year) %>% 
   summarize(RT=median(RT)) %>% kable(digits=2)
+
+longdata.pentanol <- longdata %>% filter(str_detect(name , "^(3-methylbutan-1-ol|pentan-1-ol)")) %>% 
+    left_join(select(metadata, sample, year)) 
+ggplot(longdata.pentanol, aes(x=RT, fill=factor(year))) + geom_histogram(binwidth=0.02) + 
+  facet_wrap(vars(name), ncol=1) + geom_vline(xintercept=3.75)
 ```
 
 ```{r diverse, eval=FALSE}
@@ -420,17 +454,17 @@ volsmeta <- volsmeta %>%
          sampledate = coalesce(sampledate, sampledate.file))#get sampling date from filename when no metadata
 
 # Cut contaminated samples
-#nonzero <-rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles 
+#nonzero <-rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles
 # set.seed(1) # ensures the contaminated samples are in cluster.good = 1
 # volsmeta$cluster.good <-factor(kmeans((vols.good)^(1/3), centers=3, nstart=3)$cluster)
 # set.seed(1) # ensures the contaminated samples are in cluster.cut = 1
 # volsmeta$cluster.cut <-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
 
-# keep.samples <- nonzero#unname(nonzero & !(volsmeta$year.cluster %in% c("2019.1", "2020.1")))
-# volsmeta <- volsmeta[keep.samples,]
-# vols <- vols[keep.samples,]
-# vols.cut <- vols.cut[keep.samples,]
-# vols.good <- vols.good[keep.samples,]
+keep.samples <- rowSums(vols.good)>3#nonzero#unname(nonzero & !(volsmeta$year.cluster %in% c("2019.1", "2020.1")))
+volsmeta <- volsmeta[keep.samples,]
+vols <- vols[keep.samples,]
+vols.cut <- vols.cut[keep.samples,]
+vols.good <- vols.good[keep.samples,]
 
 minsamples <- nrow(vol) * 0.15 #15% of samples (was 70 samples)
 vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))> minsamples]#occur in more than minsamples
@@ -540,7 +574,7 @@ pheatmap(as.matrix(t(vols.cut))^(1/4),
          gaps_col = which(diff(year(volsmeta$sequence.date))>0))
 
 pheatmap(as.matrix(t(vols.good))^(1/4), 
-         cluster_cols=F, show_colnames=F,
+         cluster_cols=T, show_colnames=F,
          clustering_method="mcquitty", clustering_distance_rows="correlation",
          clustering_callback = function(hc, ...){dendsort(hc, type="average")},
          scale="none", color=mako(512),main="Filtered volatiles",
@@ -1132,7 +1166,7 @@ selection_effects <- function(fitnesstrait) {
   lm(relfitness ~ year * water * snow + 
      Monoterpene * snow + Monoterpene * water + Monoterpene * year +
      Sesquiterpene * snow + Sesquiterpene * water + Sesquiterpene * year + 
-     #Benzenoid * snow + Benzenoid * water + Benzenoid * year +
+     Benzenoid * snow + Benzenoid * water + Benzenoid * year +
      Aliphatic * snow + Aliphatic * water + Aliphatic * year,
        data = trait.class.wide %>% rename(fitness=fitnesstrait) %>% 
        mutate(relfitness = fitness/mean(fitness, na.rm=T)))
