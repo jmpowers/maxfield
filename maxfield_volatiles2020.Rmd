@@ -460,13 +460,35 @@ volsmeta <- volsmeta %>%
 # set.seed(1) # ensures the contaminated samples are in cluster.cut = 1
 # volsmeta$cluster.cut <-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
 
+#Cuts 2 samples with extemely low emissions that fly off of nmds blob
 keep.samples <- rowSums(vols.good)>3#nonzero#unname(nonzero & !(volsmeta$year.cluster %in% c("2019.1", "2020.1")))
 volsmeta <- volsmeta[keep.samples,]
 vols <- vols[keep.samples,]
 vols.cut <- vols.cut[keep.samples,]
 vols.good <- vols.good[keep.samples,]
+```
 
-minsamples <- nrow(vol) * 0.15 #15% of samples (was 70 samples)
+```{r averaging}
+volsmeta %>% count(year, plantid, name="n_samples") %>% count(n_samples)
+
+volsmeta.avg <- volsmeta %>% 
+  group_by(across(all_of(c("type", "plantid", colnames(treatments))))) %>% 
+  summarize(across(all_of(c("VWC", "total")), ~mean(.x, na.rm=T)), 
+            index=index[1], .groups="drop")
+vols.cut.avg <- vols.cut %>% bind_cols(volsmeta) %>% 
+  group_by(across(all_of(c("plantid", colnames(treatments))))) %>% 
+  summarize(across(all_of(colnames(vols.cut)), ~mean(.x, na.rm=T)), .groups="drop") %>% 
+  select(-any_of(colnames(volsmeta)))
+vols.good.avg <- vols.good %>% bind_cols(volsmeta) %>% 
+  group_by(across(all_of(c("plantid", colnames(treatments))))) %>% 
+  summarize(across(all_of(colnames(vols.good)), ~mean(.x, na.rm=T)), .groups="drop") %>% 
+  select(-any_of(colnames(volsmeta)))
+rownames(volsmeta.avg) <- rownames(vols.cut.avg) <- rownames(vols.good.avg) <- volsmeta.avg$index
+```
+
+
+```{r topvols}
+minsamples <- nrow(vols.good) * 0.65
 vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))> minsamples]#occur in more than minsamples
 ipogood.top <- names(sort(colSums(vols.good.top), decreasing=T))
 volsmeta.good.top <- bind_cols(volsmeta, vols.good.top) %>%  
