@@ -239,6 +239,104 @@ bouquet::plot_filters(chemsf, option="volcano", yrange=2.5, alpha_excluded = 0.5
 bouquet::plot_filters(chemsf, option="prop")
 ```
 
+```{r quant}
+#vols <- maxf[volsmeta$index,]
+vols <- vol.all[volsmeta$FileName,]
+vols.cut <- vols[,colSums(vols)>3e8]
+rownames(vols.cut) <- volsmeta$index
+vol <- vols[volsmeta$FileName, chemsf$name[chemsf$filter_final]]#don't cut ambients yet
+rownames(vol) <- volsmeta$index
+
+#load quantitative integrations
+quant <- read_tsv("../ipomopsis-temp/data/volatiles/quant.tsv") %>%
+  mutate(Name = recode(Name, !!!shortnames)) %>% 
+  pivot_wider(names_from = "Name", values_from="Area") %>% as.data.frame()
+
+quant.meta <- quant %>% select(batch, Dirname, Filename) %>% 
+  mutate(isblank = str_detect(Filename, "lank"),
+         Year = as.integer(str_match(Filename, "(201[7-9]|202[1-2])[_.]")[,2]),
+         GCOrder = as.integer(str_match(Filename, "_([0-9][0-9]).qgd")[,2]),
+         RunDate = str_remove(str_extract(Filename, paste0("_[0-9]{2,4}",Year)), "_[0]*"),
+         RunDate = ymd(paste(str_sub(RunDate, -4,-1), str_sub(RunDate,1,1), str_sub(RunDate, 2, -5))))
+
+rownames(quant) <- quant$Filename
+quant[,c("batch","Dirname","Filename")] <- NULL
+quant.all <- quant[rownames(vols),]
+
+setdiff(colnames(quant.all), colnames(vol)) #TODO include any of these from temp paper?
+setdiff(colnames(vol), colnames(quant.all)) #TODO set up quant integrations for these
+
+quant.slopes <- set_names(rep(0,ncol(quant.all)), colnames(quant.all))
+for(compvol in colnames(quant.all)) {
+  nozeros <- bind_cols(select(vols,qual=compvol), select(quant.all,quant=compvol)) %>% 
+    filter(!(qual==0 | quant == 0))
+  quant.slopes[compvol] = coef(lm(quant ~ 0 + qual, data=nozeros))["qual"]
+  # quant_wins <- sum(vols[,compvol] == 0 & quant.all[,compvol] > 0, na.rm=T)
+  # qual_wins <-  sum(quant.all[,compvol] == 0 & vols[,compvol] > 0, na.rm=T)
+  # plot(x=sqrt(vols[,compvol]), y=sqrt(quant.all[,compvol]),
+  #      main=compvol, sub = paste0("quant:qual ",quant_wins,":",qual_wins,
+  #                                 " slope ",round(quant.slopes[compvol],3)),
+  #      xlab="qual",ylab="quant")
+  # abline(a=0, b=sqrt(quant.slopes[compvol]))
+}
+write_tsv(enframe(quant.slopes) %>% left_join(enframe(shortnames, name="Name", value="name")),
+          "data/volatiles/quant_slopes.tsv")
+
+quant.scaled <- sweep(quant.all, 2, quant.slopes, FUN = '/')
+
+quant.scaled.vol <- quant.scaled[volsmeta$FileName, 
+                                 colnames(quant.scaled) %in% 
+                                   intersect(colnames(quant.all), colnames(vol))] 
+
+#swap in scaled quant integrations
+#plot(unlist(vol[,colnames(quant.scaled.vol)]), unlist(quant.scaled.vol))
+vol[,colnames(quant.scaled.vol)] <- quant.scaled.vol
+```
+
+```{r retention, fig.width=12}
+longdata.RT <- longdata %>% filter(name %in% chemsf$name[chemsf$filter_final]) %>% 
+  left_join(select(metadata, sample, year)) %>%
+  group_by(name) %>%  mutate(n=n(), RT.sd=sd(RT)) %>% ungroup() %>% 
+  mutate(name=fct_reorder(name, RT))
+
+RT.year <- longdata.RT %>% group_by(name, year) %>% summarize(RT=median(RT)) %>% pivot_wider(names_from=year, values_from=RT) 
+RT.year %>% filter(name %in% setdiff(colnames(vol), colnames(quant.all))) %>% arrange(`2018`)
+
+
+RT.tol <- 0.17  # 10 seconds before or after in quantitative params
+ggplot(longdata.RT, aes(x=RT, y=name,color=RT.sd)) + geom_point(position=position_jitter(width=0, height=0.5)) + 
+  scale_color_viridis_c(option="magma") + theme_dark()+
+  geom_text(aes(x=4.5, label=n), color="grey80") +
+  stat_summary(fun="median", fun.max=~median(.x)+RT.tol, fun.min=~median(.x)-RT.tol, geom="pointrange", color="white", size=0.5, shape=15)
+
+ggplot(longdata.RT,  aes(y=RT, x=factor(year), color=RT.sd)) + 
+  facet_wrap(vars(name), scales="free_y") + geom_boxplot() + scale_color_viridis_c(option="magma") + theme_dark() +
+  geom_pointrange(data=RT.year, aes(y=mean1821, ymin=mean1821-0.1, ymax=mean1821+0.1, x="2019"), color="blue")
+
+#RT fixes
+longdata.butanoate <- longdata %>% filter(str_detect(name , "\\)-hex-3-enyl\\] (2-methylpropa|buta)noate")) %>% 
+    left_join(select(metadata, sample, year)) 
+ggplot(longdata.butanoate, aes(x=RT, fill=factor(year))) + geom_histogram(binwidth=0.02) + 
+  facet_wrap(vars(name), ncol=1) + scale_x_continuous(limits=c(NA,NA))
+longdata.butanoate %>% mutate(EZ=ifelse(RT>11, "Z","E")) %>% group_by(EZ, year) %>% 
+  summarize(RT=median(RT)) %>% kable(digits=2)
+```
+
+```{r diverse, eval=FALSE}
+tointegrate <- c("hexan-1-ol","sabinene","3-carene","verbenone","[(Z)-hex-3-enyl] 2-methylbutanoate","2-butyloctan-1-ol","b-caryophyllene oxide")
+best <- list()
+i <- 1
+vol.left <- vol[,tointegrate]^(1/4) # halfway between areas and presence-absence
+while(ncol(vol.left)>0) {
+  print(dim(vol.left))
+  best[[i]] <- which.max(rowSums(vol.left))
+  vol.left <- vol.left[ , !decostand(vol.left[best[[i]],], method="pa"), drop=FALSE]
+  i <- i+1
+}
+best.vol <- as.data.frame(t(vol[unlist(best),tointegrate]))
+colnames(best.vol) <- metadata[colnames(best.vol),"sample"]
+best.vol
+```
 
 ## Filtering
 
@@ -261,13 +359,6 @@ Plus (verdict other than "fvoc"):
 * merge: a compound that is a synonym of one of the floral volatiles (b-caryophyllene, b-ocimene, verbenone)
 
 ```{r filtering}
-#vols <- maxf[volsmeta$index,]
-vols <- vol.all[volsmeta$FileName,]
-vols.cut <- vols[,colSums(vols)>3e8]
-rownames(vols.cut) <- volsmeta$index
-vol <- vols[volsmeta$FileName, chemsf$name[chemsf$filter_final]]#don't cut ambients yet
-rownames(vol) <- volsmeta$index
-
 # ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %>% 
 #   filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge"),
 #          name %in% colnames(vols)[colSums(vols)>0], name != "Anisole") %>% #filter empty compounds
@@ -329,18 +420,17 @@ volsmeta <- volsmeta %>%
          sampledate = coalesce(sampledate, sampledate.file))#get sampling date from filename when no metadata
 
 # Cut contaminated samples
-#TODO now this is up to 24 samples with zeros after bouquet filtering!
-nonzero <-rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles 
+#nonzero <-rowSums(vols.good) > 0 #one sample ("55" on row 44) has no volatiles 
 # set.seed(1) # ensures the contaminated samples are in cluster.good = 1
 # volsmeta$cluster.good <-factor(kmeans((vols.good)^(1/3), centers=3, nstart=3)$cluster)
 # set.seed(1) # ensures the contaminated samples are in cluster.cut = 1
 # volsmeta$cluster.cut <-factor(kmeans((vols.cut)^(1/3), centers=3, nstart=3)$cluster)
 
-keep.samples <- nonzero#unname(nonzero & !(volsmeta$year.cluster %in% c("2019.1", "2020.1")))
-volsmeta <- volsmeta[keep.samples,]
-vols <- vols[keep.samples,]
-vols.cut <- vols.cut[keep.samples,]
-vols.good <- vols.good[keep.samples,]
+# keep.samples <- nonzero#unname(nonzero & !(volsmeta$year.cluster %in% c("2019.1", "2020.1")))
+# volsmeta <- volsmeta[keep.samples,]
+# vols <- vols[keep.samples,]
+# vols.cut <- vols.cut[keep.samples,]
+# vols.good <- vols.good[keep.samples,]
 
 minsamples <- nrow(vol) * 0.15 #15% of samples (was 70 samples)
 vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))> minsamples]#occur in more than minsamples
