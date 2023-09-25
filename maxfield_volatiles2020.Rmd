@@ -468,51 +468,52 @@ vols.cut <- vols.cut[keep.samples,]
 vols.good <- vols.good[keep.samples,]
 ```
 
+## Averaging 
+
 ```{r averaging}
-volsmeta %>% count(year, plantid, name="n_samples") %>% count(n_samples)
+volsmeta %>% count(year, plantid, name="n_samples") %>% count(n_samples) %>% kable(caption="number of samples per plant")
 
 volsmeta.avg <- volsmeta %>% 
   group_by(across(all_of(c("type", "plantid", colnames(treatments))))) %>% 
   summarize(across(all_of(c("VWC", "total")), ~mean(.x, na.rm=T)), 
             index=index[1], .groups="drop")
-vols.cut.avg <- vols.cut %>% bind_cols(volsmeta) %>% 
-  group_by(across(all_of(c("plantid", colnames(treatments))))) %>% 
-  summarize(across(all_of(colnames(vols.cut)), ~mean(.x, na.rm=T)), .groups="drop") %>% 
-  select(-any_of(colnames(volsmeta)))
+
 vols.good.avg <- vols.good %>% bind_cols(volsmeta) %>% 
   group_by(across(all_of(c("plantid", colnames(treatments))))) %>% 
   summarize(across(all_of(colnames(vols.good)), ~mean(.x, na.rm=T)), .groups="drop") %>% 
   select(-any_of(colnames(volsmeta)))
-rownames(volsmeta.avg) <- rownames(vols.cut.avg) <- rownames(vols.good.avg) <- volsmeta.avg$index
+rownames(volsmeta.avg) <- rownames(vols.good.avg) <- volsmeta.avg$index
 ```
 
 
 ```{r topvols}
-minsamples <- nrow(vols.good) * 0.65
-vols.good.top <- vols.good[,colSums(decostand(vols.good,"pa"))> minsamples]#occur in more than minsamples
-ipogood.top <- names(sort(colSums(vols.good.top), decreasing=T))
-volsmeta.good.top <- bind_cols(volsmeta, vols.good.top) %>%  
-  pivot_longer(-all_of(colnames(volsmeta))) %>% 
+minsamples <- nrow(vols.good) * 0.75 #top 12 most common volatiles, in 75% of samples
+ipogood.top <- vols.good[colSums(decostand(vols.good,"pa")) > minsamples] %>% 
+  colSums() %>% sort(decreasing=T) %>% names()
+vols.good.top <- vols.good.avg[,ipogood.top]
+
+volsmeta.good.top <- bind_cols(volsmeta.avg, vols.good.top) %>%  
+  pivot_longer(-all_of(colnames(volsmeta.avg))) %>% 
   mutate(name = fct_relevel(name, ipogood.top))
 
 mnps.plantyr.traits <- mnps.plantyr %>% 
-  select(year, plotid, plant, all_of(traits), eggs_per_flower) %>%
-  mutate(prop_uninfested = 1 - prop_infested)
+  select(year, plotid, plantid, all_of(traits), eggs_per_flower) %>%
+  mutate(prop_uninfested = 1 - prop_infested) %>% 
+  mutate(plantid = str_remove(plantid, "_[12][890]")) %>% #disambiguations on the plantid already handled by year column, except...
+  group_by(year, plotid, plantid) %>% #...two plants need to be combined in 2019
+  summarize(across(everything(), ~.x[!is.na(.x)][1]), .groups = "drop")
 
 traits.good.top <- volsmeta.good.top %>% 
   left_join(mnps.plantyr.traits) %>% 
   mutate(name = fct_relevel(name, ipogood.top))
 
-#vols.drydown <- vols.good[,c("1,3-octadiene","benzyl alcohol", "a-pinene","a-farnesene", "b-pinene", "b-ocimene")]
-#volsmeta.drydown <- bind_cols(volsmeta, vols.drydown) %>%  pivot_longer(-all_of(colnames(volsmeta)))
-
-vols.class <- vols.good %>% t() %>% as.data.frame() %>% rownames_to_column("name") %>% 
+vols.class <- vols.good.avg %>% t() %>% as.data.frame() %>% rownames_to_column("name") %>% 
   left_join(select(ipochemsf, name=name, class)) %>% 
   group_by(class) %>% summarize(across(-name, sum)) %>% column_to_rownames("class") %>%  t() %>% as.data.frame()
-volsmeta.class <- bind_cols(volsmeta, vols.class) %>%  
-  pivot_longer(-all_of(colnames(volsmeta)))
+volsmeta.class <- bind_cols(volsmeta.avg, vols.class) %>%  
+  pivot_longer(-all_of(colnames(volsmeta.avg)))
 traits.class    <- volsmeta.class %>% left_join(mnps.plantyr.traits)
-volsmeta.traits <- volsmeta %>%       left_join(mnps.plantyr.traits) #wide format
+volsmeta.traits <- volsmeta.avg %>%       left_join(mnps.plantyr.traits) #wide format
 ```
 
 
@@ -818,21 +819,21 @@ pheatmap(corr.vols,
 ### CAP
 
 ```{r cap}
-(scents.cap <- capscale(sqrt(vols.good) ~ year * water * snow, data=volsmeta, distance="bray"))
+(scents.cap <- capscale(sqrt(vols.good.avg) ~ year * water * snow, data=volsmeta.avg, distance="bray"))
 anova(scents.cap, by="term") %>% kable()
 
-scents.cap <- capscale(sqrt(vols.good) ~ year + water, data=volsmeta, distance="bray")
+scents.cap <- capscale(sqrt(vols.good.avg) ~ year + water, data=volsmeta.avg, distance="bray")
 plot(scents.cap, type="n")
-points(scents.cap, display = "sites", col=water_pal[volsmeta$water], pch=as.integer(volsmeta$year)+14)
-text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(water_pal)), col=c(rep("black",3),water_pal), font=2, cex=1.5)
+points(scents.cap, display = "sites", col=water_pal[volsmeta.avg$water], pch=as.integer(volsmeta.avg$year)+14)
+text(scents.cap, display="cn", labels=c(levels(volsmeta.avg$year), names(water_pal)), col=c(rep("black",3),water_pal), font=2, cex=1.5)
 
 plot(scents.cap, type="n")
 text(scents.cap, display="species", col="black", cex=0.5)
 
-scents.cap <- capscale(sqrt(vols.good) ~ year + snow, data=volsmeta, distance="bray")
+scents.cap <- capscale(sqrt(vols.good.avg) ~ year + snow, data=volsmeta.avg, distance="bray")
 plot(scents.cap, type="n")
-points(scents.cap, display = "sites", col=snow_pal[volsmeta$snow], pch=as.integer(volsmeta$year)+14)
-text(scents.cap, display="cn", labels=c(levels(volsmeta$year), names(snow_pal)), col=c(rep("black",3),snow_pal), font=2, cex=1.5)
+points(scents.cap, display = "sites", col=snow_pal[volsmeta.avg$snow], pch=as.integer(volsmeta.avg$year)+14)
+text(scents.cap, display="cn", labels=c(levels(volsmeta.avg$year), names(snow_pal)), col=c(rep("black",3),snow_pal), font=2, cex=1.5)
 
 plot(scents.cap, type="n")
 text(scents.cap, display="species", col="black", cex=0.5)
@@ -941,19 +942,19 @@ mod.split %>% select(class, term, p.value) %>%
 ### CAP
 
 ```{r cap_abs}
-(scents.cap <- capscale(sqrt(vols.good) ~ sun_date * precip_est_mm, data=volsmeta, distance="bray"))
+(scents.cap <- capscale(sqrt(vols.good.avg) ~ sun_date * precip_est_mm, data=volsmeta.avg, distance="bray"))
 anova(scents.cap, by="term") %>% kable()
 
 library(ggvegan)
 cap.df <- fortify(update(scents.cap, ~ sun_date + precip_est_mm)) #drop non-signif interaction for plotting
 
 ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
-  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta), aes(color=year))+
-  geom_segment(data=cap.df %>% filter(Score=="biplot"), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta.avg), aes(color=year))+
+  geom_segment(data=cap.df %>% filter(Score=="biplot"), aes(x=0,y=0,xend=CAP1*1.8, yend=CAP2*1.8), 
                arrow=arrow(length=unit(0.5, "lines")))+
   geom_text(data=cap.df %>% filter(Score=="biplot") %>% 
               mutate(Label=c("Snowmelt", "Precipitation")),
-            aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface="bold") +
+            aes(x=CAP1*2, y=CAP2*2, angle=atan(CAP2/CAP1)*180/pi), hjust=c(0,1), fontface="bold") +
   geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
   scale_color_manual("Year", values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
   theme_bw() + theme(panel.grid = element_blank())
@@ -1009,13 +1010,13 @@ ggplot(volsmeta.class, aes(x = sun_date, y = value, color=precip_est_mm)) + face
 ### CAP
 
 ```{r cap_sm}
-hasVWC <- !is.na(volsmeta$VWC)
-(scents.cap <- capscale(sqrt(vols.good[hasVWC,]) ~ year * VWC, data=volsmeta[hasVWC,], distance="bray"))
+hasVWC <- !is.na(volsmeta.avg$VWC)
+(scents.cap <- capscale(sqrt(vols.good.avg[hasVWC,]) ~ year * VWC, data=volsmeta.avg[hasVWC,], distance="bray"))
 anova(scents.cap, by="term") %>% kable()
 
 cap.df <- fortify(scents.cap)
 ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
-  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta[hasVWC,]), aes(color=year))+
+  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta.avg[hasVWC,]), aes(color=year))+
   geom_segment(data=cap.df %>% filter(Score=="biplot"), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
                arrow=arrow(length=unit(0.5, "lines")))+
   geom_text(data=cap.df %>% filter(Score=="biplot") ,
@@ -1060,7 +1061,7 @@ ggplot(volsmeta.class, aes(x = VWC, color = year, y = value)) +  facet_wrap(vars
   scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Emissions (ng/hr/flower)", color="Year")+
   scale_color_manual(values=year_pal)
 
-ggplot(volsmeta, aes(x = VWC, color = year, y = total)) + 
+ggplot(volsmeta.avg, aes(x = VWC, color = year, y = total)) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ xlim(c(0,15))+ #TODO cuts off a few high VWC values
   scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Total filtered emissions (ng/hr/flower)", color="Year") +
   scale_color_manual(values=year_pal)
@@ -1071,12 +1072,12 @@ ggplot(volsmeta, aes(x = VWC, color = year, y = total)) +
 ### CAP
 
 ```{r cap_sm_subplot}
-(scents.cap <- capscale(sqrt(vols.good) ~ year * VWC, data=left_join(select(volsmeta,-VWC), sm.subplotyear),
+(scents.cap <- capscale(sqrt(vols.good.avg) ~ year * VWC, data=left_join(select(volsmeta.avg,-VWC), sm.subplotyear),
                         distance="bray"))
 anova(scents.cap, by="term") %>% kable()
 cap.df <- fortify(scents.cap)
 ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
-  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta), aes(color=year))+
+  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta.avg), aes(color=year))+
   geom_segment(data=cap.df %>% filter(Score=="biplot"), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
                arrow=arrow(length=unit(0.5, "lines")))+
   geom_text(data=cap.df %>% filter(Score=="biplot") ,
@@ -1121,7 +1122,7 @@ ggplot(left_join(select(volsmeta.class,-VWC), sm.subplotyear), aes(x = VWC, colo
   scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Emissions (ng/hr/flower)", color="Year")+
   scale_color_manual(values=year_pal)
 
-ggplot(left_join(select(volsmeta,-VWC), sm.subplotyear), aes(x = VWC, color = year, y = total)) + 
+ggplot(left_join(select(volsmeta.avg,-VWC), sm.subplotyear), aes(x = VWC, color = year, y = total)) + 
   geom_point() + geom_smooth(se=F, span=1)+ theme_minimal()+ 
   scale_y_sqrt() + labs(x="Soil moisture (%VWC)", y ="Total filtered emissions (ng/hr/flower)", color="Year") +
   scale_color_manual(values=year_pal)
@@ -1139,7 +1140,7 @@ fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
 
 library(GGally)
 mnps.plantyr.traits %>% select(all_of(fitnesstraits)) %>% 
-  ggpairs(mapping=aes(color=mnps.plantyr$year), lower=list(continuous="smooth_loess")) + 
+  ggpairs(mapping=aes(color=mnps.plantyr.traits$year), lower=list(continuous="smooth_loess")) + 
   scale_color_manual(values=year_pal)+ scale_fill_manual(values=year_pal)
 ```
 
@@ -1147,7 +1148,7 @@ mnps.plantyr.traits %>% select(all_of(fitnesstraits)) %>%
 
 ```{r selection, fig.width=16, fig.height=10}
 walk(fitnesstraits, ~ 
-       print(ggplot(traits.good.top %>% filter(ifelse(.x == "prop_uninfested", fruits_nonaborted > 4, TRUE)), 
+       print(ggplot(traits.good.top %>% mutate(prop_uninfested = if_else(fruits_nonaborted > 4, prop_uninfested, NA)), 
                     aes_string(y=.x, x="value", color="year")) + 
                geom_point() + geom_smooth(method="lm", se=F) + 
                facet_wrap(vars(name), scales="free_x") + 
@@ -1156,7 +1157,7 @@ walk(fitnesstraits, ~
 
 
 walk(fitnesstraits, ~ 
-       print(ggplot(traits.good.top %>% filter(ifelse(.x == "prop_uninfested", fruits_nonaborted > 4, TRUE)), 
+       print(ggplot(traits.good.top %>% mutate(prop_uninfested = if_else(fruits_nonaborted > 4, prop_uninfested, NA)), 
                     aes(x=value, color=paste(water,snow), linetype=year, shape=year)) + 
                geom_point(aes_string(y=.x)) + geom_smooth(aes_string(y=.x), method="lm",se=F) + 
                facet_wrap(vars(name), scales="free_x") + 
@@ -1169,7 +1170,7 @@ walk(fitnesstraits, ~
 
 ```{r selection_class}
 walk(fitnesstraits, ~ 
-       print(ggplot(traits.class %>% filter(ifelse(.x == "prop_uninfested", fruits_nonaborted > 4, TRUE)), 
+       print(ggplot(traits.class %>% mutate(prop_uninfested = if_else(fruits_nonaborted > 4, prop_uninfested, NA)), 
                     aes(x=value, color=paste(water,snow), linetype=year, shape=year)) + 
                geom_point(aes_string(y=.x)) + geom_smooth(aes_string(y=.x), method="lm",se=F) + 
                facet_wrap(vars(name), scales="free_x") + 
@@ -1179,7 +1180,7 @@ walk(fitnesstraits, ~
 ```
 
 ```{r selection_class_gradient, fig.width=11, fig.height=8}
-trait.class.wide <- bind_cols(volsmeta, vols.class) %>% left_join(mnps.plantyr.traits) %>% 
+trait.class.wide <- bind_cols(volsmeta.avg, vols.class) %>% left_join(mnps.plantyr.traits) %>% 
   select(plantid, year, water, snow, all_of(fitnesstraits), all_of(names(class_pal))) %>% 
   mutate(across(all_of(names(class_pal)), sqrt))
 
@@ -1305,9 +1306,9 @@ calculate_beta <- function(E, slopes) {
 }
 
 selection_pca <- function(year, water=names(water_pal), snow=names(snow_pal), fitnesstrait = "seeds_est") {
-  vols.std.PCA <- volsmeta %>% bind_cols(as.data.frame(vols.PCA$x)) %>% 
+  vols.std.PCA <- volsmeta.avg %>% bind_cols(as.data.frame(vols.PCA$x)) %>% 
     filter(year == .env$year, water %in% .env$water, snow %in% .env$snow) %>% 
-    left_join(mnps.plantyr.traits %>% select(year, plotid, plant, all_of(fitnesstrait)), by=c("year", "plotid", "plant")) %>% 
+    left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
     select(all_of(fitnesstrait), any_of(names(treatments)), starts_with("PC")) %>% 
     rename("fitness" = fitnesstrait) %>% 
     group_by(year) %>% mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% ungroup %>% 
@@ -1501,7 +1502,7 @@ plasticity.water %>% left_join(diffbeta) %>%
 
 ```{r selection_abs_model}
 selection_mod_abs <- function(trait, response) {
-  vm.abs <- bind_cols(volsmeta.traits, vols.good) %>% 
+  vm.abs <- bind_cols(volsmeta.traits, vols.good.avg) %>% 
     select(all_of(c(response, trait)), sun_date, precip_est_mm) %>% 
     rename("trait" = trait, "response" = response) %>% 
     filter(!is.infinite(response), !is.nan(response), !is.na(response)) %>% 
