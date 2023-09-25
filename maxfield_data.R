@@ -834,7 +834,8 @@ timings <- bind_rows(
   lt = lt %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
   vt = vt %>% group_by(year) %>% summarize(begin = min(yday(sampledate), na.rm=T), end = max(yday(sampledate), na.rm=T)),
   ph = ph %>% drop_na(height_cm) %>% group_by(year) %>% summarize(begin = min(julian), end = max(julian)),
-  sds = sds20.date %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),
+  sds = sds20.date %>% group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)) %>% 
+    bind_rows(tibble(year=factor(c("2018","2019"), levels=c("2018","2019","2020")), begin = yday(ymd(c("2018-07-16","2019-08-19"))), end=yday(ymd(c("2018-08-28","2019-09-04"))))),#DRC notes
   cen = cen %>% select(starts_with("date")) %>% pivot_longer(everything(), names_to="census", names_prefix = "date_", values_to="date") %>% 
     filter(census != "18r2", date != ymd("2020-07-27")) %>% drop_na(date) %>% mutate(year=factor(year(date))) %>% 
     group_by(year) %>% summarize(begin = min(yday(date), na.rm=T), end = max(yday(date), na.rm=T)),

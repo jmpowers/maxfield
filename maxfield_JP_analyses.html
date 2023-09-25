@@ -11,11 +11,11 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2022-04-27" />
+<meta name="date" content="2023-09-25" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
-<script src="libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="libs/header-attrs-2.20/header-attrs.js"></script>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -110,8 +110,8 @@ pre code {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -119,16 +119,9 @@ pre code {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -258,8 +251,9 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
-<h4 class="author"><a href="http://sites.uci.edu/powers/">John Powers</a></h4>
-<h4 class="date">2022-04-27</h4>
+<h4 class="author"><a href="http://sites.uci.edu/powers/">John
+Powers</a></h4>
+<h4 class="date">2023-09-25</h4>
 
 </div>
 
@@ -271,7 +265,13 @@ td, th { padding : 6px }
 </style>
 <div id="purpose" class="section level1">
 <h1>Purpose</h1>
-<p>Analyze selection on and plastic responses of floral and vegetative traits of <em>Ipomopsis aggregata</em> to manipulations of snowmelt and summer precipitation. Determine whether plasticity is adaptive (improves survival and reproduction). Part of a <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1654655">larger project</a> to understand the potential for evolutionary rescue in alpine plants under climate change.</p>
+<p>Analyze selection on and plastic responses of floral and vegetative
+traits of <em>Ipomopsis aggregata</em> to manipulations of snowmelt and
+summer precipitation. Determine whether plasticity is adaptive (improves
+survival and reproduction). Part of a <a
+href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1654655">larger
+project</a> to understand the potential for evolutionary rescue in
+alpine plants under climate change.</p>
 </div>
 <div id="treatments" class="section level1">
 <h1>Treatments</h1>
@@ -282,12 +282,8 @@ library(lubridate)
 library(lme4)
 library(lmerTest)
 library(MuMIn)
-library(glmmTMB)</code></pre>
-<pre><code>## Warning in checkMatrixPackageVersion(): Package version inconsistency detected.
-## TMB was built with Matrix version 1.4.0
-## Current Matrix version is 1.4.1
-## Please re-install &#39;TMB&#39; from source using install.packages(&#39;TMB&#39;, type = &#39;source&#39;) or ask CRAN for a binary version of &#39;TMB&#39; matching CRAN&#39;s &#39;Matrix&#39; package</code></pre>
-<pre class="r"><code>library(emmeans)
+library(glmmTMB)
+library(emmeans)
 library(broom)
 library(broom.mixed)
 library(vegan)
@@ -915,6 +911,15 @@ anova(sm.mod.split.abs) %&gt;% kable()</code></pre>
 <pre class="r"><code>sm.mod.abs &lt;- lmer(VWC ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=left_join(sm.subplotyear, treatments))
 anova(sm.mod.abs) %&gt;% kable()</code></pre>
 <table>
+<colgroup>
+<col width="35%" />
+<col width="10%" />
+<col width="12%" />
+<col width="9%" />
+<col width="9%" />
+<col width="12%" />
+<col width="10%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left"></th>
@@ -1218,6 +1223,18 @@ timings.long %&gt;%
 <td align="left">120</td>
 </tr>
 <tr class="even">
+<td align="left">sds</td>
+<td align="left">2018</td>
+<td align="left">78</td>
+<td align="left">121</td>
+</tr>
+<tr class="odd">
+<td align="left">sds</td>
+<td align="left">2019</td>
+<td align="left">73</td>
+<td align="left">89</td>
+</tr>
+<tr class="even">
 <td align="left">cen</td>
 <td align="left">2018</td>
 <td align="left">37</td>
@@ -1243,7 +1260,10 @@ timings.long %&gt;%
 </tr>
 </tbody>
 </table>
-<p>The average last floral morphology measurement (day 214) was used to total precipitation for years before the experiment (1990-2017). The actual last floral morphology measurement (days 212, 219, 210) were used for 2018-2020.</p>
+<p>The average last floral morphology measurement (day 214) was used to
+total precipitation for years before the experiment (1990-2017). The
+actual last floral morphology measurement (days 212, 219, 210) were used
+for 2018-2020.</p>
 <pre class="r"><code>cumul_precip &lt;- meltdates %&gt;% group_by(year) %&gt;% summarize(first_sun_date = min(sun_date)) %&gt;% 
   mutate(sum_to = map(first_sun_date, ~ seq(from=.x, to=270))) %&gt;% unnest(sum_to) %&gt;% 
   mutate(cumul_precip = pmap_dbl(list(year, first_sun_date, sum_to), precip_total),
@@ -1567,7 +1587,9 @@ mnps.plantyr %&gt;% select(all_of(traits)) %&gt;% map(is.na) %&gt;% map(as.integ
 <h1>Census</h1>
 <div id="census-status" class="section level2">
 <h2>Census status</h2>
-<p>The annual census at the beginning of the summer contains information on mortality, flowering status, and plant size (longest leaf and number of leaves for each rosette).</p>
+<p>The annual census at the beginning of the summer contains information
+on mortality, flowering status, and plant size (longest leaf and number
+of leaves for each rosette).</p>
 <p>Visualize a plant’s status in each census</p>
 <pre class="r"><code>ggplot(cen.status.long, aes(y=plantid, x=census, fill=status)) + geom_tile() +
   scale_fill_manual(values=brewer.pal(8, name=&quot;Set1&quot;)[c(1,3,5,2,7,6)])+
@@ -1590,7 +1612,8 @@ mnps.plantyr %&gt;% select(all_of(traits)) %&gt;% map(is.na) %&gt;% map(as.integ
 </div>
 <div id="fitness-vs.-treatment" class="section level2">
 <h2>Fitness vs. treatment</h2>
-<p>What did plants of a given status in one year look like in the next?</p>
+<p>What did plants of a given status in one year look like in the
+next?</p>
 <pre class="r"><code>with(cen.status, table(`2018`=paste(status_18), `2019`=paste(status_19)))</code></pre>
 <pre><code>            2019
 2018         dead_nf flowering no_record tagnf vegetative
@@ -1960,7 +1983,8 @@ Anova_table(fitness.size.mod.tests) %&gt;% kable()</code></pre>
 </div>
 <div id="plant-growth-vs.-treatments" class="section level2">
 <h2>Plant growth vs. treatments</h2>
-<p>Only includes plants that remained vegetative and did not die or flower.</p>
+<p>Only includes plants that remained vegetative and did not die or
+flower.</p>
 <pre class="r"><code>cen %&gt;% drop_na(water_18, snow_18) %&gt;% filter(status_18==&quot;vegetative&quot;, status_19==&quot;vegetative&quot;) %&gt;% 
   ggplot(aes(x=r1_longest_18, y=r1_longest_19, color=water_18, shape=snow_18)) + geom_point() + geom_abline(intercept=0, slope=1) +
   scale_color_manual(values=water_pal) + theme_minimal()+coord_fixed(xlim=c(0,80), ylim=c(0,80)) +
@@ -1997,10 +2021,14 @@ Anova_table(fitness.size.mod.tests) %&gt;% kable()</code></pre>
 <pre class="r"><code>ggplot(drop_na(cen20, water, snow), aes(x=water, color=snow, y=r1_leaves)) + geom_boxplot() + scale_color_manual(values=snow_pal) + labs(x=&quot;Precipitation&quot;, y=&quot;2020 Rosette 1 # Leaves&quot;,  color=&quot;Snowmelt&quot;)</code></pre>
 <p><img src="images/plantsize-6.png" width="672" /></p>
 </div>
-<div id="combined-leaf-number-and-longest-length" class="section level2">
+<div id="combined-leaf-number-and-longest-length"
+class="section level2">
 <h2>Combined leaf number and longest length</h2>
-<p>Multiply longest leaf (mm) by number of leaves and sum across rosettes to get plant size metric (Campbell and Wendlandt 2013).</p>
-<p>Get RGR as 1.41 * ln(size2/size2) / (t2 - t1), where 1.41 is the experimentally determined exponent in the power scaling law between dry mass and leaf length.</p>
+<p>Multiply longest leaf (mm) by number of leaves and sum across
+rosettes to get plant size metric (Campbell and Wendlandt 2013).</p>
+<p>Get RGR as 1.41 * ln(size2/size2) / (t2 - t1), where 1.41 is the
+experimentally determined exponent in the power scaling law between dry
+mass and leaf length.</p>
 <pre class="r"><code>ggplot(cen.size, aes(x=census, y=size, color=water))+ facet_wrap(vars(water))+
   geom_boxplot(outlier.size=0.1)+ geom_path(aes(group=plantid), size=0.1)+
   scale_color_manual(values=water_pal, guide=F) + theme_minimal() + 
@@ -2322,10 +2350,16 @@ licor %&gt;% pivot_longer(Photo:StableF) %&gt;% mutate(index=row_number()) %&gt;
 </tr>
 </tbody>
 </table>
-<p>These conductance entries were blank, filled from WUE. There is another entry with conductance = 1.23 that was not blanked.</p>
+<p>These conductance entries were blank, filled from WUE. There is
+another entry with conductance = 1.23 that was not blanked.</p>
 <div id="leaf-and-physiology-trait-correlations" class="section level2">
 <h2>Leaf and physiology trait correlations</h2>
-<p>The leaf traits were collected in two rounds (early/late), and the physiology traits on multiple dates late in the summer. The physiology traits are matched to both leaf trait rounds (doubled). To show a color for the physiology traits without matches to the leaf traits, they are set as round 2 after merging - so ignore the boxplots of physiology traits against year.round.</p>
+<p>The leaf traits were collected in two rounds (early/late), and the
+physiology traits on multiple dates late in the summer. The physiology
+traits are matched to both leaf trait rounds (doubled). To show a color
+for the physiology traits without matches to the leaf traits, they are
+set as round 2 after merging - so ignore the boxplots of physiology
+traits against year.round.</p>
 <pre class="r"><code>plt &lt;- full_join(pt %&gt;% select(year, date, plantid, conductance, WUE, photosynthesis),
           lt %&gt;% select(year, year.round, plantid, sla, water_content, trichome_density))
 
@@ -2362,7 +2396,9 @@ ggplot(aes(x=water_content, y=value, color=factor(date), shape=year)) +
 </div>
 <div id="floral-traits-within-season" class="section level2">
 <h2>Floral traits within season</h2>
-<p>No obvious effect of time within a season for corolla length/width or sepal width. The timing of trait measurements was different each year:</p>
+<p>No obvious effect of time within a season for corolla length/width or
+sepal width. The timing of trait measurements was different each
+year:</p>
 <pre class="r"><code>ggplot(sm, aes(x=yday(date))) + 
   facet_wrap(vars(year), ncol=1) +
   geom_point(data=ph, aes(y= height_cm/2, color=&quot;Phenology (height)&quot;))+
@@ -2448,9 +2484,12 @@ Degrees-of-freedom method: kenward-roger
 Confidence level used: 0.95 </code></pre>
 <div id="selection-gradients" class="section level3">
 <h3>Selection gradients</h3>
-<p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong et al. 2018</a> for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.</p>
+<p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong
+et al. 2018</a> for reconstructing selection estimates from estimates of
+selection on PCs: Beta = E * A.</p>
 <ul>
-<li>PCA can’t handle missing values so they are removed, but this biases the data and reduces sample size - multiple imputation?</li>
+<li>PCA can’t handle missing values so they are removed, but this biases
+the data and reduces sample size - multiple imputation?</li>
 </ul>
 <pre class="r"><code>calculate_beta &lt;- function(E, slopes) {
   data.frame(B = E %*% slopes$A,
@@ -2503,15 +2542,21 @@ mnps.PCA.slopes &lt;- tidy(mnps.PCA.regression) %&gt;% filter(term != &quot;(Int
 </div>
 <div id="plasticity-models" class="section level1">
 <h1>Plasticity models</h1>
-<div id="plasticity-water-and-snowmelt-treatments" class="section level2">
+<div id="plasticity-water-and-snowmelt-treatments"
+class="section level2">
 <h2>Plasticity: water and snowmelt treatments</h2>
-<p>This is a split-plot analysis, based on the original experimental design. The models use:</p>
+<p>This is a split-plot analysis, based on the original experimental
+design. The models use:</p>
 <ul>
 <li><em>mnps.plantyr</em>, the plant means within each year</li>
-<li><em>snow</em>, the snowmelt treatment (except for plot 2 in 2019)</li>
-<li><em>water</em>, the water treatments with mock rainouts and controls combined</li>
-<li><em>plot</em> as a random effect (subplots vary within this larger unit)</li>
-<li><em>plotid</em> as a random effect (plants vary within this larger unit)</li>
+<li><em>snow</em>, the snowmelt treatment (except for plot 2 in
+2019)</li>
+<li><em>water</em>, the water treatments with mock rainouts and controls
+combined</li>
+<li><em>plot</em> as a random effect (subplots vary within this larger
+unit)</li>
+<li><em>plotid</em> as a random effect (plants vary within this larger
+unit)</li>
 </ul>
 <p>The models are specified as:</p>
 <pre><code>lmer(trait ~ year * snow * water + (1|snow:plot) + (1|snow:plotid), data = mnps.plantyr)</code></pre>
@@ -3070,7 +3115,8 @@ grid.arrange(
     theme(legend.title = element_text(color = &quot;white&quot;), legend.text = element_text(color = &quot;white&quot;)), nrow=1)</code></pre>
 <p><img src="images/multi_splitplot-2.png" width="864" /></p>
 </div>
-<div id="compensation-of-water-addition-for-early-snowmelt" class="section level3">
+<div id="compensation-of-water-addition-for-early-snowmelt"
+class="section level3">
 <h3>Compensation of water addition for early snowmelt</h3>
 <pre class="r"><code>mnps.plantyr &lt;- mnps.plantyr %&gt;% mutate(snowwater= paste0(snow, water))
 lt.plantyr.r2 &lt;- lt.plantyr.r2 %&gt;% mutate(snowwater= paste0(snow, water))
@@ -3706,8 +3752,11 @@ anova_table(pt.mod.split.rm.tests, pt.mod.split.rm) %&gt;% kable()</code></pre>
 </div>
 </div>
 </div>
-<div id="plasticity-absolute-snowmelt-date-and-estimated-summer-precipitation" class="section level2">
-<h2>Plasticity: absolute snowmelt date and estimated summer precipitation</h2>
+<div
+id="plasticity-absolute-snowmelt-date-and-estimated-summer-precipitation"
+class="section level2">
+<h2>Plasticity: absolute snowmelt date and estimated summer
+precipitation</h2>
 <div id="anova-tables-1" class="section level3">
 <h3>ANOVA tables</h3>
 <pre class="r"><code>lt.subplot.r2 &lt;- lt.subplotround %&gt;% filter(round==&quot;2&quot;)
@@ -3726,6 +3775,14 @@ mod.abs.coefs &lt;- map_dfr(mod.abs, tidy, .id=&quot;trait&quot;)
 mod.abs.tests &lt;- map(mod.abs, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 <table>
+<colgroup>
+<col width="25%" />
+<col width="10%" />
+<col width="16%" />
+<col width="27%" />
+<col width="8%" />
+<col width="10%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">trait</th>
@@ -4367,7 +4424,9 @@ plot_abs(mod.abs, bind_rows(lt.subplot.r2, pt.subplot), c(leaftraits[2],phystrai
 </div>
 <div id="slope-plots-and-compensation" class="section level3">
 <h3>Slope plots and compensation</h3>
-<p>Compensation points calculated at average value of other predictor - only use for traits where there are effects of both predictors but no interaction</p>
+<p>Compensation points calculated at average value of other predictor -
+only use for traits where there are effects of both predictors but no
+interaction</p>
 <pre class="r"><code>mod.abs.emm.avg &lt;- map_dfr(set_names(c(&quot;sun_date&quot;, &quot;precip_est_mm&quot;)), 
                    ~ mod.abs %&gt;% map(emtrends, var = .x, ~1) %&gt;% 
                      map(as_tibble) %&gt;% set_names(alltraits) %&gt;% bind_rows(.id=&quot;trait&quot;) %&gt;% 
@@ -4631,7 +4690,8 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 </tr>
 </tbody>
 </table>
-<p>Compensation points calculated at four corners of the ranges of environemtnal variables</p>
+<p>Compensation points calculated at four corners of the ranges of
+environemtnal variables</p>
 <pre class="r"><code>#get slopes with emtrends at range of other predictor, and scale slopes by SD of the plant means
 predictor.ranges &lt;- list(sun_date=c(115,160) , precip_est_mm=c(25, 175)) #a bit narrower than the experiment
 mod.abs.emm &lt;- map_dfr(set_names(c(&quot;sun_date&quot;, &quot;precip_est_mm&quot;)), 
@@ -4776,6 +4836,14 @@ pt.mod.abs.rm.coefs &lt;- map_dfr(pt.mod.abs.rm, tidy, .id=&quot;trait&quot;)
 pt.mod.abs.rm.tests &lt;- map(pt.mod.abs.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 anova_table(pt.mod.abs.rm.tests, pt.mod.abs.rm) %&gt;% kable()</code></pre>
 <table>
+<colgroup>
+<col width="19%" />
+<col width="11%" />
+<col width="18%" />
+<col width="29%" />
+<col width="9%" />
+<col width="11%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">trait</th>
@@ -4827,7 +4895,15 @@ mod.abs.lag &lt;- c(map(set_names(traits),
                  ~ lmer(mnps.plantyr[[.x]]  ~ sun_date_lag * precip_est_mm + (1|plot) + (1|plotid), data=mnps.plantyr)))
 mod.abs.lag.tests &lt;- map(mod.abs.lag, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
-<table>
+<table style="width:100%;">
+<colgroup>
+<col width="23%" />
+<col width="14%" />
+<col width="15%" />
+<col width="29%" />
+<col width="7%" />
+<col width="9%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">trait</th>
@@ -4977,11 +5053,20 @@ anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
 </div>
 <div id="plasticity-soil-moisture" class="section level2">
 <h2>Plasticity: soil moisture</h2>
-<p>Both snowmelt timing and summer precipitation affect soil moisture and its timing. This analysis regresses the floral traits against the mean soil moisture in a subplot. Slopes may differ among years. The models use:</p>
+<p>Both snowmelt timing and summer precipitation affect soil moisture
+and its timing. This analysis regresses the floral traits against the
+mean soil moisture in a subplot. Slopes may differ among years. The
+models use:</p>
 <ul>
-<li><em>mt.plantyr</em>, the trait data averaged by plant within year</li>
-<li><em>VWC</em>, the summer mean of the approximately weekly mean volumetric water content in a subplot. This may need to change to a subset of the summer because it includes soil moisture taken after traits were measured. See section on within-season variation for timing of measurements in each year.</li>
-<li><em>plotid</em> (subplot) as a random effect (plants vary within this larger unit)</li>
+<li><em>mt.plantyr</em>, the trait data averaged by plant within
+year</li>
+<li><em>VWC</em>, the summer mean of the approximately weekly mean
+volumetric water content in a subplot. This may need to change to a
+subset of the summer because it includes soil moisture taken after
+traits were measured. See section on within-season variation for timing
+of measurements in each year.</li>
+<li><em>plotid</em> (subplot) as a random effect (plants vary within
+this larger unit)</li>
 </ul>
 <p>The models are specified as:</p>
 <pre><code>lmer(trait ~ year * VWC + (1|plotid), data = mt.plantyr)</code></pre>
@@ -5008,6 +5093,15 @@ mod.sm.coefs &lt;- map_dfr(mod.sm, tidy, .id=&quot;trait&quot;)
 mod.sm.tests &lt;- map(mod.sm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 <table>
+<colgroup>
+<col width="30%" />
+<col width="10%" />
+<col width="10%" />
+<col width="13%" />
+<col width="13%" />
+<col width="10%" />
+<col width="13%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">trait</th>
@@ -5452,6 +5546,18 @@ lt.mod.sm.rm.coefs &lt;- map_dfr(lt.mod.sm.rm , tidy, .id=&quot;trait&quot;)
 lt.mod.sm.rm.tests &lt;- map(lt.mod.sm.rm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 anova_table(lt.mod.sm.rm.tests, lt.mod.sm.rm) %&gt;% kable()</code></pre>
 <table>
+<colgroup>
+<col width="17%" />
+<col width="6%" />
+<col width="7%" />
+<col width="7%" />
+<col width="11%" />
+<col width="9%" />
+<col width="10%" />
+<col width="15%" />
+<col width="7%" />
+<col width="9%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">trait</th>
@@ -5765,7 +5871,8 @@ mod.selection &lt;- selection.combos  %&gt;%
          model =      pmap(., step_selection_mod, drop=T),
          coefs = map(model, tidy),
          tests = map(model, ~ tidy(car::Anova(., type=3))))</code></pre>
-<div id="selection-differentials-as-change-in-mean" class="section level3">
+<div id="selection-differentials-as-change-in-mean"
+class="section level3">
 <h3>Selection differentials as change in mean</h3>
 <pre class="r"><code>std_selection_differential &lt;- function(set, treatment) {
   seldata &lt;- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %&gt;% ungroup() %&gt;% 
@@ -5814,8 +5921,11 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_seldiffs, yvar=&quot;seldiff&qu
 <p><img src="images/selec_diff-6.png" width="960" /></p>
 </div>
 </div>
-<div id="selection-differential-as-covariance-between-relative-fitness-and-trait" class="section level2">
-<h2>Selection differential as covariance between relative fitness and trait</h2>
+<div
+id="selection-differential-as-covariance-between-relative-fitness-and-trait"
+class="section level2">
+<h2>Selection differential as covariance between relative fitness and
+trait</h2>
 <pre class="r"><code>std_selection_differential_cov &lt;- function(set, treatment) {
   seldata &lt;- list(lt = lt.plantyr.r2, pt = pt.plantyr)[[set]] %&gt;% ungroup() %&gt;% 
     select(any_of(c(alltraits, fitnesstraits[2])), all_of(treatment), year) %&gt;% 
@@ -5983,9 +6093,11 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_emt)</code></pre>
 </table>
 <pre class="r"><code>#left_join(emt.selection, seldiffs) %&gt;% googlesheets4::write_sheet(&quot;1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA&quot;, sheet=&quot;emt_selection&quot;)</code></pre>
 </div>
-<div id="calculate-selection-differential-from-logistic-regression" class="section level3">
+<div id="calculate-selection-differential-from-logistic-regression"
+class="section level3">
 <h3>Calculate selection differential from logistic regression</h3>
-<p>Method of Janzen and Stern 1998 using this <a href="http://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm">tutorial</a>.</p>
+<p>Method of Janzen and Stern 1998 using this <a
+href="http://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm">tutorial</a>.</p>
 <pre class="r"><code>calc_JS &lt;- function(mod) {
   mod$frame %&gt;% as_tibble %&gt;% 
     mutate(w = predict(mod, type=&quot;response&quot;)) %&gt;% 
@@ -6016,7 +6128,8 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
                                         ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
                                         &quot;under different&quot;,.y$treatment,&quot;conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable() %&gt;% print})</code></pre>
-<p>Effect of trait on whether a plant flowered under different snow conditions</p>
+<p>Effect of trait on whether a plant flowered under different snow
+conditions</p>
 <table style="width:100%;">
 <colgroup>
 <col width="17%" />
@@ -6111,8 +6224,19 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant grew faster under different snow conditions</p>
+<p>Effect of trait on whether a plant grew faster under different snow
+conditions</p>
 <table>
+<colgroup>
+<col width="20%" />
+<col width="14%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="13%" />
+<col width="13%" />
+<col width="12%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Trait</th>
@@ -6188,8 +6312,19 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant survived under different snow conditions</p>
+<p>Effect of trait on whether a plant survived under different snow
+conditions</p>
 <table>
+<colgroup>
+<col width="20%" />
+<col width="14%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="13%" />
+<col width="13%" />
+<col width="12%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Trait</th>
@@ -6265,8 +6400,19 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant flowered under different water conditions</p>
+<p>Effect of trait on whether a plant flowered under different water
+conditions</p>
 <table>
+<colgroup>
+<col width="20%" />
+<col width="14%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="13%" />
+<col width="14%" />
+<col width="13%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Trait</th>
@@ -6342,8 +6488,19 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant grew faster under different water conditions</p>
+<p>Effect of trait on whether a plant grew faster under different water
+conditions</p>
 <table>
+<colgroup>
+<col width="20%" />
+<col width="14%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="13%" />
+<col width="14%" />
+<col width="13%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Trait</th>
@@ -6419,8 +6576,19 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant survived under different water conditions</p>
+<p>Effect of trait on whether a plant survived under different water
+conditions</p>
 <table>
+<colgroup>
+<col width="20%" />
+<col width="14%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="13%" />
+<col width="14%" />
+<col width="13%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Trait</th>
@@ -6910,7 +7078,8 @@ mod.selection.flowers &lt;- selection.flowers  %&gt;%
 mod.selection.flowers %&gt;% group_by(treatment, response) %&gt;%
   group_walk(function(.x,.y) {cat(paste(&quot;Effect of trait on whether a plant produced more flowers under different&quot;,.y$treatment,&quot;conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable() %&gt;% print})</code></pre>
-<p>Effect of trait on whether a plant produced more flowers under different snow conditions</p>
+<p>Effect of trait on whether a plant produced more flowers under
+different snow conditions</p>
 <table style="width:100%;">
 <colgroup>
 <col width="17%" />
@@ -7005,7 +7174,8 @@ mod.selection.flowers %&gt;% group_by(treatment, response) %&gt;%
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant produced more flowers under different water conditions</p>
+<p>Effect of trait on whether a plant produced more flowers under
+different water conditions</p>
 <table>
 <colgroup>
 <col width="16%" />
@@ -7125,7 +7295,8 @@ mod.selection.abs  %&gt;% group_by(response) %&gt;%
                                         ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
                                         &quot;under different absolute snowmelt / summer precip conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable() %&gt;% print})</code></pre>
-<p>Effect of trait on whether a plant flowered under different absolute snowmelt / summer precip conditions</p>
+<p>Effect of trait on whether a plant flowered under different absolute
+snowmelt / summer precip conditions</p>
 <table style="width:100%;">
 <colgroup>
 <col width="18%" />
@@ -7204,7 +7375,8 @@ mod.selection.abs  %&gt;% group_by(response) %&gt;%
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant survived under different absolute snowmelt / summer precip conditions</p>
+<p>Effect of trait on whether a plant survived under different absolute
+snowmelt / summer precip conditions</p>
 <table style="width:100%;">
 <colgroup>
 <col width="18%" />
@@ -7283,7 +7455,8 @@ mod.selection.abs  %&gt;% group_by(response) %&gt;%
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant grew faster under different absolute snowmelt / summer precip conditions</p>
+<p>Effect of trait on whether a plant grew faster under different
+absolute snowmelt / summer precip conditions</p>
 <table style="width:100%;">
 <colgroup>
 <col width="18%" />
@@ -7396,8 +7569,20 @@ mod.selection.sm  %&gt;% group_by(response) %&gt;%
   group_walk(function(.x,.y) {cat(paste(&quot;Effect of trait on whether a plant&quot;,ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
                                         &quot;under different VWC conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable() %&gt;% print})</code></pre>
-<p>Effect of trait on whether a plant flowered under different VWC conditions</p>
+<p>Effect of trait on whether a plant flowered under different VWC
+conditions</p>
 <table>
+<colgroup>
+<col width="17%" />
+<col width="12%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="11%" />
+<col width="10%" />
+<col width="9%" />
+<col width="15%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Trait</th>
@@ -7480,8 +7665,20 @@ mod.selection.sm  %&gt;% group_by(response) %&gt;%
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant survived under different VWC conditions</p>
+<p>Effect of trait on whether a plant survived under different VWC
+conditions</p>
 <table>
+<colgroup>
+<col width="17%" />
+<col width="12%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="11%" />
+<col width="10%" />
+<col width="9%" />
+<col width="15%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Trait</th>
@@ -7564,8 +7761,20 @@ mod.selection.sm  %&gt;% group_by(response) %&gt;%
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant grew faster under different VWC conditions</p>
+<p>Effect of trait on whether a plant grew faster under different VWC
+conditions</p>
 <table>
+<colgroup>
+<col width="17%" />
+<col width="12%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="11%" />
+<col width="10%" />
+<col width="9%" />
+<col width="15%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Trait</th>
@@ -7813,7 +8022,8 @@ map(set_names(leaftraits),
 <pre class="r"><code>lm(open ~ flowers_est * year, data = mnps.plantyr) %&gt;% emtrends(~year, var=&quot;flowers_est&quot;) %&gt;% tidy %&gt;% 
   kable(caption=&quot;Slope of average open flowers vs. total number of flowers&quot;)</code></pre>
 <table>
-<caption>Slope of average open flowers vs. total number of flowers</caption>
+<caption>Slope of average open flowers vs. total number of
+flowers</caption>
 <thead>
 <tr class="header">
 <th align="left">year</th>
