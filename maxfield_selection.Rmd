@@ -16,22 +16,25 @@ editor_options:
 
 ```{r setup, message=FALSE}
 library(tidyverse)
-library(knitr)
 library(emmeans)
 library(broom)
 library(lme4)
 library(lmerTest)
+library(GGally)
+library(knitr)
 knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, 
                       fig.path = "images_selection/", dev="svglite", dev.args=list(fix_text_size=FALSE), fig.height=6, fig.width=6)
 options(digits=3) # for kables
 
 load("data/maxfield_data.rda") #load trait measurements, etc
 mnps.plantyr <- mnps.plantyr %>% mutate(prop_uninfested = 1 - prop_infested)
+#TODO eggs_per_flower has some high values when the eggs were averaged over 1 observation but the flowers were averaged over multiple weeks. need to calculate this before averaging
 
 fitnesstraits <- c("seeds_est", "seeds_per_flower", "prop_uninfested", "eggs_per_flower")
 fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
                   eggs_per_flower="Fly eggs per flower")[fitnesstraits]
-morphtraits <- c("corolla_length", "corolla_width","style_length","anther_max","anther_min","sepal_width","nectar_24_h_ul", "nectar_conc")
+morphtraits <- c("corolla_length", "corolla_width","style_length","anther_max","anther_min","sepal_width","nectar_24_h_ul", "nectar_conc")#floral traits less height and flower number, plus anthers
+morphnames <- c(traitnames, anther_max="Max stamen length", anther_min="Min stamen length")[morphtraits]
 ```
 
 # Fitness vs. treatments and soil moisture
@@ -80,7 +83,6 @@ mnps.plantyr %>% pivot_longer(all_of(fitnesstraits), names_to = "trait") %>%
 ## Fitness correlations
 
 ```{r fitness_corr}
-library(GGally)
 mnps.plantyr %>% select(all_of(fitnesstraits)) %>% 
   ggpairs(mapping=aes(color=mnps.plantyr$year), lower=list(continuous="smooth_loess")) + 
   scale_color_manual(values=year_pal)+ scale_fill_manual(values=year_pal)
@@ -120,26 +122,37 @@ walk(fitnesstraits, ~
                facet_wrap(vars(name), scales="free_x", labeller=as_labeller(traitnames)) + 
                labs(y=fitnessnames[.x], color="Year")+
                theme_bw() + scale_color_manual(values=year_pal) + theme(axis.title.x=element_blank()))) 
+
+walk(fitnesstraits, ~ 
+       print(mnps.plantyr %>% 
+               mutate(prop_uninfested = if_else(fruits_nonaborted > 4, prop_uninfested, NA)) %>% 
+               pivot_longer(all_of(floraltraits)) %>%
+               ggplot(aes(x=value, color=paste(water,snow), linetype=year, shape=year)) + 
+               geom_point(aes_string(y=.x)) + geom_smooth(aes_string(y=.x), method="lm",se=F) + 
+               facet_wrap(vars(name), scales="free_x") + 
+               labs(x="Emissions (ng/hr/flower)", y=fitnessnames[.x], 
+                    color="Precipitation and snowmelt", linetype="Year", shape="Year")+
+               theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))
 ```
 
 ```{r mt_indiv_mod}
-#TODO split up by year
-mt.mod.indiv <- expand_grid(trait=floraltraits, fitnesstrait=fitnesstraits) %>% 
-  mutate(model = pmap(., function(trait, fitnesstrait) {
-    lm(relfitness ~ trait.z * year, 
+mt.mod.indiv <- expand_grid(trait=floraltraits, fitnesstrait=fitnesstraits, yr=2018:2020) %>% 
+  filter(!(yr==2018 & trait=="sepal_width")) %>% 
+  mutate(model = pmap(., function(trait, fitnesstrait, yr) {
+    lm(relfitness ~ trait.z, 
        data=mnps.plantyr %>% mutate(trait.z = mnps.plantyr[[trait]] / alltraits.sd[[trait]]) %>% 
          rename("fitness" = fitnesstrait) %>% 
-         group_by(year) %>% mutate(relfitness = fitness/mean(fitness, na.rm=T)))}), # mean fitness in each yr
-    coef = map(model, tidy),
-    test = map(model, ~tidy(car::Anova(.x), type=3)),
-    emm = map(model, ~summary(emtrends(.x, ~1, var="trait.z")))) 
+         filter(year==yr) %>% mutate(relfitness = fitness/mean(fitness, na.rm=T)))}), # mean fitness in each yr
+    coef = map(model, tidy))
+    #test = map(model, ~tidy(car::Anova(.x), type=3)),
+    #emm = map(model, ~summary(emtrends(.x, ~1, var="trait.z")))) 
 
 #get the the standardized selection differential S' (change in relative fitness / standardized trait value)
-mt.mod.indiv %>% select(trait, fitnesstrait, coef) %>% unnest(coef) %>% filter(term=="trait.z") %>% 
-  ggplot(aes(x=traitnames[trait], y=estimate, ymin=estimate-std.error, ymax=estimate+std.error)) + 
+mt.mod.indiv %>% select(trait, fitnesstrait, yr, coef) %>% unnest(coef) %>% filter(term=="trait.z") %>% 
+  ggplot(aes(x=traitnames[trait], color=factor(yr), y=estimate, ymin=estimate-std.error, ymax=estimate+std.error)) + 
   facet_wrap(vars(fitnesstrait), labeller = as_labeller(fitnessnames)) + 
-  geom_hline(yintercept=0) + geom_pointrange() + coord_flip() + 
-  labs(y="Standardized selection differential S'") + theme(axis.title.y=element_blank())
+  geom_hline(yintercept=0) + geom_pointrange() + coord_flip() + scale_color_manual(values=year_pal) + 
+  labs(y="Standardized selection differential S'", color="Year") + theme_bw() + theme(axis.title.y=element_blank())
 ```
 
 # Selection gradients from PCA
@@ -148,37 +161,71 @@ Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for rec
 
 * PCA can't handle missing values so they are removed, but this biases the data and reduces sample size - multiple imputation?
 
-```{r gradients, fig.width=4, fig.height=3}
+```{r gradients, fig.width=8, fig.height=6}
+morphtraits.pca <- morphtraits[-6]  #remove sepal_width (not measured in 2018)
+#Standardize traits by mean and fitness by mean within each year
+mnps.plantyr.std <- mnps.plantyr %>% select(all_of(morphtraits.pca),all_of(fitnesstraits), any_of(names(treatments))) %>%
+  mutate(across(all_of(morphtraits.pca), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% 
+  drop_na(all_of(morphtraits.pca)) 
+
+# Run PCA on traits
+mnps.PCA <- mnps.plantyr.std %>% select(all_of(morphtraits.pca)) %>% prcomp() 
+summary(mnps.PCA) # PCs 1 - 5 explain 90% of the variation
+mnps.PCA.E <- mnps.PCA$rotation[,1:5]
+mnps.plantyr.std.PCA <- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
+
 calculate_beta <- function(E, slopes) {
   data.frame(B = E %*% slopes$A,
              SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %>% 
     mutate(p.value = pt(abs(B)/SE, df=1, lower.tail=F)) %>% #calculate t statistic from difference in means and SE, then look up one-tailed p with 1 df in the upper tail
     rownames_to_column("trait")
 }
-plot_beta <- function(beta) {
-  beta %>% mutate(trait = fct_reorder(trait, B)) %>% 
-    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
-    geom_vline(xintercept=0)+ geom_pointrange() + 
-    labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait")
+
+selection_pca <- function(year, water=names(water_pal), snow=names(snow_pal), fitnesstrait = "seeds_est") {
+  mnps.std.PCA <- mnps.plantyr.std.PCA %>% 
+    filter(year == .env$year, water %in% .env$water, snow %in% .env$snow) %>%
+    select(all_of(fitnesstrait), any_of(names(treatments)), starts_with("PC")) %>%
+    rename("fitness" = fitnesstrait) %>%
+    group_by(year) %>% mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% ungroup %>%
+    drop_na(relfitness) %>%
+    select(where(~sum(is.na(.))==0))
+
+  # Regress relative fitness on PCs
+  mnps.PCA.regression <- lm(relfitness ~ PC1 + PC2 + PC3 + PC4 + PC5, data = mnps.std.PCA)
+  mnps.PCA.slopes <- tidy(mnps.PCA.regression) %>% filter(term != "(Intercept)") %>% rename(A=estimate, SE=std.error)
+  
+  # Convert selection gradients on PCs to gradients on traits
+  calculate_beta(mnps.PCA.E, mnps.PCA.slopes)
 }
 
-mnps.plantyr.std <- mnps.plantyr %>% select(all_of(morphtraits),seeds_est, any_of(names(treatments))) %>% 
-  mutate(across(all_of(morphtraits), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% 
-  group_by(year) %>% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T), .keep="unused") %>% ungroup %>% 
-  drop_na(all_of(morphtraits)) 
+plot_beta <- function(betas, colorby="year") {
+  bs <- betas
+  if(colorby=="water_snow")  bs <- bs %>%  mutate(water_snow = paste(water, snow))
+  ggplot(bs, aes(y=morphnames[trait], x = B, xmin=B-SE, xmax=B+SE,)) + #alpha=p.value<0.05
+    geom_vline(xintercept=0)+ 
+    geom_pointrange(mapping=aes_string(color=colorby), position=position_dodge(width=0.5)) + 
+    labs(x = "Selection gradient \U03B2 estimated from gradients on PCs", y = "Trait",
+         color=list(year="Year", water="Precipitation", snow="Snowmelt", 
+                    water_snow = "Precipitation and snowmelt")[[colorby]]) +
+    scale_color_manual(values=list(year=year_pal, water=water_pal, snow=snow_pal,
+                                   water_snow=water_snow_pal)[[colorby]]) +
+    theme_bw()
+}
 
-# Run PCA on traits
-mnps.PCA <- mnps.plantyr.std %>% select(all_of(morphtraits)) %>% prcomp() 
-summary(mnps.PCA) # PCs 1 - 5 explain 90% of the variation
-mnps.PCA.E <- mnps.PCA$rotation[,1:5]
-mnps.plantyr.std.PCA <- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
+mnps.beta.yr <- expand_grid(year=unique(mnps.plantyr$year), fitnesstrait=fitnesstraits)  %>% 
+ mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+plot_beta(mnps.beta.yr)+ facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))
 
-# Regress relative fitness on PCs
-mnps.PCA.regression <- lm(seeds_rel ~ PC1 + PC2 + PC3 + PC4 + PC5, data = mnps.plantyr.std.PCA)
-mnps.PCA.slopes <- tidy(mnps.PCA.regression) %>% filter(term != "(Intercept)") %>% rename(A=estimate, SE=std.error)
+mnps.beta.water <- expand_grid(year=unique(mnps.plantyr$year), water=names(water_pal), fitnesstrait=fitnesstraits)  %>% 
+ mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
 
-# Convert selection gradients on PCs to gradients on traits
-(mnps.beta <- calculate_beta(mnps.PCA.E, mnps.PCA.slopes)) %>% kable(caption="selection gradients estimated from PCs")
-plot_beta(mnps.beta)
+mnps.beta.snow <- expand_grid(year=unique(mnps.plantyr$year), snow=names(snow_pal), fitnesstrait=fitnesstraits)  %>% 
+ mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+
+mnps.beta.water.snow <- expand_grid(year=unique(mnps.plantyr$year), water=names(water_pal), snow=names(snow_pal),  fitnesstrait=fitnesstraits)  %>% 
+  mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+
+walk(fitnesstraits, ~print(plot_beta(filter(mnps.beta.water.snow, fitnesstrait==.x), colorby="water_snow") + 
+                             facet_wrap(vars(year), nrow=1) + ggtitle(fitnessnames[.x])))
 ```
 
