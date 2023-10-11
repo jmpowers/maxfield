@@ -1,0 +1,111 @@
+---
+title: "Maxfield Meadow Ipomopsis Selection"
+author: "[John Powers](http://sites.uci.edu/powers/)"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    self_contained: no
+    lib_dir: libs
+    code_folding: hide
+    toc: yes
+    toc_float: TRUE
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, message=FALSE}
+library(tidyverse)
+library(knitr)
+library(emmeans)
+library(broom)
+library(lme4)
+library(lmerTest)
+knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, 
+                      fig.path = "images_selection/", dev="svglite", dev.args=list(fix_text_size=FALSE), fig.height=6, fig.width=6)
+options(digits=3) # for kables
+
+load("data/maxfield_data.rda") #load trait measurements, etc
+fitnesstraits <- c("seeds_est", "seeds_per_flower", "prop_uninfested", "eggs_per_flower")
+fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
+                  eggs_per_flower="Fly eggs per flower")[fitnesstraits]
+morphtraits <- c("corolla_length", "corolla_width","style_length","anther_max","anther_min","sepal_width","nectar_24_h_ul", "nectar_conc")
+```
+
+# Fitness vs. environment
+
+## Fitness vs. VWC
+
+```{r fitness_sm, fig.height=4, fig.width=4}
+#See if VWC affects relative fitness
+ggplot(mnps.plantyr, aes(x=VWC, y=seeds_est, color=year)) + geom_point() + geom_smooth(method="lm",se=F) + 
+  labs(x="VWC", y="Seed production", color="year")+ theme_bw() + scale_color_manual(values=year_pal)
+
+seeds.mod.sm <- lmer(seeds_rel ~ VWC * year + (1|plotid), 
+                     data=mnps.plantyr %>% group_by(year) %>% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T)))
+anova(seeds.mod.sm, ddf="Ken") %>% kable()
+emtrends(seeds.mod.sm, ~year, var="VWC") %>% kable()
+```
+
+# Selection on individual traits
+
+```{r mt_selection, fig.height=8, fig.width=6}
+mnps.plantyr %>% select(all_of(c(floraltraits, "seeds_est")), year) %>% 
+  pivot_longer(all_of(floraltraits), names_to="trait") %>% 
+  ggplot(aes(x=value, y=seeds_est, color=year)) + geom_point() + geom_smooth(method="lm",se=F) + 
+  facet_wrap(vars(trait), scales="free_x", labeller=as_labeller(traitnames)) + 
+  labs(x="Trait", y="Seed production", color="year")+
+  theme_bw() + scale_color_manual(values=year_pal)
+
+mt.mod.seeds <- map(set_names(floraltraits), 
+                    ~ lm(seeds_rel ~ trait.z * year, 
+                         data=mnps.plantyr %>% mutate(trait.z = mnps.plantyr[[.x]] / alltraits.sd[[.x]]) %>% 
+                           group_by(year) %>% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T)))) # mean seeds in each yr
+
+mt.mod.seeds.coefs <- map_dfr(mt.mod.seeds, tidy, .id="trait")
+mt.mod.seeds.tests <- map(mt.mod.seeds, car::Anova, type=3) %>% map_dfr(tidy, .id="trait")
+mt.mod.seeds.emm <- map_dfr(mt.mod.seeds, ~summary(emtrends(.x, ~1, var="trait.z")), .id="trait")
+
+#get the the standardized selection differential S' (change in relative fitness / standardized trait value)
+mt.mod.seeds.coefs %>% filter(term=="trait.z") %>% arrange(estimate) %>% 
+  kable(caption = "selection differential for each trait: lm(fitness~trait*year)")
+```
+
+# Selection gradients from PCA
+
+Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.
+
+* PCA can't handle missing values so they are removed, but this biases the data and reduces sample size - multiple imputation?
+
+```{r gradients, fig.width=4, fig.height=3}
+calculate_beta <- function(E, slopes) {
+  data.frame(B = E %*% slopes$A,
+             SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %>% rownames_to_column("trait")
+}
+plot_beta <- function(beta) {
+  beta %>% mutate(trait = fct_reorder(trait, B)) %>% 
+    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
+    geom_vline(xintercept=0)+ geom_pointrange() + 
+    labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait")
+}
+
+mnps.plantyr.std <- mnps.plantyr %>% select(all_of(morphtraits),seeds_est, any_of(names(treatments))) %>% 
+  mutate(across(all_of(morphtraits), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% 
+  group_by(year) %>% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T), .keep="unused") %>% ungroup %>% 
+  drop_na(all_of(morphtraits)) 
+
+# Run PCA on traits
+mnps.PCA <- mnps.plantyr.std %>% select(all_of(morphtraits)) %>% prcomp() 
+summary(mnps.PCA) # PCs 1 - 5 explain 90% of the variation
+mnps.PCA.E <- mnps.PCA$rotation[,1:5]
+mnps.plantyr.std.PCA <- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
+
+# Regress relative fitness on PCs
+mnps.PCA.regression <- lm(seeds_rel ~ PC1 + PC2 + PC3 + PC4 + PC5, data = mnps.plantyr.std.PCA)
+mnps.PCA.slopes <- tidy(mnps.PCA.regression) %>% filter(term != "(Intercept)") %>% rename(A=estimate, SE=std.error)
+
+# Convert selection gradients on PCs to gradients on traits
+(mnps.beta <- calculate_beta(mnps.PCA.E, mnps.PCA.slopes)) %>% kable(caption="selection gradients estimated from PCs")
+plot_beta(mnps.beta)
+```
+
