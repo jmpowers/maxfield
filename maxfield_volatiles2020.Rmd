@@ -1143,14 +1143,6 @@ fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
                   eggs_per_flower="Fly eggs per flower")[fitnesstraits]
 ```
 
-
-```{r fitness_corr}
-library(GGally)
-mnps.plantyr.traits %>% select(all_of(fitnesstraits)) %>% 
-  ggpairs(mapping=aes(color=mnps.plantyr.traits$year), lower=list(continuous="smooth_loess")) + 
-  scale_color_manual(values=year_pal)+ scale_fill_manual(values=year_pal)
-```
-
 ## Plots of selection in treatments and years
 
 ```{r selection, fig.width=16, fig.height=10}

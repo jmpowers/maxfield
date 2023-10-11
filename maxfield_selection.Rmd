@@ -34,19 +34,78 @@ fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
 morphtraits <- c("corolla_length", "corolla_width","style_length","anther_max","anther_min","sepal_width","nectar_24_h_ul", "nectar_conc")
 ```
 
-# Fitness vs. environment
+# Fitness vs. treatments and soil moisture
 
-## Fitness vs. VWC
+## Seed traits
 
-```{r fitness_sm, fig.height=4, fig.width=4}
-#See if VWC affects relative fitness
-ggplot(mnps.plantyr, aes(x=VWC, y=seeds_est, color=year)) + geom_point() + geom_smooth(method="lm",se=F) + 
-  labs(x="VWC", y="Seed production", color="year")+ theme_bw() + scale_color_manual(values=year_pal)
+```{r seeds_treat, fig.height=12, fig.width=5}
+sds %>% pivot_longer(all_of(seedtraits), names_to = "trait") %>% 
+  ggplot(aes(y=value, x=water, color=snow)) + 
+  facet_grid(trait~year, scales="free_y", labeller=as_labeller(c(set_names(2018:2020), traitnames))) +
+  geom_boxplot() + scale_color_manual(values=snow_pal) +  scale_y_continuous(expand=expansion(mult=c(0,0.05)))+
+  labs(x="Precipitation", color="Snow") + 
+  theme_bw() + theme(axis.title.y=element_blank()) + guides(x=guide_axis(angle = 90))
 
-seeds.mod.sm <- lmer(seeds_rel ~ VWC * year + (1|plotid), 
-                     data=mnps.plantyr %>% group_by(year) %>% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T)))
-anova(seeds.mod.sm, ddf="Ken") %>% kable()
-emtrends(seeds.mod.sm, ~year, var="VWC") %>% kable()
+sds %>% pivot_longer(all_of(seedtraits), names_to = "trait") %>% 
+  ggplot(aes(y=value, x=VWC, color=year)) + 
+  facet_grid(trait~year, scales="free_y", labeller=as_labeller(c(set_names(2018:2020), traitnames))) +
+  geom_point(size=0.5) + geom_smooth(se=F) + scale_color_manual(values=year_pal) +
+  labs(x="Summer mean of soil moisture in subplot (VWC)", color="Year") + 
+  theme_bw() + theme(axis.title.y=element_blank()) + guides(year="none")
+```
+
+## Fitness metrics
+
+```{r fitness_treat, fig.height=8, fig.width=5}
+mnps.plantyr %>% pivot_longer(all_of(fitnesstraits), names_to = "trait") %>% 
+  ggplot(aes(y=value, x=water, color=snow)) + 
+  facet_grid(trait~year, scales="free_y", labeller=as_labeller(c(set_names(2018:2020), fitnessnames))) +
+  geom_boxplot() + scale_color_manual(values=snow_pal) +  scale_y_continuous(expand=expansion(mult=c(0,0.05)))+
+  labs(x="Precipitation", color="Snow") + 
+  theme_bw() + theme(axis.title.y=element_blank()) + guides(x=guide_axis(angle = 90))
+
+mnps.plantyr %>% pivot_longer(all_of(fitnesstraits), names_to = "trait") %>% 
+  ggplot(aes(y=value, x=VWC, color=year)) + 
+  facet_grid(trait~year, scales="free_y", labeller=as_labeller(c(set_names(2018:2020), fitnessnames))) +
+  geom_point(size=0.5) + geom_smooth(se=F) + scale_color_manual(values=year_pal) +
+  labs(x="Summer mean of soil moisture in subplot (VWC)", color="Year") + 
+  theme_bw() + theme(axis.title.y=element_blank()) + guides(year="none")
+
+# seeds.mod.sm <- lmer(seeds_rel ~ VWC * year + (1|plotid), 
+#                      data=mnps.plantyr %>% group_by(year) %>% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T)))
+# anova(seeds.mod.sm, ddf="Ken") %>% kable()
+# emtrends(seeds.mod.sm, ~year, var="VWC") %>% kable()
+```
+
+## Fitness correlations
+
+```{r fitness_corr}
+library(GGally)
+mnps.plantyr %>% select(all_of(fitnesstraits)) %>% 
+  ggpairs(mapping=aes(color=mnps.plantyr$year), lower=list(continuous="smooth_loess")) + 
+  scale_color_manual(values=year_pal)+ scale_fill_manual(values=year_pal)
+
+ggplot(sds %>% drop_na(plot), aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
+  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) + theme_minimal() +
+  labs(x="Counted fruits", y="Counted seeds", color="Precipitation")
+```
+
+# Floral trait correlations
+
+```{r correlations}
+mt %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width) %>% 
+  ggpairs()
+
+nt %>% select(nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg) %>% 
+  ggpairs()
+
+ggplot(nt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(x=traitnames[["nectar_conc"]], y=traitnames[["nectar_24_h_ul"]]) + geom_smooth(se=F)
+
+mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %>% 
+  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
+
+mnps.plantyr %>% select(all_of(seedtraits[c(1,7,2:6)])) %>% 
+  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
 ```
 
 # Selection on individual traits

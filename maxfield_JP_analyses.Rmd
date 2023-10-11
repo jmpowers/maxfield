@@ -829,23 +829,6 @@ ggplot(aes(x=water_content, y=value, color=factor(date), shape=year)) +
 
 # Floral traits
 
-## Floral trait correlations
-```{r correlations}
-mt %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width) %>% 
-  ggpairs()
-
-nt %>% select(nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg) %>% 
-  ggpairs()
-
-ggplot(nt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(x=traitnames[["nectar_conc"]], y=traitnames[["nectar_24_h_ul"]]) + geom_smooth(se=F)
-
-mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %>% 
-  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
-
-mnps.plantyr %>% select(all_of(seedtraits[c(1,7,2:6)])) %>% 
-  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
-```
-
 ## Floral traits within season
 
 No obvious effect of time within a season for corolla length/width or sepal width. The timing of trait measurements was different each year:
@@ -2095,25 +2078,6 @@ ggplot(ph.plantyr, aes(x=VWC, y=open, color=year)) + geom_point() + geom_smooth(
 ```
 
 # Seeds
-
-```{r seeds}
-ggplot(sds %>% drop_na(plot), aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
-  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) + theme_minimal() +
-  labs(x="Counted fruits", y="Counted seeds", color="Precipitation")
-
-for(tr in seedtraits) {
-  print(ggplot(sds %>% drop_na(plot), aes_string(tr, x="water", color="snow")) + geom_boxplot() + 
-    scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1) + 
-    scale_y_continuous(trans=ifelse(tr %in% c("seeds_est", "fruits_nonaborted"),"sqrt","identity"))+
-    labs(x="Precipitation", y=traitnames[[tr]], color="Precipitation") +
-        guides(x=guide_axis(angle = 90)))
-  
-  print(ggplot(sds, aes_string(tr, x="VWC", color="year")) + geom_point() + geom_smooth(se=F) + 
-   scale_color_manual(values=year_pal) +
-    scale_y_continuous(trans=ifelse(tr %in% c("seeds_est", "fruits_nonaborted"),"sqrt","identity"))+
-    labs(x="Summer mean of soil moisture in subplot (VWC)", y=traitnames[[tr]], color="Year"))
-}
-```
 
 ## Fruiting phenology (2020)
 

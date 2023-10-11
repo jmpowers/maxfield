@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-09-25" />
+<meta name="date" content="2023-10-11" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-09-25</h4>
+<h4 class="date">2023-10-11</h4>
 
 </div>
 
@@ -2377,23 +2377,6 @@ ggplot(aes(x=water_content, y=value, color=factor(date), shape=year)) +
 </div>
 <div id="floral-traits" class="section level1">
 <h1>Floral traits</h1>
-<div id="floral-trait-correlations" class="section level2">
-<h2>Floral trait correlations</h2>
-<pre class="r"><code>mt %&gt;% select(corolla_length,   corolla_width,  style_length,   anther_max, anther_min, sepal_width) %&gt;% 
-  ggpairs()</code></pre>
-<p><img src="images/correlations-1.png" width="672" /></p>
-<pre class="r"><code>nt %&gt;% select(nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg) %&gt;% 
-  ggpairs()</code></pre>
-<p><img src="images/correlations-2.png" width="672" /></p>
-<pre class="r"><code>ggplot(nt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(x=traitnames[[&quot;nectar_conc&quot;]], y=traitnames[[&quot;nectar_24_h_ul&quot;]]) + geom_smooth(se=F)</code></pre>
-<p><img src="images/correlations-3.png" width="672" /></p>
-<pre class="r"><code>mnps.plantyr %&gt;% select(corolla_length, corolla_width,  style_length,   anther_max, anther_min, sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %&gt;% 
-  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)</code></pre>
-<p><img src="images/correlations-4.png" width="672" /></p>
-<pre class="r"><code>mnps.plantyr %&gt;% select(all_of(seedtraits[c(1,7,2:6)])) %&gt;% 
-  ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)</code></pre>
-<p><img src="images/correlations-5.png" width="672" /></p>
-</div>
 <div id="floral-traits-within-season" class="section level2">
 <h2>Floral traits within season</h2>
 <p>No obvious effect of time within a season for corolla length/width or
@@ -2430,114 +2413,6 @@ year:</p>
   labs(y=traitnames[[&quot;nectar_conc&quot;]], x=&quot;Day of year&quot;)+
   scale_color_manual(values=water_pal) + theme_minimal()</code></pre>
 <p><img src="images/morph_season-4.png" width="672" /></p>
-</div>
-<div id="selection-on-floral-traits" class="section level2">
-<h2>Selection on floral traits</h2>
-<pre class="r"><code>mnps.plantyr %&gt;% select(all_of(c(floraltraits, &quot;seeds_est&quot;)), year) %&gt;% 
-  pivot_longer(all_of(floraltraits), names_to=&quot;trait&quot;) %&gt;% 
-  ggplot(aes(x=value, y=seeds_est, color=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller=as_labeller(traitnames)) + 
-  labs(x=&quot;Trait&quot;, y=&quot;Seed production&quot;, color=&quot;year&quot;)+
-  theme_bw() + scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images/mt_selection-1.png" width="576" /></p>
-<pre class="r"><code>mt.mod.seeds &lt;- map(set_names(floraltraits), 
-                    ~ lm(seeds_rel ~ trait.z * year, 
-                         data=mnps.plantyr %&gt;% mutate(trait.z = mnps.plantyr[[.x]] / alltraits.sd[[.x]]) %&gt;% 
-                           group_by(year) %&gt;% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T)))) # mean seeds in each yr
-
-mt.mod.seeds.coefs &lt;- map_dfr(mt.mod.seeds, tidy, .id=&quot;trait&quot;)
-mt.mod.seeds.tests &lt;- map(mt.mod.seeds, car::Anova, type=3) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
-mt.mod.seeds.emm &lt;- map_dfr(mt.mod.seeds, ~summary(emtrends(.x, ~1, var=&quot;trait.z&quot;)), .id=&quot;trait&quot;)
-
-#get the the standardized selection differential S&#39; (change in relative fitness / standardized trait value)
-mt.mod.seeds.coefs %&gt;% filter(term==&quot;trait.z&quot;) %&gt;% arrange(estimate)</code></pre>
-<pre><code># A tibble: 8 × 6
-  trait          term    estimate std.error statistic  p.value
-  &lt;chr&gt;          &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
-1 nectar_conc    trait.z  -0.0225    0.0618    -0.365 7.15e- 1
-2 nectar_24_h_ul trait.z   0.0401    0.0555     0.722 4.70e- 1
-3 sepal_width    trait.z   0.0529    0.0574     0.921 3.58e- 1
-4 corolla_length trait.z   0.0752    0.0555     1.36  1.76e- 1
-5 corolla_width  trait.z   0.0779    0.0575     1.35  1.76e- 1
-6 style_length   trait.z   0.100     0.0555     1.81  7.15e- 2
-7 height_cm      trait.z   0.439     0.0501     8.77  3.73e-17
-8 flowers_est    trait.z   0.695     0.0289    24.1   1.76e-85</code></pre>
-<pre class="r"><code>#See if VWC affects relative fitness
-ggplot(mnps.plantyr, aes(x=VWC, y=seeds_est, color=year)) + geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
-  labs(x=&quot;VWC&quot;, y=&quot;Seed production&quot;, color=&quot;year&quot;)+ theme_bw() + scale_color_manual(values=year_pal)</code></pre>
-<p><img src="images/mt_selection-2.png" width="576" /></p>
-<pre class="r"><code>seeds.mod.sm &lt;- lmer(seeds_rel ~ VWC * year + (1|plotid), 
-                     data=mnps.plantyr %&gt;% group_by(year) %&gt;% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T)))
-anova(seeds.mod.sm, ddf=&quot;Ken&quot;)</code></pre>
-<pre><code>Type III Analysis of Variance Table with Kenward-Roger&#39;s method
-         Sum Sq Mean Sq NumDF DenDF F value Pr(&gt;F)
-VWC        0.58   0.580     1    27    0.66   0.42
-year       1.48   0.739     2   411    0.84   0.43
-VWC:year   1.41   0.705     2   426    0.81   0.45</code></pre>
-<pre class="r"><code>emtrends(seeds.mod.sm, ~year, var=&quot;VWC&quot;)</code></pre>
-<pre><code> year VWC.trend     SE    df lower.CL upper.CL
- 2018   -0.0266 0.0643 151.7   -0.154    0.100
- 2019    0.0963 0.0768 106.5   -0.056    0.249
- 2020    0.0360 0.0670  98.6   -0.097    0.169
-
-Degrees-of-freedom method: kenward-roger 
-Confidence level used: 0.95 </code></pre>
-<div id="selection-gradients" class="section level3">
-<h3>Selection gradients</h3>
-<p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong
-et al. 2018</a> for reconstructing selection estimates from estimates of
-selection on PCs: Beta = E * A.</p>
-<ul>
-<li>PCA can’t handle missing values so they are removed, but this biases
-the data and reduces sample size - multiple imputation?</li>
-</ul>
-<pre class="r"><code>calculate_beta &lt;- function(E, slopes) {
-  data.frame(B = E %*% slopes$A,
-             SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %&gt;% rownames_to_column(&quot;trait&quot;)
-}
-plot_beta &lt;- function(beta) {
-  beta %&gt;% mutate(trait = fct_reorder(trait, B)) %&gt;% 
-    ggplot(aes(y=trait, x = B, xmin=B-SE, xmax=B+SE)) + 
-    geom_vline(xintercept=0)+ geom_pointrange() + 
-    labs(x = &quot;Selection gradient (beta) estimated from gradients on PCs&quot;, y = &quot;Trait&quot;)
-}
-
-morphtraits &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;sepal_width&quot;,&quot;nectar_24_h_ul&quot;, &quot;nectar_conc&quot;)
-
-mnps.plantyr.std &lt;- mnps.plantyr %&gt;% select(all_of(morphtraits),seeds_est, any_of(names(treatments))) %&gt;% 
-  mutate(across(all_of(morphtraits), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% 
-  group_by(year) %&gt;% mutate(seeds_rel = seeds_est/mean(seeds_est, na.rm=T), .keep=&quot;unused&quot;) %&gt;% ungroup %&gt;% 
-  drop_na(all_of(morphtraits)) 
-
-# Run PCA on traits
-mnps.PCA &lt;- mnps.plantyr.std %&gt;% select(morphtraits) %&gt;% prcomp() 
-summary(mnps.PCA) # PCs 1 - 6 explain 95% of the variation</code></pre>
-<pre><code>Importance of components:
-                         PC1   PC2   PC3   PC4   PC5    PC6    PC7   PC8
-Standard deviation     1.439 1.013 0.920 0.836 0.765 0.6497 0.3269 0.253
-Proportion of Variance 0.356 0.176 0.145 0.120 0.101 0.0725 0.0184 0.011
-Cumulative Proportion  0.356 0.532 0.678 0.798 0.898 0.9707 0.9890 1.000</code></pre>
-<pre class="r"><code>mnps.PCA.E &lt;- mnps.PCA$rotation[,1:5]
-mnps.plantyr.std.PCA &lt;- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
-
-# Regress relative fitness on PCs
-mnps.PCA.regression &lt;- lm(seeds_rel ~ PC1 + PC2 + PC3 + PC4 + PC5, data = mnps.plantyr.std.PCA)
-mnps.PCA.slopes &lt;- tidy(mnps.PCA.regression) %&gt;% filter(term != &quot;(Intercept)&quot;) %&gt;% rename(A=estimate, SE=std.error)
-
-# Convert selection gradients on PCs to gradients on traits
-(mnps.beta &lt;- calculate_beta(mnps.PCA.E, mnps.PCA.slopes))</code></pre>
-<pre><code>           trait         B      SE
-1 corolla_length  0.006762 0.02655
-2  corolla_width  0.073894 0.07288
-3   style_length  0.011639 0.02369
-4     anther_max  0.011217 0.02748
-5     anther_min  0.002605 0.02648
-6    sepal_width  0.006088 0.06773
-7 nectar_24_h_ul -0.012963 0.07219
-8    nectar_conc -0.025004 0.07567</code></pre>
-<pre class="r"><code>plot_beta(mnps.beta)</code></pre>
-<p><img src="images/gradients-1.png" width="672" /></p>
-</div>
 </div>
 </div>
 <div id="plasticity-models" class="section level1">
@@ -8151,23 +8026,6 @@ flowers</caption>
 </div>
 <div id="seeds" class="section level1">
 <h1>Seeds</h1>
-<pre class="r"><code>ggplot(sds %&gt;% drop_na(plot), aes(color=water, x=fruits, y=seeds)) + geom_point() + geom_smooth(se=F) + 
-  scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) + theme_minimal() +
-  labs(x=&quot;Counted fruits&quot;, y=&quot;Counted seeds&quot;, color=&quot;Precipitation&quot;)</code></pre>
-<p><img src="images/seeds-1.png" width="672" /></p>
-<pre class="r"><code>for(tr in seedtraits) {
-  print(ggplot(sds %&gt;% drop_na(plot), aes_string(tr, x=&quot;water&quot;, color=&quot;snow&quot;)) + geom_boxplot() + 
-    scale_color_manual(values=snow_pal) + facet_wrap(vars(year), nrow=1) + 
-    scale_y_continuous(trans=ifelse(tr %in% c(&quot;seeds_est&quot;, &quot;fruits_nonaborted&quot;),&quot;sqrt&quot;,&quot;identity&quot;))+
-    labs(x=&quot;Precipitation&quot;, y=traitnames[[tr]], color=&quot;Precipitation&quot;) +
-        guides(x=guide_axis(angle = 90)))
-  
-  print(ggplot(sds, aes_string(tr, x=&quot;VWC&quot;, color=&quot;year&quot;)) + geom_point() + geom_smooth(se=F) + 
-   scale_color_manual(values=year_pal) +
-    scale_y_continuous(trans=ifelse(tr %in% c(&quot;seeds_est&quot;, &quot;fruits_nonaborted&quot;),&quot;sqrt&quot;,&quot;identity&quot;))+
-    labs(x=&quot;Summer mean of soil moisture in subplot (VWC)&quot;, y=traitnames[[tr]], color=&quot;Year&quot;))
-}</code></pre>
-<p><img src="images/seeds-2.png" width="672" /><img src="images/seeds-3.png" width="672" /><img src="images/seeds-4.png" width="672" /><img src="images/seeds-5.png" width="672" /><img src="images/seeds-6.png" width="672" /><img src="images/seeds-7.png" width="672" /><img src="images/seeds-8.png" width="672" /><img src="images/seeds-9.png" width="672" /><img src="images/seeds-10.png" width="672" /><img src="images/seeds-11.png" width="672" /><img src="images/seeds-12.png" width="672" /><img src="images/seeds-13.png" width="672" /><img src="images/seeds-14.png" width="672" /><img src="images/seeds-15.png" width="672" /></p>
 <div id="fruiting-phenology-2020" class="section level2">
 <h2>Fruiting phenology (2020)</h2>
 <pre class="r"><code>ggplot(sds20.date.zeroed, aes(x=julian, y=fruits_nonaborted, color=water, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun=&quot;mean&quot;, geom=&quot;line&quot;) + scale_y_sqrt() + scale_color_manual(values=water_pal)+
