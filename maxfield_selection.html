@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-10-11" />
+<meta name="date" content="2023-10-12" />
 
 <title>Maxfield Meadow Ipomopsis Selection</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Selection</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-10-11</h4>
+<h4 class="date">2023-10-12</h4>
 
 </div>
 
@@ -399,6 +399,41 @@ selection on PCs: Beta = E * A.</p>
 <li>PCA can’t handle missing values so they are removed, but this biases
 the data and reduces sample size - multiple imputation?</li>
 </ul>
+<div id="pca-of-each-flower" class="section level2">
+<h2>PCA of each flower</h2>
+<pre class="r"><code>mt.morph &lt;- mt[,c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;year&quot;,&quot;VWC&quot;)] %&gt;% drop_na(1:5) #drop sepal_width
+mt.pca &lt;- prcomp(mt.morph[,-(6:7)], scale.=TRUE)
+
+mt.morph.pca &lt;- mt.morph %&gt;%
+  bind_cols(as.data.frame(mt.pca$x)) %&gt;% 
+  tibble::rowid_to_column(&quot;index&quot;) %&gt;% 
+  mutate(x_0=0,y_0=0,
+         x_1=-corolla_width/2,y_1=corolla_length,
+         x_2= corolla_width/2,y_2=corolla_length) %&gt;% 
+  pivot_longer(c(starts_with(&quot;x&quot;),starts_with(&quot;y&quot;)), names_to=c(&quot;.value&quot;, &quot;point&quot;), names_sep=&quot;_&quot;)
+
+scl &lt;- 100
+zoom &lt;- 5.5
+mt.pca.vars &lt;- as.data.frame(mt.pca$rotation) %&gt;% rownames_to_column(&quot;variable&quot;)
+mt.pca.labs &lt;- paste0(&quot;PC&quot;, 1:2, &quot; (&quot;, round(100*mt.pca$sdev[1:2]^2/sum(mt.pca$sdev^2), 0), &quot;% explained var.)&quot;) 
+ggplot(mt.morph.pca) + theme_classic() +
+  geom_polygon(aes(x= x/scl+PC1, y= y/scl+PC2, group=index, color=VWC, fill=VWC)) +
+  #geom_point(aes(x=PC1, y=PC2, size=sepal_width/2), color=&quot;darkgreen&quot;) + 
+  geom_point(aes(x=PC1, y=PC2 + anther_min/scl), color=&quot;yellow&quot;, size=0.3) +
+  geom_point(aes(x=PC1, y=PC2 + anther_max/scl), color=&quot;yellow&quot;, size=0.3) +
+  geom_point(aes(x=PC1, y=PC2 + style_length/scl), color=&quot;grey60&quot;, size=0.5, shape=4) +
+  geom_segment(data=mt.pca.vars,aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
+               arrow = arrow(length = unit(1/2, &quot;picas&quot;)), color=&quot;black&quot;) +
+  geom_text(data =mt.pca.vars, aes(label = gsub(&quot;_&quot;,&quot; &quot;,variable), x = PC1*zoom*1.4, y = PC2*zoom*1.4,
+                                   angle =  (180/pi) * atan(PC2/PC1), hjust = 0), color=&quot;black&quot;)+
+  scale_size_identity() + coord_fixed() + 
+  scale_fill_viridis_c(direction=-1, option=&quot;plasma&quot;) + scale_color_viridis_c(direction=-1, option=&quot;plasma&quot;) + 
+  labs(x=mt.pca.labs[1], y=mt.pca.labs[2])</code></pre>
+<p><img src="images_selection/pca-1.svg" width="576" /></p>
+<pre class="r"><code>ggsave(&quot;images_selection/mt_morph_pca_noSW.svg&quot;, height=15, width=20)</code></pre>
+</div>
+<div id="gradients-from-averaged-traits" class="section level2">
+<h2>Gradients from averaged traits</h2>
 <pre class="r"><code>morphtraits.pca &lt;- morphtraits[-6]  #remove sepal_width (not measured in 2018)
 #Standardize traits by mean and fitness by mean within each year
 mnps.plantyr.std &lt;- mnps.plantyr %&gt;% select(all_of(morphtraits.pca),all_of(fitnesstraits), any_of(names(treatments))) %&gt;%
@@ -406,7 +441,7 @@ mnps.plantyr.std &lt;- mnps.plantyr %&gt;% select(all_of(morphtraits.pca),all_of
   drop_na(all_of(morphtraits.pca)) 
 
 # Run PCA on traits
-mnps.PCA &lt;- mnps.plantyr.std %&gt;% select(all_of(morphtraits.pca)) %&gt;% prcomp() 
+mnps.PCA &lt;- mnps.plantyr.std %&gt;% select(all_of(morphtraits.pca)) %&gt;% prcomp() #TODO check if these need to be scaled (scale. arg)
 summary(mnps.PCA) # PCs 1 - 4 explain ~90% of the variation</code></pre>
 <pre><code>Importance of components:
                          PC1   PC2   PC3    PC4    PC5    PC6    PC7
@@ -470,6 +505,7 @@ mnps.beta.water.snow &lt;- expand_grid(year=unique(mnps.plantyr$year), water=nam
 walk(fitnesstraits, ~print(plot_beta(filter(mnps.beta.water.snow, fitnesstrait==.x), colorby=&quot;water_snow&quot;) + 
                              facet_wrap(vars(year), nrow=1) + ggtitle(fitnessnames[.x])))</code></pre>
 <p><img src="images_selection/gradients-2.svg" width="768" /><img src="images_selection/gradients-3.svg" width="768" /><img src="images_selection/gradients-4.svg" width="768" /><img src="images_selection/gradients-5.svg" width="768" /></p>
+</div>
 </div>
 <div id="adaptive-plasticity" class="section level1">
 <h1>Adaptive plasticity</h1>

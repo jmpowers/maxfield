@@ -161,6 +161,41 @@ Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for rec
 
 * PCA can't handle missing values so they are removed, but this biases the data and reduces sample size - multiple imputation?
 
+## PCA of each flower
+```{r pca}
+mt.morph <- mt[,c("corolla_length", "corolla_width","style_length","anther_max","anther_min","year","VWC")] %>% drop_na(1:5) #drop sepal_width
+mt.pca <- prcomp(mt.morph[,-(6:7)], scale.=TRUE)
+
+mt.morph.pca <- mt.morph %>%
+  bind_cols(as.data.frame(mt.pca$x)) %>% 
+  tibble::rowid_to_column("index") %>% 
+  mutate(x_0=0,y_0=0,
+         x_1=-corolla_width/2,y_1=corolla_length,
+         x_2= corolla_width/2,y_2=corolla_length) %>% 
+  pivot_longer(c(starts_with("x"),starts_with("y")), names_to=c(".value", "point"), names_sep="_")
+
+scl <- 100
+zoom <- 5.5
+mt.pca.vars <- as.data.frame(mt.pca$rotation) %>% rownames_to_column("variable")
+mt.pca.labs <- paste0("PC", 1:2, " (", round(100*mt.pca$sdev[1:2]^2/sum(mt.pca$sdev^2), 0), "% explained var.)") 
+ggplot(mt.morph.pca) + theme_classic() +
+  geom_polygon(aes(x= x/scl+PC1, y= y/scl+PC2, group=index, color=VWC, fill=VWC)) +
+  #geom_point(aes(x=PC1, y=PC2, size=sepal_width/2), color="darkgreen") + 
+  geom_point(aes(x=PC1, y=PC2 + anther_min/scl), color="yellow", size=0.3) +
+  geom_point(aes(x=PC1, y=PC2 + anther_max/scl), color="yellow", size=0.3) +
+  geom_point(aes(x=PC1, y=PC2 + style_length/scl), color="grey60", size=0.5, shape=4) +
+  geom_segment(data=mt.pca.vars,aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
+               arrow = arrow(length = unit(1/2, "picas")), color="black") +
+  geom_text(data =mt.pca.vars, aes(label = gsub("_"," ",variable), x = PC1*zoom*1.4, y = PC2*zoom*1.4,
+                                   angle =  (180/pi) * atan(PC2/PC1), hjust = 0), color="black")+
+  scale_size_identity() + coord_fixed() + 
+  scale_fill_viridis_c(direction=-1, option="plasma") + scale_color_viridis_c(direction=-1, option="plasma") + 
+  labs(x=mt.pca.labs[1], y=mt.pca.labs[2])
+ggsave("images_selection/mt_morph_pca_noSW.svg", height=15, width=20)
+```
+
+## Gradients from averaged traits
+
 ```{r gradients, fig.width=8, fig.height=6}
 morphtraits.pca <- morphtraits[-6]  #remove sepal_width (not measured in 2018)
 #Standardize traits by mean and fitness by mean within each year
@@ -169,7 +204,7 @@ mnps.plantyr.std <- mnps.plantyr %>% select(all_of(morphtraits.pca),all_of(fitne
   drop_na(all_of(morphtraits.pca)) 
 
 # Run PCA on traits
-mnps.PCA <- mnps.plantyr.std %>% select(all_of(morphtraits.pca)) %>% prcomp() 
+mnps.PCA <- mnps.plantyr.std %>% select(all_of(morphtraits.pca)) %>% prcomp() #TODO check if these need to be scaled (scale. arg)
 summary(mnps.PCA) # PCs 1 - 4 explain ~90% of the variation
 mnps.PCA.E <- mnps.PCA$rotation[,1:4]
 mnps.plantyr.std.PCA <- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
