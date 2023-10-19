@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-10-12" />
+<meta name="date" content="2023-10-18" />
 
 <title>Maxfield Meadow Ipomopsis Selection</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Selection</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-10-12</h4>
+<h4 class="date">2023-10-18</h4>
 
 </div>
 
@@ -339,7 +339,7 @@ class="section level1">
 <pre class="r"><code>nt %&gt;% select(nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg) %&gt;% 
   ggpairs()</code></pre>
 <p><img src="images_selection/correlations-2.svg" width="576" /></p>
-<pre class="r"><code>ggplot(nt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(x=traitnames[[&quot;nectar_conc&quot;]], y=traitnames[[&quot;nectar_24_h_ul&quot;]]) + geom_smooth(se=F)</code></pre>
+<pre class="r"><code>ggplot(nt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(y=traitnames[[&quot;nectar_conc&quot;]], x=traitnames[[&quot;nectar_24_h_ul&quot;]]) + geom_smooth(se=F)</code></pre>
 <p><img src="images_selection/correlations-3.svg" width="576" /></p>
 <pre class="r"><code>mnps.plantyr %&gt;% select(corolla_length, corolla_width,  style_length,   anther_max, anther_min, sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %&gt;% 
   ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)</code></pre>
@@ -451,10 +451,10 @@ Cumulative Proportion  0.492 0.668 0.795 0.8951 0.9650 0.9842 1.0000</code></pre
 <pre class="r"><code>mnps.PCA.E &lt;- mnps.PCA$rotation[,1:4]
 mnps.plantyr.std.PCA &lt;- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
 
-calculate_beta &lt;- function(E, slopes) {
+calculate_beta &lt;- function(E, slopes, resid.df) {
   data.frame(B = E %*% slopes$A,
              SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %&gt;% 
-    mutate(p.value = pt(abs(B)/SE, df=1, lower.tail=F)) %&gt;% #calculate t statistic from difference in means and SE, then look up one-tailed p with 1 df in the upper tail
+    mutate(p.value = 2*pt(abs(B)/SE, df=resid.df, lower.tail=F)) %&gt;% #calculate t statistic from difference in means and SE, then look up one-tailed p in the upper tail, double to get a 2-tailed test
     rownames_to_column(&quot;trait&quot;)
 }
 
@@ -472,7 +472,7 @@ selection_pca &lt;- function(year, water=names(water_pal), snow=names(snow_pal),
   mnps.PCA.slopes &lt;- tidy(mnps.PCA.regression) %&gt;% filter(term != &quot;(Intercept)&quot;) %&gt;% rename(A=estimate, SE=std.error)
   
   # Convert selection gradients on PCs to gradients on traits
-  calculate_beta(mnps.PCA.E, mnps.PCA.slopes)
+  calculate_beta(mnps.PCA.E, mnps.PCA.slopes, aov(mnps.PCA.regression)$df.residual)
 }
 
 plot_beta &lt;- function(betas, colorby=&quot;year&quot;) {
@@ -516,11 +516,15 @@ walk(fitnesstraits, ~print(plot_beta(filter(mnps.beta.water.snow, fitnesstrait==
                            linfct = multcomp::mcp(water = c(&quot;Addition - Control = 0&quot;,
                                                             &quot;Reduction - Control = 0&quot;,
                                                             &quot;Reduction - Addition = 0&quot;),
-                                                  snow = c(&quot;Early - Normal = 0&quot;))), multcomp::adjusted(type=&quot;fdr&quot;))))) %&gt;% 
+                                                  snow = c(&quot;Early - Normal = 0&quot;))), multcomp::adjusted(type=&quot;none&quot;))))) %&gt;%#adjust later 
   select(year, name, emm, test) %&gt;% unnest(c(emm, test)) %&gt;% 
   mutate(estimate=estimate/emmean, std.error=std.error/emmean, #divide estimated difference in means by emm in Normal Control subplots
          contrast = str_replace(str_remove_all(contrast, &quot;[a-z\\s]&quot;),&quot;-&quot;,&quot;_&quot;),
-         newenv = recode(contrast, &quot;A_C&quot;=&quot;Addition&quot;, &quot;R_C&quot;=&quot;Reduction&quot;,&quot;E_N&quot;=&quot;Early&quot;)) %&gt;% 
+         newenv = recode(contrast, &quot;A_C&quot;=&quot;Addition&quot;, &quot;R_C&quot;=&quot;Reduction&quot;,&quot;E_N&quot;=&quot;Early&quot;),
+         multiplecomps = contrast %in% c(&quot;A_C&quot;,&quot;R_C&quot;)) %&gt;% #these two reuse the same control data
+  group_by(multiplecomps, name, year) %&gt;% #two comparisons to Control made within each volatile and year 
+  mutate(adj.p.value = ifelse(multiplecomps, p.adjust(p.value, method=&quot;fdr&quot;), p.value)) %&gt;% 
+  ungroup %&gt;%
   select(year, name, newenv, adj.p.value, estimate, std.error) %&gt;% 
   left_join(bind_rows(rename(mnps.beta.water, newenv=water),
                     rename(mnps.beta.snow, newenv=snow)) %&gt;% 
@@ -552,7 +556,7 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
             theme_bw() + theme(axis.text = element_text(size=7)))})</code></pre>
 <p><img src="images_selection/adaptive-1.svg" width="672" /><img src="images_selection/adaptive-2.svg" width="672" /><img src="images_selection/adaptive-3.svg" width="672" /></p>
 <pre class="r"><code>ggplot(adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% drop_na(fitnesstrait),
-       aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=morphnames[name], color=year)) +  #alpha=1-adj.p.value
+       aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=morphnames[name], color=year, alpha=adj.p.value &lt; 0.05)) +  
   facet_wrap(vars(newenv)) +
   geom_vline(xintercept = 0) + geom_pointrange() + scale_color_manual(values=year_pal) + 
   theme_bw() + theme(panel.grid.major.y=element_blank(), axis.title.y=element_blank()) +

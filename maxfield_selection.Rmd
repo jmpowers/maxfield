@@ -101,7 +101,7 @@ mt %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_mi
 nt %>% select(nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg) %>% 
   ggpairs()
 
-ggplot(nt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(x=traitnames[["nectar_conc"]], y=traitnames[["nectar_24_h_ul"]]) + geom_smooth(se=F)
+ggplot(nt, aes(x=nectar_24_h_ul, y = nectar_conc)) + geom_point() + labs(y=traitnames[["nectar_conc"]], x=traitnames[["nectar_24_h_ul"]]) + geom_smooth(se=F)
 
 mnps.plantyr %>% select(corolla_length,	corolla_width,	style_length,	anther_max,	anther_min,	sepal_width, nectar_24_h_ul, nectar_conc, nectar_sugar_24_h_mg, height_cm, flowers_est) %>% 
   ggcorr(hjust=0.85, layout.exp=2, label=T, label_round=2)
@@ -209,10 +209,10 @@ summary(mnps.PCA) # PCs 1 - 4 explain ~90% of the variation
 mnps.PCA.E <- mnps.PCA$rotation[,1:4]
 mnps.plantyr.std.PCA <- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
 
-calculate_beta <- function(E, slopes) {
+calculate_beta <- function(E, slopes, resid.df) {
   data.frame(B = E %*% slopes$A,
              SE = sqrt(E ^ 2 %*% slopes$SE ^ 2)) %>% 
-    mutate(p.value = pt(abs(B)/SE, df=1, lower.tail=F)) %>% #calculate t statistic from difference in means and SE, then look up one-tailed p with 1 df in the upper tail
+    mutate(p.value = 2*pt(abs(B)/SE, df=resid.df, lower.tail=F)) %>% #calculate t statistic from difference in means and SE, then look up one-tailed p in the upper tail, double to get a 2-tailed test
     rownames_to_column("trait")
 }
 
@@ -230,7 +230,7 @@ selection_pca <- function(year, water=names(water_pal), snow=names(snow_pal), fi
   mnps.PCA.slopes <- tidy(mnps.PCA.regression) %>% filter(term != "(Intercept)") %>% rename(A=estimate, SE=std.error)
   
   # Convert selection gradients on PCs to gradients on traits
-  calculate_beta(mnps.PCA.E, mnps.PCA.slopes)
+  calculate_beta(mnps.PCA.E, mnps.PCA.slopes, aov(mnps.PCA.regression)$df.residual)
 }
 
 plot_beta <- function(betas, colorby="year") {
@@ -275,11 +275,15 @@ adaptive.plasticity.data <- mnps.plantyr %>% pivot_longer(all_of(morphtraits)) %
                            linfct = multcomp::mcp(water = c("Addition - Control = 0",
                                                             "Reduction - Control = 0",
                                                             "Reduction - Addition = 0"),
-                                                  snow = c("Early - Normal = 0"))), multcomp::adjusted(type="fdr"))))) %>% 
+                                                  snow = c("Early - Normal = 0"))), multcomp::adjusted(type="none"))))) %>%#adjust later 
   select(year, name, emm, test) %>% unnest(c(emm, test)) %>% 
   mutate(estimate=estimate/emmean, std.error=std.error/emmean, #divide estimated difference in means by emm in Normal Control subplots
          contrast = str_replace(str_remove_all(contrast, "[a-z\\s]"),"-","_"),
-         newenv = recode(contrast, "A_C"="Addition", "R_C"="Reduction","E_N"="Early")) %>% 
+         newenv = recode(contrast, "A_C"="Addition", "R_C"="Reduction","E_N"="Early"),
+         multiplecomps = contrast %in% c("A_C","R_C")) %>% #these two reuse the same control data
+  group_by(multiplecomps, name, year) %>% #two comparisons to Control made within each volatile and year 
+  mutate(adj.p.value = ifelse(multiplecomps, p.adjust(p.value, method="fdr"), p.value)) %>% 
+  ungroup %>%
   select(year, name, newenv, adj.p.value, estimate, std.error) %>% 
   left_join(bind_rows(rename(mnps.beta.water, newenv=water),
                     rename(mnps.beta.snow, newenv=snow)) %>% 
@@ -311,7 +315,7 @@ adaptive.plasticity.data %>% filter(newenv!="R_A") %>%
             theme_bw() + theme(axis.text = element_text(size=7)))})
 
 ggplot(adaptive.plasticity.data %>% filter(newenv!="R_A") %>% drop_na(fitnesstrait),
-       aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=morphnames[name], color=year)) +  #alpha=1-adj.p.value
+       aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error, y=morphnames[name], color=year, alpha=adj.p.value < 0.05)) +  
   facet_wrap(vars(newenv)) +
   geom_vline(xintercept = 0) + geom_pointrange() + scale_color_manual(values=year_pal) + 
   theme_bw() + theme(panel.grid.major.y=element_blank(), axis.title.y=element_blank()) +
