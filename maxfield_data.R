@@ -413,17 +413,8 @@ ph18.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
          plantid = paste0(plotid, plant),
          plant=as.character(plant),
          julian = factor(yday(date)),
-         year="2018",
-         open = rowSums(select(., starts_with("open")), na.rm=T),
-         buds = rowSums(select(., starts_with("buds")), na.rm=T),
-         eggs=eggs_total) %>% 
-  fix_dataset("pheno18") %>% left_join(treatments) %>% 
-  mutate_if(is.character, as.factor) 
-
-ph18 <- ph18.raw %>% 
-  complete(nesting(plant, plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
-  mutate(flowering = open + buds > 0,
-         has_egg = eggs > 0)
+         year="2018") %>% #TODO there are multiple issues with this dataset, see Maxfield volatiles todo list
+  fix_dataset("pheno18") 
 
 ph19.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2019") %>% 
   mutate(plot = as.character(plot), 
@@ -431,17 +422,8 @@ ph19.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
          plantid = paste0(plotid, plant),
          plant = as.character(plant),
          julian = factor(yday(date)),
-         year="2019",
-         open = rowSums(select(., starts_with("open")), na.rm=T),
-         buds = rowSums(select(., starts_with("buds")), na.rm=T),
-         eggs = rowSums(select(., starts_with("eggs")), na.rm=T)) %>% 
-  fix_dataset("pheno19") %>% left_join(treatments) %>% 
-  mutate_if(is.character, as.factor)
-
-ph19 <- ph19.raw %>% 
-  complete(nesting(plant, plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
-  mutate(flowering = open + buds > 0,
-         has_egg = eggs > 0)
+         year="2019") %>% 
+  fix_dataset("pheno19")
 
 ph20.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2020") %>% 
   mutate(plot = as.character(plot), 
@@ -449,21 +431,27 @@ ph20.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
          plantid = paste0(plotid, plant),
          plant = as.character(plant),
          julian = factor(yday(date)),
-         year="2020",
-         open = rowSums(select(., starts_with("open")), na.rm=T),
-         buds = rowSums(select(., starts_with("buds")), na.rm=T),
-         eggs = rowSums(select(., starts_with("eggs")), na.rm=T)) %>% 
-  fix_dataset("pheno20") %>% left_join(treatments) %>% 
-  mutate_if(is.character, as.factor) 
+         year="2020") %>% 
+  fix_dataset("pheno20")
 
-ph20 <- ph20.raw %>% 
-  complete(nesting(plant, plantid, plotid, plot, subplot, snow, water, water4),nesting(julian, date), fill=list(open=0,buds=0)) %>% #add zeros to weeks the plant was not counted
+ph.raw <- bind_rows(ph18.raw, ph19.raw, ph20.raw) %>% 
+  rowwise() %>% mutate(open = sum(c_across(starts_with("open")), na.rm=T),
+                       buds = sum(c_across(starts_with("buds")), na.rm=T),
+                       eggs = sum(c_across(starts_with("eggs")), na.rm=T)) %>% ungroup() %>% #TODO there are 3 egg columns in 2018, only want eggs_total!
   mutate(flowering = open + buds > 0,
-         has_egg = eggs > 0)
-
-ph <- bind_rows(list("2018" = ph18, "2019" = ph19, "2020" = ph20), .id="year") %>% 
-  mutate(julian=as.integer(as.character(julian))) %>% 
+         has_egg = eggs > 0,
+         eggs_per_flower = eggs/(open+buds), #had replace_na(eggs,0) but eggs not always counted when buds measured
+         julian=as.integer(as.character(julian))) %>% 
+  left_join(treatments) %>% 
+  mutate_if(is.character, as.factor) %>% 
   left_join(sm.subplotyear) 
+
+#add zeros to weeks the plant was not counted - this doesn't work in 2018, where data was not collected weekly
+#see maxfiled_JP_analyses raw phenology tables
+ph <- ph.raw %>% group_by(year) %>% 
+  complete(nesting(plant, plantid, plotid, plot, subplot, snow, water, water4), nesting(julian, date), 
+                fill=list(open=0,buds=0)) %>% ungroup() 
+
 
 # leaftraits --------------------------------------------------------------
 
@@ -809,8 +797,8 @@ mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>%
   mutate(plantid = paste0(plotid, plant)) %>% 
   group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% 
   summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
-  mutate_if(is.numeric, ~replace(., is.nan(.), NA)) %>% 
-  mutate(eggs_per_flower = replace_na(eggs,0)/(open+buds))
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA)) 
+#  mutate(eggs_per_flower = replace_na(eggs,0)/(open+buds))
 
 #average by plant and year, then by subplot
 mnps.subplot <- mnps.plantyr %>%  
