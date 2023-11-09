@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-10-18" />
+<meta name="date" content="2023-10-19" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-10-18</h4>
+<h4 class="date">2023-10-19</h4>
 
 </div>
 
@@ -2925,8 +2925,8 @@ walk(fitnesstraits, ~print(plot_beta(filter(vols.beta.water.snow, fitnesstrait==
          newenv = recode(contrast, &quot;A_C&quot;=&quot;Addition&quot;, &quot;R_C&quot;=&quot;Reduction&quot;,&quot;E_N&quot;=&quot;Early&quot;),
          multiplecomps = contrast %in% c(&quot;A_C&quot;,&quot;R_C&quot;)) %&gt;% #these two reuse the same control data
   group_by(multiplecomps, name, year) %&gt;% #two comparisons to Control made within each volatile and year 
-  mutate(adj.p.value = ifelse(multiplecomps, p.adjust(p.value, method=&quot;fdr&quot;), p.value)) %&gt;% 
-  ungroup %&gt;% select(year, name, newenv, adj.p.value, estimate, std.error) %&gt;% 
+  mutate(plasticity.p.value = ifelse(multiplecomps, p.adjust(p.value, method=&quot;fdr&quot;), p.value)) %&gt;% 
+  ungroup %&gt;% select(year, name, newenv, plasticity.p.value, estimate, std.error) %&gt;% 
   left_join(bind_rows(rename(vols.beta.water, newenv=water),
                     rename(vols.beta.snow, newenv=snow)) %&gt;% 
             filter(fitnesstrait!=&quot;eggs_per_flower&quot;) %&gt;% rename(name=trait)) %&gt;% 
@@ -2938,7 +2938,8 @@ envnames &lt;- c(Addition=&quot;additional precipitation&quot;,
 
 library(ggpubr)
 adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
-  mutate(fitnesstrait=factor(fitnesstrait, levels = rev(fitnesstraits))) %&gt;% 
+  mutate(fitnesstrait=factor(fitnesstrait, levels = rev(fitnesstraits)),
+         plasticity.signif = plasticity.p.value &lt; 0.05, selection.signif= p.value &lt; 0.05) %&gt;% 
   group_by(newenv) %&gt;% nest() %&gt;% 
   pwalk(function(newenv, data) { 
     print(ggplot(data, aes(x=estimate, y=B, color=class)) + 
@@ -2951,7 +2952,7 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
             annotate(&quot;rect&quot;, xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= &quot;black&quot;, alpha=0.1) +
             geom_errorbar(aes(ymin=B-SE, ymax=B+SE)) + 
             geom_errorbarh(aes(xmin=estimate-std.error, xmax=estimate+std.error)) +
-            geom_point(aes(size=mean.floral)) + 
+            geom_point(aes(shape = paste(plasticity.signif, selection.signif))) + #size=mean.floral, 
             scale_size_area(&quot;Mean emissions\n(ng/hr/flower)&quot;, max_size=3) +
             scale_x_continuous(labels=scales::percent, limits=c(NA,NA), breaks=c(-4:4)) + 
             scale_color_manual(&quot;Compound class&quot;, values=class_pal, 
@@ -2959,7 +2960,7 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
             theme_bw() + theme(axis.text = element_text(size=7)))})</code></pre>
 <p><img src="images_volatiles2020/adaptive-1.svg" width="672" /><img src="images_volatiles2020/adaptive-2.svg" width="672" /><img src="images_volatiles2020/adaptive-3.svg" width="672" /></p>
 <pre class="r"><code>ggplot(adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;), aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error,
-                          y=name, color=year, alpha=adj.p.value&lt;0.05)) +  facet_wrap(vars(newenv)) +
+                          y=name, color=year, alpha=plasticity.p.value&lt;0.05)) +  facet_wrap(vars(newenv)) +
   geom_vline(xintercept = 0) + geom_pointrange() + scale_color_manual(values=year_pal) + 
   theme_bw() + theme(panel.grid.major.y=element_blank(), axis.title.y=element_blank()) +
   labs(x=&quot;Plastic change in new environment compared to control&quot;)</code></pre>

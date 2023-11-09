@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-10-18" />
+<meta name="date" content="2023-10-26" />
 
 <title>Maxfield Meadow Ipomopsis Selection</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Selection</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-10-18</h4>
+<h4 class="date">2023-10-26</h4>
 
 </div>
 
@@ -355,22 +355,23 @@ class="section level1">
                mutate(prop_uninfested = if_else(fruits_nonaborted &gt; 4, prop_uninfested, NA)) %&gt;% 
                pivot_longer(all_of(floraltraits)) %&gt;% 
                ggplot(aes_string(y=.x, x=&quot;value&quot;, color=&quot;year&quot;)) + 
-               geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + 
-               facet_wrap(vars(name), scales=&quot;free_x&quot;, labeller=as_labeller(traitnames)) + 
+               geom_point(size=0.5) + geom_smooth(method=&quot;lm&quot;, se=F) + 
+               facet_wrap(vars(name), scales=&quot;free_x&quot;, labeller=as_labeller(traitnames), nrow=2) + 
                labs(y=fitnessnames[.x], color=&quot;Year&quot;)+
                theme_bw() + scale_color_manual(values=year_pal) + theme(axis.title.x=element_blank()))) </code></pre>
-<p><img src="images_selection/mt_selection-1.svg" width="768" /><img src="images_selection/mt_selection-2.svg" width="768" /><img src="images_selection/mt_selection-3.svg" width="768" /><img src="images_selection/mt_selection-4.svg" width="768" /></p>
+<p><img src="images_selection/mt_selection-1.svg" width="960" /><img src="images_selection/mt_selection-2.svg" width="960" /><img src="images_selection/mt_selection-3.svg" width="960" /><img src="images_selection/mt_selection-4.svg" width="960" /></p>
 <pre class="r"><code>walk(fitnesstraits, ~ 
        print(mnps.plantyr %&gt;% 
                mutate(prop_uninfested = if_else(fruits_nonaborted &gt; 4, prop_uninfested, NA)) %&gt;% 
                pivot_longer(all_of(floraltraits)) %&gt;%
-               ggplot(aes(x=value, color=paste(water,snow), linetype=year, shape=year)) + 
-               geom_point(aes_string(y=.x)) + geom_smooth(aes_string(y=.x), method=&quot;lm&quot;,se=F) + 
-               facet_wrap(vars(name), scales=&quot;free_x&quot;, labeller=as_labeller(traitnames)) + 
-               labs(x=&quot;Emissions (ng/hr/flower)&quot;, y=fitnessnames[.x], 
+               ggplot(aes(x=value, color=paste(water,snow))) + #shape=year, linetype=year,
+               geom_point(aes_string(y=.x), size=0.5) + geom_smooth(aes_string(y=.x), method=&quot;lm&quot;,se=F) + 
+               facet_wrap(vars(name), scales=&quot;free_x&quot;, labeller=as_labeller(traitnames), nrow=2) + 
+               labs(y=fitnessnames[.x], 
                     color=&quot;Precipitation and snowmelt&quot;, linetype=&quot;Year&quot;, shape=&quot;Year&quot;)+
-               theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))</code></pre>
-<p><img src="images_selection/mt_selection-5.svg" width="768" /><img src="images_selection/mt_selection-6.svg" width="768" /><img src="images_selection/mt_selection-7.svg" width="768" /><img src="images_selection/mt_selection-8.svg" width="768" /></p>
+               theme_bw()  + scale_color_manual(values=water_snow_pal) +
+               theme(axis.title.x=element_blank())))</code></pre>
+<p><img src="images_selection/mt_selection-5.svg" width="960" /><img src="images_selection/mt_selection-6.svg" width="960" /><img src="images_selection/mt_selection-7.svg" width="960" /><img src="images_selection/mt_selection-8.svg" width="960" /></p>
 <pre class="r"><code>mt.mod.indiv &lt;- expand_grid(trait=floraltraits, fitnesstrait=fitnesstraits, yr=2018:2020) %&gt;% 
   filter(!(yr==2018 &amp; trait==&quot;sepal_width&quot;)) %&gt;% 
   mutate(model = pmap(., function(trait, fitnesstrait, yr) {
@@ -430,7 +431,17 @@ ggplot(mt.morph.pca) + theme_classic() +
   scale_fill_viridis_c(direction=-1, option=&quot;plasma&quot;) + scale_color_viridis_c(direction=-1, option=&quot;plasma&quot;) + 
   labs(x=mt.pca.labs[1], y=mt.pca.labs[2])</code></pre>
 <p><img src="images_selection/pca-1.svg" width="576" /></p>
-<pre class="r"><code>ggsave(&quot;images_selection/mt_morph_pca_noSW.svg&quot;, height=15, width=20)</code></pre>
+<pre class="r"><code>ggsave(&quot;images_selection/mt_morph_pca_noSW.svg&quot;, height=15, width=20)
+
+zoom&lt;-2
+ggplot(mt.morph.pca) + geom_point(aes(x=PC1, y=PC2, color=corolla_width/corolla_length)) +
+  geom_segment(data=mt.pca.vars,aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
+               arrow = arrow(length = unit(1/2, &quot;picas&quot;)), color=&quot;white&quot;) +
+  geom_text(data =mt.pca.vars, aes(label = gsub(&quot;_&quot;,&quot; &quot;,variable), x = PC1*zoom*1.1, y = PC2*zoom*1.1,
+                                   angle =  (180/pi) * atan(PC2/PC1), hjust = 0), color=&quot;white&quot;)+
+  scale_color_viridis_c(option = &quot;plasma&quot;)+ theme_dark()+
+  theme(panel.grid=element_blank()) + labs(color=&quot;width/length&quot;) #+ coord_fixed()</code></pre>
+<p><img src="images_selection/pca-2.svg" width="576" /></p>
 </div>
 <div id="gradients-from-averaged-traits" class="section level2">
 <h2>Gradients from averaged traits</h2>
@@ -478,7 +489,7 @@ selection_pca &lt;- function(year, water=names(water_pal), snow=names(snow_pal),
 plot_beta &lt;- function(betas, colorby=&quot;year&quot;) {
   bs &lt;- betas
   if(colorby==&quot;water_snow&quot;)  bs &lt;- bs %&gt;%  mutate(water_snow = paste(water, snow))
-  ggplot(bs, aes(y=morphnames[trait], x = B, xmin=B-SE, xmax=B+SE,)) + #alpha=p.value&lt;0.05
+  ggplot(bs, aes(y=morphnames[trait], x = B, xmin=B-SE, xmax=B+SE,alpha=p.value&lt;0.05)) + 
     geom_vline(xintercept=0)+ 
     geom_pointrange(mapping=aes_string(color=colorby), position=position_dodge(width=0.5)) + 
     labs(x = &quot;Selection gradient \U03B2 estimated from gradients on PCs&quot;, y = &quot;Trait&quot;,

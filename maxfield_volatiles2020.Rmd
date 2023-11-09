@@ -1366,8 +1366,8 @@ adaptive.plasticity.data <- volsmeta.good.top %>% group_by(name, year) %>% nest(
          newenv = recode(contrast, "A_C"="Addition", "R_C"="Reduction","E_N"="Early"),
          multiplecomps = contrast %in% c("A_C","R_C")) %>% #these two reuse the same control data
   group_by(multiplecomps, name, year) %>% #two comparisons to Control made within each volatile and year 
-  mutate(adj.p.value = ifelse(multiplecomps, p.adjust(p.value, method="fdr"), p.value)) %>% 
-  ungroup %>% select(year, name, newenv, adj.p.value, estimate, std.error) %>% 
+  mutate(plasticity.p.value = ifelse(multiplecomps, p.adjust(p.value, method="fdr"), p.value)) %>% 
+  ungroup %>% select(year, name, newenv, plasticity.p.value, estimate, std.error) %>% 
   left_join(bind_rows(rename(vols.beta.water, newenv=water),
                     rename(vols.beta.snow, newenv=snow)) %>% 
             filter(fitnesstrait!="eggs_per_flower") %>% rename(name=trait)) %>% 
@@ -1379,7 +1379,8 @@ envnames <- c(Addition="additional precipitation",
 
 library(ggpubr)
 adaptive.plasticity.data %>% filter(newenv!="R_A") %>% 
-  mutate(fitnesstrait=factor(fitnesstrait, levels = rev(fitnesstraits))) %>% 
+  mutate(fitnesstrait=factor(fitnesstrait, levels = rev(fitnesstraits)),
+         plasticity.signif = plasticity.p.value < 0.05, selection.signif= p.value < 0.05) %>% 
   group_by(newenv) %>% nest() %>% 
   pwalk(function(newenv, data) { 
     print(ggplot(data, aes(x=estimate, y=B, color=class)) + 
@@ -1392,7 +1393,7 @@ adaptive.plasticity.data %>% filter(newenv!="R_A") %>%
             annotate("rect", xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= "black", alpha=0.1) +
             geom_errorbar(aes(ymin=B-SE, ymax=B+SE)) + 
             geom_errorbarh(aes(xmin=estimate-std.error, xmax=estimate+std.error)) +
-            geom_point(aes(size=mean.floral)) + 
+            geom_point(aes(shape = paste(plasticity.signif, selection.signif))) + #size=mean.floral, 
             scale_size_area("Mean emissions\n(ng/hr/flower)", max_size=3) +
             scale_x_continuous(labels=scales::percent, limits=c(NA,NA), breaks=c(-4:4)) + 
             scale_color_manual("Compound class", values=class_pal, 
@@ -1400,7 +1401,7 @@ adaptive.plasticity.data %>% filter(newenv!="R_A") %>%
             theme_bw() + theme(axis.text = element_text(size=7)))})
 
 ggplot(adaptive.plasticity.data %>% filter(newenv!="R_A"), aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error,
-                          y=name, color=year, alpha=adj.p.value<0.05)) +  facet_wrap(vars(newenv)) +
+                          y=name, color=year, alpha=plasticity.p.value<0.05)) +  facet_wrap(vars(newenv)) +
   geom_vline(xintercept = 0) + geom_pointrange() + scale_color_manual(values=year_pal) + 
   theme_bw() + theme(panel.grid.major.y=element_blank(), axis.title.y=element_blank()) +
   labs(x="Plastic change in new environment compared to control")
