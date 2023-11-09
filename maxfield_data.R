@@ -412,9 +412,10 @@ ph18.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
          plotid = paste0(plot, subplot),
          plantid = paste0(plotid, plant),
          plant=as.character(plant),
+         date=as.Date(date),
          julian = factor(yday(date)),
-         year="2018") %>% #TODO there are multiple issues with this dataset, see Maxfield volatiles todo list
-  fix_dataset("pheno18") 
+         year="2018") #%>% #TODO there are multiple issues with this dataset, see Maxfield volatiles todo list
+  #fix_dataset("pheno18") #TODO uncomment this
 
 ph19.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2019") %>% 
   mutate(plot = as.character(plot), 

@@ -1971,19 +1971,86 @@ map(set_names(phystraits),
 
 # Phenology
 
-```{r check_phenology}
+```{r check_phenology, fig.width=11, fig.height=9}
+xdate <- scale_x_date(date_breaks="day", date_labels = "%m-%d %a", minor_breaks = NULL, guide=guide_axis(angle=90))
+
 walk(list(ph18.raw, ph19.raw, ph20.raw), 
      function(ph.raw) {
   y = ph.raw$year[1]
   p <- ph.raw %>% count(plot, subplot, plotid, plantid, julian) %>% add_count(plantid, name="n_plantid") %>% 
   mutate(plantid = fct_reorder(plantid, as.integer(factor(paste(plotid, n_plantid))),.desc=T)) %>% 
   ggplot(aes(julian, plantid, fill=factor(n)))+
-  geom_tile()+ scale_fill_viridis(option="inferno", discrete=T) + 
+  geom_tile()+ scale_fill_viridis_d(option="inferno") + 
   geom_point(aes(color=subplot, x=median(as.integer(julian))))+ scale_color_manual(values=sample(rainbow(10)))+
   geom_point(aes(color=plot, x=median(as.integer(julian))), position=position_nudge(x=-0.3))+ 
   theme_classic() + theme(panel.background = element_rect(fill="grey")) + guides(x=guide_axis(angle = 90)) +
   labs(x="Day of year", y="Plant (sorted by subplot)", fill="Observations", color="Plot", title=paste(y,"phenology"))
   print(p)})
+#TODO investigate multiple entries for a plant on the same date
+ph18.raw %>% count(plot, subplot, plotid, plantid, date) %>% add_count(plantid, name="n_plantid") %>% 
+  mutate(plantid = fct_reorder(plantid, as.integer(factor(paste(plotid, n_plantid))),.desc=T)) %>% 
+  ggplot(aes(as.Date(date), plantid, fill=factor(n)))+
+  geom_tile()+  xdate 
+
+ph.measures = c("eggs_delia_flies",	"eggs_small_flies", "flowers_with_eggs", "eggs_total", "open_1", "height_cm")
+ph18.raw %>% group_by(date) %>% summarize(across(all_of(ph.measures), ~sum(!is.na(.x)))) %>% 
+  pivot_longer(all_of(ph.measures)) %>% mutate(name = factor(name, levels=ph.measures)) %>% 
+  ggplot(aes(x=as.Date(date), y=value, fill=name)) + geom_col() + xdate + facet_wrap(vars(name), ncol=1) 
+
+#TODO figure out what blanks mean on each date and subplot - zero or not measured?
+ph18.byplotdate <- ph18.raw %>% group_by(date, plotid) %>% summarize(across(c(eggs_total, open_1), ~sum(!is.na(.x)))) %>% 
+  mutate(measured_eggs = eggs_total/open_1)
+ggplot(ph18.byplotdate, aes(x=date, y=plotid)) + geom_tile(aes(fill=open_1)) + scale_fill_viridis_c()
+ggplot(ph18.byplotdate, aes(x=date, group=plotid)) + geom_line(aes(y=open_1, color=str_sub(plotid,1,1))) #seeing some duplicates here
+
+ggplot(ph18.byplotdate, aes(x=date, y=plotid)) + geom_tile(aes(fill=measured_eggs)) + scale_fill_viridis_c()
+
+ggplot(ph18.raw, aes(y=flowers_with_eggs, x= open_1 + replace_na(open_2,0)+ replace_na(open_3,0)+ replace_na(open_4,0))) + geom_point() +geom_abline()
+ggplot(ph18.raw, aes(x=flowers_with_eggs, y= eggs_total)) + geom_point() +geom_abline()
+ph18.raw %>% filter(eggs_total < flowers_with_eggs) 
+```
+
+```{r check_phenology_obs, fig.width=11, fig.height=9}
+library(googlesheets4)
+gs4_auth(email=T)
+#sheet with the order of plants on each scanned sheet that has egg data (rest of sheets with no eggs are not entered yet)
+ph18.order <- read_sheet("1aPpSjtL--YjtB4SPQ9bgv-9_pFSzkNtscsgaAJOwWTA", sheet="2018observers", col_types="c") %>% 
+  mutate(date=ymd(date), scanpage = as.integer(scanpage))
+ph18.obs <- ph18.order %>% select(-plant) %>% drop_na(plotid) %>% fill(!comments)
+ph18.order <- ph18.order %>% drop_na(plant) %>% fill(!c(comments,plant)) 
+
+#check if there are two observers in the same subplot on the same day
+ph18.obs %>% count(observer, date, plotid) %>% 
+  add_count(date, plotid) %>% filter(nn>1) %>% arrange(date, plotid) %>% left_join(ph18.obs)
+
+#check if there are duplicate plants measured on the same day
+full_join(ph18.order %>% count(date, plotid, plant) %>% filter(n>1) %>% mutate(order=1),
+          ph18.raw   %>% count(date, plotid, plant) %>% filter(n>1))
+
+#put the data (.raw) in order of the scanned sheets (.order)
+ph18.reorder <- left_join(distinct(ph18.order, date, plotid, plant, .keep_all=T), #throw out the second duplicate plant
+                          add_count(ph18.raw, date, plotid, plant)) %>% #add in both duplicate entries from the raw data
+  filter(n==1 | str_detect(comments, "same data")) %>% select(-n) %>% #take out all uncombinable duplicates, save dupes with the same data
+  distinct(date, plotid, plant, .keep_all=T) #throw out the the second duplicate plant for duplicates with the same data
+  
+
+ph18.reorder %>% add_count(date, plotid, plant) %>% filter(n>1)
+
+#TODO in big dataset, need to update JN 6-15 on scanned pages 62 and 64 to 6/13, and HB 6-20 to 6-25 on p58+59, aldo 
+#TODO missing scan for RD p1 on 2018-07-03
+ph18.obs %>% distinct(observer, date, plotid) %>% ggplot(aes(x=date, y=plotid, fill=observer))+ geom_tile(alpha=0.5) +
+  theme_minimal() + xdate
+
+ph18.obs %>% distinct(observer, date, plotid, egg_entries) %>% ggplot(aes(x=date, y=plotid, fill=egg_entries))+ geom_tile(alpha=0.5) +
+  theme_minimal() + xdate
+
+ph18.order %>% ggplot(aes(x=date, y=paste(plotid,plant), fill=egg_entries))+ geom_tile(alpha=0.5) +
+  theme_minimal() + xdate
+
+ph18.order %>% count(plotid, plant) %>% ggplot(aes(x=n)) + geom_histogram(binwidth=1) + scale_x_continuous(breaks=1:20)
+ph18.order %>% count(plotid, plant) %>% filter(n==1) %>% left_join(ph18.order) 
+
+
 ```
 
 # Weekly vs. total fly and flower counts

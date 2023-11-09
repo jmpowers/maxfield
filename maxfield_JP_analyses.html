@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-10-11" />
+<meta name="date" content="2023-11-08" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-10-11</h4>
+<h4 class="date">2023-11-08</h4>
 
 </div>
 
@@ -7876,19 +7876,142 @@ map(set_names(leaftraits),
 </div>
 <div id="phenology" class="section level1">
 <h1>Phenology</h1>
-<pre class="r"><code>walk(list(ph18.raw, ph19.raw, ph20.raw), 
+<pre class="r"><code>xdate &lt;- scale_x_date(date_breaks=&quot;day&quot;, date_labels = &quot;%m-%d %a&quot;, minor_breaks = NULL, guide=guide_axis(angle=90))
+
+walk(list(ph18.raw, ph19.raw, ph20.raw), 
      function(ph.raw) {
   y = ph.raw$year[1]
   p &lt;- ph.raw %&gt;% count(plot, subplot, plotid, plantid, julian) %&gt;% add_count(plantid, name=&quot;n_plantid&quot;) %&gt;% 
   mutate(plantid = fct_reorder(plantid, as.integer(factor(paste(plotid, n_plantid))),.desc=T)) %&gt;% 
   ggplot(aes(julian, plantid, fill=factor(n)))+
-  geom_tile()+ scale_fill_viridis(option=&quot;inferno&quot;, discrete=T) + 
+  geom_tile()+ scale_fill_viridis_d(option=&quot;inferno&quot;) + 
   geom_point(aes(color=subplot, x=median(as.integer(julian))))+ scale_color_manual(values=sample(rainbow(10)))+
   geom_point(aes(color=plot, x=median(as.integer(julian))), position=position_nudge(x=-0.3))+ 
   theme_classic() + theme(panel.background = element_rect(fill=&quot;grey&quot;)) + guides(x=guide_axis(angle = 90)) +
   labs(x=&quot;Day of year&quot;, y=&quot;Plant (sorted by subplot)&quot;, fill=&quot;Observations&quot;, color=&quot;Plot&quot;, title=paste(y,&quot;phenology&quot;))
   print(p)})</code></pre>
-<p><img src="images/check_phenology-1.png" width="672" /><img src="images/check_phenology-2.png" width="672" /><img src="images/check_phenology-3.png" width="672" /></p>
+<p><img src="images/check_phenology-1.png" width="1056" /><img src="images/check_phenology-2.png" width="1056" /><img src="images/check_phenology-3.png" width="1056" /></p>
+<pre class="r"><code>#TODO investigate multiple entries for a plant on the same date
+ph18.raw %&gt;% count(plot, subplot, plotid, plantid, date) %&gt;% add_count(plantid, name=&quot;n_plantid&quot;) %&gt;% 
+  mutate(plantid = fct_reorder(plantid, as.integer(factor(paste(plotid, n_plantid))),.desc=T)) %&gt;% 
+  ggplot(aes(as.Date(date), plantid, fill=factor(n)))+
+  geom_tile()+  xdate </code></pre>
+<p><img src="images/check_phenology-4.png" width="1056" /></p>
+<pre class="r"><code>ph.measures = c(&quot;eggs_delia_flies&quot;, &quot;eggs_small_flies&quot;, &quot;flowers_with_eggs&quot;, &quot;eggs_total&quot;, &quot;open_1&quot;, &quot;height_cm&quot;)
+ph18.raw %&gt;% group_by(date) %&gt;% summarize(across(all_of(ph.measures), ~sum(!is.na(.x)))) %&gt;% 
+  pivot_longer(all_of(ph.measures)) %&gt;% mutate(name = factor(name, levels=ph.measures)) %&gt;% 
+  ggplot(aes(x=as.Date(date), y=value, fill=name)) + geom_col() + xdate + facet_wrap(vars(name), ncol=1) </code></pre>
+<p><img src="images/check_phenology-5.png" width="1056" /></p>
+<pre class="r"><code>#TODO figure out what blanks mean on each date and subplot - zero or not measured?
+ph18.byplotdate &lt;- ph18.raw %&gt;% group_by(date, plotid) %&gt;% summarize(across(c(eggs_total, open_1), ~sum(!is.na(.x)))) %&gt;% 
+  mutate(measured_eggs = eggs_total/open_1)
+ggplot(ph18.byplotdate, aes(x=date, y=plotid)) + geom_tile(aes(fill=open_1)) + scale_fill_viridis_c()</code></pre>
+<p><img src="images/check_phenology-6.png" width="1056" /></p>
+<pre class="r"><code>ggplot(ph18.byplotdate, aes(x=date, group=plotid)) + geom_line(aes(y=open_1, color=str_sub(plotid,1,1))) #seeing some duplicates here</code></pre>
+<p><img src="images/check_phenology-7.png" width="1056" /></p>
+<pre class="r"><code>ggplot(ph18.byplotdate, aes(x=date, y=plotid)) + geom_tile(aes(fill=measured_eggs)) + scale_fill_viridis_c()</code></pre>
+<p><img src="images/check_phenology-8.png" width="1056" /></p>
+<pre class="r"><code>ggplot(ph18.raw, aes(y=flowers_with_eggs, x= open_1 + replace_na(open_2,0)+ replace_na(open_3,0)+ replace_na(open_4,0))) + geom_point() +geom_abline()</code></pre>
+<p><img src="images/check_phenology-9.png" width="1056" /></p>
+<pre class="r"><code>ggplot(ph18.raw, aes(x=flowers_with_eggs, y= eggs_total)) + geom_point() +geom_abline()</code></pre>
+<p><img src="images/check_phenology-10.png" width="1056" /></p>
+<pre class="r"><code>ph18.raw %&gt;% filter(eggs_total &lt; flowers_with_eggs) </code></pre>
+<pre><code># A tibble: 1 × 75
+  plantid notes date                plot  subplot plant inflor height_cm buds_1
+  &lt;fct&gt;   &lt;fct&gt; &lt;dttm&gt;              &lt;fct&gt; &lt;fct&gt;   &lt;fct&gt;  &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt;
+1 2B195   &lt;NA&gt;  2018-07-03 00:00:00 2     B       195        1        NA      6
+# ℹ 66 more variables: open_1 &lt;dbl&gt;, nr_1 &lt;dbl&gt;, buds_2 &lt;dbl&gt;, open_2 &lt;dbl&gt;,
+#   nr_2 &lt;dbl&gt;, buds_3 &lt;dbl&gt;, open_3 &lt;dbl&gt;, nr_3 &lt;dbl&gt;, buds_4 &lt;dbl&gt;,
+#   open_4 &lt;dbl&gt;, nr_4 &lt;dbl&gt;, buds_5 &lt;dbl&gt;, open_5 &lt;dbl&gt;, nr_5 &lt;lgl&gt;,
+#   buds_6 &lt;lgl&gt;, open_6 &lt;lgl&gt;, nr_6 &lt;lgl&gt;, buds_7 &lt;lgl&gt;, open_7 &lt;lgl&gt;,
+#   nr_7 &lt;dbl&gt;, buds_8 &lt;lgl&gt;, open_8 &lt;lgl&gt;, nr_8 &lt;lgl&gt;, buds_9 &lt;lgl&gt;,
+#   open_9 &lt;lgl&gt;, nr_9 &lt;lgl&gt;, buds_10 &lt;lgl&gt;, open_10 &lt;lgl&gt;, nr_10 &lt;lgl&gt;,
+#   eggs_delia_flies &lt;dbl&gt;, eggs_small_flies &lt;dbl&gt;, eggs_total &lt;dbl&gt;, …</code></pre>
+<pre class="r"><code>library(googlesheets4)
+gs4_auth(email=T)
+#sheet with the order of plants on each scanned sheet that has egg data (rest of sheets with no eggs are not entered yet)
+ph18.order &lt;- read_sheet(&quot;1aPpSjtL--YjtB4SPQ9bgv-9_pFSzkNtscsgaAJOwWTA&quot;, sheet=&quot;2018observers&quot;, col_types=&quot;c&quot;) %&gt;% 
+  mutate(date=ymd(date), scanpage = as.integer(scanpage))
+ph18.obs &lt;- ph18.order %&gt;% select(-plant) %&gt;% drop_na(plotid) %&gt;% fill(!comments)
+ph18.order &lt;- ph18.order %&gt;% drop_na(plant) %&gt;% fill(!c(comments,plant)) 
+
+#check if there are two observers in the same subplot on the same day
+ph18.obs %&gt;% count(observer, date, plotid) %&gt;% 
+  add_count(date, plotid) %&gt;% filter(nn&gt;1) %&gt;% arrange(date, plotid) %&gt;% left_join(ph18.obs)</code></pre>
+<pre><code># A tibble: 8 × 13
+  observer date       plotid     n    nn scanpage page  pagemax egg_entries
+  &lt;chr&gt;    &lt;date&gt;     &lt;chr&gt;  &lt;int&gt; &lt;int&gt;    &lt;int&gt; &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;      
+1 JN       2018-06-15 6C         1     2       63 NA    NA      none       
+2 RD       2018-06-15 6C         1     2       61 NA    NA      none       
+3 AF       2018-07-09 2A         1     2        2 NA    NA      complete   
+4 JN       2018-07-09 2A         1     2       15 NA    NA      complete   
+5 AF       2018-07-09 2B         1     2        2 NA    NA      complete   
+6 JN       2018-07-09 2B         1     2       15 NA    NA      complete   
+7 JN       2018-07-09 5C         1     2       16 NA    NA      complete   
+8 RD       2018-07-09 5C         1     2        1 NA    NA      partial    
+# ℹ 4 more variables: blank &lt;chr&gt;, dash &lt;chr&gt;, zeros &lt;chr&gt;, comments &lt;chr&gt;</code></pre>
+<pre class="r"><code>#check if there are duplicate plants measured on the same day
+full_join(ph18.order %&gt;% count(date, plotid, plant) %&gt;% filter(n&gt;1) %&gt;% mutate(order=1),
+          ph18.raw   %&gt;% count(date, plotid, plant) %&gt;% filter(n&gt;1))</code></pre>
+<pre><code># A tibble: 144 × 5
+   date                plotid plant     n order
+   &lt;dttm&gt;              &lt;chr&gt;  &lt;chr&gt; &lt;int&gt; &lt;dbl&gt;
+ 1 2018-06-20 00:00:00 4B     183       2     1
+ 2 2018-06-20 00:00:00 5D     258       2     1
+ 3 2018-06-21 00:00:00 5C     205       2     1
+ 4 2018-06-27 00:00:00 6A     151       2     1
+ 5 2018-06-27 00:00:00 6A     160       2     1
+ 6 2018-07-05 00:00:00 6A     125       2     1
+ 7 2018-07-05 00:00:00 6A     133       2     1
+ 8 2018-07-05 00:00:00 6A     135       2     1
+ 9 2018-07-05 00:00:00 6A     143       2     1
+10 2018-07-05 00:00:00 6A     151       2     1
+# ℹ 134 more rows</code></pre>
+<pre class="r"><code>#put the data (.raw) in order of the scanned sheets (.order)
+ph18.reorder &lt;- left_join(distinct(ph18.order, date, plotid, plant, .keep_all=T), #throw out the second duplicate plant
+                          add_count(ph18.raw, date, plotid, plant)) %&gt;% #add in both duplicate entries from the raw data
+  filter(n==1 | str_detect(comments, &quot;same data&quot;)) %&gt;% select(-n) %&gt;% #take out all uncombinable duplicates, save dupes with the same data
+  distinct(date, plotid, plant, .keep_all=T) #throw out the the second duplicate plant for duplicates with the same data
+  
+
+ph18.reorder %&gt;% add_count(date, plotid, plant) %&gt;% filter(n&gt;1)</code></pre>
+<pre><code># A tibble: 0 × 85
+# ℹ 85 variables: scanpage &lt;int&gt;, observer &lt;chr&gt;, date &lt;dttm&gt;, page &lt;chr&gt;,
+#   pagemax &lt;chr&gt;, egg_entries &lt;chr&gt;, blank &lt;chr&gt;, dash &lt;chr&gt;, zeros &lt;chr&gt;,
+#   plotid &lt;chr&gt;, plant &lt;chr&gt;, comments &lt;chr&gt;, plantid &lt;fct&gt;, notes &lt;fct&gt;,
+#   plot &lt;fct&gt;, subplot &lt;fct&gt;, inflor &lt;dbl&gt;, height_cm &lt;dbl&gt;, buds_1 &lt;dbl&gt;,
+#   open_1 &lt;dbl&gt;, nr_1 &lt;dbl&gt;, buds_2 &lt;dbl&gt;, open_2 &lt;dbl&gt;, nr_2 &lt;dbl&gt;,
+#   buds_3 &lt;dbl&gt;, open_3 &lt;dbl&gt;, nr_3 &lt;dbl&gt;, buds_4 &lt;dbl&gt;, open_4 &lt;dbl&gt;,
+#   nr_4 &lt;dbl&gt;, buds_5 &lt;dbl&gt;, open_5 &lt;dbl&gt;, nr_5 &lt;lgl&gt;, buds_6 &lt;lgl&gt;, …</code></pre>
+<pre class="r"><code>#TODO in big dataset, need to update JN 6-15 on scanned pages 62 and 64 to 6/13, and HB 6-20 to 6-25 on p58+59, aldo 
+#TODO missing scan for RD p1 on 2018-07-03
+ph18.obs %&gt;% distinct(observer, date, plotid) %&gt;% ggplot(aes(x=date, y=plotid, fill=observer))+ geom_tile(alpha=0.5) +
+  theme_minimal() + xdate</code></pre>
+<p><img src="images/check_phenology_obs-1.png" width="1056" /></p>
+<pre class="r"><code>ph18.obs %&gt;% distinct(observer, date, plotid, egg_entries) %&gt;% ggplot(aes(x=date, y=plotid, fill=egg_entries))+ geom_tile(alpha=0.5) +
+  theme_minimal() + xdate</code></pre>
+<p><img src="images/check_phenology_obs-2.png" width="1056" /></p>
+<pre class="r"><code>ph18.order %&gt;% ggplot(aes(x=date, y=paste(plotid,plant), fill=egg_entries))+ geom_tile(alpha=0.5) +
+  theme_minimal() + xdate</code></pre>
+<p><img src="images/check_phenology_obs-3.png" width="1056" /></p>
+<pre class="r"><code>ph18.order %&gt;% count(plotid, plant) %&gt;% ggplot(aes(x=n)) + geom_histogram(binwidth=1) + scale_x_continuous(breaks=1:20)</code></pre>
+<p><img src="images/check_phenology_obs-4.png" width="1056" /></p>
+<pre class="r"><code>ph18.order %&gt;% count(plotid, plant) %&gt;% filter(n==1) %&gt;% left_join(ph18.order) </code></pre>
+<pre><code># A tibble: 28 × 13
+   plotid plant     n scanpage observer date       page  pagemax egg_entries
+   &lt;chr&gt;  &lt;chr&gt; &lt;int&gt;    &lt;int&gt; &lt;chr&gt;    &lt;date&gt;     &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;      
+ 1 1B     179       1        5 JN       2018-07-16 1     4       complete   
+ 2 1B     564       1       59 HB       2018-07-25 NA    NA      partial    
+ 3 1C     67        1        5 JN       2018-07-16 1     4       complete   
+ 4 1D     28        1       46 RD       2018-07-31 2     3       complete   
+ 5 2C     226       1       57 RD       2018-08-15 1     1       complete   
+ 6 2C     299       1       55 HB       2018-07-20 1     4       complete   
+ 7 2D     217       1       29 RD       2018-06-27 2     4       complete   
+ 8 3B     224       1       28 RD       2018-06-27 1     4       complete   
+ 9 3D     269       1       56 HB       2018-07-20 2     4       complete   
+10 3D     647       1       17 RD       2018-07-03 2     NA      complete   
+# ℹ 18 more rows
+# ℹ 4 more variables: blank &lt;chr&gt;, dash &lt;chr&gt;, zeros &lt;chr&gt;, comments &lt;chr&gt;</code></pre>
 </div>
 <div id="weekly-vs.-total-fly-and-flower-counts" class="section level1">
 <h1>Weekly vs. total fly and flower counts</h1>
