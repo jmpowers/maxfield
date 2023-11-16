@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-11-08" />
+<meta name="date" content="2023-11-15" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-11-08</h4>
+<h4 class="date">2023-11-15</h4>
 
 </div>
 
@@ -1404,25 +1404,25 @@ bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="right">1865</td>
-<td align="right">674</td>
-<td align="right">674</td>
-<td align="right">653</td>
-<td align="right">2.77</td>
-<td align="right">2.77</td>
-<td align="right">2.86</td>
-<td align="right">9.36</td>
+<td align="right">1862</td>
+<td align="right">656</td>
+<td align="right">656</td>
+<td align="right">635</td>
+<td align="right">2.84</td>
+<td align="right">2.84</td>
+<td align="right">2.93</td>
+<td align="right">9.11</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">10143</td>
-<td align="right">746</td>
-<td align="right">746</td>
+<td align="right">3647</td>
 <td align="right">723</td>
-<td align="right">13.60</td>
-<td align="right">13.60</td>
-<td align="right">14.03</td>
-<td align="right">10.36</td>
+<td align="right">723</td>
+<td align="right">700</td>
+<td align="right">5.04</td>
+<td align="right">5.04</td>
+<td align="right">5.21</td>
+<td align="right">10.04</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
@@ -1973,7 +1973,7 @@ Anova_table(fitness.size.mod.tests) %&gt;% kable()</code></pre>
 <td align="right">0.0000</td>
 <td align="right">0.0058</td>
 <td align="right">0.9566</td>
-<td align="right">0.0635</td>
+<td align="right">0.0636</td>
 <td align="right">0.9118</td>
 <td align="right">0.5483</td>
 <td align="right">0.7510</td>
@@ -2570,26 +2570,26 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 <tr class="even">
 <td align="left">height_cm</td>
 <td align="right">0.0000</td>
-<td align="right">0.0797</td>
-<td align="right">0.9885</td>
-<td align="right">0.2403</td>
-<td align="right">0.4519</td>
-<td align="right">0.4824</td>
-<td align="right">0.0828</td>
-<td align="right">0.2340</td>
+<td align="right">0.1066</td>
+<td align="right">0.9361</td>
+<td align="right">0.1843</td>
+<td align="right">0.4027</td>
+<td align="right">0.5061</td>
+<td align="right">0.0928</td>
+<td align="right">0.2348</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
 <td align="right">0.0000</td>
-<td align="right">0.8278</td>
-<td align="right">0.6950</td>
-<td align="right">0.1774</td>
-<td align="right">0.6485</td>
-<td align="right">0.3676</td>
-<td align="right">0.1002</td>
-<td align="right">0.2548</td>
-<td align="left">FALSE</td>
+<td align="right">0.6968</td>
+<td align="right">0.3807</td>
+<td align="right">0.0414</td>
+<td align="right">0.7977</td>
+<td align="right">0.0661</td>
+<td align="right">0.0900</td>
+<td align="right">0.1080</td>
+<td align="left">TRUE</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
@@ -2605,14 +2605,14 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.0000</td>
-<td align="right">0.7351</td>
-<td align="right">0.6320</td>
+<td align="right">0.0001</td>
+<td align="right">0.7306</td>
+<td align="right">0.6293</td>
 <td align="right">0.0008</td>
-<td align="right">0.1490</td>
-<td align="right">0.3863</td>
-<td align="right">0.4237</td>
-<td align="right">0.1231</td>
+<td align="right">0.1500</td>
+<td align="right">0.3858</td>
+<td align="right">0.4199</td>
+<td align="right">0.1228</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
@@ -2629,14 +2629,14 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">0.4977</td>
-<td align="right">0.7985</td>
-<td align="right">0.3643</td>
+<td align="right">0.5059</td>
+<td align="right">0.8018</td>
+<td align="right">0.3642</td>
 <td align="right">0.0094</td>
 <td align="right">0.2559</td>
 <td align="right">0.6180</td>
-<td align="right">0.7130</td>
-<td align="right">0.0422</td>
+<td align="right">0.7119</td>
+<td align="right">0.0420</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
@@ -2666,12 +2666,12 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 <tr class="even">
 <td align="left">seeds_per_flower</td>
 <td align="right">0.0000</td>
-<td align="right">0.2186</td>
-<td align="right">0.6152</td>
-<td align="right">0.1212</td>
-<td align="right">0.1651</td>
+<td align="right">0.2188</td>
+<td align="right">0.6156</td>
+<td align="right">0.1211</td>
+<td align="right">0.1653</td>
 <td align="right">0.0588</td>
-<td align="right">0.7929</td>
+<td align="right">0.7931</td>
 <td align="right">0.1093</td>
 <td align="left">TRUE</td>
 </tr>
@@ -2812,16 +2812,16 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="right">1.6192</td>
-<td align="right">0.9319</td>
-<td align="right">8.9755</td>
+<td align="right">1.6330</td>
+<td align="right">1.0498</td>
+<td align="right">8.9623</td>
 <td align="right">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.2788</td>
-<td align="right">0.3668</td>
-<td align="right">3.4286</td>
+<td align="right">0.0000</td>
+<td align="right">2.0467</td>
+<td align="right">17.5675</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -2833,9 +2833,9 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">12.9966</td>
+<td align="right">12.8602</td>
 <td align="right">0.0000</td>
-<td align="right">103.5162</td>
+<td align="right">103.5604</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -2847,9 +2847,9 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">7.2583</td>
+<td align="right">7.2361</td>
 <td align="right">0.0000</td>
-<td align="right">31.9898</td>
+<td align="right">32.0025</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -3058,13 +3058,13 @@ mod.split.glht %&gt;% kable()</code></pre>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="right">-3.1022</td>
-<td align="right">0.0946</td>
+<td align="right">-2.8298</td>
+<td align="right">0.1391</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">-0.0669</td>
-<td align="right">0.9041</td>
+<td align="right">-0.7806</td>
+<td align="right">0.7848</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
@@ -3073,8 +3073,8 @@ mod.split.glht %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">-12.3807</td>
-<td align="right">0.5359</td>
+<td align="right">-12.5091</td>
+<td align="right">0.5309</td>
 </tr>
 <tr class="even">
 <td align="left">fruits_nonaborted</td>
@@ -3083,8 +3083,8 @@ mod.split.glht %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">5.8266</td>
-<td align="right">0.4143</td>
+<td align="right">5.7801</td>
+<td align="right">0.4174</td>
 </tr>
 <tr class="even">
 <td align="left">prop_infested</td>
@@ -3098,7 +3098,7 @@ mod.split.glht %&gt;% kable()</code></pre>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_flower</td>
-<td align="right">-0.7577</td>
+<td align="right">-0.7573</td>
 <td align="right">0.0086</td>
 </tr>
 <tr class="odd">
@@ -3190,12 +3190,12 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 <tr class="even">
 <td align="left">height_cm</td>
 <td align="right">0.9998</td>
-<td align="right">0.9851</td>
+<td align="right">0.9258</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.8083</td>
-<td align="right">0.8845</td>
+<td align="right">0.3236</td>
+<td align="right">0.4810</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
@@ -3204,8 +3204,8 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.6677</td>
-<td align="right">0.6265</td>
+<td align="right">0.6625</td>
+<td align="right">0.6260</td>
 </tr>
 <tr class="even">
 <td align="left">fruits_nonaborted</td>
@@ -3214,8 +3214,8 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">0.8774</td>
-<td align="right">0.4110</td>
+<td align="right">0.8799</td>
+<td align="right">0.4089</td>
 </tr>
 <tr class="even">
 <td align="left">prop_infested</td>
@@ -3229,8 +3229,8 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 </tr>
 <tr class="even">
 <td align="left">seeds_per_flower</td>
-<td align="right">0.5170</td>
-<td align="right">0.9895</td>
+<td align="right">0.5176</td>
+<td align="right">0.9896</td>
 </tr>
 <tr class="odd">
 <td align="left">sla</td>
@@ -3728,18 +3728,18 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 <tr class="even">
 <td align="left">height_cm</td>
 <td align="right">0.0000</td>
-<td align="right">0.7391</td>
-<td align="right">0.6307</td>
-<td align="right">0.2249</td>
+<td align="right">0.6279</td>
+<td align="right">0.5462</td>
+<td align="right">0.2279</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.0000</td>
-<td align="right">0.0807</td>
-<td align="right">0.0796</td>
-<td align="right">0.3124</td>
-<td align="left">FALSE</td>
+<td align="right">0.8566</td>
+<td align="right">0.0795</td>
+<td align="right">0.4289</td>
+<td align="right">0.0831</td>
+<td align="left">TRUE</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
@@ -3752,8 +3752,8 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 <tr class="odd">
 <td align="left">seeds_est</td>
 <td align="right">0.0025</td>
-<td align="right">0.8837</td>
-<td align="right">0.8452</td>
+<td align="right">0.8845</td>
+<td align="right">0.8463</td>
 <td align="right">0.0693</td>
 <td align="left">TRUE</td>
 </tr>
@@ -3767,9 +3767,9 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">0.5817</td>
-<td align="right">0.7074</td>
-<td align="right">0.7465</td>
+<td align="right">0.5830</td>
+<td align="right">0.7079</td>
+<td align="right">0.7480</td>
 <td align="right">0.0010</td>
 <td align="left">TRUE</td>
 </tr>
@@ -3935,21 +3935,21 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="right">0.2992</td>
-<td align="right">0.0201</td>
-<td align="right">-0.0002</td>
-<td align="right">0.0430</td>
-<td align="right">0.0599</td>
+<td align="right">0.3064</td>
+<td align="right">0.0297</td>
+<td align="right">-0.0003</td>
+<td align="right">0.0434</td>
+<td align="right">0.0607</td>
 <td align="right">0.0005</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.1503</td>
-<td align="right">0.0359</td>
-<td align="right">-0.0003</td>
-<td align="right">0.0145</td>
-<td align="right">0.0203</td>
-<td align="right">0.0002</td>
+<td align="right">-0.0151</td>
+<td align="right">-0.2047</td>
+<td align="right">0.0007</td>
+<td align="right">0.0830</td>
+<td align="right">0.1160</td>
+<td align="right">0.0009</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
@@ -3962,11 +3962,11 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">1.7748</td>
-<td align="right">0.1214</td>
+<td align="right">1.7736</td>
+<td align="right">0.1206</td>
 <td align="right">-0.0013</td>
-<td align="right">0.5789</td>
-<td align="right">0.8223</td>
+<td align="right">0.5790</td>
+<td align="right">0.8225</td>
 <td align="right">0.0064</td>
 </tr>
 <tr class="even">
@@ -3980,10 +3980,10 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">0.0918</td>
-<td align="right">0.0890</td>
+<td align="right">0.0915</td>
+<td align="right">0.0889</td>
 <td align="right">-0.0006</td>
-<td align="right">0.1656</td>
+<td align="right">0.1657</td>
 <td align="right">0.2357</td>
 <td align="right">0.0019</td>
 </tr>
@@ -4133,16 +4133,16 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="right">1.6834</td>
+<td align="right">1.6881</td>
 <td align="right">0.0000</td>
-<td align="right">8.9663</td>
+<td align="right">8.9611</td>
 <td align="right">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.4554</td>
-<td align="right">0.5671</td>
-<td align="right">3.2361</td>
+<td align="right">4.9257</td>
+<td align="right">0.0000</td>
+<td align="right">17.8860</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -4154,9 +4154,9 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">15.9697</td>
-<td align="right">0.0012</td>
-<td align="right">104.7062</td>
+<td align="right">15.9106</td>
+<td align="right">0.0000</td>
+<td align="right">104.7375</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -4168,9 +4168,9 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">6.7858</td>
+<td align="right">6.7638</td>
 <td align="right">0.0000</td>
-<td align="right">32.2311</td>
+<td align="right">32.2422</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -4349,7 +4349,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0073</td>
 <td align="right">0.0024</td>
 <td align="right">0.0011</td>
-<td align="right">1.805</td>
+<td align="right">1.8049</td>
 <td align="right">0.4375</td>
 <td align="right">0.0205</td>
 </tr>
@@ -4359,7 +4359,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0037</td>
 <td align="right">0.0025</td>
 <td align="right">0.0010</td>
-<td align="right">5.416</td>
+<td align="right">5.4158</td>
 <td align="right">1.6122</td>
 <td align="right">0.0616</td>
 </tr>
@@ -4369,7 +4369,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0069</td>
 <td align="right">0.0024</td>
 <td align="right">0.0010</td>
-<td align="right">2.635</td>
+<td align="right">2.6348</td>
 <td align="right">0.5246</td>
 <td align="right">0.0300</td>
 </tr>
@@ -4379,7 +4379,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0039</td>
 <td align="right">0.0035</td>
 <td align="right">0.0014</td>
-<td align="right">-1.069</td>
+<td align="right">-1.0690</td>
 <td align="right">0.9923</td>
 <td align="right">-0.0122</td>
 </tr>
@@ -4389,7 +4389,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0062</td>
 <td align="right">0.0026</td>
 <td align="right">0.0013</td>
-<td align="right">2.103</td>
+<td align="right">2.1031</td>
 <td align="right">0.5986</td>
 <td align="right">0.0239</td>
 </tr>
@@ -4399,7 +4399,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">-0.0043</td>
 <td align="right">0.0024</td>
 <td align="right">0.0011</td>
-<td align="right">6.632</td>
+<td align="right">6.6321</td>
 <td align="right">1.7649</td>
 <td align="right">0.0754</td>
 </tr>
@@ -4409,29 +4409,29 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0037</td>
 <td align="right">0.0028</td>
 <td align="right">0.0012</td>
-<td align="right">-1.381</td>
+<td align="right">-1.3810</td>
 <td align="right">0.8848</td>
 <td align="right">-0.0157</td>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="right">0.0268</td>
-<td align="right">-0.0010</td>
-<td align="right">0.0020</td>
+<td align="right">0.0269</td>
+<td align="right">-0.0008</td>
+<td align="right">0.0021</td>
 <td align="right">0.0010</td>
-<td align="right">-28.052</td>
-<td align="right">28.6434</td>
-<td align="right">-0.3190</td>
+<td align="right">-32.6310</td>
+<td align="right">38.9817</td>
+<td align="right">-0.3710</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.0315</td>
-<td align="right">-0.0003</td>
-<td align="right">0.0018</td>
-<td align="right">0.0008</td>
-<td align="right">-106.209</td>
-<td align="right">285.0776</td>
-<td align="right">-1.2076</td>
+<td align="right">0.0027</td>
+<td align="right">-0.0058</td>
+<td align="right">0.0022</td>
+<td align="right">0.0012</td>
+<td align="right">-0.4548</td>
+<td align="right">0.3881</td>
+<td align="right">-0.0052</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
@@ -4439,7 +4439,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">-0.0001</td>
 <td align="right">0.0026</td>
 <td align="right">0.0010</td>
-<td align="right">-104.781</td>
+<td align="right">-104.7811</td>
 <td align="right">764.8022</td>
 <td align="right">-1.1914</td>
 </tr>
@@ -4449,9 +4449,9 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">-0.0004</td>
 <td align="right">0.0026</td>
 <td align="right">0.0011</td>
-<td align="right">-37.327</td>
-<td align="right">103.6387</td>
-<td align="right">-0.4244</td>
+<td align="right">-37.6179</td>
+<td align="right">105.1995</td>
+<td align="right">-0.4277</td>
 </tr>
 <tr class="even">
 <td align="left">fruits_nonaborted</td>
@@ -4459,7 +4459,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0015</td>
 <td align="right">0.0025</td>
 <td align="right">0.0012</td>
-<td align="right">6.574</td>
+<td align="right">6.5745</td>
 <td align="right">5.7247</td>
 <td align="right">0.0748</td>
 </tr>
@@ -4469,9 +4469,9 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0003</td>
 <td align="right">0.0025</td>
 <td align="right">0.0012</td>
-<td align="right">3.827</td>
-<td align="right">16.8020</td>
-<td align="right">0.0435</td>
+<td align="right">3.7020</td>
+<td align="right">15.8328</td>
+<td align="right">0.0421</td>
 </tr>
 <tr class="even">
 <td align="left">prop_infested</td>
@@ -4479,7 +4479,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0012</td>
 <td align="right">0.0026</td>
 <td align="right">0.0009</td>
-<td align="right">5.980</td>
+<td align="right">5.9804</td>
 <td align="right">4.8177</td>
 <td align="right">0.0680</td>
 </tr>
@@ -4489,7 +4489,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">-0.0015</td>
 <td align="right">0.0025</td>
 <td align="right">0.0009</td>
-<td align="right">7.428</td>
+<td align="right">7.4280</td>
 <td align="right">4.7397</td>
 <td align="right">0.0845</td>
 </tr>
@@ -4499,9 +4499,9 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0001</td>
 <td align="right">0.0026</td>
 <td align="right">0.0010</td>
-<td align="right">213.972</td>
-<td align="right">2809.4418</td>
-<td align="right">2.4329</td>
+<td align="right">214.5126</td>
+<td align="right">2823.5088</td>
+<td align="right">2.4391</td>
 </tr>
 <tr class="odd">
 <td align="left">sla</td>
@@ -4509,7 +4509,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0015</td>
 <td align="right">0.0168</td>
 <td align="right">0.0011</td>
-<td align="right">142.765</td>
+<td align="right">142.7648</td>
 <td align="right">108.3386</td>
 <td align="right">1.6233</td>
 </tr>
@@ -4519,7 +4519,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">-0.0063</td>
 <td align="right">0.0022</td>
 <td align="right">0.0013</td>
-<td align="right">1.087</td>
+<td align="right">1.0868</td>
 <td align="right">0.4151</td>
 <td align="right">0.0124</td>
 </tr>
@@ -4529,7 +4529,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0054</td>
 <td align="right">0.0127</td>
 <td align="right">0.0011</td>
-<td align="right">-3.491</td>
+<td align="right">-3.4911</td>
 <td align="right">2.4577</td>
 <td align="right">-0.0397</td>
 </tr>
@@ -4539,7 +4539,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0020</td>
 <td align="right">0.0053</td>
 <td align="right">0.0012</td>
-<td align="right">7.029</td>
+<td align="right">7.0294</td>
 <td align="right">5.2136</td>
 <td align="right">0.0799</td>
 </tr>
@@ -4549,7 +4549,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0039</td>
 <td align="right">0.0068</td>
 <td align="right">0.0012</td>
-<td align="right">6.190</td>
+<td align="right">6.1899</td>
 <td align="right">2.6138</td>
 <td align="right">0.0704</td>
 </tr>
@@ -4559,7 +4559,7 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">-0.0047</td>
 <td align="right">0.0084</td>
 <td align="right">0.0012</td>
-<td align="right">4.689</td>
+<td align="right">4.6886</td>
 <td align="right">2.0949</td>
 <td align="right">0.0533</td>
 </tr>
@@ -4849,18 +4849,18 @@ anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
 <tr class="even">
 <td align="left">height_cm</td>
 <td align="right">0.0000</td>
-<td align="right">0.4583</td>
-<td align="right">0.2677</td>
-<td align="right">0.1964</td>
+<td align="right">0.4295</td>
+<td align="right">0.2444</td>
+<td align="right">0.1998</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.0000</td>
-<td align="right">0.7585</td>
-<td align="right">0.0954</td>
-<td align="right">0.3250</td>
-<td align="left">TRUE</td>
+<td align="right">0.5723</td>
+<td align="right">0.5561</td>
+<td align="right">0.2837</td>
+<td align="right">0.0574</td>
+<td align="left">FALSE</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_fruit</td>
@@ -4872,10 +4872,10 @@ anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.0014</td>
-<td align="right">0.5884</td>
-<td align="right">0.4990</td>
-<td align="right">0.0679</td>
+<td align="right">0.0015</td>
+<td align="right">0.5903</td>
+<td align="right">0.5009</td>
+<td align="right">0.0677</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
@@ -4888,9 +4888,9 @@ anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">0.4964</td>
-<td align="right">0.9619</td>
-<td align="right">0.8817</td>
+<td align="right">0.5007</td>
+<td align="right">0.9653</td>
+<td align="right">0.8846</td>
 <td align="right">0.0034</td>
 <td align="left">TRUE</td>
 </tr>
@@ -4914,7 +4914,7 @@ anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
 <td align="left">seeds_per_flower</td>
 <td align="right">0.0003</td>
 <td align="right">0.1542</td>
-<td align="right">0.1174</td>
+<td align="right">0.1173</td>
 <td align="right">0.0545</td>
 <td align="left">FALSE</td>
 </tr>
@@ -5054,20 +5054,20 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="right">0.5134</td>
-<td align="right">0.0808</td>
-<td align="right">0.1761</td>
+<td align="right">0.4495</td>
+<td align="right">0.0626</td>
+<td align="right">0.1739</td>
 <td align="right">NA</td>
-<td align="right">0.2177</td>
+<td align="right">0.2220</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.0007</td>
-<td align="right">0.6597</td>
-<td align="right">0.9300</td>
+<td align="right">0.0309</td>
+<td align="right">0.6450</td>
+<td align="right">0.4047</td>
 <td align="right">NA</td>
-<td align="right">0.2474</td>
+<td align="right">0.0855</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="even">
@@ -5081,11 +5081,11 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.7964</td>
-<td align="right">0.2517</td>
-<td align="right">0.2466</td>
+<td align="right">0.8023</td>
+<td align="right">0.2543</td>
+<td align="right">0.2465</td>
 <td align="right">NA</td>
-<td align="right">0.0812</td>
+<td align="right">0.0810</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="even">
@@ -5099,11 +5099,11 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">0.7109</td>
-<td align="right">0.0816</td>
-<td align="right">0.7410</td>
+<td align="right">0.7147</td>
+<td align="right">0.0827</td>
+<td align="right">0.7387</td>
 <td align="right">NA</td>
-<td align="right">0.0118</td>
+<td align="right">0.0117</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="even">
@@ -5126,8 +5126,8 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="even">
 <td align="left">seeds_per_flower</td>
-<td align="right">0.8282</td>
-<td align="right">0.6368</td>
+<td align="right">0.8281</td>
+<td align="right">0.6367</td>
 <td align="right">0.6923</td>
 <td align="right">NA</td>
 <td align="right">0.0734</td>
@@ -5244,14 +5244,14 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="even">
 <td align="left">height_cm</td>
-<td align="right">1.8327</td>
-<td align="right">8.9983</td>
+<td align="right">1.8184</td>
+<td align="right">8.9915</td>
 <td align="right">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">open</td>
-<td align="right">0.5006</td>
-<td align="right">3.4237</td>
+<td align="right">2.0846</td>
+<td align="right">17.6776</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -5262,8 +5262,8 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">14.5934</td>
-<td align="right">104.4144</td>
+<td align="right">14.5458</td>
+<td align="right">104.4497</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -5274,8 +5274,8 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">flowers_est</td>
-<td align="right">6.6832</td>
-<td align="right">32.1759</td>
+<td align="right">6.6641</td>
+<td align="right">32.1883</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -5616,7 +5616,7 @@ Eigenvalues for unconstrained axes:
 <td align="right">2</td>
 <td align="right">0.0169</td>
 <td align="right">0.9945</td>
-<td align="right">0.383</td>
+<td align="right">0.400</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>
@@ -5696,7 +5696,7 @@ Eigenvalues for unconstrained axes:
 <td align="right">1</td>
 <td align="right">0.0142</td>
 <td align="right">3.267</td>
-<td align="right">0.043</td>
+<td align="right">0.040</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>
@@ -5874,32 +5874,6 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_emt)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">flowered</td>
-<td align="left">snow</td>
-<td align="left">conductance</td>
-<td align="left">2019</td>
-<td align="left">NA</td>
-<td align="left">Normal</td>
-<td align="right">0.4873</td>
-<td align="right">0.0493</td>
-<td align="right">74</td>
-<td align="right">38</td>
-<td align="right">0.2452</td>
-</tr>
-<tr class="even">
-<td align="left">flowered</td>
-<td align="left">snow</td>
-<td align="left">WUE</td>
-<td align="left">2019</td>
-<td align="left">NA</td>
-<td align="left">Normal</td>
-<td align="right">-1.0427</td>
-<td align="right">0.0279</td>
-<td align="right">77</td>
-<td align="right">39</td>
-<td align="right">-0.2824</td>
-</tr>
-<tr class="odd">
 <td align="left">survived</td>
 <td align="left">water</td>
 <td align="left">conductance</td>
@@ -5907,7 +5881,7 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_emt)</code></pre>
 <td align="left">Reduction</td>
 <td align="left">NA</td>
 <td align="right">-3.3443</td>
-<td align="right">0.0136</td>
+<td align="right">0.0130</td>
 <td align="right">33</td>
 <td align="right">26</td>
 <td align="right">-0.2340</td>
@@ -5920,7 +5894,7 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_emt)</code></pre>
 <td align="left">Reduction</td>
 <td align="left">NA</td>
 <td align="right">1.7324</td>
-<td align="right">0.0436</td>
+<td align="right">0.0427</td>
 <td align="right">33</td>
 <td align="right">26</td>
 <td align="right">0.1273</td>
@@ -5964,6 +5938,32 @@ walk(c(&quot;water&quot;,&quot;snow&quot;), plot_emt)</code></pre>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
+<tr class="even">
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="left">conductance</td>
+<td align="left">2019</td>
+<td align="left">NA</td>
+<td align="left">Normal</td>
+<td align="right">0.4873</td>
+<td align="right">0.0484</td>
+<td align="right">74</td>
+<td align="right">38</td>
+<td align="right">0.2452</td>
+</tr>
+<tr class="odd">
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="left">WUE</td>
+<td align="left">2019</td>
+<td align="left">NA</td>
+<td align="left">Normal</td>
+<td align="right">-1.0427</td>
+<td align="right">0.0271</td>
+<td align="right">77</td>
+<td align="right">39</td>
+<td align="right">-0.2824</td>
+</tr>
 </tbody>
 </table>
 <pre class="r"><code>#left_join(emt.selection, seldiffs) %&gt;% googlesheets4::write_sheet(&quot;1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA&quot;, sheet=&quot;emt_selection&quot;)</code></pre>
@@ -5994,7 +5994,7 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
   labs(x=&quot;S&#39;, logistic regression + Janzen &amp; Stern + whole SD&quot;,
        y=&quot;S&#39;, subtracting means + SD from treatment &amp; year subset&quot;)</code></pre>
 <p><img src="images/seldiff_logreg-1.png" width="672" /></p>
-<pre class="r"><code>JS.selection %&gt;% googlesheets4::write_sheet(&quot;1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA&quot;, sheet=&quot;logis_selection&quot;)</code></pre>
+<pre class="r"><code>#JS.selection %&gt;% googlesheets4::write_sheet(&quot;1vuQXBF8fCOjw-mYFLBk7Pm_iRUzSAZ8QmBCSJtt6IhA&quot;, sheet=&quot;logis_selection&quot;)</code></pre>
 </div>
 <div id="selection-anova" class="section level3">
 <h3>Selection ANOVA</h3>
@@ -6003,6 +6003,94 @@ ggplot(JS.selection, aes(y=seldiff,x=trait.trend.sd.linear, color=n_after)) +
                                         ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
                                         &quot;under different&quot;,.y$treatment,&quot;conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable() %&gt;% print})</code></pre>
+<p>Effect of trait on whether a plant grew faster under different snow
+conditions</p>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="14%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="13%" />
+<col width="13%" />
+<col width="12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">trait</th>
+<th align="right">year</th>
+<th align="right">snow</th>
+<th align="right">trait:year</th>
+<th align="right">trait:snow</th>
+<th align="right">year:snow</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0.7052</td>
+<td align="right">0.3816</td>
+<td align="right">0.8329</td>
+<td align="right">0.2508</td>
+<td align="right">0.5087</td>
+<td align="right">0.3092</td>
+<td align="right">0.5174</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">0.2207</td>
+<td align="right">0.5082</td>
+<td align="right">0.0726</td>
+<td align="right">0.5553</td>
+<td align="right">0.5807</td>
+<td align="right">0.4760</td>
+<td align="right">0.6075</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">0.0360</td>
+<td align="right">0.0185</td>
+<td align="right">0.3471</td>
+<td align="right">0.7810</td>
+<td align="right">0.2428</td>
+<td align="right">0.8452</td>
+<td align="right">0.6853</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">0.9038</td>
+<td align="right">0.3558</td>
+<td align="right">0.5644</td>
+<td align="right">0.3127</td>
+<td align="right">0.1033</td>
+<td align="right">0.9416</td>
+<td align="right">0.2709</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">0.4514</td>
+<td align="right">0.8889</td>
+<td align="right">0.8290</td>
+<td align="right">0.3335</td>
+<td align="right">0.0692</td>
+<td align="right">0.5832</td>
+<td align="right">0.2541</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">0.1721</td>
+<td align="right">0.5663</td>
+<td align="right">0.0367</td>
+<td align="right">0.6402</td>
+<td align="right">0.6375</td>
+<td align="right">0.7271</td>
+<td align="right">0.2155</td>
+</tr>
+</tbody>
+</table>
 <p>Effect of trait on whether a plant flowered under different snow
 conditions</p>
 <table style="width:100%;">
@@ -6099,94 +6187,6 @@ conditions</p>
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant grew faster under different snow
-conditions</p>
-<table>
-<colgroup>
-<col width="20%" />
-<col width="14%" />
-<col width="8%" />
-<col width="8%" />
-<col width="8%" />
-<col width="13%" />
-<col width="13%" />
-<col width="12%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">Trait</th>
-<th align="right">(Intercept)</th>
-<th align="right">trait</th>
-<th align="right">year</th>
-<th align="right">snow</th>
-<th align="right">trait:year</th>
-<th align="right">trait:snow</th>
-<th align="right">year:snow</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="right">0.7052</td>
-<td align="right">0.3816</td>
-<td align="right">0.8329</td>
-<td align="right">0.2508</td>
-<td align="right">0.5087</td>
-<td align="right">0.3092</td>
-<td align="right">0.5174</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">0.2207</td>
-<td align="right">0.5082</td>
-<td align="right">0.0726</td>
-<td align="right">0.5553</td>
-<td align="right">0.5807</td>
-<td align="right">0.4760</td>
-<td align="right">0.6075</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">0.0360</td>
-<td align="right">0.0185</td>
-<td align="right">0.3471</td>
-<td align="right">0.7810</td>
-<td align="right">0.2428</td>
-<td align="right">0.8452</td>
-<td align="right">0.6853</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">0.9038</td>
-<td align="right">0.3558</td>
-<td align="right">0.5644</td>
-<td align="right">0.3127</td>
-<td align="right">0.1033</td>
-<td align="right">0.9416</td>
-<td align="right">0.2709</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">0.4514</td>
-<td align="right">0.8889</td>
-<td align="right">0.8290</td>
-<td align="right">0.3335</td>
-<td align="right">0.0692</td>
-<td align="right">0.5832</td>
-<td align="right">0.2541</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="right">0.1721</td>
-<td align="right">0.5663</td>
-<td align="right">0.0367</td>
-<td align="right">0.6402</td>
-<td align="right">0.6375</td>
-<td align="right">0.7271</td>
-<td align="right">0.2155</td>
-</tr>
-</tbody>
-</table>
 <p>Effect of trait on whether a plant survived under different snow
 conditions</p>
 <table>
@@ -6275,94 +6275,6 @@ conditions</p>
 </tr>
 </tbody>
 </table>
-<p>Effect of trait on whether a plant flowered under different water
-conditions</p>
-<table>
-<colgroup>
-<col width="20%" />
-<col width="14%" />
-<col width="8%" />
-<col width="8%" />
-<col width="8%" />
-<col width="13%" />
-<col width="14%" />
-<col width="13%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">Trait</th>
-<th align="right">(Intercept)</th>
-<th align="right">trait</th>
-<th align="right">year</th>
-<th align="right">water</th>
-<th align="right">trait:year</th>
-<th align="right">trait:water</th>
-<th align="right">year:water</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="right">0.5329</td>
-<td align="right">0.1689</td>
-<td align="right">0.9884</td>
-<td align="right">0.2451</td>
-<td align="right">0.9449</td>
-<td align="right">0.3231</td>
-<td align="right">0.0555</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">0.0007</td>
-<td align="right">0.5407</td>
-<td align="right">0.1706</td>
-<td align="right">0.7915</td>
-<td align="right">0.9078</td>
-<td align="right">0.9320</td>
-<td align="right">0.3337</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">0.8205</td>
-<td align="right">0.5025</td>
-<td align="right">0.1750</td>
-<td align="right">0.6309</td>
-<td align="right">0.2268</td>
-<td align="right">0.7004</td>
-<td align="right">0.3672</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">0.0495</td>
-<td align="right">0.6821</td>
-<td align="right">0.0300</td>
-<td align="right">0.1912</td>
-<td align="right">0.8794</td>
-<td align="right">0.3623</td>
-<td align="right">0.8151</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">0.0004</td>
-<td align="right">0.5845</td>
-<td align="right">0.0654</td>
-<td align="right">0.2286</td>
-<td align="right">0.4345</td>
-<td align="right">0.1494</td>
-<td align="right">0.7986</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="right">0.3530</td>
-<td align="right">0.2789</td>
-<td align="right">0.0076</td>
-<td align="right">0.5942</td>
-<td align="right">0.1261</td>
-<td align="right">0.8670</td>
-<td align="right">0.8587</td>
-</tr>
-</tbody>
-</table>
 <p>Effect of trait on whether a plant grew faster under different water
 conditions</p>
 <table>
@@ -6448,6 +6360,94 @@ conditions</p>
 <td align="right">0.9072</td>
 <td align="right">0.2128</td>
 <td align="right">0.0087</td>
+</tr>
+</tbody>
+</table>
+<p>Effect of trait on whether a plant flowered under different water
+conditions</p>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="14%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="13%" />
+<col width="14%" />
+<col width="13%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">trait</th>
+<th align="right">year</th>
+<th align="right">water</th>
+<th align="right">trait:year</th>
+<th align="right">trait:water</th>
+<th align="right">year:water</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0.5329</td>
+<td align="right">0.1689</td>
+<td align="right">0.9884</td>
+<td align="right">0.2451</td>
+<td align="right">0.9449</td>
+<td align="right">0.3231</td>
+<td align="right">0.0555</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">0.0007</td>
+<td align="right">0.5407</td>
+<td align="right">0.1706</td>
+<td align="right">0.7915</td>
+<td align="right">0.9078</td>
+<td align="right">0.9320</td>
+<td align="right">0.3337</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">0.8205</td>
+<td align="right">0.5025</td>
+<td align="right">0.1750</td>
+<td align="right">0.6309</td>
+<td align="right">0.2268</td>
+<td align="right">0.7004</td>
+<td align="right">0.3672</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">0.0495</td>
+<td align="right">0.6821</td>
+<td align="right">0.0300</td>
+<td align="right">0.1912</td>
+<td align="right">0.8794</td>
+<td align="right">0.3623</td>
+<td align="right">0.8151</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">0.0004</td>
+<td align="right">0.5845</td>
+<td align="right">0.0654</td>
+<td align="right">0.2286</td>
+<td align="right">0.4345</td>
+<td align="right">0.1494</td>
+<td align="right">0.7986</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">0.3530</td>
+<td align="right">0.2789</td>
+<td align="right">0.0076</td>
+<td align="right">0.5942</td>
+<td align="right">0.1261</td>
+<td align="right">0.8670</td>
+<td align="right">0.8587</td>
 </tr>
 </tbody>
 </table>
@@ -6554,102 +6554,6 @@ conditions</p>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="left">flowered</td>
-<td align="left">water</td>
-<td align="right">0.1962</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="left">flowered</td>
-<td align="left">water</td>
-<td align="right">0.2700</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="left">flowered</td>
-<td align="left">water</td>
-<td align="right">0.0008</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="left">flowered</td>
-<td align="left">water</td>
-<td align="right">0.0000</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="left">flowered</td>
-<td align="left">water</td>
-<td align="right">0.0000</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="left">flowered</td>
-<td align="left">water</td>
-<td align="right">0.0000</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-</tr>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="left">flowered</td>
-<td align="left">snow</td>
-<td align="right">NA</td>
-<td align="right">0.0001</td>
-<td align="right">NA</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="left">flowered</td>
-<td align="left">snow</td>
-<td align="right">NA</td>
-<td align="right">0.0680</td>
-<td align="right">NA</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="left">flowered</td>
-<td align="left">snow</td>
-<td align="right">NA</td>
-<td align="right">0.0070</td>
-<td align="right">NA</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="left">flowered</td>
-<td align="left">snow</td>
-<td align="right">NA</td>
-<td align="right">0.0001</td>
-<td align="right">NA</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="left">flowered</td>
-<td align="left">snow</td>
-<td align="right">NA</td>
-<td align="right">0.0001</td>
-<td align="right">NA</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="left">flowered</td>
-<td align="left">snow</td>
-<td align="right">NA</td>
-<td align="right">0.0001</td>
-<td align="right">NA</td>
-</tr>
 <tr class="odd">
 <td align="left">sla</td>
 <td align="left">survived</td>
@@ -6842,6 +6746,102 @@ conditions</p>
 <td align="right">0.1699</td>
 <td align="right">1.1374</td>
 </tr>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">0.1962</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">0.2700</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">0.0008</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">0.0000</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">0.0000</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="left">flowered</td>
+<td align="left">water</td>
+<td align="right">0.0000</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">NA</td>
+<td align="right">0.0001</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">NA</td>
+<td align="right">0.0680</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">NA</td>
+<td align="right">0.0070</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">NA</td>
+<td align="right">0.0001</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">NA</td>
+<td align="right">0.0001</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="left">flowered</td>
+<td align="left">snow</td>
+<td align="right">NA</td>
+<td align="right">0.0001</td>
+<td align="right">NA</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -7017,35 +7017,35 @@ different snow conditions</p>
 <tr class="even">
 <td align="left">photosynthesis</td>
 <td align="right">0.0000</td>
-<td align="right">0.8086</td>
-<td align="right">0.6009</td>
-<td align="right">0.1619</td>
-<td align="right">0.1928</td>
-<td align="right">0.5016</td>
-<td align="right">0.6144</td>
-<td align="right">0.2454</td>
+<td align="right">0.8100</td>
+<td align="right">0.6023</td>
+<td align="right">0.1615</td>
+<td align="right">0.1925</td>
+<td align="right">0.5030</td>
+<td align="right">0.6133</td>
+<td align="right">0.2463</td>
 </tr>
 <tr class="odd">
 <td align="left">conductance</td>
 <td align="right">0.0000</td>
-<td align="right">0.5174</td>
-<td align="right">0.7129</td>
-<td align="right">0.2948</td>
-<td align="right">0.6738</td>
-<td align="right">0.8377</td>
-<td align="right">0.2615</td>
-<td align="right">0.5080</td>
+<td align="right">0.5156</td>
+<td align="right">0.7138</td>
+<td align="right">0.2936</td>
+<td align="right">0.6732</td>
+<td align="right">0.8353</td>
+<td align="right">0.2621</td>
+<td align="right">0.5062</td>
 </tr>
 <tr class="even">
 <td align="left">WUE</td>
 <td align="right">0.0000</td>
-<td align="right">0.2820</td>
-<td align="right">0.0588</td>
-<td align="right">0.1299</td>
-<td align="right">0.0257</td>
-<td align="right">0.0541</td>
-<td align="right">0.4595</td>
-<td align="right">0.9683</td>
+<td align="right">0.2831</td>
+<td align="right">0.0586</td>
+<td align="right">0.1304</td>
+<td align="right">0.0256</td>
+<td align="right">0.0545</td>
+<td align="right">0.4612</td>
+<td align="right">0.9695</td>
 </tr>
 </tbody>
 </table>
@@ -7113,35 +7113,35 @@ different water conditions</p>
 <tr class="even">
 <td align="left">photosynthesis</td>
 <td align="right">0.0000</td>
-<td align="right">0.8435</td>
-<td align="right">0.1935</td>
-<td align="right">0.2844</td>
-<td align="right">0.3959</td>
-<td align="right">0.6279</td>
-<td align="right">0.5149</td>
-<td align="right">0.2389</td>
+<td align="right">0.8456</td>
+<td align="right">0.1941</td>
+<td align="right">0.2840</td>
+<td align="right">0.3954</td>
+<td align="right">0.6299</td>
+<td align="right">0.5147</td>
+<td align="right">0.2399</td>
 </tr>
 <tr class="odd">
 <td align="left">conductance</td>
 <td align="right">0.0000</td>
-<td align="right">0.9734</td>
-<td align="right">0.8013</td>
-<td align="right">0.7151</td>
-<td align="right">0.4694</td>
-<td align="right">0.1638</td>
-<td align="right">0.1616</td>
-<td align="right">0.1253</td>
+<td align="right">0.9720</td>
+<td align="right">0.8000</td>
+<td align="right">0.7156</td>
+<td align="right">0.4708</td>
+<td align="right">0.1635</td>
+<td align="right">0.1623</td>
+<td align="right">0.1265</td>
 </tr>
 <tr class="even">
 <td align="left">WUE</td>
 <td align="right">0.0000</td>
-<td align="right">0.3759</td>
-<td align="right">0.4196</td>
-<td align="right">0.7234</td>
+<td align="right">0.3771</td>
+<td align="right">0.4208</td>
+<td align="right">0.7211</td>
 <td align="right">0.0090</td>
-<td align="right">0.0143</td>
-<td align="right">0.9029</td>
-<td align="right">0.7533</td>
+<td align="right">0.0144</td>
+<td align="right">0.9052</td>
+<td align="right">0.7564</td>
 </tr>
 </tbody>
 </table>
@@ -7170,86 +7170,6 @@ mod.selection.abs  %&gt;% group_by(response) %&gt;%
                                         ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
                                         &quot;under different absolute snowmelt / summer precip conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable() %&gt;% print})</code></pre>
-<p>Effect of trait on whether a plant flowered under different absolute
-snowmelt / summer precip conditions</p>
-<table style="width:100%;">
-<colgroup>
-<col width="18%" />
-<col width="12%" />
-<col width="7%" />
-<col width="9%" />
-<col width="14%" />
-<col width="15%" />
-<col width="21%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">Trait</th>
-<th align="right">(Intercept)</th>
-<th align="right">trait</th>
-<th align="right">sun_date</th>
-<th align="right">precip_est_mm</th>
-<th align="right">trait:sun_date</th>
-<th align="right">trait:precip_est_mm</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="right">0.4423</td>
-<td align="right">0.3750</td>
-<td align="right">0.4214</td>
-<td align="right">0.6124</td>
-<td align="right">0.3305</td>
-<td align="right">0.5006</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">0.0126</td>
-<td align="right">0.5140</td>
-<td align="right">0.0566</td>
-<td align="right">0.8222</td>
-<td align="right">0.7044</td>
-<td align="right">0.8733</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">0.1977</td>
-<td align="right">0.2466</td>
-<td align="right">0.2229</td>
-<td align="right">0.7339</td>
-<td align="right">0.2829</td>
-<td align="right">0.6692</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">0.0038</td>
-<td align="right">0.8012</td>
-<td align="right">0.0094</td>
-<td align="right">0.8557</td>
-<td align="right">0.7679</td>
-<td align="right">0.9560</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">0.0551</td>
-<td align="right">0.4541</td>
-<td align="right">0.1081</td>
-<td align="right">0.1964</td>
-<td align="right">0.5729</td>
-<td align="right">0.0665</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="right">0.0007</td>
-<td align="right">0.0469</td>
-<td align="right">0.0013</td>
-<td align="right">0.3180</td>
-<td align="right">0.0540</td>
-<td align="right">0.3205</td>
-</tr>
-</tbody>
-</table>
 <p>Effect of trait on whether a plant survived under different absolute
 snowmelt / summer precip conditions</p>
 <table style="width:100%;">
@@ -7410,6 +7330,86 @@ absolute snowmelt / summer precip conditions</p>
 </tr>
 </tbody>
 </table>
+<p>Effect of trait on whether a plant flowered under different absolute
+snowmelt / summer precip conditions</p>
+<table style="width:100%;">
+<colgroup>
+<col width="18%" />
+<col width="12%" />
+<col width="7%" />
+<col width="9%" />
+<col width="14%" />
+<col width="15%" />
+<col width="21%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">trait</th>
+<th align="right">sun_date</th>
+<th align="right">precip_est_mm</th>
+<th align="right">trait:sun_date</th>
+<th align="right">trait:precip_est_mm</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0.4423</td>
+<td align="right">0.3750</td>
+<td align="right">0.4214</td>
+<td align="right">0.6124</td>
+<td align="right">0.3305</td>
+<td align="right">0.5006</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">0.0126</td>
+<td align="right">0.5140</td>
+<td align="right">0.0566</td>
+<td align="right">0.8222</td>
+<td align="right">0.7044</td>
+<td align="right">0.8733</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">0.1977</td>
+<td align="right">0.2466</td>
+<td align="right">0.2229</td>
+<td align="right">0.7339</td>
+<td align="right">0.2829</td>
+<td align="right">0.6692</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">0.0038</td>
+<td align="right">0.8012</td>
+<td align="right">0.0094</td>
+<td align="right">0.8557</td>
+<td align="right">0.7679</td>
+<td align="right">0.9560</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">0.0551</td>
+<td align="right">0.4541</td>
+<td align="right">0.1081</td>
+<td align="right">0.1964</td>
+<td align="right">0.5729</td>
+<td align="right">0.0665</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">0.0007</td>
+<td align="right">0.0469</td>
+<td align="right">0.0013</td>
+<td align="right">0.3180</td>
+<td align="right">0.0540</td>
+<td align="right">0.3205</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>#sjPlot::plot_model((mod.selection.abs %&gt;% filter(trait==&quot;conductance&quot;, response==&quot;flowered&quot;) %&gt;% pull(model))[[1]])
 precip.breaks &lt;- seq(25,175, by=25)
 ggplot(pt.plantyr %&gt;% drop_na(survived),
@@ -7444,102 +7444,6 @@ mod.selection.sm  %&gt;% group_by(response) %&gt;%
   group_walk(function(.x,.y) {cat(paste(&quot;Effect of trait on whether a plant&quot;,ifelse(.y$response==&quot;RGR&quot;, &quot;grew faster&quot;, as.character(.y$response)),
                                         &quot;under different VWC conditions&quot;)); 
     Anova_table(.x %&gt;% unnest(tests)) %&gt;% kable() %&gt;% print})</code></pre>
-<p>Effect of trait on whether a plant flowered under different VWC
-conditions</p>
-<table>
-<colgroup>
-<col width="17%" />
-<col width="12%" />
-<col width="7%" />
-<col width="7%" />
-<col width="7%" />
-<col width="11%" />
-<col width="10%" />
-<col width="9%" />
-<col width="15%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">Trait</th>
-<th align="right">(Intercept)</th>
-<th align="right">trait</th>
-<th align="right">year</th>
-<th align="right">VWC</th>
-<th align="right">trait:year</th>
-<th align="right">trait:VWC</th>
-<th align="right">year:VWC</th>
-<th align="right">trait:year:VWC</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">sla</td>
-<td align="right">0.0986</td>
-<td align="right">0.3932</td>
-<td align="right">0.0883</td>
-<td align="right">0.0867</td>
-<td align="right">0.2587</td>
-<td align="right">0.2594</td>
-<td align="right">0.0930</td>
-<td align="right">0.2677</td>
-</tr>
-<tr class="even">
-<td align="left">trichome_density</td>
-<td align="right">0.2196</td>
-<td align="right">0.7588</td>
-<td align="right">0.3490</td>
-<td align="right">0.7496</td>
-<td align="right">0.8627</td>
-<td align="right">0.6074</td>
-<td align="right">0.4737</td>
-<td align="right">0.8513</td>
-</tr>
-<tr class="odd">
-<td align="left">water_content</td>
-<td align="right">0.3687</td>
-<td align="right">0.5271</td>
-<td align="right">0.0621</td>
-<td align="right">0.3931</td>
-<td align="right">0.0758</td>
-<td align="right">0.4863</td>
-<td align="right">0.1285</td>
-<td align="right">0.1425</td>
-</tr>
-<tr class="even">
-<td align="left">photosynthesis</td>
-<td align="right">0.1193</td>
-<td align="right">0.6535</td>
-<td align="right">0.5496</td>
-<td align="right">0.9270</td>
-<td align="right">0.8181</td>
-<td align="right">0.5146</td>
-<td align="right">0.4588</td>
-<td align="right">0.6353</td>
-</tr>
-<tr class="odd">
-<td align="left">conductance</td>
-<td align="right">0.0168</td>
-<td align="right">0.5078</td>
-<td align="right">0.1783</td>
-<td align="right">0.9916</td>
-<td align="right">0.5994</td>
-<td align="right">0.9736</td>
-<td align="right">0.3469</td>
-<td align="right">0.7040</td>
-</tr>
-<tr class="even">
-<td align="left">WUE</td>
-<td align="right">0.4772</td>
-<td align="right">0.5835</td>
-<td align="right">0.9329</td>
-<td align="right">0.8762</td>
-<td align="right">0.9296</td>
-<td align="right">0.8420</td>
-<td align="right">0.3700</td>
-<td align="right">0.3936</td>
-</tr>
-</tbody>
-</table>
 <p>Effect of trait on whether a plant survived under different VWC
 conditions</p>
 <table>
@@ -7732,6 +7636,102 @@ conditions</p>
 </tr>
 </tbody>
 </table>
+<p>Effect of trait on whether a plant flowered under different VWC
+conditions</p>
+<table>
+<colgroup>
+<col width="17%" />
+<col width="12%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="11%" />
+<col width="10%" />
+<col width="9%" />
+<col width="15%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Trait</th>
+<th align="right">(Intercept)</th>
+<th align="right">trait</th>
+<th align="right">year</th>
+<th align="right">VWC</th>
+<th align="right">trait:year</th>
+<th align="right">trait:VWC</th>
+<th align="right">year:VWC</th>
+<th align="right">trait:year:VWC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sla</td>
+<td align="right">0.0986</td>
+<td align="right">0.3932</td>
+<td align="right">0.0883</td>
+<td align="right">0.0867</td>
+<td align="right">0.2587</td>
+<td align="right">0.2594</td>
+<td align="right">0.0930</td>
+<td align="right">0.2677</td>
+</tr>
+<tr class="even">
+<td align="left">trichome_density</td>
+<td align="right">0.2196</td>
+<td align="right">0.7588</td>
+<td align="right">0.3490</td>
+<td align="right">0.7496</td>
+<td align="right">0.8627</td>
+<td align="right">0.6074</td>
+<td align="right">0.4737</td>
+<td align="right">0.8513</td>
+</tr>
+<tr class="odd">
+<td align="left">water_content</td>
+<td align="right">0.3687</td>
+<td align="right">0.5271</td>
+<td align="right">0.0621</td>
+<td align="right">0.3931</td>
+<td align="right">0.0758</td>
+<td align="right">0.4863</td>
+<td align="right">0.1285</td>
+<td align="right">0.1425</td>
+</tr>
+<tr class="even">
+<td align="left">photosynthesis</td>
+<td align="right">0.1193</td>
+<td align="right">0.6535</td>
+<td align="right">0.5496</td>
+<td align="right">0.9270</td>
+<td align="right">0.8181</td>
+<td align="right">0.5146</td>
+<td align="right">0.4588</td>
+<td align="right">0.6353</td>
+</tr>
+<tr class="odd">
+<td align="left">conductance</td>
+<td align="right">0.0168</td>
+<td align="right">0.5078</td>
+<td align="right">0.1783</td>
+<td align="right">0.9916</td>
+<td align="right">0.5994</td>
+<td align="right">0.9736</td>
+<td align="right">0.3469</td>
+<td align="right">0.7040</td>
+</tr>
+<tr class="even">
+<td align="left">WUE</td>
+<td align="right">0.4772</td>
+<td align="right">0.5835</td>
+<td align="right">0.9329</td>
+<td align="right">0.8762</td>
+<td align="right">0.9296</td>
+<td align="right">0.8420</td>
+<td align="right">0.3700</td>
+<td align="right">0.3936</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>pt.plantyr %&gt;% 
     pivot_longer(all_of(c(&quot;WUE&quot;)),names_to=&quot;trait&quot;) %&gt;% 
     filter(year!=&quot;2020&quot;) %&gt;% mutate(year=fct_drop(year)) %&gt;% 
@@ -7752,7 +7752,7 @@ ggsave(filename=&quot;../snow_precip_mt.png&quot;, width=7, height=4)</code></pr
 </div>
 <div id="rgr-selection-without-treatments" class="section level2">
 <h2>RGR selection without treatments</h2>
-<pre class="r"><code>lt.plantyr %&gt;% left_join(cen.RGR.long) %&gt;% select(all_of(c(leaftraits, &quot;RGR&quot;)), year) %&gt;% 
+<pre class="r"><code>lt.plantyr %&gt;% left_join(cen.RGR.long) %&gt;% select(all_of(c(leaftraits, &quot;RGR&quot;)), year.round) %&gt;% 
   pivot_longer(all_of(leaftraits), names_to=&quot;trait&quot;) %&gt;% 
   ggplot(aes(x=value, y=RGR, color=year.round)) + facet_wrap(vars(trait), scales=&quot;free_x&quot;, labeller=as_labeller(traitnames)) + 
   geom_hline(yintercept=0) + geom_point() + geom_smooth(method=&quot;lm&quot;,se=F) + 
@@ -7891,23 +7891,21 @@ walk(list(ph18.raw, ph19.raw, ph20.raw),
   labs(x=&quot;Day of year&quot;, y=&quot;Plant (sorted by subplot)&quot;, fill=&quot;Observations&quot;, color=&quot;Plot&quot;, title=paste(y,&quot;phenology&quot;))
   print(p)})</code></pre>
 <p><img src="images/check_phenology-1.png" width="1056" /><img src="images/check_phenology-2.png" width="1056" /><img src="images/check_phenology-3.png" width="1056" /></p>
-<pre class="r"><code>#TODO investigate multiple entries for a plant on the same date
-ph18.raw %&gt;% count(plot, subplot, plotid, plantid, date) %&gt;% add_count(plantid, name=&quot;n_plantid&quot;) %&gt;% 
+<pre class="r"><code>ph18.raw %&gt;% count(plot, subplot, plotid, plantid, date) %&gt;% add_count(plantid, name=&quot;n_plantid&quot;) %&gt;% 
   mutate(plantid = fct_reorder(plantid, as.integer(factor(paste(plotid, n_plantid))),.desc=T)) %&gt;% 
   ggplot(aes(as.Date(date), plantid, fill=factor(n)))+
   geom_tile()+  xdate </code></pre>
 <p><img src="images/check_phenology-4.png" width="1056" /></p>
-<pre class="r"><code>ph.measures = c(&quot;eggs_delia_flies&quot;, &quot;eggs_small_flies&quot;, &quot;flowers_with_eggs&quot;, &quot;eggs_total&quot;, &quot;open_1&quot;, &quot;height_cm&quot;)
+<pre class="r"><code>ph.measures = c(&quot;flowers_with_eggs&quot;, &quot;eggs_total&quot;, &quot;open_1&quot;, &quot;height_cm&quot;)
 ph18.raw %&gt;% group_by(date) %&gt;% summarize(across(all_of(ph.measures), ~sum(!is.na(.x)))) %&gt;% 
   pivot_longer(all_of(ph.measures)) %&gt;% mutate(name = factor(name, levels=ph.measures)) %&gt;% 
   ggplot(aes(x=as.Date(date), y=value, fill=name)) + geom_col() + xdate + facet_wrap(vars(name), ncol=1) </code></pre>
 <p><img src="images/check_phenology-5.png" width="1056" /></p>
-<pre class="r"><code>#TODO figure out what blanks mean on each date and subplot - zero or not measured?
-ph18.byplotdate &lt;- ph18.raw %&gt;% group_by(date, plotid) %&gt;% summarize(across(c(eggs_total, open_1), ~sum(!is.na(.x)))) %&gt;% 
+<pre class="r"><code>ph18.byplotdate &lt;- ph18.raw %&gt;% group_by(date, plotid) %&gt;% summarize(across(c(eggs_total, open_1), ~sum(!is.na(.x)))) %&gt;% 
   mutate(measured_eggs = eggs_total/open_1)
 ggplot(ph18.byplotdate, aes(x=date, y=plotid)) + geom_tile(aes(fill=open_1)) + scale_fill_viridis_c()</code></pre>
 <p><img src="images/check_phenology-6.png" width="1056" /></p>
-<pre class="r"><code>ggplot(ph18.byplotdate, aes(x=date, group=plotid)) + geom_line(aes(y=open_1, color=str_sub(plotid,1,1))) #seeing some duplicates here</code></pre>
+<pre class="r"><code>ggplot(ph18.byplotdate, aes(x=date, group=plotid)) + geom_line(aes(y=open_1, color=str_sub(plotid,1,1))) </code></pre>
 <p><img src="images/check_phenology-7.png" width="1056" /></p>
 <pre class="r"><code>ggplot(ph18.byplotdate, aes(x=date, y=plotid)) + geom_tile(aes(fill=measured_eggs)) + scale_fill_viridis_c()</code></pre>
 <p><img src="images/check_phenology-8.png" width="1056" /></p>
@@ -7915,18 +7913,24 @@ ggplot(ph18.byplotdate, aes(x=date, y=plotid)) + geom_tile(aes(fill=open_1)) + s
 <p><img src="images/check_phenology-9.png" width="1056" /></p>
 <pre class="r"><code>ggplot(ph18.raw, aes(x=flowers_with_eggs, y= eggs_total)) + geom_point() +geom_abline()</code></pre>
 <p><img src="images/check_phenology-10.png" width="1056" /></p>
-<pre class="r"><code>ph18.raw %&gt;% filter(eggs_total &lt; flowers_with_eggs) </code></pre>
-<pre><code># A tibble: 1 × 75
-  plantid notes date                plot  subplot plant inflor height_cm buds_1
-  &lt;fct&gt;   &lt;fct&gt; &lt;dttm&gt;              &lt;fct&gt; &lt;fct&gt;   &lt;fct&gt;  &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt;
-1 2B195   &lt;NA&gt;  2018-07-03 00:00:00 2     B       195        1        NA      6
-# ℹ 66 more variables: open_1 &lt;dbl&gt;, nr_1 &lt;dbl&gt;, buds_2 &lt;dbl&gt;, open_2 &lt;dbl&gt;,
-#   nr_2 &lt;dbl&gt;, buds_3 &lt;dbl&gt;, open_3 &lt;dbl&gt;, nr_3 &lt;dbl&gt;, buds_4 &lt;dbl&gt;,
-#   open_4 &lt;dbl&gt;, nr_4 &lt;dbl&gt;, buds_5 &lt;dbl&gt;, open_5 &lt;dbl&gt;, nr_5 &lt;lgl&gt;,
-#   buds_6 &lt;lgl&gt;, open_6 &lt;lgl&gt;, nr_6 &lt;lgl&gt;, buds_7 &lt;lgl&gt;, open_7 &lt;lgl&gt;,
-#   nr_7 &lt;dbl&gt;, buds_8 &lt;lgl&gt;, open_8 &lt;lgl&gt;, nr_8 &lt;lgl&gt;, buds_9 &lt;lgl&gt;,
-#   open_9 &lt;lgl&gt;, nr_9 &lt;lgl&gt;, buds_10 &lt;lgl&gt;, open_10 &lt;lgl&gt;, nr_10 &lt;lgl&gt;,
-#   eggs_delia_flies &lt;dbl&gt;, eggs_small_flies &lt;dbl&gt;, eggs_total &lt;dbl&gt;, …</code></pre>
+<pre class="r"><code>ph18.raw %&gt;% filter(flowers_with_eggs &gt; open_1 + replace_na(open_2,0)+ replace_na(open_3,0)+ replace_na(open_4,0)+
+                      replace_na(open_5,0)+replace_na(open_6,0)+replace_na(open_7,0)+replace_na(open_8,0))</code></pre>
+<pre><code># A tibble: 6 × 58
+  plantid notes    date       plot  subplot plant inflor height_cm buds_1 open_1
+  &lt;chr&gt;   &lt;chr&gt;    &lt;date&gt;     &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+1 4D31    JP: 1 o… 2018-06-20 4     D       31         1        35     24      1
+2 4D35    &lt;NA&gt;     2018-06-25 4     D       35         1        NA      9      2
+3 4C118   JP: 1 o… 2018-07-09 4     C       118        2        NA      8      1
+4 2C265   JP: 0 o… 2018-06-20 2     C       265        3        29      6      0
+5 5B284   JP copi… 2018-06-20 5     B       284        1        29     16      1
+6 5B294   JP: 0 o… 2018-07-25 5     B       294        2        NA      0      0
+# ℹ 48 more variables: nr_1 &lt;dbl&gt;, buds_2 &lt;dbl&gt;, open_2 &lt;dbl&gt;, nr_2 &lt;dbl&gt;,
+#   buds_3 &lt;dbl&gt;, open_3 &lt;dbl&gt;, nr_3 &lt;dbl&gt;, buds_4 &lt;dbl&gt;, open_4 &lt;dbl&gt;,
+#   nr_4 &lt;dbl&gt;, buds_5 &lt;dbl&gt;, open_5 &lt;dbl&gt;, nr_5 &lt;dbl&gt;, buds_6 &lt;dbl&gt;,
+#   open_6 &lt;dbl&gt;, nr_6 &lt;dbl&gt;, buds_7 &lt;dbl&gt;, open_7 &lt;dbl&gt;, nr_7 &lt;dbl&gt;,
+#   buds_8 &lt;dbl&gt;, open_8 &lt;dbl&gt;, nr_8 &lt;dbl&gt;, buds_9 &lt;dbl&gt;, open_9 &lt;dbl&gt;,
+#   nr_9 &lt;dbl&gt;, buds_10 &lt;dbl&gt;, open_10 &lt;dbl&gt;, nr_10 &lt;dbl&gt;, flies_delia &lt;dbl&gt;,
+#   flies_small &lt;dbl&gt;, eggs_total &lt;dbl&gt;, flowers_with_eggs &lt;dbl&gt;, …</code></pre>
 <pre class="r"><code>library(googlesheets4)
 gs4_auth(email=T)
 #sheet with the order of plants on each scanned sheet that has egg data (rest of sheets with no eggs are not entered yet)
@@ -7935,7 +7939,34 @@ ph18.order &lt;- read_sheet(&quot;1aPpSjtL--YjtB4SPQ9bgv-9_pFSzkNtscsgaAJOwWTA&q
 ph18.obs &lt;- ph18.order %&gt;% select(-plant) %&gt;% drop_na(plotid) %&gt;% fill(!comments)
 ph18.order &lt;- ph18.order %&gt;% drop_na(plant) %&gt;% fill(!c(comments,plant)) 
 
-#check if there are two observers in the same subplot on the same day
+ph18.obs %&gt;% distinct(observer, date, plotid) %&gt;% ggplot(aes(x=date, y=plotid, fill=observer))+ geom_tile(alpha=0.5) +
+  theme_minimal() + xdate</code></pre>
+<p><img src="images/check_phenology_obs-1.png" width="1056" /></p>
+<pre class="r"><code>ph18.obs %&gt;% distinct(observer, date, plotid, egg_entries) %&gt;% ggplot(aes(x=date, y=plotid, fill=egg_entries))+ geom_tile(alpha=0.5) +
+  theme_minimal() + xdate</code></pre>
+<p><img src="images/check_phenology_obs-2.png" width="1056" /></p>
+<pre class="r"><code>ph18.order %&gt;% ggplot(aes(x=date, y=paste(plotid,plant), fill=egg_entries))+ geom_tile(alpha=0.5) +
+  theme_minimal() + xdate</code></pre>
+<p><img src="images/check_phenology_obs-3.png" width="1056" /></p>
+<pre class="r"><code>ph18.order %&gt;% count(plotid, plant) %&gt;% ggplot(aes(x=n)) + geom_histogram(binwidth=1) + scale_x_continuous(breaks=1:20)</code></pre>
+<p><img src="images/check_phenology_obs-4.png" width="1056" /></p>
+<pre class="r"><code>ph18.order %&gt;% count(plotid, plant) %&gt;% filter(n==1) %&gt;% left_join(ph18.order) </code></pre>
+<pre><code># A tibble: 27 × 13
+   plotid plant     n scanpage observer date       page  pagemax egg_entries
+   &lt;chr&gt;  &lt;chr&gt; &lt;int&gt;    &lt;int&gt; &lt;chr&gt;    &lt;date&gt;     &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;      
+ 1 1B     179       1        5 JN       2018-07-16 1     4       complete   
+ 2 1B     564       1       59 HB       2018-07-25 NA    NA      partial    
+ 3 1C     67        1        5 JN       2018-07-16 1     4       complete   
+ 4 1D     28        1       46 RD       2018-07-31 2     3       complete   
+ 5 2C     226       1       57 RD       2018-08-15 1     1       complete   
+ 6 2C     299       1       55 HB       2018-07-20 1     4       complete   
+ 7 2D     217       1       29 RD       2018-06-27 2     4       complete   
+ 8 3B     224       1       28 RD       2018-06-27 1     4       complete   
+ 9 3D     269       1       56 HB       2018-07-20 2     4       complete   
+10 3D     647       1       17 RD       2018-07-03 2     NA      complete   
+# ℹ 17 more rows
+# ℹ 4 more variables: blank &lt;chr&gt;, dash &lt;chr&gt;, zeros &lt;chr&gt;, comments &lt;chr&gt;</code></pre>
+<pre class="r"><code>#check if there are two observers in the same subplot on the same day
 ph18.obs %&gt;% count(observer, date, plotid) %&gt;% 
   add_count(date, plotid) %&gt;% filter(nn&gt;1) %&gt;% arrange(date, plotid) %&gt;% left_join(ph18.obs)</code></pre>
 <pre><code># A tibble: 8 × 13
@@ -7953,65 +7984,101 @@ ph18.obs %&gt;% count(observer, date, plotid) %&gt;%
 <pre class="r"><code>#check if there are duplicate plants measured on the same day
 full_join(ph18.order %&gt;% count(date, plotid, plant) %&gt;% filter(n&gt;1) %&gt;% mutate(order=1),
           ph18.raw   %&gt;% count(date, plotid, plant) %&gt;% filter(n&gt;1))</code></pre>
-<pre><code># A tibble: 144 × 5
-   date                plotid plant     n order
-   &lt;dttm&gt;              &lt;chr&gt;  &lt;chr&gt; &lt;int&gt; &lt;dbl&gt;
- 1 2018-06-20 00:00:00 4B     183       2     1
- 2 2018-06-20 00:00:00 5D     258       2     1
- 3 2018-06-21 00:00:00 5C     205       2     1
- 4 2018-06-27 00:00:00 6A     151       2     1
- 5 2018-06-27 00:00:00 6A     160       2     1
- 6 2018-07-05 00:00:00 6A     125       2     1
- 7 2018-07-05 00:00:00 6A     133       2     1
- 8 2018-07-05 00:00:00 6A     135       2     1
- 9 2018-07-05 00:00:00 6A     143       2     1
-10 2018-07-05 00:00:00 6A     151       2     1
-# ℹ 134 more rows</code></pre>
+<pre><code># A tibble: 27 × 5
+   date       plotid plant     n order
+   &lt;date&gt;     &lt;chr&gt;  &lt;chr&gt; &lt;int&gt; &lt;dbl&gt;
+ 1 2018-06-20 4B     183       2     1
+ 2 2018-06-20 5D     258       2     1
+ 3 2018-06-21 5C     205       2     1
+ 4 2018-06-27 6A     151       2     1
+ 5 2018-06-27 6A     160       2     1
+ 6 2018-07-05 6A     125       2     1
+ 7 2018-07-05 6A     133       2     1
+ 8 2018-07-05 6A     135       2     1
+ 9 2018-07-05 6A     143       2     1
+10 2018-07-05 6A     151       2     1
+# ℹ 17 more rows</code></pre>
 <pre class="r"><code>#put the data (.raw) in order of the scanned sheets (.order)
-ph18.reorder &lt;- left_join(distinct(ph18.order, date, plotid, plant, .keep_all=T), #throw out the second duplicate plant
-                          add_count(ph18.raw, date, plotid, plant)) %&gt;% #add in both duplicate entries from the raw data
-  filter(n==1 | str_detect(comments, &quot;same data&quot;)) %&gt;% select(-n) %&gt;% #take out all uncombinable duplicates, save dupes with the same data
-  distinct(date, plotid, plant, .keep_all=T) #throw out the the second duplicate plant for duplicates with the same data
-  
+ph18.reorder.all &lt;- left_join(ph18.order %&gt;% distinct(date, plotid, plant, .keep_all=T), #throw out the second duplicate plant
+                          ph18.raw %&gt;% add_count(date, plotid, plant) %&gt;% mutate(index=row_number())) %&gt;% #add in both duplicate entries from the raw data
+    mutate(scanorder = row_number())
+#left_join(tibble(index = 1:nrow(ph18.raw)), ph18.reorder.all %&gt;% select(index, scanpage, scanorder)) %&gt;% clipr::write_clip()
+ph18.reorder &lt;- ph18.reorder.all %&gt;% #I reconsidered taking out all the uncombinable dupes - now just pick one since they are likely remeasures
+  #filter(n==1 | str_detect(comments, &quot;same data&quot;)) %&gt;% select(-n) %&gt;% #take out all uncombinable duplicates, save dupes with the same data
+  mutate(date.merged =  ymd(recode(as.character(date), #merge egg counts over several days
+                                   &quot;2018-07-02&quot;=&quot;2018-07-03&quot;, &quot;2018-07-05&quot;=&quot;2018-07-03&quot;, &quot;2018-07-11&quot;=&quot;2018-07-09&quot;))) %&gt;% 
+  #merging creates duplicates for 6A and 6B on 7/11 and 7/9, 7/11 dupes get thrown out here:
+  distinct(date.merged, plotid, plant, .keep_all=T) %&gt;%  #throw out the the second duplicate plant for duplicates 
+  filter(date != ymd(&quot;2018-06-21&quot;), # take out day with only fly measures, no flower counts (moved to 6/20)
+         plant!=&quot;needs tag&quot;, egg_entries!=&quot;none&quot;) #only focus on days with egg counts
 
-ph18.reorder %&gt;% add_count(date, plotid, plant) %&gt;% filter(n&gt;1)</code></pre>
-<pre><code># A tibble: 0 × 85
-# ℹ 85 variables: scanpage &lt;int&gt;, observer &lt;chr&gt;, date &lt;dttm&gt;, page &lt;chr&gt;,
-#   pagemax &lt;chr&gt;, egg_entries &lt;chr&gt;, blank &lt;chr&gt;, dash &lt;chr&gt;, zeros &lt;chr&gt;,
-#   plotid &lt;chr&gt;, plant &lt;chr&gt;, comments &lt;chr&gt;, plantid &lt;fct&gt;, notes &lt;fct&gt;,
-#   plot &lt;fct&gt;, subplot &lt;fct&gt;, inflor &lt;dbl&gt;, height_cm &lt;dbl&gt;, buds_1 &lt;dbl&gt;,
-#   open_1 &lt;dbl&gt;, nr_1 &lt;dbl&gt;, buds_2 &lt;dbl&gt;, open_2 &lt;dbl&gt;, nr_2 &lt;dbl&gt;,
-#   buds_3 &lt;dbl&gt;, open_3 &lt;dbl&gt;, nr_3 &lt;dbl&gt;, buds_4 &lt;dbl&gt;, open_4 &lt;dbl&gt;,
-#   nr_4 &lt;dbl&gt;, buds_5 &lt;dbl&gt;, open_5 &lt;dbl&gt;, nr_5 &lt;lgl&gt;, buds_6 &lt;lgl&gt;, …</code></pre>
-<pre class="r"><code>#TODO in big dataset, need to update JN 6-15 on scanned pages 62 and 64 to 6/13, and HB 6-20 to 6-25 on p58+59, aldo 
-#TODO missing scan for RD p1 on 2018-07-03
-ph18.obs %&gt;% distinct(observer, date, plotid) %&gt;% ggplot(aes(x=date, y=plotid, fill=observer))+ geom_tile(alpha=0.5) +
-  theme_minimal() + xdate</code></pre>
-<p><img src="images/check_phenology_obs-1.png" width="1056" /></p>
-<pre class="r"><code>ph18.obs %&gt;% distinct(observer, date, plotid, egg_entries) %&gt;% ggplot(aes(x=date, y=plotid, fill=egg_entries))+ geom_tile(alpha=0.5) +
-  theme_minimal() + xdate</code></pre>
-<p><img src="images/check_phenology_obs-2.png" width="1056" /></p>
-<pre class="r"><code>ph18.order %&gt;% ggplot(aes(x=date, y=paste(plotid,plant), fill=egg_entries))+ geom_tile(alpha=0.5) +
-  theme_minimal() + xdate</code></pre>
-<p><img src="images/check_phenology_obs-3.png" width="1056" /></p>
-<pre class="r"><code>ph18.order %&gt;% count(plotid, plant) %&gt;% ggplot(aes(x=n)) + geom_histogram(binwidth=1) + scale_x_continuous(breaks=1:20)</code></pre>
-<p><img src="images/check_phenology_obs-4.png" width="1056" /></p>
-<pre class="r"><code>ph18.order %&gt;% count(plotid, plant) %&gt;% filter(n==1) %&gt;% left_join(ph18.order) </code></pre>
-<pre><code># A tibble: 28 × 13
-   plotid plant     n scanpage observer date       page  pagemax egg_entries
-   &lt;chr&gt;  &lt;chr&gt; &lt;int&gt;    &lt;int&gt; &lt;chr&gt;    &lt;date&gt;     &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;      
- 1 1B     179       1        5 JN       2018-07-16 1     4       complete   
- 2 1B     564       1       59 HB       2018-07-25 NA    NA      partial    
- 3 1C     67        1        5 JN       2018-07-16 1     4       complete   
- 4 1D     28        1       46 RD       2018-07-31 2     3       complete   
- 5 2C     226       1       57 RD       2018-08-15 1     1       complete   
- 6 2C     299       1       55 HB       2018-07-20 1     4       complete   
- 7 2D     217       1       29 RD       2018-06-27 2     4       complete   
- 8 3B     224       1       28 RD       2018-06-27 1     4       complete   
- 9 3D     269       1       56 HB       2018-07-20 2     4       complete   
-10 3D     647       1       17 RD       2018-07-03 2     NA      complete   
-# ℹ 18 more rows
-# ℹ 4 more variables: blank &lt;chr&gt;, dash &lt;chr&gt;, zeros &lt;chr&gt;, comments &lt;chr&gt;</code></pre>
+ph18.reorder %&gt;% ggplot(aes(x=date.merged, y=paste(plotid,plant), fill=!is.na(eggs_total)))+ 
+  geom_tile(width=1) +theme_minimal() + xdate</code></pre>
+<p><img src="images/check_phenology_obs-5.png" width="1056" /></p>
+<pre class="r"><code>ph18.reorder %&gt;% drop_na(open_1) %&gt;% ggplot(aes(x=date.merged, y=paste(plotid,plant), fill=paste(open_1&gt;0, !is.na(eggs_total))))+ labs(fill=&quot;any flowers? egg entry?&quot;)+
+  geom_tile(width=1) +theme_minimal() + xdate</code></pre>
+<p><img src="images/check_phenology_obs-6.png" width="1056" /></p>
+<pre class="r"><code>ph18.reorder %&gt;% filter(is.na(open_1)) #verified out blanks in open_1 - usually plant was munched or dying</code></pre>
+<pre><code># A tibble: 21 × 70
+   scanpage observer date       page  pagemax egg_entries blank    dash  zeros
+      &lt;int&gt; &lt;chr&gt;    &lt;date&gt;     &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;
+ 1        3 JN       2018-07-16 3     4       complete    no open  no    yes  
+ 2        3 JN       2018-07-16 3     4       complete    no open  no    yes  
+ 3        5 JN       2018-07-16 1     4       complete    no       no    yes  
+ 4        5 JN       2018-07-16 1     4       complete    no       no    yes  
+ 5        6 JN       2018-07-16 2     4       complete    no       no    yes  
+ 6       12 JN       2018-07-11 NA    NA      partial     not sure no    yes  
+ 7       12 JN       2018-07-11 NA    NA      partial     not sure no    yes  
+ 8       13 JN       2018-07-11 NA    NA      complete    no       no    yes  
+ 9       16 JN       2018-07-09 NA    NA      complete    no       no    yes  
+10       16 JN       2018-07-09 NA    NA      complete    no       no    yes  
+# ℹ 11 more rows
+# ℹ 61 more variables: plotid &lt;chr&gt;, plant &lt;chr&gt;, comments &lt;chr&gt;,
+#   plantid &lt;chr&gt;, notes &lt;chr&gt;, plot &lt;chr&gt;, subplot &lt;chr&gt;, inflor &lt;dbl&gt;,
+#   height_cm &lt;dbl&gt;, buds_1 &lt;dbl&gt;, open_1 &lt;dbl&gt;, nr_1 &lt;dbl&gt;, buds_2 &lt;dbl&gt;,
+#   open_2 &lt;dbl&gt;, nr_2 &lt;dbl&gt;, buds_3 &lt;dbl&gt;, open_3 &lt;dbl&gt;, nr_3 &lt;dbl&gt;,
+#   buds_4 &lt;dbl&gt;, open_4 &lt;dbl&gt;, nr_4 &lt;dbl&gt;, buds_5 &lt;dbl&gt;, open_5 &lt;dbl&gt;,
+#   nr_5 &lt;dbl&gt;, buds_6 &lt;dbl&gt;, open_6 &lt;dbl&gt;, nr_6 &lt;dbl&gt;, buds_7 &lt;dbl&gt;, …</code></pre>
+<pre class="r"><code>ph18.obs.entered &lt;- ph18.reorder %&gt;% summarize(.by=all_of(colnames(ph18.obs)[1:9]),
+                                               n.obs = n(),
+                                               prop.zero.open = mean(open_1==0, na.rm=T),
+                                               prop.na.eggs=mean(is.na(eggs_total)),
+                                               prop.zero.eggs=mean(eggs_total==0, na.rm=T)) %&gt;% filter(egg_entries !=&quot;none&quot;) 
+ggplot(ph18.obs.entered, aes(x=prop.na.eggs, y=prop.zero.eggs, size=n.obs, color=blank)) + geom_point(alpha=0.5) + theme_minimal()</code></pre>
+<p><img src="images/check_phenology_obs-7.png" width="1056" /></p>
+<pre class="r"><code>ggplot(ph18.obs.entered, aes(x=prop.zero.open, y=prop.zero.eggs, size=n.obs, color=blank)) + geom_point(alpha=0.5) + theme_minimal()</code></pre>
+<p><img src="images/check_phenology_obs-8.png" width="1056" /></p>
+<pre class="r"><code>ggplot(ph18.obs.entered, aes(x=prop.zero.open, y=prop.na.eggs, size=n.obs, color=paste(&quot;blank=&quot;,blank,&quot;dash=&quot;,dash)))  + theme_minimal() + geom_abline() + geom_text(aes(label=paste(observer,scanpage)))</code></pre>
+<p><img src="images/check_phenology_obs-9.png" width="1056" /></p>
+<pre class="r"><code>ggplot(ph.raw, aes(x=eggs, fill=year)) + facet_wrap(vars(year), ncol=1, scales=&quot;free_y&quot;) + geom_histogram(binwidth=1)</code></pre>
+<p><img src="images/check_phenology_eggs-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(ph.raw, aes(x=eggs_per_flower_date, fill=year)) + facet_wrap(vars(year), ncol=1, scales=&quot;free_y&quot;) + geom_histogram(binwidth=0.05)</code></pre>
+<p><img src="images/check_phenology_eggs-2.png" width="672" /></p>
+<pre class="r"><code>#made these two methods give the same eggs_per_flower result
+# ph.egg &lt;- ph.raw %&gt;%
+#   drop_na(open, buds, eggs) %&gt;% #drop incomplete measurements
+#   filter(flowering) %&gt;% #need flowers to count
+#   group_by(year, water, water4, snow, plot, plotid, plant, plantid) %&gt;%
+#   summarize(across(c(open, buds, eggs), sum), n_dates=n(), .groups=&quot;drop&quot;) %&gt;%
+#   mutate(eggs_per_flower = if_else(year == &quot;2018&quot;, eggs/open, eggs/(open+buds)))#in 2018 only open flowers were checked for eggs
+# ph.plantyr &lt;- ph.raw %&gt;%
+#   mutate(open_witheggcount = if_else(is.na(eggs) | !flowering, NA, open), #only keep data when flowering (open or buds) and eggs counted
+#          buds_witheggcount = if_else(is.na(eggs) | !flowering, NA, buds)) %&gt;%
+#   group_by(year, water, water4, snow, plot, plotid, plant, plantid) %&gt;%
+#   summarize(across(c(open, buds, eggs, open_witheggcount, buds_witheggcount), ~sum(.x,na.rm=T)), .groups=&quot;drop&quot;) %&gt;% #mean is most of the problem!
+#   mutate(eggs_per_flower = if_else(year==&quot;2018&quot;, eggs/open_witheggcount, eggs/(open_witheggcount+buds_witheggcount)))
+# comp &lt;- left_join(ph.plantyr, ph.egg, by=join_by(year, water, water4, snow, plot, plotid, plant, plantid))
+
+ggplot(mnps.plantyr, aes(x=open_witheggcount+buds_witheggcount, y=eggs, color=year)) + geom_point() + geom_smooth() + geom_abline()</code></pre>
+<p><img src="images/check_phenology_eggs-3.png" width="672" /></p>
+<pre class="r"><code>ggplot(mnps.plantyr, aes(x=open_witheggcount, y=eggs_per_flower, color=year)) + facet_wrap(vars(year)) + geom_point()   #full rainbow in 2018!</code></pre>
+<p><img src="images/check_phenology_eggs-4.png" width="672" /></p>
+<pre class="r"><code>ggplot(mnps.plantyr, aes(x=open_witheggcount+buds_witheggcount, y=eggs_per_flower, color=year)) + facet_wrap(vars(year)) + geom_point() + geom_smooth(se=F)</code></pre>
+<p><img src="images/check_phenology_eggs-5.png" width="672" /></p>
+<pre class="r"><code>ggplot(mnps.plantyr, aes(x=n_egg_dates, y=eggs_per_flower, color=year)) + facet_wrap(vars(year)) + geom_point()  + geom_smooth(se=F)</code></pre>
+<p><img src="images/check_phenology_eggs-6.png" width="672" /></p>
+<pre class="r"><code>ggplot(mnps.plantyr, aes(x=n_egg_dates, fill=year)) + facet_wrap(vars(year), ncol=1) + geom_histogram(binwidth=1)</code></pre>
+<p><img src="images/check_phenology_eggs-7.png" width="672" /></p>
 </div>
 <div id="weekly-vs.-total-fly-and-flower-counts" class="section level1">
 <h1>Weekly vs. total fly and flower counts</h1>
@@ -8035,26 +8102,26 @@ flowers</caption>
 <tbody>
 <tr class="odd">
 <td align="left">2018</td>
-<td align="right">0.0343</td>
-<td align="right">0.0061</td>
-<td align="right">520</td>
-<td align="right">5.606</td>
+<td align="right">0.5471</td>
+<td align="right">0.0301</td>
+<td align="right">519</td>
+<td align="right">18.151</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
-<td align="right">0.0645</td>
-<td align="right">0.0081</td>
-<td align="right">520</td>
-<td align="right">8.009</td>
+<td align="right">0.3515</td>
+<td align="right">0.0394</td>
+<td align="right">519</td>
+<td align="right">8.931</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
-<td align="right">0.0356</td>
-<td align="right">0.0047</td>
-<td align="right">520</td>
-<td align="right">7.636</td>
+<td align="right">0.2115</td>
+<td align="right">0.0228</td>
+<td align="right">519</td>
+<td align="right">9.289</td>
 <td align="right">0</td>
 </tr>
 </tbody>
@@ -8065,9 +8132,9 @@ flowers</caption>
 <pre><code># A tibble: 3 × 6
   year  fruits_fly_no_seeds.trend std.error    df statistic  p.value
   &lt;chr&gt;                     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
-1 2018                     0.0958    0.0191   517      5.02 7.09e- 7
-2 2019                     0.103     0.0110   517      9.41 1.66e-19
-3 2020                     0.0807    0.0101   517      8.00 8.41e-15</code></pre>
+1 2018                      0.634    0.0784   512      8.09 4.35e-15
+2 2019                      0.368    0.0456   512      8.07 5.15e-15
+3 2020                      0.441    0.0415   512     10.6  5.37e-24</code></pre>
 <pre class="r"><code>ggplot(ph %&gt;% drop_na(height_cm), aes(x=julian, y=height_cm, shape=snow, color=water))+ geom_point() + geom_path(aes(group=plantid))+
   facet_wrap(vars(year), ncol=1)+
     geom_vline(data=meltdates, aes(xintercept=sun_date, linetype=snow))+
@@ -8127,7 +8194,11 @@ flowers</caption>
 <h2>Floral display size</h2>
 <div id="section" class="section level3">
 <h3>2020</h3>
-<pre class="r"><code>ggplot(ph.plantyr, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
+<pre class="r"><code>ph.plantyr &lt;- ph %&gt;% group_by(year, water, water4, snow, plot, plotid, plant, plantid) %&gt;% 
+  summarize(across(c(open, eggs, height_cm, VWC), mean, na.rm=T)) %&gt;% 
+  mutate(eggs = if_else(is.nan(eggs), 0, eggs))
+
+ggplot(ph.plantyr, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_smooth(method=&quot;lm&quot;, se=F) + scale_color_manual(values=water_pal) + facet_wrap(vars(year), nrow=1) +
   labs(x=&quot;Mean inflorescence height (cm)&quot;, y=&quot;Mean number of open flowers&quot;, color=&quot;Precipitation&quot;)</code></pre>
 <p><img src="images/display_size-1.png" width="672" /></p>
 <pre class="r"><code>ggplot(ph.plantyr, aes(x=water, color=snow, y = height_cm)) +
