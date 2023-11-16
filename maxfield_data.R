@@ -4,7 +4,6 @@
 # setup -------------------------------------------------------------------
 
 library(tidyverse)
-library(lubridate)
 library(RColorBrewer)
 library(colorspace)
 
@@ -406,7 +405,10 @@ cen.RGR.long <- cen.RGR %>% select(plantid, plotid, starts_with("RGR")) %>%
 
 # phenology ---------------------------------------------------------------
 
-ph18.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2018") %>% 
+ph18.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2018", guess_max = 3000) %>% 
+  select(!any_of(c("scanpage","scanorder"))) %>% 
+  drop_na(date) %>% # one observation
+  filter(date !=ymd("2018-06-21")) %>% #fly counts filled in for 6-20
   mutate(plot = as.character(plot), 
          subplot = toupper(subplot),
          plotid = paste0(plot, subplot),
@@ -414,8 +416,8 @@ ph18.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
          plant=as.character(plant),
          date=as.Date(date),
          julian = factor(yday(date)),
-         year="2018") #%>% #TODO there are multiple issues with this dataset, see Maxfield volatiles todo list
-  #fix_dataset("pheno18") #TODO uncomment this
+         year="2018") %>% 
+  fix_dataset("pheno18")
 
 ph19.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), sheet="2019") %>% 
   mutate(plot = as.character(plot), 
@@ -435,20 +437,22 @@ ph20.raw <- read_sheet(filter(datasheets, name=="2020 Maxfield Phenology"), shee
          year="2020") %>% 
   fix_dataset("pheno20")
 
+sum_na <- function(x) if(all(is.na(x))) NA_integer_ else sum(x, na.rm=TRUE) #NA if whole row is NA
 ph.raw <- bind_rows(ph18.raw, ph19.raw, ph20.raw) %>% 
-  rowwise() %>% mutate(open = sum(c_across(starts_with("open")), na.rm=T),
-                       buds = sum(c_across(starts_with("buds")), na.rm=T),
-                       eggs = sum(c_across(starts_with("eggs")), na.rm=T)) %>% ungroup() %>% #TODO there are 3 egg columns in 2018, only want eggs_total!
-  mutate(flowering = open + buds > 0,
+  rowwise() %>% mutate(open = sum_na(c_across(starts_with("open_"))),
+                       buds = sum_na(c_across(starts_with("buds_"))),
+                       eggs = sum_na(c_across(starts_with("eggs_")))) %>% ungroup() %>% 
+  mutate(flowering = (replace_na(open,0) + replace_na(buds,0)) > 0,
          has_egg = eggs > 0,
-         eggs_per_flower = eggs/(open+buds), #had replace_na(eggs,0) but eggs not always counted when buds measured
+         eggs_per_flower_date = eggs/(open+buds), #had replace_na(eggs,0) but eggs not always counted when open/buds measured
          julian=as.integer(as.character(julian))) %>% 
   left_join(treatments) %>% 
   mutate_if(is.character, as.factor) %>% 
   left_join(sm.subplotyear) 
 
-#add zeros to weeks the plant was not counted - this doesn't work in 2018, where data was not collected weekly
-#see maxfiled_JP_analyses raw phenology tables
+#add zeros to weeks the plant was not counted
+#this doesn't work in 2018, where data was not collected weekly (but see date.merged in ph18.obs for solution)
+#see maxfield_JP_analyses raw phenology tables
 ph <- ph.raw %>% group_by(year) %>% 
   complete(nesting(plant, plantid, plotid, plot, subplot, snow, water, water4), nesting(julian, date), 
                 fill=list(open=0,buds=0)) %>% ungroup() 
@@ -790,21 +794,26 @@ sds <- bind_rows(sds18, sds19, sds20) %>%
     seeds_per_flower = seeds_est / flowers_est)
 
 ######## Merge morphology, nectar, phenology, and seeds ####
-mnps <- bind_rows(mt, ph, sds)
+mnps <- bind_rows(mt, ph.raw, sds) #was ph but filling in doesn't work for 2018 #TODO make sure swap doesn't break graphs
 
 #average by plant and year
+counts_to_sum <- c("open", "buds", "eggs", "open_witheggcount", "buds_witheggcount")
 mnps.plantyr <- mnps %>% mutate_at(c("plotid","plant"), as.character) %>% 
   drop_na(plant) %>% 
   mutate(plantid = paste0(plotid, plant)) %>% 
+  mutate(open_witheggcount = if_else(is.na(eggs) | !flowering, NA, open), #only keep data when flowering (open or buds) and eggs counted
+         buds_witheggcount = if_else(is.na(eggs) | !flowering, NA, buds)) %>% 
   group_by(year, water, water4, snow, plot, plotid, plant, plantid) %>% 
-  summarize_if(is.numeric, mean, na.rm=T) %>% ungroup %>% 
-  mutate_if(is.numeric, ~replace(., is.nan(.), NA)) 
-#  mutate(eggs_per_flower = replace_na(eggs,0)/(open+buds))
+  summarize(n_egg_dates = sum(!is.na(eggs)),
+            across(where(is.numeric) & -all_of(counts_to_sum), ~ mean(.x,na.rm=T)),
+            across(all_of(counts_to_sum), ~sum_na(.x))) %>% ungroup %>% #return NA if all entries are NA
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA)) %>% 
+  mutate(eggs_per_flower = if_else(year=="2018", eggs/open_witheggcount, eggs/(open_witheggcount+buds_witheggcount)))
 
 #average by plant and year, then by subplot
 mnps.subplot <- mnps.plantyr %>%  
   group_by(year, water, water4, snow, plot, plotid) %>% summarize_if(is.numeric, mean, na.rm=T)%>% ungroup %>% 
-  mutate_if(is.numeric, ~replace(., is.nan(.), NA)) %>% drop_na(water4) #TODO figure out what entries in ph are causing NAs
+  mutate_if(is.numeric, ~replace(., is.nan(.), NA))
 write_sheet(mnps.subplot %>% select(!starts_with(c("open_","buds_","nr_","eggs_","fit."))), 
                                     ss=filter(datasheets, name=="Maxfield Results"), sheet="subplot_means")
 
@@ -885,9 +894,9 @@ alldata <- list("treatments"=treatments,
                 "census_2019"=cen19,
                 "census_2020"=cen20,
                 "census_2021"=cen21,
-                "phenology_2018"=ph18,
-                "phenology_2019"=ph19,
-                "phenology_2020"=ph20,
+                "phenology_2018"=ph18.raw,
+                "phenology_2019"=ph19.raw,
+                "phenology_2020"=ph20.raw,
                 "leaf_traits"=lt,
                 "licor"=licor,
                 "phys_traits"=pt,
