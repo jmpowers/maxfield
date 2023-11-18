@@ -1180,8 +1180,8 @@ walk(fitnesstraits, ~
 
 ```{r selection_class_gradient, fig.width=9.5, fig.height=6}
 trait.class.wide <- bind_cols(volsmeta.avg, vols.class) %>% left_join(mnps.plantyr.traits) %>% 
-  select(plantid, year, water, snow, all_of(fitnesstraits), all_of(names(class_pal))) %>% 
-  mutate(across(all_of(names(class_pal)), sqrt))
+  select(plantid, year, water, snow, all_of(fitnesstraits), all_of(names(class_pal))) 
+ #mutate(across(all_of(names(class_pal)), sqrt))
 
 selection_effects <- function(fitnesstrait) {
   options(contrasts = c("contr.sum", "contr.poly"))
@@ -1196,7 +1196,6 @@ selection_effects <- function(fitnesstrait) {
 
 fitnesstraits.sd <- map_dbl(fitnesstraits, ~sd(mnps.plantyr.traits[[.x]], na.rm=T)) %>% set_names(fitnesstraits)
 class.sd <- map_dbl(names(class_pal), ~sd(trait.class.wide[[.x]], na.rm=T)) %>% set_names(names(class_pal)) 
-#note this is after sqrt transformation
 
 get_emt_class <- function(mod) {
   map_dfr(set_names(names(class_pal)), ~emtrends(mod, c("year","water","snow"), var=.x) %>% 
@@ -1281,13 +1280,14 @@ tibble(name = fitnesstraits, SR2 = MF$SR2) %>%
 
 Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.
 
-```{r gradients, fig.width=14, fig.height=10}
+```{r gradients, fig.width=9, fig.height=9}
 # previously split the data before running PCA - now run PCA on the whole dataset
 
 # Run PCA on traits
-vols.PCA <- vols.good.top %>% mutate(across(everything(), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% 
+vols.PCA <- vols.good.top %>% 
+  mutate(across(everything(), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% #center and scale
   prcomp() 
-summary(vols.PCA) # PCs 1 - 5 explain 56% of the variation, 20 PCs total (20 top volatiles)
+summary(vols.PCA) # PCs 1 - 5 explain 82% of the variation, 12 PCs total (12 top volatiles)
 vols.PCA.E <- vols.PCA$rotation[,1:5] #min(4, ncol(vols.PCA$rotation))
 
 calculate_beta <- function(E, slopes, resid.df) {
@@ -1303,7 +1303,7 @@ selection_pca <- function(year, water=names(water_pal), snow=names(snow_pal), fi
     left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
     select(all_of(fitnesstrait), any_of(names(treatments)), starts_with("PC")) %>% 
     rename("fitness" = fitnesstrait) %>% 
-    group_by(year) %>% mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% ungroup %>% 
+    group_by(year) %>% mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% ungroup %>% #relative fitness within year
     drop_na(relfitness) %>% 
     select(where(~sum(is.na(.))==0))
   
@@ -1370,8 +1370,8 @@ adaptive.plasticity.data <- volsmeta.good.top %>% group_by(name, year) %>% nest(
   ungroup %>% select(year, name, newenv, plasticity.p.value, estimate, std.error) %>% 
   left_join(bind_rows(rename(vols.beta.water, newenv=water),
                     rename(vols.beta.snow, newenv=snow)) %>% 
-            filter(fitnesstrait!="eggs_per_flower") %>% rename(name=trait)) %>% 
-  left_join(ipochemsf %>% select(-starts_with("area")))
+            filter(fitnesstrait!="eggs_per_flower") %>% 
+  rename(name=trait)) %>% left_join(ipochemsf %>% select(-starts_with("area")))
 
 envnames <- c(Addition="additional precipitation",
              Reduction="reduced precipitation",
@@ -1379,8 +1379,9 @@ envnames <- c(Addition="additional precipitation",
 
 library(ggpubr)
 adaptive.plasticity.data %>% filter(newenv!="R_A") %>% 
-  mutate(fitnesstrait=factor(fitnesstrait, levels = rev(fitnesstraits)),
-         plasticity.signif = plasticity.p.value < 0.05, selection.signif= p.value < 0.05) %>% 
+  mutate(fitnesstrait=factor(fitnesstrait, levels = sort(fitnesstraits)),
+         plasticity.signif = plasticity.p.value < 0.05, selection.signif= p.value < 0.05,
+         plasticity.selection.signif = interaction(factor(plasticity.signif), factor(selection.signif))) %>% 
   group_by(newenv) %>% nest() %>% 
   pwalk(function(newenv, data) { 
     print(ggplot(data, aes(x=estimate, y=B, color=class)) + 
@@ -1393,12 +1394,15 @@ adaptive.plasticity.data %>% filter(newenv!="R_A") %>%
             annotate("rect", xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= "black", alpha=0.1) +
             geom_errorbar(aes(ymin=B-SE, ymax=B+SE)) + 
             geom_errorbarh(aes(xmin=estimate-std.error, xmax=estimate+std.error)) +
-            geom_point(aes(shape = paste(plasticity.signif, selection.signif))) + #size=mean.floral, 
-            scale_size_area("Mean emissions\n(ng/hr/flower)", max_size=3) +
-            scale_x_continuous(labels=scales::percent, limits=c(NA,NA), breaks=c(-4:4)) + 
+            geom_point(aes(shape = plasticity.selection.signif), size=2.5) + 
+            scale_shape_manual("adjusted P<0.05", values=c(1,17,19,15), guide=guide_legend(override.aes = list(size=5)),
+                               labels=c("neither", "plasticity", "selection","both"), drop=FALSE)+
+            scale_x_continuous(labels=scales::percent, breaks=c(-4:4)) + 
             scale_color_manual("Compound class", values=class_pal, 
                                guide=guide_legend(override.aes = list(size=5))) + 
             theme_bw() + theme(axis.text = element_text(size=7)))})
+
+adaptive.plasticity.data %>% filter(newenv != "R_A") %>% count(p.value < 0.05, plasticity.p.value < 0.05)
 
 ggplot(adaptive.plasticity.data %>% filter(newenv!="R_A"), aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error,
                           y=name, color=year, alpha=plasticity.p.value<0.05)) +  facet_wrap(vars(newenv)) +
@@ -1418,7 +1422,7 @@ adaptive.plasticity.data %>%
 ```
 
 
-# Plasticity to snowmelt vs. precipitation
+## Plasticity to snowmelt vs. precipitation
 
 ```{r snow_v_water, fig.height=6, fig.width=4.5}
 compare.plasticity <- full_join(
@@ -1474,7 +1478,8 @@ selection_mod_abs <- function(trait, response) {
     select(all_of(c(response, trait)), sun_date, precip_est_mm) %>% 
     rename("trait" = trait, "response" = response) %>% 
     filter(!is.infinite(response), !is.nan(response), !is.na(response)) %>% 
-    mutate(response = response/mean(response, na.rm=T), trait = trait/sd(trait, na.rm=T))
+    mutate(response = response/mean(response, na.rm=T), #relative fitness
+           trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
   options(contrasts = c("contr.sum", "contr.poly"))
   lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
 }
@@ -1497,7 +1502,7 @@ mod.selection.abs %>% select(-model) %>% unnest(coefs) %>%
   geom_hline(yintercept=0) + geom_boxplot()
 
 library(ggrepel)
-ggplot(mod.selection.tests, aes(x=factor(response, levels=rev(fitnesstraits)), y=estimate, label=greekify(trait))) + 
+ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), y=estimate, label=greekify(trait))) + 
   facet_wrap(vars(term), labeller = as_labeller(c(trait="A. Selection on trait (\U03B2)",
                                                   `trait:precip_est_mm`=
                                                     "B. Selection on trait x summer precipitation (\U03B2 / mm)",
@@ -1505,7 +1510,10 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=rev(fitnesstraits)), y
                                                     "C. Selection on trait x snowmelt date (\U03B2 / day)")),
              scales="free_y", ncol=1) + theme_bw() +
   geom_point(aes(size=mean.floral, color=class)) + geom_hline(yintercept=0) + 
-  geom_text_repel(data = filter(mod.selection.tests, p.value < 0.01), hjust=0, nudge_x = 0.15, show.legend = FALSE) + 
+  geom_text_repel(data = filter(mod.selection.tests, p.value < 0.05) %>% 
+                    mutate(trait=recode(trait, "(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene"=
+                                          "(1Z,4Z,7Z)-1,5,9,9-\ntetramethylcycloundeca-1,4,7-triene")), 
+                  show.legend = FALSE, size=3.5, box.padding=0, point.padding=0, direction="y", lineheight=0.7)+
   scale_size_area(max_size = 10) + scale_x_discrete(labels=fitnessnames) +
   scale_color_manual(values=class_pal, guide=guide_legend(override.aes = list(size=5))) + 
   labs(x="Fitness measure", size="Mean emissions\n(ng/hr/flower)", color="Class") + 
@@ -1514,6 +1522,9 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=rev(fitnesstraits)), y
 mod.selection.abs %>% filter(trait=="a-pinene") %>% 
   mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 
   select(-c(model, coefs)) %>% unnest(tests) %>% filter(str_detect(term, "trait")) %>% kable()
+
+library(skimr)
+skim(mod.selection.tests %>% group_by(term), estimate)
 ```
 
 # Volatiles vs. floral traits
