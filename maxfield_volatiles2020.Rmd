@@ -41,6 +41,12 @@ knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F,
 options(digits=4) # for kables
 ```
 
+```{r rename_figs, eval=FALSE}
+figs <- read_tsv("data/volatiles/volatiles_fig_paths.tsv")
+walk2(figs$path, figs$fig, ~system(paste0("cp ", .x, " ./figures_volatiles2020/Figure", .y, ".",tools::file_ext(.x))))
+walk2(figs$path, figs$fig, ~system(paste0("inkscape -o ./figures_volatiles2020/Figure", .y, ".eps ", .x)))
+```
+
 ```{r loadscents}
 load("data/maxfield_data.rda") #load trait measurements, etc
 load("data/volatiles/maxfield_volatiles_lessdupes.rda") # from maxfield_gc.R, loads maxfmeta and maxf (wide GC data)

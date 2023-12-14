@@ -1,4 +1,4 @@
---- 
+---
 title: "Maxfield Meadow Ipomopsis Experiment"
 author: "[John Powers](http://sites.uci.edu/powers/)"
 date: "`r Sys.Date()`"
@@ -375,6 +375,8 @@ experimentvars <- c("snowcloth","meltdates","waterdates","sm")
 plot_timings(filter(timings, variable %in% c(experimentvars, "mt","nt","ph")))
 plot_timings(filter(timings, variable %in% c(experimentvars, "lt","pt","cen")))
 plot_timings(filter(timings, variable %in% c(experimentvars, "vt", "ph","sds")))
+library(svglite)
+ggsave("images/timings-3.svg", height=5, width=7, device=svglite, fix_text_size=FALSE)
 
 timings.long <- timings %>% select(-plots) %>% 
   pivot_longer(c(begin,end), names_to="time", values_to="day") 
@@ -1916,10 +1918,10 @@ mod.selection.sm  %>% group_by(response) %>%
     Anova_table(.x %>% unnest(tests)) %>% kable() %>% print})
 ```
 
-```{r summaryfigures, fig.width=7, fig.height=3, eval=F}
+```{r summaryfigures, fig.width=7, fig.height=3}
 pt.plantyr %>% 
     pivot_longer(all_of(c("WUE")),names_to="trait") %>% 
-    filter(year!="2020") %>% mutate(year=fct_drop(year)) %>% 
+    filter(year=="2018") %>% mutate(year=fct_drop(year)) %>% 
     ggplot(aes_string(y="survived", x="value", color="water", linetype="year")) + 
     geom_point() + geom_smooth(se=F, method="glm", method.args = list(family=binomial)) +
     scale_linetype(guide=guide_legend(override.aes = list(color="black"))) + 
@@ -1929,7 +1931,7 @@ pt.plantyr %>%
                             panel.border = element_rect(fill=NA, colour = "black"), 
                             panel.spacing=unit(8, "pt"), plot.margin = margin(0,0,0,0, "pt"), 
                             legend.position = "right") 
-ggsave(filename="../surv_water_pt.png", width=4.5, height=2.5)
+ggsave(filename="../surv_water_pt_2018.png", width=5, height=2.5)
 
 plot_abs(mod.abs, mnps.subplot, floraltraits[1:6]) + #Morphological traits - subplot means
     scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))

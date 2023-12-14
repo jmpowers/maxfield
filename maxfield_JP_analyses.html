@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-11-15" />
+<meta name="date" content="2023-11-28" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-11-15</h4>
+<h4 class="date">2023-11-28</h4>
 
 </div>
 
@@ -1018,7 +1018,10 @@ plot_timings(filter(timings, variable %in% c(experimentvars, &quot;mt&quot;,&quo
 <p><img src="images/timings-2.png" width="672" /></p>
 <pre class="r"><code>plot_timings(filter(timings, variable %in% c(experimentvars, &quot;vt&quot;, &quot;ph&quot;,&quot;sds&quot;)))</code></pre>
 <p><img src="images/timings-3.png" width="672" /></p>
-<pre class="r"><code>timings.long &lt;- timings %&gt;% select(-plots) %&gt;% 
+<pre class="r"><code>library(svglite)
+ggsave(&quot;images/timings-3.svg&quot;, height=5, width=7, device=svglite, fix_text_size=FALSE)
+
+timings.long &lt;- timings %&gt;% select(-plots) %&gt;% 
   pivot_longer(c(begin,end), names_to=&quot;time&quot;, values_to=&quot;day&quot;) 
 
 timings.long %&gt;% 
@@ -7734,7 +7737,7 @@ conditions</p>
 </table>
 <pre class="r"><code>pt.plantyr %&gt;% 
     pivot_longer(all_of(c(&quot;WUE&quot;)),names_to=&quot;trait&quot;) %&gt;% 
-    filter(year!=&quot;2020&quot;) %&gt;% mutate(year=fct_drop(year)) %&gt;% 
+    filter(year==&quot;2018&quot;) %&gt;% mutate(year=fct_drop(year)) %&gt;% 
     ggplot(aes_string(y=&quot;survived&quot;, x=&quot;value&quot;, color=&quot;water&quot;, linetype=&quot;year&quot;)) + 
     geom_point() + geom_smooth(se=F, method=&quot;glm&quot;, method.args = list(family=binomial)) +
     scale_linetype(guide=guide_legend(override.aes = list(color=&quot;black&quot;))) + 
@@ -7743,12 +7746,14 @@ conditions</p>
     theme_minimal() + theme(text=element_text(color=&quot;black&quot;), axis.text = element_text(color=&quot;black&quot;),
                             panel.border = element_rect(fill=NA, colour = &quot;black&quot;), 
                             panel.spacing=unit(8, &quot;pt&quot;), plot.margin = margin(0,0,0,0, &quot;pt&quot;), 
-                            legend.position = &quot;right&quot;) 
-ggsave(filename=&quot;../surv_water_pt.png&quot;, width=4.5, height=2.5)
+                            legend.position = &quot;right&quot;) </code></pre>
+<p><img src="images/summaryfigures-1.png" width="672" /></p>
+<pre class="r"><code>ggsave(filename=&quot;../surv_water_pt_2018.png&quot;, width=5, height=2.5)
 
 plot_abs(mod.abs, mnps.subplot, floraltraits[1:6]) + #Morphological traits - subplot means
-    scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))
-ggsave(filename=&quot;../snow_precip_mt.png&quot;, width=7, height=4)</code></pre>
+    scale_y_continuous(limits=c(-1.7, 2.8), breaks=c(-1:2))</code></pre>
+<p><img src="images/summaryfigures-2.png" width="672" /></p>
+<pre class="r"><code>ggsave(filename=&quot;../snow_precip_mt.png&quot;, width=7, height=4)</code></pre>
 </div>
 <div id="rgr-selection-without-treatments" class="section level2">
 <h2>RGR selection without treatments</h2>
