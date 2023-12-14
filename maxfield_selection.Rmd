@@ -332,3 +332,79 @@ ggplot(adaptive.plasticity.data %>% filter(newenv!="R_A") %>% drop_na(fitnesstra
   labs(x="Plastic change in new environment compared to control", color="Year")
 ```
 
+# Long-term selection
+
+```{r mt_selection_long, fig.height=6, fig.width=10}
+#from /MyDocs/MEGA/Documents/RMBL 2013/Project/Data/flrtraits_master3_2013.xls
+#TODO get raw weather data from RMBLWeatherData_2010.xls (1975-2010)
+pg <- read_csv("data/PG_flrtraits_2013.csv") %>% 
+  mutate(type2 = case_match(type, c("AA","agg")~"agg", "TT"~"ten", .default="hyb"))
+floraltraits.pg <- c(floraltraits[c(1,2,3,5,8)], "redness")
+traitnames.pg <- c(traitnames, redness="Redness")
+alltraits.sd.pg <- map_dbl(floraltraits.pg, ~sd(pg[[.x]], na.rm=T)) %>% set_names(floraltraits.pg)
+
+#TODO 2005 and 2010 have less than 10 plants!
+pg %>% count(year,type2) %>% pivot_wider(names_from=type2, values_from=n, values_fill = 0) %>% mutate(n = agg+hyb+ten)
+
+pg %>% pivot_longer(all_of(c(floraltraits.pg, "seeds_est"))) %>% 
+  ggplot(aes(y=value, x=meltday, color=type2)) + 
+  facet_wrap(vars(name), scales="free_y", labeller=as_labeller(traitnames.pg), nrow=2) +
+  geom_point() + geom_smooth(method="lm", se=F) + 
+  theme_bw() + theme(axis.title.y=element_blank())
+
+pg %>% pivot_longer(all_of(floraltraits.pg)) %>% 
+  ggplot(aes(y=seeds_est, x=value, color=factor(year))) + 
+  geom_point(size=0.5) + geom_smooth(method="lm", se=F) + 
+  facet_wrap(vars(name), scales="free_x", labeller=as_labeller(traitnames.pg), nrow=2) + 
+  labs(y=fitnessnames["seeds_est"], color="Year")+
+  theme_bw() + theme(axis.title.x=element_blank())
+
+pg.climate <- pg %>% distinct(year, snowfall, octmay, junjul, meltday)
+with(pg.climate, octmay - snowfall) #almost the same - units? maybe mm water?
+ggplot(pg.climate, aes(x=snowfall, y=meltday)) + geom_point() + geom_smooth(method="lm")
+
+# pg.sdiff <- pg %>% pivot_longer(all_of(floraltraits.pg)) %>% drop_na(value) %>% 
+#   group_by(name) %>% nest() %>% 
+#   mutate(model = map(data, ~lm(seeds_est ~ value * factor(year), data=.)), 
+#          emt = map(model, ~ summary(emtrends(.x, ~year, var="value")))) %>% 
+#   select(-data, -model) %>% unnest(emt)
+  
+```
+
+```{r mt_indiv_mod_long}
+mt.mod.indiv.pg <- pg %>% pivot_longer(all_of(floraltraits.pg), names_to="trait") %>% 
+  drop_na(value) %>% distinct(trait, yr=year) %>% 
+  mutate(fitnesstrait="seeds_est") %>% 
+  mutate(model = pmap(., function(trait, fitnesstrait, yr) {
+    lm(relfitness ~ trait.z, 
+       data=pg %>% mutate(trait.z = pg[[trait]] / alltraits.sd.pg[[trait]]) %>% 
+         rename("fitness" = fitnesstrait) %>% 
+         filter(year==yr) %>% mutate(relfitness = fitness/mean(fitness, na.rm=T)))}), # mean fitness in each yr
+    coef = map(model, tidy))
+    #test = map(model, ~tidy(car::Anova(.x), type=3)),
+    #emm = map(model, ~summary(emtrends(.x, ~1, var="trait.z")))) 
+
+#get the the standardized selection differential S' (change in relative fitness / standardized trait value)
+mt.mod.indiv.slopes.pg <- mt.mod.indiv.pg %>% select(trait, fitnesstrait, year=yr, coef) %>% 
+  unnest(coef) %>% filter(term=="trait.z") %>% left_join(pg.climate)
+
+ggplot(mt.mod.indiv.slopes.pg, aes(x=traitnames.pg[trait], color=factor(year), y=estimate, ymin=estimate-std.error, ymax=estimate+std.error)) + 
+  facet_wrap(vars(fitnesstrait), labeller = as_labeller(fitnessnames)) + 
+  geom_hline(yintercept=0) + geom_pointrange() + coord_flip() +  
+  labs(y="Standardized selection differential S'", color="Year") + 
+  theme_bw() + theme(axis.title.y=element_blank())
+
+#TODO the corolla length plot doesn't quite match Fig 3B in Campbell & Powers 2015
+ggplot(mt.mod.indiv.slopes.pg , aes(x=meltday, y=estimate, ymin=estimate-std.error, ymax=estimate+std.error)) +
+    facet_wrap(vars(trait), labeller = as_labeller(traitnames.pg)) + 
+  geom_smooth(method="lm", color="grey70", alpha=0.1) + 
+  geom_hline(yintercept=0) + geom_linerange(color="grey70") + geom_text(aes(label=str_sub(year,3,4))) + 
+  labs(y="Standardized selection differential S'", x="Snowmelt date") + theme_bw()
+
+mt.mod.indiv.slopes.pg %>% group_by(trait) %>%  nest() %>% 
+  mutate(model = map(data, ~lm(estimate ~ meltday, data=.)),
+         test = map(model, ~tidy(anova(.)))) %>% 
+  select(-data, -model) %>% unnest(test) %>% filter(term=="meltday") %>% kable(caption="selection differential vs. meltdate")
+```
+
+
