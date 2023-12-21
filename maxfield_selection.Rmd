@@ -344,7 +344,8 @@ traitnames.pg <- c(traitnames, redness="Redness")
 alltraits.sd.pg <- map_dbl(floraltraits.pg, ~sd(pg[[.x]], na.rm=T)) %>% set_names(floraltraits.pg)
 
 #TODO 2005 and 2010 have less than 10 plants!
-pg %>% count(year,type2) %>% pivot_wider(names_from=type2, values_from=n, values_fill = 0) %>% mutate(n = agg+hyb+ten)
+pg %>% count(year,type2) %>% pivot_wider(names_from=type2, values_from=n, values_fill = 0) %>%
+  mutate(n = agg+hyb+ten) %>% kable(caption = "number of plants of each species")
 
 pg %>% pivot_longer(all_of(c(floraltraits.pg, "seeds_est"))) %>% 
   ggplot(aes(y=value, x=meltday, color=type2)) + 
@@ -362,14 +363,9 @@ pg %>% pivot_longer(all_of(floraltraits.pg)) %>%
 pg.climate <- pg %>% distinct(year, snowfall, octmay, junjul, meltday)
 with(pg.climate, octmay - snowfall) #almost the same - units? maybe mm water?
 ggplot(pg.climate, aes(x=snowfall, y=meltday)) + geom_point() + geom_smooth(method="lm")
-
-# pg.sdiff <- pg %>% pivot_longer(all_of(floraltraits.pg)) %>% drop_na(value) %>% 
-#   group_by(name) %>% nest() %>% 
-#   mutate(model = map(data, ~lm(seeds_est ~ value * factor(year), data=.)), 
-#          emt = map(model, ~ summary(emtrends(.x, ~year, var="value")))) %>% 
-#   select(-data, -model) %>% unnest(emt)
-  
 ```
+
+## Selection in each year
 
 ```{r mt_indiv_mod_long}
 mt.mod.indiv.pg <- pg %>% pivot_longer(all_of(floraltraits.pg), names_to="trait") %>% 
@@ -407,4 +403,44 @@ mt.mod.indiv.slopes.pg %>% group_by(trait) %>%  nest() %>%
   select(-data, -model) %>% unnest(test) %>% filter(term=="meltday") %>% kable(caption="selection differential vs. meltdate")
 ```
 
+# Selection by snowmelt date
+
+```{r mt_indiv_snow, fig.width=14, fig.height=10}
+datasetnames <- c(max="Maxfield Meadow", pg="Poverty Gulch")
+max.pg.std <- bind_rows(.id="dataset", pg=filter(pg, type2!="ten"), 
+                        max=mutate(mnps.plantyr, site="max", year=as.numeric(year), meltday=sun_date)) %>%
+  pivot_longer(any_of(c(floraltraits.pg, floraltraits))) %>% 
+  select(dataset, year, site, plant, type, type2, seeds_est, meltday, name, value) %>% 
+  group_by(site, year, name) %>% drop_na(value, seeds_est) %>%
+  mutate(relfitness = seeds_est/mean(seeds_est), #relative fitness in each year for the plants with that trait measured
+         stdtrait = (value-mean(value))/sd(value)) #mean-standardized trait
+
+meltbins <- 4
+ggplot(max.pg.std, aes(y=relfitness, x=stdtrait, color=cut(meltday,meltbins))) + 
+  facet_grid(dataset ~ name, labeller = as_labeller(c(traitnames.pg, datasetnames))) + 
+  geom_point(size=0.5) + geom_smooth(method="lm", se=F, linewidth=2) +
+  coord_cartesian(xlim=c(-3,3), ylim=c(0, 5))+#some outliers not shown
+  scale_color_brewer(palette="Oranges", direction=-1) + scale_y_continuous(expand=expansion(c(0,0.05)))+
+  labs(x="Mean-centered and SD-scaled trait", y="Relative fitness (total seeds)", color = "Snowmelt date") +
+  theme_dark() + theme(legend.position = "top")
+```
+
+```{r mt_indiv_snow_mod}
+ggplot(max.pg.std, aes(x=meltday, fill=cut(meltday, meltbins))) + geom_histogram(binwidth=1)+
+  facet_wrap(vars(dataset), labeller = as_labeller(datasetnames)) + 
+  scale_fill_brewer(palette="Oranges", direction=-1, guide="none") + theme_dark() + 
+  labs(x="Snowmelt date", y="Number of observations")
+
+max.pg.std.mod <- max.pg.std %>% group_by(dataset, name) %>% nest() %>%
+  mutate(model = map(data, ~lm(relfitness ~ stdtrait * meltday, data=.)),
+         coef = map(model, ~tidy(.x))) %>%
+  select(-data, -model) %>% unnest(coef) %>% filter(term!="(Intercept)")
+
+ggplot(max.pg.std.mod, aes(y=traitnames.pg[name], x=estimate, shape=p.value<0.05, color=datasetnames[dataset])) + 
+  facet_wrap(vars(term), scales = "free_x") +
+  geom_vline(xintercept = 0)+ scale_shape_manual(values=c(1,19), guide="none")+ 
+  scale_color_brewer("", palette = "Set1")+
+  geom_pointrange(aes(xmin=estimate-std.error, xmax=estimate+std.error)) + 
+  theme_bw() + theme(legend.position = "top", axis.title.y=element_blank()) 
+```
 
