@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-01-03" />
+<meta name="date" content="2024-01-04" />
 
 <title>Long term Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Long term Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-01-03</h4>
+<h4 class="date">2024-01-04</h4>
 
 </div>
 
@@ -266,10 +266,123 @@ knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F,
                       fig.path = &quot;images_longterm/&quot;, dev=&quot;svglite&quot;, dev.args=list(fix_text_size=FALSE), fig.height=6, fig.width=6)
 options(digits=3, knitr.kable.NA = &quot;&quot;) # for kables
 ggplot2::theme_set(theme_bw())</code></pre>
-<pre class="r"><code>sampling &lt;- map_dfr(set_names(as.character(2018:2022)), .id=&quot;year&quot;, 
+<pre class="r"><code>sampling &lt;- map_dfr(set_names(as.character(2017:2022)), .id=&quot;year&quot;, 
                     ~read_sheet(&quot;1VSEJtR_lGGHUNc738U9SLpZg2_bk-7ZITlnvl-OsAdg&quot;, sheet=.x) %&gt;% 
                       mutate(across(any_of(c(&quot;sample&quot;, &quot;plant&quot;, &quot;pump_id&quot;, &quot;vial&quot;)), as.character))) %&gt;% 
   mutate(across(c(bag, pump, end, equil, pumping), ~as.numeric(.x - ymd_hms(&quot;1899-12-30 00:00:00&quot;), unit=&quot;hours&quot;)))</code></pre>
+<pre class="r"><code>sampling %&gt;% count(year, observer) %&gt;% pivot_wider(names_from=observer, values_from=n) %&gt;% kable(caption = &quot;samples by observer&quot;)</code></pre>
+<table>
+<caption>samples by observer</caption>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="right">NA</th>
+<th align="right">JN</th>
+<th align="right">KW</th>
+<th align="right">LS</th>
+<th align="right">JP</th>
+<th align="right">ST</th>
+<th align="right">XL</th>
+<th align="right">DH</th>
+<th align="right">AA</th>
+<th align="right">DC</th>
+<th align="right">JB</th>
+<th align="right">JK</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2017</td>
+<td align="right">266</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2018</td>
+<td align="right">63</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2019</td>
+<td align="right"></td>
+<td align="right">32</td>
+<td align="right">31</td>
+<td align="right">33</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2020</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right">26</td>
+<td align="right">29</td>
+<td align="right">11</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2021</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right">23</td>
+<td align="right"></td>
+<td align="right">34</td>
+<td align="right"></td>
+<td align="right">8</td>
+<td align="right">39</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2022</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right">73</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right">83</td>
+<td align="right">77</td>
+<td align="right">4</td>
+<td align="right">21</td>
+<td align="right">32</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>sampling %&gt;% count(date, site, time, type) %&gt;% mutate(date=as.Date(date)) %&gt;% pivot_wider(names_from=type, values_from=n) %&gt;% 
   kable(caption=&quot;samples by date&quot;)</code></pre>
 <table>
@@ -285,6 +398,134 @@ ggplot2::theme_set(theme_bw())</code></pre>
 </tr>
 </thead>
 <tbody>
+<tr class="odd">
+<td align="left">2017-07-10</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">9</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2017-07-13</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">27</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2017-07-14</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">17</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">2017-07-18</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">20</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2017-07-18</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">17</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">2017-07-19</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">2</td>
+<td align="right">10</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2017-07-19</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">15</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">2017-07-20</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">5</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2017-07-20</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">17</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">2017-07-21</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right"></td>
+<td align="right">2</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2017-07-21</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">12</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">2017-07-24</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">26</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2017-07-26</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2017-07-27</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">4</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2017-08-01</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">1</td>
+<td align="right">25</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">2017-08-10</td>
+<td align="left">Lagg</td>
+<td align="left">N</td>
+<td align="right">1</td>
+<td align="right">23</td>
+<td align="right">1</td>
+</tr>
 <tr class="odd">
 <td align="left">2018-07-18</td>
 <td align="left">VF</td>
@@ -454,11 +695,19 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 </tr>
 <tr class="even">
+<td align="left">2022-08-01</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">4</td>
+<td align="right">19</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
 <td align="left">2022-08-02</td>
 <td align="left">VF</td>
 <td align="left">N</td>
-<td align="right">1</td>
-<td align="right">3</td>
+<td align="right">4</td>
+<td align="right">20</td>
 <td align="right"></td>
 </tr>
 </tbody>
@@ -477,33 +726,39 @@ ggplot2::theme_set(theme_bw())</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">2017</td>
+<td align="right">20</td>
+<td align="right">232</td>
+<td align="right">14</td>
+</tr>
+<tr class="even">
 <td align="left">2018</td>
 <td align="right">9</td>
 <td align="right">50</td>
 <td align="right">4</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">14</td>
 <td align="right">81</td>
 <td align="right">1</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">7</td>
 <td align="right">59</td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2021</td>
 <td align="right">10</td>
 <td align="right">94</td>
 <td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2022</td>
-<td align="right">25</td>
-<td align="right">222</td>
+<td align="right">32</td>
+<td align="right">258</td>
 <td align="right"></td>
 </tr>
 </tbody>
@@ -518,56 +773,65 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <th align="right">Ihyb_D</th>
 <th align="right">Ihyb_N</th>
 <th align="right">Lagg_D</th>
-<th align="right">VF_D</th>
 <th align="right">Lagg_N</th>
+<th align="right">VF_D</th>
 <th align="right">VF_N</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">2017</td>
+<td align="right">40</td>
+<td align="right">35</td>
+<td align="right">64</td>
+<td align="right">23</td>
+<td align="right">70</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
 <td align="left">2018</td>
 <td align="right">8</td>
 <td align="right">10</td>
 <td align="right">15</td>
+<td align="right"></td>
 <td align="right">17</td>
 <td align="right"></td>
-<td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">25</td>
 <td align="right"></td>
 <td align="right">39</td>
+<td align="right"></td>
 <td align="right">17</td>
 <td align="right"></td>
-<td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">21</td>
 <td align="right">24</td>
 <td align="right"></td>
+<td align="right"></td>
 <td align="right">14</td>
 <td align="right"></td>
-<td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2021</td>
 <td align="right">15</td>
 <td align="right">15</td>
 <td align="right">44</td>
+<td align="right"></td>
 <td align="right">20</td>
 <td align="right"></td>
-<td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2022</td>
 <td align="right">38</td>
 <td align="right">85</td>
 <td align="right">49</td>
-<td align="right"></td>
 <td align="right">47</td>
-<td align="right">3</td>
+<td align="right">19</td>
+<td align="right">20</td>
 </tr>
 </tbody>
 </table>
@@ -581,56 +845,65 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <th align="right">Ihyb_D</th>
 <th align="right">Ihyb_N</th>
 <th align="right">Lagg_D</th>
-<th align="right">VF_D</th>
 <th align="right">Lagg_N</th>
+<th align="right">VF_D</th>
 <th align="right">VF_N</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">2017</td>
+<td align="right">32</td>
+<td align="right">30</td>
+<td align="right">49</td>
+<td align="right">22</td>
+<td align="right">46</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
 <td align="left">2018</td>
 <td align="right">8</td>
 <td align="right">10</td>
 <td align="right">15</td>
+<td align="right"></td>
 <td align="right">17</td>
 <td align="right"></td>
-<td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="right">25</td>
 <td align="right"></td>
 <td align="right">39</td>
+<td align="right"></td>
 <td align="right">16</td>
 <td align="right"></td>
-<td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="right">20</td>
 <td align="right">20</td>
 <td align="right"></td>
+<td align="right"></td>
 <td align="right">13</td>
 <td align="right"></td>
-<td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2021</td>
 <td align="right">15</td>
 <td align="right">12</td>
 <td align="right">41</td>
+<td align="right"></td>
 <td align="right">20</td>
 <td align="right"></td>
-<td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2022</td>
 <td align="right">25</td>
 <td align="right">31</td>
 <td align="right">48</td>
-<td align="right"></td>
 <td align="right">46</td>
-<td align="right">3</td>
+<td align="right">19</td>
+<td align="right">20</td>
 </tr>
 </tbody>
 </table>
@@ -645,13 +918,63 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <th align="left">time</th>
 <th align="right">1</th>
 <th align="right">2</th>
-<th align="right">3</th>
 <th align="right">4</th>
+<th align="right">3</th>
 <th align="right">5</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">2017</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">26</td>
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2017</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">26</td>
+<td align="right">3</td>
+<td align="right"></td>
+<td align="right">1</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2017</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">35</td>
+<td align="right">13</td>
+<td align="right"></td>
+<td align="right">1</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2017</td>
+<td align="left">Lagg</td>
+<td align="left">N</td>
+<td align="right">21</td>
+<td align="right">1</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2017</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">25</td>
+<td align="right">18</td>
+<td align="right"></td>
+<td align="right">3</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
 <td align="left">2018</td>
 <td align="left">Ihyb</td>
 <td align="left">D</td>
@@ -661,7 +984,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2018</td>
 <td align="left">Ihyb</td>
 <td align="left">N</td>
@@ -671,7 +994,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2018</td>
 <td align="left">Lagg</td>
 <td align="left">D</td>
@@ -681,7 +1004,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2018</td>
 <td align="left">VF</td>
 <td align="left">D</td>
@@ -691,7 +1014,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="left">Ihyb</td>
 <td align="left">D</td>
@@ -701,7 +1024,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2019</td>
 <td align="left">Lagg</td>
 <td align="left">D</td>
@@ -711,7 +1034,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2019</td>
 <td align="left">VF</td>
 <td align="left">D</td>
@@ -721,7 +1044,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2020</td>
 <td align="left">Ihyb</td>
 <td align="left">D</td>
@@ -731,7 +1054,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2020</td>
 <td align="left">Ihyb</td>
 <td align="left">N</td>
@@ -741,7 +1064,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2020</td>
 <td align="left">VF</td>
 <td align="left">D</td>
@@ -751,7 +1074,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2021</td>
 <td align="left">Ihyb</td>
 <td align="left">D</td>
@@ -761,7 +1084,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2021</td>
 <td align="left">Ihyb</td>
 <td align="left">N</td>
@@ -771,7 +1094,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2021</td>
 <td align="left">Lagg</td>
 <td align="left">D</td>
@@ -781,7 +1104,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2021</td>
 <td align="left">VF</td>
 <td align="left">D</td>
@@ -791,7 +1114,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2022</td>
 <td align="left">Ihyb</td>
 <td align="left">D</td>
@@ -801,17 +1124,17 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2022</td>
 <td align="left">Ihyb</td>
 <td align="left">N</td>
 <td align="right">5</td>
 <td align="right">8</td>
-<td align="right">10</td>
 <td align="right">6</td>
+<td align="right">10</td>
 <td align="right">2</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">2022</td>
 <td align="left">Lagg</td>
 <td align="left">D</td>
@@ -821,7 +1144,7 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">2022</td>
 <td align="left">Lagg</td>
 <td align="left">N</td>
@@ -831,15 +1154,91 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <td align="right"></td>
 <td align="right"></td>
 </tr>
+<tr class="even">
+<td align="left">2022</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">19</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
 <tr class="odd">
 <td align="left">2022</td>
 <td align="left">VF</td>
 <td align="left">N</td>
-<td align="right">3</td>
+<td align="right">20</td>
 <td align="right"></td>
 <td align="right"></td>
 <td align="right"></td>
 <td align="right"></td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sampling %&gt;% drop_na(treatment) %&gt;% count(year, site, treatment) %&gt;% 
+  pivot_wider(names_from=site, values_from=n) %&gt;% kable(caption=&quot;floral samples from each treatment&quot;)</code></pre>
+<table>
+<caption>floral samples from each treatment</caption>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="left">treatment</th>
+<th align="right">Ihyb</th>
+<th align="right">Lagg</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="left">ambient</td>
+<td align="right">36</td>
+<td align="right">58</td>
+</tr>
+<tr class="even">
+<td align="left">2022</td>
+<td align="left">nitrogen</td>
+<td align="right">48</td>
+<td align="right">20</td>
+</tr>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="left">water control</td>
+<td align="right">39</td>
+<td align="right">18</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sampling %&gt;% drop_na(treatment) %&gt;% count(year, site, treatment, plant) %&gt;% count(year, site, treatment) %&gt;% 
+  pivot_wider(names_from=site, values_from=n) %&gt;% kable(caption=&quot;plants from each treatment&quot;)</code></pre>
+<table>
+<caption>plants from each treatment</caption>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="left">treatment</th>
+<th align="right">Ihyb</th>
+<th align="right">Lagg</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="left">ambient</td>
+<td align="right">11</td>
+<td align="right">30</td>
+</tr>
+<tr class="even">
+<td align="left">2022</td>
+<td align="left">nitrogen</td>
+<td align="right">10</td>
+<td align="right">10</td>
+</tr>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="left">water control</td>
+<td align="right">10</td>
+<td align="right">9</td>
 </tr>
 </tbody>
 </table>
@@ -849,6 +1248,12 @@ ggplot2::theme_set(theme_bw())</code></pre>
 <p><img src="images_longterm/sampsize-2.svg" width="576" /></p>
 <pre class="r"><code>sampling %&gt;% ggplot(aes(y=bag, x=year, color=site)) + facet_wrap(vars(time), ncol=1, scales=&quot;free_y&quot;) + geom_boxplot()</code></pre>
 <p><img src="images_longterm/sampsize-3.svg" width="576" /></p>
+<pre class="r"><code>sampling %&gt;% ggplot(aes(y=equil,   x=year, color=type)) + geom_boxplot() + ylim(c(0,NA))</code></pre>
+<p><img src="images_longterm/sampsize-4.svg" width="576" /></p>
+<pre class="r"><code>sampling %&gt;% ggplot(aes(y=pumping, x=year, color=type)) + geom_boxplot() + ylim(c(0,NA))</code></pre>
+<p><img src="images_longterm/sampsize-5.svg" width="576" /></p>
+<pre class="r"><code>sampling %&gt;% filter(type==&quot;floral&quot;) %&gt;% ggplot(aes(y=biomass_g, x=site, color=site)) + geom_boxplot()</code></pre>
+<p><img src="images_longterm/sampsize-6.svg" width="576" /></p>
 
 
 
