@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="John Powers" />
+
+<meta name="date" content="2024-01-03" />
+
+<title>Long term Ipomopsis Volatiles</title>
+
+<script src="libs/header-attrs-2.20/header-attrs.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="libs/navigation-1.1/tabsets.js"></script>
+<script src="libs/navigation-1.1/codefolding.js"></script>
+<link href="libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Long term Ipomopsis Volatiles</h1>
+<h4 class="author"><a href="http://sites.uci.edu/powers/">John
+Powers</a></h4>
+<h4 class="date">2024-01-03</h4>
+
+</div>
+
+
+<pre class="r"><code>library(tidyverse)
+library(googlesheets4)
+gs4_auth(email=T)
+library(knitr)
+knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, 
+                      fig.path = &quot;images_longterm/&quot;, dev=&quot;svglite&quot;, dev.args=list(fix_text_size=FALSE), fig.height=6, fig.width=6)
+options(digits=3, knitr.kable.NA = &quot;&quot;) # for kables
+ggplot2::theme_set(theme_bw())</code></pre>
+<pre class="r"><code>sampling &lt;- map_dfr(set_names(as.character(2018:2022)), .id=&quot;year&quot;, 
+                    ~read_sheet(&quot;1VSEJtR_lGGHUNc738U9SLpZg2_bk-7ZITlnvl-OsAdg&quot;, sheet=.x) %&gt;% 
+                      mutate(across(any_of(c(&quot;sample&quot;, &quot;plant&quot;, &quot;pump_id&quot;, &quot;vial&quot;)), as.character))) %&gt;% 
+  mutate(across(c(bag, pump, end, equil, pumping), ~as.numeric(.x - ymd_hms(&quot;1899-12-30 00:00:00&quot;), unit=&quot;hours&quot;)))</code></pre>
+<pre class="r"><code>sampling %&gt;% count(date, site, time, type) %&gt;% mutate(date=as.Date(date)) %&gt;% pivot_wider(names_from=type, values_from=n) %&gt;% 
+  kable(caption=&quot;samples by date&quot;)</code></pre>
+<table>
+<caption>samples by date</caption>
+<thead>
+<tr class="header">
+<th align="left">date</th>
+<th align="left">site</th>
+<th align="left">time</th>
+<th align="right">ambient</th>
+<th align="right">floral</th>
+<th align="right">leaf</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018-07-18</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">17</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">2018-07-19</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">2</td>
+<td align="right">10</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-07-19</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">15</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">2018-07-20</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">5</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-07-26</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2019-07-23</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">6</td>
+<td align="right">17</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2019-07-30</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">3</td>
+<td align="right">39</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">2019-08-02</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">5</td>
+<td align="right">25</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2020-07-16</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">3</td>
+<td align="right">24</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2020-07-17</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">14</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2020-07-21</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">21</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2021-07-12</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">2</td>
+<td align="right">15</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2021-07-15</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">3</td>
+<td align="right">44</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2021-07-20</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">2</td>
+<td align="right">20</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2021-07-21</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">3</td>
+<td align="right">15</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2022-07-11</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">3</td>
+<td align="right">34</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2022-07-12</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">9</td>
+<td align="right">20</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2022-07-21</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">3</td>
+<td align="right">49</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2022-07-21</td>
+<td align="left">Lagg</td>
+<td align="left">N</td>
+<td align="right">5</td>
+<td align="right">47</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2022-07-27</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">3</td>
+<td align="right">51</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2022-07-28</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">1</td>
+<td align="right">18</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2022-08-02</td>
+<td align="left">VF</td>
+<td align="left">N</td>
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sampling %&gt;% count(year, type) %&gt;% pivot_wider(names_from=type, values_from=n) %&gt;% 
+  kable(caption=&quot;samples by type&quot;)</code></pre>
+<table>
+<caption>samples by type</caption>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="right">ambient</th>
+<th align="right">floral</th>
+<th align="right">leaf</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="right">9</td>
+<td align="right">50</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="right">14</td>
+<td align="right">81</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="right">7</td>
+<td align="right">59</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2021</td>
+<td align="right">10</td>
+<td align="right">94</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="right">25</td>
+<td align="right">222</td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sampling %&gt;% filter(type==&quot;floral&quot;) %&gt;% count(year, site, time) %&gt;% pivot_wider(names_from=c(site,time), values_from=n) %&gt;% 
+  kable(caption=&quot;floral samples at each site and time&quot;)</code></pre>
+<table>
+<caption>floral samples at each site and time</caption>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="right">Ihyb_D</th>
+<th align="right">Ihyb_N</th>
+<th align="right">Lagg_D</th>
+<th align="right">VF_D</th>
+<th align="right">Lagg_N</th>
+<th align="right">VF_N</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="right">8</td>
+<td align="right">10</td>
+<td align="right">15</td>
+<td align="right">17</td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="right">25</td>
+<td align="right"></td>
+<td align="right">39</td>
+<td align="right">17</td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="right">21</td>
+<td align="right">24</td>
+<td align="right"></td>
+<td align="right">14</td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2021</td>
+<td align="right">15</td>
+<td align="right">15</td>
+<td align="right">44</td>
+<td align="right">20</td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="right">38</td>
+<td align="right">85</td>
+<td align="right">49</td>
+<td align="right"></td>
+<td align="right">47</td>
+<td align="right">3</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sampling %&gt;% filter(type==&quot;floral&quot;, !is.na(plant)) %&gt;% count(year, site, time, plant) %&gt;% count(year, site, time) %&gt;%
+  pivot_wider(names_from=c(site,time), values_from=n) %&gt;% kable(caption=&quot;unique plants at each site and time&quot;)</code></pre>
+<table>
+<caption>unique plants at each site and time</caption>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="right">Ihyb_D</th>
+<th align="right">Ihyb_N</th>
+<th align="right">Lagg_D</th>
+<th align="right">VF_D</th>
+<th align="right">Lagg_N</th>
+<th align="right">VF_N</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="right">8</td>
+<td align="right">10</td>
+<td align="right">15</td>
+<td align="right">17</td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="right">25</td>
+<td align="right"></td>
+<td align="right">39</td>
+<td align="right">16</td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="right">20</td>
+<td align="right">20</td>
+<td align="right"></td>
+<td align="right">13</td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2021</td>
+<td align="right">15</td>
+<td align="right">12</td>
+<td align="right">41</td>
+<td align="right">20</td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="right">25</td>
+<td align="right">31</td>
+<td align="right">48</td>
+<td align="right"></td>
+<td align="right">46</td>
+<td align="right">3</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sampling %&gt;% filter(type==&quot;floral&quot;, !is.na(plant)) %&gt;% count(year, site, time, plant) %&gt;% count(year, site, time, n) %&gt;% 
+  pivot_wider(names_from=n, values_from=nn) %&gt;% kable(caption=&quot;floral samples per plant&quot;)</code></pre>
+<table>
+<caption>floral samples per plant</caption>
+<thead>
+<tr class="header">
+<th align="left">year</th>
+<th align="left">site</th>
+<th align="left">time</th>
+<th align="right">1</th>
+<th align="right">2</th>
+<th align="right">3</th>
+<th align="right">4</th>
+<th align="right">5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">8</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2018</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">10</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2018</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">15</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2018</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">17</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2019</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">25</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2019</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">39</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2019</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">15</td>
+<td align="right">1</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2020</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">20</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2020</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">20</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2020</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">12</td>
+<td align="right">1</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2021</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">15</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2021</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">9</td>
+<td align="right">3</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2021</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">38</td>
+<td align="right">3</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2021</td>
+<td align="left">VF</td>
+<td align="left">D</td>
+<td align="right">20</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="left">Ihyb</td>
+<td align="left">D</td>
+<td align="right">12</td>
+<td align="right">13</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2022</td>
+<td align="left">Ihyb</td>
+<td align="left">N</td>
+<td align="right">5</td>
+<td align="right">8</td>
+<td align="right">10</td>
+<td align="right">6</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="left">Lagg</td>
+<td align="left">D</td>
+<td align="right">47</td>
+<td align="right">1</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">2022</td>
+<td align="left">Lagg</td>
+<td align="left">N</td>
+<td align="right">45</td>
+<td align="right">1</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">2022</td>
+<td align="left">VF</td>
+<td align="left">N</td>
+<td align="right">3</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sampling %&gt;% ggplot(aes(y=VWC, x=yday(date), color=site)) + facet_wrap(vars(year), ncol=1) + geom_point()</code></pre>
+<p><img src="images_longterm/sampsize-1.svg" width="576" /></p>
+<pre class="r"><code>sampling %&gt;% ggplot(aes(y=bag, x=yday(date), color=site)) + facet_wrap(vars(year), ncol=1) + geom_point()</code></pre>
+<p><img src="images_longterm/sampsize-2.svg" width="576" /></p>
+<pre class="r"><code>sampling %&gt;% ggplot(aes(y=bag, x=year, color=site)) + facet_wrap(vars(time), ncol=1, scales=&quot;free_y&quot;) + geom_boxplot()</code></pre>
+<p><img src="images_longterm/sampsize-3.svg" width="576" /></p>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

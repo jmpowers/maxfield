@@ -1,0 +1,51 @@
+---
+title: "Long term Ipomopsis Volatiles"
+author: "[John Powers](http://sites.uci.edu/powers/)"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    self_contained: no
+    lib_dir: libs
+    code_folding: hide
+    toc: yes
+    toc_float: TRUE
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, message=FALSE}
+library(tidyverse)
+library(googlesheets4)
+gs4_auth(email=T)
+library(knitr)
+knitr::opts_chunk$set(comment="", cache=T, warning = F, message = F, 
+                      fig.path = "images_longterm/", dev="svglite", dev.args=list(fix_text_size=FALSE), fig.height=6, fig.width=6)
+options(digits=3, knitr.kable.NA = "") # for kables
+ggplot2::theme_set(theme_bw())
+```
+
+```{r metadata}
+sampling <- map_dfr(set_names(as.character(2018:2022)), .id="year", 
+                    ~read_sheet("1VSEJtR_lGGHUNc738U9SLpZg2_bk-7ZITlnvl-OsAdg", sheet=.x) %>% 
+                      mutate(across(any_of(c("sample", "plant", "pump_id", "vial")), as.character))) %>% 
+  mutate(across(c(bag, pump, end, equil, pumping), ~as.numeric(.x - ymd_hms("1899-12-30 00:00:00"), unit="hours")))
+```
+
+```{r sampsize}
+sampling %>% count(date, site, time, type) %>% mutate(date=as.Date(date)) %>% pivot_wider(names_from=type, values_from=n) %>% 
+  kable(caption="samples by date")
+sampling %>% count(year, type) %>% pivot_wider(names_from=type, values_from=n) %>% 
+  kable(caption="samples by type")
+sampling %>% filter(type=="floral") %>% count(year, site, time) %>% pivot_wider(names_from=c(site,time), values_from=n) %>% 
+  kable(caption="floral samples at each site and time")
+
+sampling %>% filter(type=="floral", !is.na(plant)) %>% count(year, site, time, plant) %>% count(year, site, time) %>%
+  pivot_wider(names_from=c(site,time), values_from=n) %>% kable(caption="unique plants at each site and time")
+sampling %>% filter(type=="floral", !is.na(plant)) %>% count(year, site, time, plant) %>% count(year, site, time, n) %>% 
+  pivot_wider(names_from=n, values_from=nn) %>% kable(caption="floral samples per plant")
+
+sampling %>% ggplot(aes(y=VWC, x=yday(date), color=site)) + facet_wrap(vars(year), ncol=1) + geom_point()
+sampling %>% ggplot(aes(y=bag, x=yday(date), color=site)) + facet_wrap(vars(year), ncol=1) + geom_point()
+sampling %>% ggplot(aes(y=bag, x=year, color=site)) + facet_wrap(vars(time), ncol=1, scales="free_y") + geom_boxplot()
+```
+
