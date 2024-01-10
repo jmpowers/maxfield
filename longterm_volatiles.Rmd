@@ -25,7 +25,7 @@ ggplot2::theme_set(theme_bw())
 ```
 
 ```{r metadata}
-sampling <- map_dfr(set_names(as.character(2017:2022)), .id="year", 
+sampling <- map_dfr(set_names(as.character(2017:2023)), .id="year", 
                     ~read_sheet("1VSEJtR_lGGHUNc738U9SLpZg2_bk-7ZITlnvl-OsAdg", sheet=.x) %>% 
                       mutate(across(any_of(c("sample", "plant", "pump_id", "vial")), as.character))) %>% 
   mutate(across(c(bag, pump, end, equil, pumping), ~as.numeric(.x - ymd_hms("1899-12-30 00:00:00"), unit="hours")))
@@ -56,4 +56,3 @@ sampling %>% ggplot(aes(y=equil,   x=year, color=type)) + geom_boxplot() + ylim(
 sampling %>% ggplot(aes(y=pumping, x=year, color=type)) + geom_boxplot() + ylim(c(0,NA))
 sampling %>% filter(type=="floral") %>% ggplot(aes(y=biomass_g, x=site, color=site)) + geom_boxplot()
 ```
-
