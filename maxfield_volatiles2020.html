@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-11-17" />
+<meta name="date" content="2024-01-19" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-11-17</h4>
+<h4 class="date">2024-01-19</h4>
 
 </div>
 
@@ -282,6 +282,9 @@ library(knitr)
 knitr::opts_chunk$set(comment=&quot;&quot;, cache=T, warning = F, message = F, 
                       fig.path = &quot;images_volatiles2020/&quot;, dev=&quot;svglite&quot;, dev.args=list(fix_text_size=FALSE), fig.height=8, fig.width=8)
 options(digits=4) # for kables</code></pre>
+<pre class="r"><code>figs &lt;- read_tsv(&quot;data/volatiles/volatiles_fig_paths.tsv&quot;)
+walk2(figs$path, figs$fig, ~system(paste0(&quot;cp &quot;, .x, &quot; ./figures_volatiles2020/Figure&quot;, .y, &quot;.&quot;,tools::file_ext(.x))))
+walk2(figs$path, figs$fig, ~system(paste0(&quot;inkscape -o ./figures_volatiles2020/Figure&quot;, .y, &quot;.eps &quot;, .x)))</code></pre>
 <pre class="r"><code>load(&quot;data/maxfield_data.rda&quot;) #load trait measurements, etc
 load(&quot;data/volatiles/maxfield_volatiles_lessdupes.rda&quot;) # from maxfield_gc.R, loads maxfmeta and maxf (wide GC data)
 
@@ -3446,13 +3449,63 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 </div>
 <div id="volatiles-vs.-floral-traits" class="section level1">
 <h1>Volatiles vs. floral traits</h1>
+<p>Venn for the plants that have seeds counted</p>
+<pre class="r"><code>samples_per_plant &lt;- volsmeta %&gt;% count(year, plantid, name=&quot;scent&quot;) %&gt;% as_tibble() %&gt;% 
+  full_join(mnps.plantyr.traits %&gt;% drop_na(corolla_length) %&gt;% count(year,plantid, name=&quot;morph&quot;)) %&gt;% 
+  full_join(mnps.plantyr.traits %&gt;% drop_na(nectar_24_h_ul) %&gt;% count(year,plantid, name=&quot;nectar&quot;)) %&gt;% 
+  full_join(mnps.plantyr.traits %&gt;% drop_na(height_cm) %&gt;% count(year,plantid, name=&quot;height&quot;)) %&gt;% 
+  full_join(mnps.plantyr.traits %&gt;% drop_na(seeds_est) %&gt;% count(year,plantid, name=&quot;seeds&quot;)) %&gt;% 
+  drop_na(seeds)
+
+library(ggvenn)
+samples_per_plant %&gt;% mutate(across(c(scent, morph, nectar), ~!is.na(.x))) %&gt;% ggvenn()</code></pre>
+<p><img src="images_volatiles2020/overlap-1.svg" width="768" /></p>
+<pre class="r"><code>samples_per_plant %&gt;% mutate(across(c(scent, morph, nectar, height), ~!is.na(.x))) %&gt;% ggvenn()</code></pre>
+<p><img src="images_volatiles2020/overlap-2.svg" width="768" /></p>
+<pre class="r"><code>vols.traits &lt;- bind_cols(volsmeta.avg, vols.good.avg) %&gt;% full_join(mnps.plantyr.traits)
+
+vmnt &lt;- vols.traits %&gt;% select(corolla_length, corolla_width, style_length, 
+                               nectar_24_h_ul, nectar_conc, height_cm, all_of(ipogood)) %&gt;% 
+  drop_na() %&gt;% #drop plants with any missing data
+  mutate(across(all_of(ipogood), sqrt))
+
+vmnt.pca &lt;- prcomp(vmnt, scale.=TRUE)
+vmnt.morph.pca &lt;- vmnt %&gt;%
+  bind_cols(as.data.frame(vmnt.pca$x)) %&gt;% 
+  tibble::rowid_to_column(&quot;index&quot;) %&gt;% 
+  mutate(x_0=0,y_0=0,
+         x_1=-corolla_width/2,y_1=corolla_length,
+         x_2= corolla_width/2,y_2=corolla_length) %&gt;% 
+  pivot_longer(c(starts_with(&quot;x&quot;),starts_with(&quot;y&quot;)), names_to=c(&quot;.value&quot;, &quot;point&quot;), names_sep=&quot;_&quot;)
+
+vmnt.pca.vars &lt;- as.data.frame(vmnt.pca$rotation) %&gt;% rownames_to_column(&quot;variable&quot;) %&gt;% 
+  mutate(class=fct_collapse(variable, !!!deframe(select(ipochemsf, class, name)), other_level=&quot;Other trait&quot;)) 
+vmnt.pca.labs &lt;- paste0(&quot;PC&quot;, 1:2, &quot; (&quot;, round(100*vmnt.pca$sdev[1:2]^2/sum(vmnt.pca$sdev^2), 0), &quot;% explained)&quot;) 
+zoom&lt;-15
+ggplot(vmnt.morph.pca, aes(x=PC1, y=PC2)) +
+  geom_point(shape=21, color=&quot;grey80&quot;, size=2) + #, fill=`a-pinene`
+  geom_segment(data=vmnt.pca.vars, aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
+               arrow = arrow(length = unit(1/2, &quot;picas&quot;)), color=&quot;grey80&quot;) +
+  geom_text(data=vmnt.pca.vars, aes(label = greekify(recode(variable, !!!traitnames)), 
+                                   x = PC1*zoom*1.1, y = PC2*zoom*1.1, color = class,
+                                   angle =  (180/pi) * atan(PC2/PC1), hjust=if_else(PC1&gt;0,0,1)), size=3, show.legend = F)+
+  coord_fixed()+ scale_fill_viridis_c(option = &quot;plasma&quot;)+ scale_color_manual(values=c(class_pal, &quot;Other trait&quot;=&quot;black&quot;)) + 
+  theme_minimal()+ theme(panel.grid=element_blank(), legend.position = &quot;top&quot;) + 
+  geom_point(data=vmnt.pca.vars, aes(color=class), alpha=0)+ 
+  guides(color=guide_legend(override.aes = list(alpha=1, size=3)))+
+  labs(color=&quot;&quot;, fill=&quot;sqrt(a-pinene)&quot;, x=vmnt.pca.labs[1], y=vmnt.pca.labs[2]) </code></pre>
+<p><img src="images_volatiles2020/vmnt_pca-1.svg" width="768" /></p>
+<pre class="r"><code>library(corrplot)
+corrplot(cor(vmnt), method=&quot;color&quot;, type=&quot;lower&quot;,
+         order = &quot;hclust&quot;, hclust.method = &quot;complete&quot;, addrect = 4, 
+         tl.col=&quot;black&quot;, tl.cex=0.8)</code></pre>
+<p><img src="images_volatiles2020/vmnt_corr-1.svg" width="768" /></p>
 <pre class="r"><code>walk(floraltraits, ~
 print(ggplot(traits.class, aes_string(x=.x, y=&quot;value&quot;, color=&quot;year&quot;)) + 
   geom_point() + geom_smooth(se=F, span=1) + 
   facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
   labs(y=&quot;Emissions (ng/hr/flower)&quot;, x=traitnames.units[.x], color=&quot;Year&quot;)+
   theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)))</code></pre>
-<p><img src="images_volatiles2020/flrsize-1.svg" width="768" /><img src="images_volatiles2020/flrsize-2.svg" width="768" /><img src="images_volatiles2020/flrsize-3.svg" width="768" /><img src="images_volatiles2020/flrsize-4.svg" width="768" /><img src="images_volatiles2020/flrsize-5.svg" width="768" /><img src="images_volatiles2020/flrsize-6.svg" width="768" /><img src="images_volatiles2020/flrsize-7.svg" width="768" /><img src="images_volatiles2020/flrsize-8.svg" width="768" /></p>
 </div>
 
 
