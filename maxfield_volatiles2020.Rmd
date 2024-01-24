@@ -520,6 +520,7 @@ volsmeta.class <- bind_cols(volsmeta.avg, vols.class) %>%
   pivot_longer(-all_of(colnames(volsmeta.avg)))
 traits.class    <- volsmeta.class %>% left_join(mnps.plantyr.traits)
 volsmeta.traits <- volsmeta.avg %>%       left_join(mnps.plantyr.traits) #wide format
+vols.traits <- bind_cols(volsmeta.avg, vols.good.avg) %>% left_join(mnps.plantyr.traits)
 ```
 
 
@@ -1480,9 +1481,9 @@ plasticity.water %>% left_join(diffbeta) %>%
 
 ```{r selection_abs_model}
 selection_mod_abs <- function(trait, response) {
-  vm.abs <- bind_cols(volsmeta.traits, vols.good.avg) %>% 
+  vm.abs <- vols.traits %>% 
     select(all_of(c(response, trait)), sun_date, precip_est_mm) %>% 
-    rename("trait" = trait, "response" = response) %>% 
+    rename("trait" = all_of(trait), "response" = all_of(response)) %>% 
     filter(!is.infinite(response), !is.nan(response), !is.na(response)) %>% 
     mutate(response = response/mean(response, na.rm=T), #relative fitness
            trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
@@ -1490,12 +1491,14 @@ selection_mod_abs <- function(trait, response) {
   lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
 }
 
-mod.selection.abs <- expand.grid(list(response = fitnesstraits, trait = ipogood)) %>%
+
+mod.selection.abs <- expand.grid(list(response = fitnesstraits, trait = c(ipogood, traits[c(1:6,8)]))) %>%
   mutate(model = pmap(., selection_mod_abs),
          coefs = map(model, tidy))
 
 mod.selection.tests <- mod.selection.abs %>% 
   left_join(ipochemsf, by=c("trait"="name")) %>% 
+  mutate(freq.floral = replace_na(freq.floral, 1)) %>% #morph/nectar traits
   filter(freq.floral>0.1) %>% 
     mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 
   select(-model) %>% unnest(coefs) %>% 
@@ -1515,13 +1518,14 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
                                                   `trait:sun_date`=
                                                     "C. Selection on trait x snowmelt date (\U03B2 / day)")),
              scales="free_y", ncol=1) + theme_bw() +
-  geom_point(aes(size=mean.floral, color=class)) + geom_hline(yintercept=0) + 
+  geom_point(aes(size=replace_na(mean.floral, 1),  #default size for non-vol traits
+                 color=fct_na_value_to_level(class, "Other trait"))) + geom_hline(yintercept=0) + 
   geom_text_repel(data = filter(mod.selection.tests, p.value < 0.05) %>% 
-                    mutate(trait=recode(trait, "(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene"=
-                                          "(1Z,4Z,7Z)-1,5,9,9-\ntetramethylcycloundeca-1,4,7-triene")), 
+                    mutate(trait=recode(trait, !!!c("(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene"=
+                                          "(1Z,4Z,7Z)-1,5,9,9-\ntetramethylcycloundeca-1,4,7-triene", traitnames))), 
                   show.legend = FALSE, size=3.5, box.padding=0, point.padding=0, direction="y", lineheight=0.7)+
   scale_size_area(max_size = 10) + scale_x_discrete(labels=fitnessnames) +
-  scale_color_manual(values=class_pal, guide=guide_legend(override.aes = list(size=5))) + 
+  scale_color_manual(values=c(class_pal,"Other trait"="black"), guide=guide_legend(override.aes = list(size=5))) + 
   labs(x="Fitness measure", size="Mean emissions\n(ng/hr/flower)", color="Class") + 
   theme(axis.title.y=element_blank())
 
@@ -1535,7 +1539,18 @@ skim(mod.selection.tests %>% group_by(term), estimate)
 
 # Volatiles vs. floral traits
 
-Venn for the plants that have seeds counted
+```{r flrsize, eval=F}
+walk(floraltraits, ~
+print(ggplot(traits.class, aes_string(x=.x, y="value", color="year")) + 
+  geom_point() + geom_smooth(se=F, span=1) + 
+  facet_wrap(vars(name), scales="free_y") + 
+  labs(y="Emissions (ng/hr/flower)", x=traitnames.units[.x], color="Year")+
+  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)))
+```
+
+## Overlap of datasets
+
+For the plants that have seeds counted
 
 ```{r overlap}
 samples_per_plant <- volsmeta %>% count(year, plantid, name="scent") %>% as_tibble() %>% 
@@ -1545,58 +1560,49 @@ samples_per_plant <- volsmeta %>% count(year, plantid, name="scent") %>% as_tibb
   full_join(mnps.plantyr.traits %>% drop_na(seeds_est) %>% count(year,plantid, name="seeds")) %>% 
   drop_na(seeds)
 
-library(ggvenn)
+library(ggvenn) # numbers outside all circles have seed estimates
 samples_per_plant %>% mutate(across(c(scent, morph, nectar), ~!is.na(.x))) %>% ggvenn()
 samples_per_plant %>% mutate(across(c(scent, morph, nectar, height), ~!is.na(.x))) %>% ggvenn()
+
+traits.m <- c("corolla_length", "corolla_width", "style_length") #exclude sepal_width (no 2018), anther min/max
+traits.n <- c("nectar_24_h_ul", "nectar_conc")
+# drop plants with missing data for 3 combinations of measurements
+vmn <- vols.traits %>% select(all_of(c(ipogood, traits.m, traits.n, "height_cm"))) %>% drop_na()
+vn <-  vols.traits %>% select(all_of(c(ipogood, traits.n, "height_cm"))) %>% drop_na()
+vm <-  vols.traits %>% select(all_of(c(ipogood, traits.m, "height_cm"))) %>% drop_na()
 ```
+
+## PCA
 
 ```{r vmnt_pca}
-vols.traits <- bind_cols(volsmeta.avg, vols.good.avg) %>% full_join(mnps.plantyr.traits)
+pca <- vmn %>% mutate(across(all_of(ipogood), sqrt)) %>% #TODO consider a transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
+  prcomp(scale.=TRUE)
+plot(pca)
 
-vmnt <- vols.traits %>% select(corolla_length, corolla_width, style_length, 
-                               nectar_24_h_ul, nectar_conc, height_cm, all_of(ipogood)) %>% 
-  drop_na() %>% #drop plants with any missing data
-  mutate(across(all_of(ipogood), sqrt))
-
-vmnt.pca <- prcomp(vmnt, scale.=TRUE)
-vmnt.morph.pca <- vmnt %>%
-  bind_cols(as.data.frame(vmnt.pca$x)) %>% 
-  tibble::rowid_to_column("index") %>% 
-  mutate(x_0=0,y_0=0,
-         x_1=-corolla_width/2,y_1=corolla_length,
-         x_2= corolla_width/2,y_2=corolla_length) %>% 
-  pivot_longer(c(starts_with("x"),starts_with("y")), names_to=c(".value", "point"), names_sep="_")
-
-vmnt.pca.vars <- as.data.frame(vmnt.pca$rotation) %>% rownames_to_column("variable") %>% 
+pca.vars <- as.data.frame(pca$rotation) %>% rownames_to_column("variable") %>% 
   mutate(class=fct_collapse(variable, !!!deframe(select(ipochemsf, class, name)), other_level="Other trait")) 
-vmnt.pca.labs <- paste0("PC", 1:2, " (", round(100*vmnt.pca$sdev[1:2]^2/sum(vmnt.pca$sdev^2), 0), "% explained)") 
+pca.labs <- paste0("PC", 1:2, " (", round(100*pca$sdev[1:2]^2/sum(pca$sdev^2), 0), "% explained)") 
 zoom<-15
-ggplot(vmnt.morph.pca, aes(x=PC1, y=PC2)) +
-  geom_point(shape=21, color="grey80", size=2) + #, fill=`a-pinene`
-  geom_segment(data=vmnt.pca.vars, aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
+ggplot(bind_cols(vmn, as_tibble(pca$x)), aes(x=PC1, y=PC2)) +
+  geom_point(shape=21, color="grey80", size=2) + #, fill=`a-pinene` + scale_fill_viridis_c(option = "plasma")
+  geom_segment(data=pca.vars, aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
                arrow = arrow(length = unit(1/2, "picas")), color="grey80") +
-  geom_text(data=vmnt.pca.vars, aes(label = greekify(recode(variable, !!!traitnames)), 
-                                   x = PC1*zoom*1.1, y = PC2*zoom*1.1, color = class,
-                                   angle =  (180/pi) * atan(PC2/PC1), hjust=if_else(PC1>0,0,1)), size=3, show.legend = F)+
-  coord_fixed()+ scale_fill_viridis_c(option = "plasma")+ scale_color_manual(values=c(class_pal, "Other trait"="black")) + 
+  geom_text(data=pca.vars, show.legend = F,
+            aes(label = greekify(recode(variable, !!!traitnames)), 
+                x = PC1*zoom*1.1, y = PC2*zoom*1.1, color = class,
+                angle =  (180/pi) * atan(PC2/PC1), hjust=if_else(PC1>0,0,1)), size=3)+
+  coord_fixed()+ scale_color_manual(values=c(class_pal, "Other trait"="black")) + 
   theme_minimal()+ theme(panel.grid=element_blank(), legend.position = "top") + 
-  geom_point(data=vmnt.pca.vars, aes(color=class), alpha=0)+ 
+  geom_point(data=pca.vars, aes(color=class), alpha=0)+ 
   guides(color=guide_legend(override.aes = list(alpha=1, size=3)))+
-  labs(color="", fill="sqrt(a-pinene)", x=vmnt.pca.labs[1], y=vmnt.pca.labs[2]) 
+  labs(color="", x=pca.labs[1], y=pca.labs[2]) 
 ```
+
+## Correlations
 
 ```{r vmnt_corr}
 library(corrplot)
-corrplot(cor(vmnt), method="color", type="lower",
+corrplot(cor(vmn), method="color", type="lower",
          order = "hclust", hclust.method = "complete", addrect = 4, 
          tl.col="black", tl.cex=0.8)
-```
-
-```{r flrsize, eval=F}
-walk(floraltraits, ~
-print(ggplot(traits.class, aes_string(x=.x, y="value", color="year")) + 
-  geom_point() + geom_smooth(se=F, span=1) + 
-  facet_wrap(vars(name), scales="free_y") + 
-  labs(y="Emissions (ng/hr/flower)", x=traitnames.units[.x], color="Year")+
-  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)))
 ```

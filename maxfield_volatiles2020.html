@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-01-19" />
+<meta name="date" content="2024-01-23" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-01-19</h4>
+<h4 class="date">2024-01-23</h4>
 
 </div>
 
@@ -1001,7 +1001,8 @@ vols.class &lt;- vols.good.avg %&gt;% t() %&gt;% as.data.frame() %&gt;% rownames
 volsmeta.class &lt;- bind_cols(volsmeta.avg, vols.class) %&gt;%  
   pivot_longer(-all_of(colnames(volsmeta.avg)))
 traits.class    &lt;- volsmeta.class %&gt;% left_join(mnps.plantyr.traits)
-volsmeta.traits &lt;- volsmeta.avg %&gt;%       left_join(mnps.plantyr.traits) #wide format</code></pre>
+volsmeta.traits &lt;- volsmeta.avg %&gt;%       left_join(mnps.plantyr.traits) #wide format
+vols.traits &lt;- bind_cols(volsmeta.avg, vols.good.avg) %&gt;% left_join(mnps.plantyr.traits)</code></pre>
 </div>
 <div id="compound-relative-amounts" class="section level2">
 <h2>Compound relative amounts</h2>
@@ -3152,9 +3153,9 @@ plasticity.water %&gt;% left_join(diffbeta) %&gt;%
 <div id="selection-vs.-absolute-snowmelt-precip" class="section level2">
 <h2>Selection vs. absolute snowmelt, precip</h2>
 <pre class="r"><code>selection_mod_abs &lt;- function(trait, response) {
-  vm.abs &lt;- bind_cols(volsmeta.traits, vols.good.avg) %&gt;% 
+  vm.abs &lt;- vols.traits %&gt;% 
     select(all_of(c(response, trait)), sun_date, precip_est_mm) %&gt;% 
-    rename(&quot;trait&quot; = trait, &quot;response&quot; = response) %&gt;% 
+    rename(&quot;trait&quot; = all_of(trait), &quot;response&quot; = all_of(response)) %&gt;% 
     filter(!is.infinite(response), !is.nan(response), !is.na(response)) %&gt;% 
     mutate(response = response/mean(response, na.rm=T), #relative fitness
            trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
@@ -3162,12 +3163,14 @@ plasticity.water %&gt;% left_join(diffbeta) %&gt;%
   lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
 }
 
-mod.selection.abs &lt;- expand.grid(list(response = fitnesstraits, trait = ipogood)) %&gt;%
+
+mod.selection.abs &lt;- expand.grid(list(response = fitnesstraits, trait = c(ipogood, traits[c(1:6,8)]))) %&gt;%
   mutate(model = pmap(., selection_mod_abs),
          coefs = map(model, tidy))
 
 mod.selection.tests &lt;- mod.selection.abs %&gt;% 
   left_join(ipochemsf, by=c(&quot;trait&quot;=&quot;name&quot;)) %&gt;% 
+  mutate(freq.floral = replace_na(freq.floral, 1)) %&gt;% #morph/nectar traits
   filter(freq.floral&gt;0.1) %&gt;% 
     mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
   select(-model) %&gt;% unnest(coefs) %&gt;% 
@@ -3184,13 +3187,14 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
                                                   `trait:sun_date`=
                                                     &quot;C. Selection on trait x snowmelt date (\U03B2 / day)&quot;)),
              scales=&quot;free_y&quot;, ncol=1) + theme_bw() +
-  geom_point(aes(size=mean.floral, color=class)) + geom_hline(yintercept=0) + 
+  geom_point(aes(size=replace_na(mean.floral, 1),  #default size for non-vol traits
+                 color=fct_na_value_to_level(class, &quot;Other trait&quot;))) + geom_hline(yintercept=0) + 
   geom_text_repel(data = filter(mod.selection.tests, p.value &lt; 0.05) %&gt;% 
-                    mutate(trait=recode(trait, &quot;(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene&quot;=
-                                          &quot;(1Z,4Z,7Z)-1,5,9,9-\ntetramethylcycloundeca-1,4,7-triene&quot;)), 
+                    mutate(trait=recode(trait, !!!c(&quot;(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene&quot;=
+                                          &quot;(1Z,4Z,7Z)-1,5,9,9-\ntetramethylcycloundeca-1,4,7-triene&quot;, traitnames))), 
                   show.legend = FALSE, size=3.5, box.padding=0, point.padding=0, direction=&quot;y&quot;, lineheight=0.7)+
   scale_size_area(max_size = 10) + scale_x_discrete(labels=fitnessnames) +
-  scale_color_manual(values=class_pal, guide=guide_legend(override.aes = list(size=5))) + 
+  scale_color_manual(values=c(class_pal,&quot;Other trait&quot;=&quot;black&quot;), guide=guide_legend(override.aes = list(size=5))) + 
   labs(x=&quot;Fitness measure&quot;, size=&quot;Mean emissions\n(ng/hr/flower)&quot;, color=&quot;Class&quot;) + 
   theme(axis.title.y=element_blank())</code></pre>
 <p><img src="images_volatiles2020/selection_abs-2.svg" width="768" /></p>
@@ -3340,7 +3344,7 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 </tr>
 <tr class="even">
 <td align="left">Number of rows</td>
-<td align="left">360</td>
+<td align="left">444</td>
 </tr>
 <tr class="odd">
 <td align="left">Number of columns</td>
@@ -3376,7 +3380,7 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <col width="9%" />
 <col width="13%" />
 <col width="4%" />
-<col width="4%" />
+<col width="3%" />
 <col width="5%" />
 <col width="5%" />
 <col width="4%" />
@@ -3406,14 +3410,14 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <td align="left">trait</td>
 <td align="right">0</td>
 <td align="right">1</td>
-<td align="right">0.02</td>
-<td align="right">0.29</td>
+<td align="right">0.04</td>
+<td align="right">0.3</td>
 <td align="right">-0.73</td>
-<td align="right">-0.13</td>
+<td align="right">-0.12</td>
 <td align="right">0.05</td>
-<td align="right">0.15</td>
-<td align="right">0.82</td>
-<td align="left">▁▃▇▂▁</td>
+<td align="right">0.16</td>
+<td align="right">1.19</td>
+<td align="left">▂▇▇▂▁</td>
 </tr>
 <tr class="even">
 <td align="left">estimate</td>
@@ -3421,13 +3425,13 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <td align="right">0</td>
 <td align="right">1</td>
 <td align="right">0.00</td>
+<td align="right">0.0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
-<td align="right">0.00</td>
-<td align="left">▁▂▅▇▁</td>
+<td align="left">▁▃▇▃▁</td>
 </tr>
 <tr class="odd">
 <td align="left">estimate</td>
@@ -3435,13 +3439,13 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <td align="right">0</td>
 <td align="right">1</td>
 <td align="right">0.00</td>
-<td align="right">0.00</td>
-<td align="right">0.00</td>
+<td align="right">0.0</td>
+<td align="right">-0.01</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.01</td>
-<td align="left">▂▇▇▃▁</td>
+<td align="left">▁▂▇▂▁</td>
 </tr>
 </tbody>
 </table>
@@ -3449,7 +3453,15 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 </div>
 <div id="volatiles-vs.-floral-traits" class="section level1">
 <h1>Volatiles vs. floral traits</h1>
-<p>Venn for the plants that have seeds counted</p>
+<pre class="r"><code>walk(floraltraits, ~
+print(ggplot(traits.class, aes_string(x=.x, y=&quot;value&quot;, color=&quot;year&quot;)) + 
+  geom_point() + geom_smooth(se=F, span=1) + 
+  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
+  labs(y=&quot;Emissions (ng/hr/flower)&quot;, x=traitnames.units[.x], color=&quot;Year&quot;)+
+  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)))</code></pre>
+<div id="overlap-of-datasets" class="section level2">
+<h2>Overlap of datasets</h2>
+<p>For the plants that have seeds counted</p>
 <pre class="r"><code>samples_per_plant &lt;- volsmeta %&gt;% count(year, plantid, name=&quot;scent&quot;) %&gt;% as_tibble() %&gt;% 
   full_join(mnps.plantyr.traits %&gt;% drop_na(corolla_length) %&gt;% count(year,plantid, name=&quot;morph&quot;)) %&gt;% 
   full_join(mnps.plantyr.traits %&gt;% drop_na(nectar_24_h_ul) %&gt;% count(year,plantid, name=&quot;nectar&quot;)) %&gt;% 
@@ -3457,55 +3469,51 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
   full_join(mnps.plantyr.traits %&gt;% drop_na(seeds_est) %&gt;% count(year,plantid, name=&quot;seeds&quot;)) %&gt;% 
   drop_na(seeds)
 
-library(ggvenn)
+library(ggvenn) # numbers outside all circles have seed estimates
 samples_per_plant %&gt;% mutate(across(c(scent, morph, nectar), ~!is.na(.x))) %&gt;% ggvenn()</code></pre>
 <p><img src="images_volatiles2020/overlap-1.svg" width="768" /></p>
 <pre class="r"><code>samples_per_plant %&gt;% mutate(across(c(scent, morph, nectar, height), ~!is.na(.x))) %&gt;% ggvenn()</code></pre>
 <p><img src="images_volatiles2020/overlap-2.svg" width="768" /></p>
-<pre class="r"><code>vols.traits &lt;- bind_cols(volsmeta.avg, vols.good.avg) %&gt;% full_join(mnps.plantyr.traits)
-
-vmnt &lt;- vols.traits %&gt;% select(corolla_length, corolla_width, style_length, 
-                               nectar_24_h_ul, nectar_conc, height_cm, all_of(ipogood)) %&gt;% 
-  drop_na() %&gt;% #drop plants with any missing data
-  mutate(across(all_of(ipogood), sqrt))
-
-vmnt.pca &lt;- prcomp(vmnt, scale.=TRUE)
-vmnt.morph.pca &lt;- vmnt %&gt;%
-  bind_cols(as.data.frame(vmnt.pca$x)) %&gt;% 
-  tibble::rowid_to_column(&quot;index&quot;) %&gt;% 
-  mutate(x_0=0,y_0=0,
-         x_1=-corolla_width/2,y_1=corolla_length,
-         x_2= corolla_width/2,y_2=corolla_length) %&gt;% 
-  pivot_longer(c(starts_with(&quot;x&quot;),starts_with(&quot;y&quot;)), names_to=c(&quot;.value&quot;, &quot;point&quot;), names_sep=&quot;_&quot;)
-
-vmnt.pca.vars &lt;- as.data.frame(vmnt.pca$rotation) %&gt;% rownames_to_column(&quot;variable&quot;) %&gt;% 
-  mutate(class=fct_collapse(variable, !!!deframe(select(ipochemsf, class, name)), other_level=&quot;Other trait&quot;)) 
-vmnt.pca.labs &lt;- paste0(&quot;PC&quot;, 1:2, &quot; (&quot;, round(100*vmnt.pca$sdev[1:2]^2/sum(vmnt.pca$sdev^2), 0), &quot;% explained)&quot;) 
-zoom&lt;-15
-ggplot(vmnt.morph.pca, aes(x=PC1, y=PC2)) +
-  geom_point(shape=21, color=&quot;grey80&quot;, size=2) + #, fill=`a-pinene`
-  geom_segment(data=vmnt.pca.vars, aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
-               arrow = arrow(length = unit(1/2, &quot;picas&quot;)), color=&quot;grey80&quot;) +
-  geom_text(data=vmnt.pca.vars, aes(label = greekify(recode(variable, !!!traitnames)), 
-                                   x = PC1*zoom*1.1, y = PC2*zoom*1.1, color = class,
-                                   angle =  (180/pi) * atan(PC2/PC1), hjust=if_else(PC1&gt;0,0,1)), size=3, show.legend = F)+
-  coord_fixed()+ scale_fill_viridis_c(option = &quot;plasma&quot;)+ scale_color_manual(values=c(class_pal, &quot;Other trait&quot;=&quot;black&quot;)) + 
-  theme_minimal()+ theme(panel.grid=element_blank(), legend.position = &quot;top&quot;) + 
-  geom_point(data=vmnt.pca.vars, aes(color=class), alpha=0)+ 
-  guides(color=guide_legend(override.aes = list(alpha=1, size=3)))+
-  labs(color=&quot;&quot;, fill=&quot;sqrt(a-pinene)&quot;, x=vmnt.pca.labs[1], y=vmnt.pca.labs[2]) </code></pre>
+<pre class="r"><code>traits.m &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;, &quot;style_length&quot;) #exclude sepal_width (no 2018), anther min/max
+traits.n &lt;- c(&quot;nectar_24_h_ul&quot;, &quot;nectar_conc&quot;)
+# drop plants with missing data for 3 combinations of measurements
+vmn &lt;- vols.traits %&gt;% select(all_of(c(ipogood, traits.m, traits.n, &quot;height_cm&quot;))) %&gt;% drop_na()
+vn &lt;-  vols.traits %&gt;% select(all_of(c(ipogood, traits.n, &quot;height_cm&quot;))) %&gt;% drop_na()
+vm &lt;-  vols.traits %&gt;% select(all_of(c(ipogood, traits.m, &quot;height_cm&quot;))) %&gt;% drop_na()</code></pre>
+</div>
+<div id="pca" class="section level2">
+<h2>PCA</h2>
+<pre class="r"><code>pca &lt;- vmn %&gt;% mutate(across(all_of(ipogood), sqrt)) %&gt;% #TODO consider a transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
+  prcomp(scale.=TRUE)
+plot(pca)</code></pre>
 <p><img src="images_volatiles2020/vmnt_pca-1.svg" width="768" /></p>
+<pre class="r"><code>pca.vars &lt;- as.data.frame(pca$rotation) %&gt;% rownames_to_column(&quot;variable&quot;) %&gt;% 
+  mutate(class=fct_collapse(variable, !!!deframe(select(ipochemsf, class, name)), other_level=&quot;Other trait&quot;)) 
+pca.labs &lt;- paste0(&quot;PC&quot;, 1:2, &quot; (&quot;, round(100*pca$sdev[1:2]^2/sum(pca$sdev^2), 0), &quot;% explained)&quot;) 
+zoom&lt;-15
+ggplot(bind_cols(vmn, as_tibble(pca$x)), aes(x=PC1, y=PC2)) +
+  geom_point(shape=21, color=&quot;grey80&quot;, size=2) + #, fill=`a-pinene` + scale_fill_viridis_c(option = &quot;plasma&quot;)
+  geom_segment(data=pca.vars, aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
+               arrow = arrow(length = unit(1/2, &quot;picas&quot;)), color=&quot;grey80&quot;) +
+  geom_text(data=pca.vars, show.legend = F,
+            aes(label = greekify(recode(variable, !!!traitnames)), 
+                x = PC1*zoom*1.1, y = PC2*zoom*1.1, color = class,
+                angle =  (180/pi) * atan(PC2/PC1), hjust=if_else(PC1&gt;0,0,1)), size=3)+
+  coord_fixed()+ scale_color_manual(values=c(class_pal, &quot;Other trait&quot;=&quot;black&quot;)) + 
+  theme_minimal()+ theme(panel.grid=element_blank(), legend.position = &quot;top&quot;) + 
+  geom_point(data=pca.vars, aes(color=class), alpha=0)+ 
+  guides(color=guide_legend(override.aes = list(alpha=1, size=3)))+
+  labs(color=&quot;&quot;, x=pca.labs[1], y=pca.labs[2]) </code></pre>
+<p><img src="images_volatiles2020/vmnt_pca-2.svg" width="768" /></p>
+</div>
+<div id="correlations-1" class="section level2">
+<h2>Correlations</h2>
 <pre class="r"><code>library(corrplot)
-corrplot(cor(vmnt), method=&quot;color&quot;, type=&quot;lower&quot;,
+corrplot(cor(vmn), method=&quot;color&quot;, type=&quot;lower&quot;,
          order = &quot;hclust&quot;, hclust.method = &quot;complete&quot;, addrect = 4, 
          tl.col=&quot;black&quot;, tl.cex=0.8)</code></pre>
 <p><img src="images_volatiles2020/vmnt_corr-1.svg" width="768" /></p>
-<pre class="r"><code>walk(floraltraits, ~
-print(ggplot(traits.class, aes_string(x=.x, y=&quot;value&quot;, color=&quot;year&quot;)) + 
-  geom_point() + geom_smooth(se=F, span=1) + 
-  facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
-  labs(y=&quot;Emissions (ng/hr/flower)&quot;, x=traitnames.units[.x], color=&quot;Year&quot;)+
-  theme_bw() + scale_y_sqrt() + scale_color_manual(values=year_pal)))</code></pre>
+</div>
 </div>
 
 
