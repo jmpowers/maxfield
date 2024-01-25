@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-01-24" />
+<meta name="date" content="2024-01-25" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-01-24</h4>
+<h4 class="date">2024-01-25</h4>
 
 </div>
 
@@ -2838,10 +2838,13 @@ et al. 2018</a> for reconstructing selection estimates from estimates of
 selection on PCs: Beta = E * A.</p>
 <pre class="r"><code># previously split the data before running PCA - now run PCA on the whole dataset
 
+prcomp_std &lt;- function(data) {
+  data %&gt;% mutate(across(everything(), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% #center and scale
+  prcomp(center = FALSE, scale. = FALSE)
+}
+
 # Run PCA on traits
-vols.PCA &lt;- vols.good.top %&gt;% 
-  mutate(across(everything(), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% #center and scale
-  prcomp() 
+vols.PCA &lt;- prcomp_std(vols.good.top)
 summary(vols.PCA) # PCs 1 - 5 explain 82% of the variation, 12 PCs total (12 top volatiles)</code></pre>
 <pre><code>Importance of components:
                          PC1   PC2   PC3    PC4    PC5    PC6    PC7    PC8
@@ -2861,9 +2864,15 @@ Cumulative Proportion  0.9612 0.9826 0.9957 1.00000</code></pre>
 
 #takes vols.PCA as input
 selection_pca &lt;- function(year, water=names(water_pal), snow=names(snow_pal), fitnesstrait = &quot;seeds_est&quot;, 
-                          n.PCs = 5) {#defualt number of PCs used in regression
-  std.traits &lt;- volsmeta.avg.cut %&gt;% bind_cols(as.data.frame(vols.PCA$x)) %&gt;% 
+                          n.PCs = 5, #default number of PCs in regression
+                          pca = vols.PCA, mdata = volsmeta.avg.cut) {
+  if(ncol(pca$x) &lt;= n.PCs) {
+    warning(paste(&quot;Only &quot;, ncol(pca$x), &quot;PCs&quot;))
+    n.PCs &lt;- ncol(pca$x)
+  }
+  std.traits &lt;- mdata %&gt;% bind_cols(as.data.frame(pca$x)) %&gt;% 
     filter(year == .env$year, water %in% .env$water, snow %in% .env$snow) %&gt;% 
+    select(-any_of(fitnesstrait)) %&gt;% 
     left_join(mnps.plantyr.traits %&gt;% select(year, plotid, plantid, all_of(fitnesstrait)), by=c(&quot;year&quot;, &quot;plotid&quot;, &quot;plantid&quot;)) %&gt;% 
     select(all_of(fitnesstrait), any_of(names(treatments)), starts_with(&quot;PC&quot;)) %&gt;% 
     rename(&quot;fitness&quot; = fitnesstrait) %&gt;% 
@@ -2875,7 +2884,7 @@ selection_pca &lt;- function(year, water=names(water_pal), snow=names(snow_pal),
   selection.on.PCs &lt;- lm(formula(paste(&quot;relfitness ~&quot;, paste0(&quot;PC&quot;,1:n.PCs, collapse=&quot; + &quot;))), data = std.traits)
 
   # Convert selection gradients on PCs to gradients on traits
-  calculate_beta(E = vols.PCA$rotation[,1:n.PCs],
+  calculate_beta(E = pca$rotation[,1:n.PCs],
                  slopes = tidy(selection.on.PCs) %&gt;% filter(term != &quot;(Intercept)&quot;) %&gt;%
                    rename(A=estimate, SE=std.error), 
                  resid.df = aov(selection.on.PCs)$df.residual)
@@ -3475,18 +3484,27 @@ samples_per_plant %&gt;% mutate(across(c(scent, morph, nectar), ~!is.na(.x))) %&
 <p><img src="images_volatiles2020/overlap-2.svg" width="768" /></p>
 <pre class="r"><code>traits.m &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;, &quot;style_length&quot;) #exclude sepal_width (no 2018), anther min/max
 traits.n &lt;- c(&quot;nectar_24_h_ul&quot;, &quot;nectar_conc&quot;)
-# drop plants with missing data for 3 combinations of measurements
-vm &lt;-  vols.traits %&gt;% select(all_of(c(ipogood.top, traits.m, &quot;height_cm&quot;))) %&gt;% drop_na()
-vn &lt;-  vols.traits %&gt;% select(all_of(c(ipogood.top, traits.n, &quot;height_cm&quot;))) %&gt;% drop_na()
-vmn &lt;- vols.traits %&gt;% select(all_of(c(ipogood.top, traits.m, traits.n, &quot;height_cm&quot;))) %&gt;% drop_na()
+# drop plants with missing data for combinations of measurements
+combos &lt;- list(v=vols.good.top, 
+               vm=vols.traits %&gt;% select(all_of(c(ipogood.top, traits.m, &quot;height_cm&quot;))) %&gt;% drop_na(), 
+               vn=vols.traits %&gt;% select(all_of(c(ipogood.top, traits.n, &quot;height_cm&quot;))) %&gt;% drop_na(), 
+               vmn=vols.traits %&gt;% select(all_of(c(ipogood.top, traits.m, traits.n, &quot;height_cm&quot;))) %&gt;% drop_na(),
+               mn=mnps.plantyr.traits %&gt;% select(all_of(c(traits.m, traits.n, &quot;height_cm&quot;))) %&gt;% drop_na(),
+               n=mnps.plantyr.traits %&gt;% select(all_of(c(traits.n, &quot;height_cm&quot;))) %&gt;% drop_na(),
+               m=mnps.plantyr.traits %&gt;% select(all_of(c(traits.m, &quot;height_cm&quot;))) %&gt;% drop_na())
 
-vols.traits %&gt;% 
-  mutate(v=vctrs::vec_detect_complete(.[,c(ipogood.top)]),
-         vm = vctrs::vec_detect_complete(.[,colnames(vm)]),
-         vn = vctrs::vec_detect_complete(.[,colnames(vn)]),
-         vmn = vctrs::vec_detect_complete(.[,colnames(vmn)])) %&gt;% 
-  group_by(year, water, snow) %&gt;% 
-  summarize(across(c(v, vm, vn, vmn), sum)) %&gt;% kable(caption=&quot;plants with each set of measurements&quot;)</code></pre>
+all.traits.combos &lt;- full_join(bind_cols(volsmeta.avg, vols.good.avg), 
+                               left_join(mnps.plantyr.traits, treatments)) %&gt;% 
+  mutate(v =   vctrs::vec_detect_complete(.[,colnames(combos$v)]),
+         vm =  vctrs::vec_detect_complete(.[,colnames(combos$vm)]),
+         vn =  vctrs::vec_detect_complete(.[,colnames(combos$vn)]),
+         vmn = vctrs::vec_detect_complete(.[,colnames(combos$vmn)]),
+         mn =  vctrs::vec_detect_complete(.[,colnames(combos$mn)]),
+         n =  vctrs::vec_detect_complete(.[,colnames(combos$n)]),
+         m =  vctrs::vec_detect_complete(.[,colnames(combos$m)]))
+
+all.traits.combos %&gt;% group_by(year, water, snow) %&gt;% 
+  summarize(across(all_of(names(combos)), sum)) %&gt;% kable(caption=&quot;plants with each set of measurements&quot;)</code></pre>
 <table>
 <caption>plants with each set of measurements</caption>
 <thead>
@@ -3498,6 +3516,9 @@ vols.traits %&gt;%
 <th align="right">vm</th>
 <th align="right">vn</th>
 <th align="right">vmn</th>
+<th align="right">mn</th>
+<th align="right">n</th>
+<th align="right">m</th>
 </tr>
 </thead>
 <tbody>
@@ -3509,6 +3530,9 @@ vols.traits %&gt;%
 <td align="right">19</td>
 <td align="right">16</td>
 <td align="right">16</td>
+<td align="right">17</td>
+<td align="right">17</td>
+<td align="right">20</td>
 </tr>
 <tr class="even">
 <td align="left">2018</td>
@@ -3518,6 +3542,9 @@ vols.traits %&gt;%
 <td align="right">16</td>
 <td align="right">14</td>
 <td align="right">14</td>
+<td align="right">16</td>
+<td align="right">17</td>
+<td align="right">19</td>
 </tr>
 <tr class="odd">
 <td align="left">2018</td>
@@ -3527,6 +3554,9 @@ vols.traits %&gt;%
 <td align="right">15</td>
 <td align="right">12</td>
 <td align="right">9</td>
+<td align="right">16</td>
+<td align="right">19</td>
+<td align="right">32</td>
 </tr>
 <tr class="even">
 <td align="left">2018</td>
@@ -3536,6 +3566,9 @@ vols.traits %&gt;%
 <td align="right">23</td>
 <td align="right">12</td>
 <td align="right">12</td>
+<td align="right">19</td>
+<td align="right">19</td>
+<td align="right">37</td>
 </tr>
 <tr class="odd">
 <td align="left">2018</td>
@@ -3545,6 +3578,9 @@ vols.traits %&gt;%
 <td align="right">12</td>
 <td align="right">6</td>
 <td align="right">6</td>
+<td align="right">11</td>
+<td align="right">11</td>
+<td align="right">26</td>
 </tr>
 <tr class="even">
 <td align="left">2018</td>
@@ -3554,6 +3590,9 @@ vols.traits %&gt;%
 <td align="right">10</td>
 <td align="right">7</td>
 <td align="right">7</td>
+<td align="right">9</td>
+<td align="right">9</td>
+<td align="right">14</td>
 </tr>
 <tr class="odd">
 <td align="left">2019</td>
@@ -3563,6 +3602,9 @@ vols.traits %&gt;%
 <td align="right">8</td>
 <td align="right">10</td>
 <td align="right">7</td>
+<td align="right">8</td>
+<td align="right">11</td>
+<td align="right">9</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
@@ -3572,6 +3614,9 @@ vols.traits %&gt;%
 <td align="right">29</td>
 <td align="right">31</td>
 <td align="right">28</td>
+<td align="right">32</td>
+<td align="right">36</td>
+<td align="right">35</td>
 </tr>
 <tr class="odd">
 <td align="left">2019</td>
@@ -3581,6 +3626,9 @@ vols.traits %&gt;%
 <td align="right">19</td>
 <td align="right">18</td>
 <td align="right">17</td>
+<td align="right">30</td>
+<td align="right">34</td>
+<td align="right">33</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
@@ -3590,6 +3638,9 @@ vols.traits %&gt;%
 <td align="right">16</td>
 <td align="right">19</td>
 <td align="right">16</td>
+<td align="right">28</td>
+<td align="right">33</td>
+<td align="right">28</td>
 </tr>
 <tr class="odd">
 <td align="left">2019</td>
@@ -3599,6 +3650,9 @@ vols.traits %&gt;%
 <td align="right">11</td>
 <td align="right">11</td>
 <td align="right">11</td>
+<td align="right">14</td>
+<td align="right">14</td>
+<td align="right">14</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
@@ -3608,6 +3662,9 @@ vols.traits %&gt;%
 <td align="right">18</td>
 <td align="right">17</td>
 <td align="right">17</td>
+<td align="right">21</td>
+<td align="right">23</td>
+<td align="right">23</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
@@ -3617,6 +3674,9 @@ vols.traits %&gt;%
 <td align="right">19</td>
 <td align="right">14</td>
 <td align="right">13</td>
+<td align="right">15</td>
+<td align="right">19</td>
+<td align="right">21</td>
 </tr>
 <tr class="even">
 <td align="left">2020</td>
@@ -3626,6 +3686,9 @@ vols.traits %&gt;%
 <td align="right">13</td>
 <td align="right">15</td>
 <td align="right">11</td>
+<td align="right">19</td>
+<td align="right">26</td>
+<td align="right">27</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
@@ -3635,6 +3698,9 @@ vols.traits %&gt;%
 <td align="right">22</td>
 <td align="right">18</td>
 <td align="right">16</td>
+<td align="right">23</td>
+<td align="right">34</td>
+<td align="right">38</td>
 </tr>
 <tr class="even">
 <td align="left">2020</td>
@@ -3644,6 +3710,9 @@ vols.traits %&gt;%
 <td align="right">21</td>
 <td align="right">17</td>
 <td align="right">12</td>
+<td align="right">17</td>
+<td align="right">27</td>
+<td align="right">30</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
@@ -3653,6 +3722,9 @@ vols.traits %&gt;%
 <td align="right">10</td>
 <td align="right">13</td>
 <td align="right">8</td>
+<td align="right">10</td>
+<td align="right">15</td>
+<td align="right">14</td>
 </tr>
 <tr class="even">
 <td align="left">2020</td>
@@ -3662,6 +3734,9 @@ vols.traits %&gt;%
 <td align="right">10</td>
 <td align="right">9</td>
 <td align="right">8</td>
+<td align="right">11</td>
+<td align="right">13</td>
+<td align="right">13</td>
 </tr>
 </tbody>
 </table>
@@ -3669,7 +3744,7 @@ vols.traits %&gt;%
 <div id="correlations-1" class="section level2">
 <h2>Correlations</h2>
 <pre class="r"><code>library(corrplot)
-corrplot(cor(vmn), method=&quot;color&quot;, type=&quot;lower&quot;,
+corrplot(cor(combos$vmn), method=&quot;color&quot;, type=&quot;lower&quot;,
          order = &quot;hclust&quot;, hclust.method = &quot;complete&quot;, addrect = 4, 
          tl.col=&quot;black&quot;, tl.cex=0.8)</code></pre>
 <p><img src="images_volatiles2020/vmnt_corr-1.svg" width="768" /></p>
@@ -3677,16 +3752,14 @@ corrplot(cor(vmn), method=&quot;color&quot;, type=&quot;lower&quot;,
 <div id="pca" class="section level2">
 <h2>PCA</h2>
 <pre class="r"><code>#TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
-pca &lt;- vmn %&gt;% mutate(across(all_of(ipogood.top), sqrt)) %&gt;% 
-    mutate(across(everything(), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% #center and scale
-  prcomp(center = F, scale = F)
+pca &lt;- combos$vmn %&gt;% mutate(across(all_of(ipogood.top), sqrt)) %&gt;% prcomp_std()
 
 pca.vars &lt;- as.data.frame(pca$rotation) %&gt;% rownames_to_column(&quot;variable&quot;) %&gt;% 
   mutate(class=fct_collapse(variable, !!!deframe(select(filter(ipochemsf, name %in% ipogood.top), class, name)), 
                             other_level=&quot;Other trait&quot;)) 
 pca.labs &lt;- paste0(&quot;PC&quot;, 1:2, &quot; (&quot;, round(100*pca$sdev[1:2]^2/sum(pca$sdev^2), 0), &quot;% explained)&quot;) 
 zoom&lt;-15
-ggplot(bind_cols(vmn, as_tibble(pca$x)), aes(x=PC1, y=PC2)) +
+ggplot(bind_cols(combos$vmn, as_tibble(pca$x)), aes(x=PC1, y=PC2)) +
   geom_point(shape=21, color=&quot;grey80&quot;, size=2) + #, fill=`a-pinene` + scale_fill_viridis_c(option = &quot;plasma&quot;)
   geom_segment(data=pca.vars, aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
                arrow = arrow(length = unit(1/2, &quot;picas&quot;)), color=&quot;grey80&quot;) +
@@ -3707,12 +3780,10 @@ ggplot(bind_cols(vmn, as_tibble(pca$x)), aes(x=PC1, y=PC2)) +
 et al. 2018</a> for reconstructing selection estimates from estimates of
 selection on PCs: Beta = E * A.</p>
 <pre class="r"><code>volsmeta.avg.cut &lt;- #treatments used in selection_pca function
-  volsmeta.avg[!is.na(rowSums(vols.traits[,colnames(vmn)])),] #match rows in vmn
+  volsmeta.avg[!is.na(rowSums(vols.traits[,colnames(combos$vmn)])),] #match rows in vmn
 
 #TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
-vols.PCA &lt;- vmn %&gt;% mutate(across(all_of(ipogood.top), sqrt)) %&gt;% 
-    mutate(across(everything(), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %&gt;% #center and scale
-  prcomp(center = F, scale = F)
+vols.PCA &lt;- combos$vmn %&gt;% mutate(across(all_of(ipogood.top), sqrt)) %&gt;% prcomp_std()
 summary(vols.PCA) # PCs 1 - 5 explain 66% of the variation, 18 PCs total (12 volatiles + 6 traits)</code></pre>
 <pre><code>Importance of components:
                          PC1   PC2  PC3    PC4    PC5    PC6    PC7    PC8
@@ -3745,17 +3816,54 @@ plot_beta(vols.beta.snow, colorby = &quot;snow&quot;)+
 <p><img src="images_volatiles2020/vmnt_gradients-4.svg" width="864" /></p>
 <div id="sensitivity-to-number-of-pcs" class="section level3">
 <h3>Sensitivity to number of PCs</h3>
-<p>Black curve is cumulative proportion explained by PCs. Black line is
-5 PCs.</p>
 <pre class="r"><code>vols.beta.yr.PCs &lt;- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits, 
                                 n.PCs=2:17)  %&gt;% 
   mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-ggplot(vols.beta.yr.PCs, aes(x=n.PCs)) + facet_wrap(vars(fitnesstrait)) + 
+ggplot(vols.beta.yr.PCs, aes(x=n.PCs)) + facet_wrap(vars(fitnesstrait), scales=&quot;free_y&quot;) + 
   geom_line(aes(y=B, color=ifelse(trait %in% traits, &quot;Other trait&quot;, &quot;Volatile&quot;), group=paste(trait, year))) +
-  labs(color=&quot;&quot;) + geom_vline(xintercept=5) + ylim(c(-0.66,1)) + 
-  geom_line(data=tibble(cumul_expl=summary(vols.PCA)$importance[3,]) %&gt;% mutate(n.PCs = 1:nrow(.)),
-            aes(y=cumul_expl), color=&quot;black&quot;)</code></pre>
-<p><img src="images_volatiles2020/numberPCs-1.svg" width="768" /></p>
+  labs(color=&quot;&quot;) #+ geom_vline(xintercept=5) + ylim(c(-0.66,1)) + </code></pre>
+<p><img src="images_volatiles2020/numberPCs-1.svg" width="960" /></p>
+<pre class="r"><code>  #geom_line(data=tibble(cumul_expl=summary(vols.PCA)$importance[3,]) %&gt;% mutate(n.PCs = 1:nrow(.)),
+  #          aes(y=cumul_expl), color=&quot;black&quot;)</code></pre>
+</div>
+<div id="sensitivity-to-more-observations" class="section level3">
+<h3>Sensitivity to more observations</h3>
+<pre class="r"><code>map(combos, dim)</code></pre>
+<pre><code>$v
+[1] 374  12
+
+$vm
+[1] 291  16
+
+$vn
+[1] 259  15
+
+$vmn
+[1] 228  18
+
+$mn
+[1] 316   6
+
+$n
+[1] 377   3
+
+$m
+[1] 433   4</code></pre>
+<pre class="r"><code>combos.PCA &lt;- map(combos,  ~ .x %&gt;% mutate(across(any_of(ipogood.top), sqrt)) %&gt;% prcomp_std())
+
+#combos.meta &lt;- map(names(combos), ~ volsmeta.avg[pull(vols.traits.combos, .x),])
+combos.meta &lt;- map(names(combos), ~ all.traits.combos[pull(all.traits.combos, .x),])
+
+vols.beta.yr.combos &lt;- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits, 
+                                n.PCs=5)  %&gt;% 
+  cross_join(tibble(pca = combos.PCA, mdata=combos.meta, 
+                    combo = factor(names(combos), levels=names(combos)))) %&gt;% 
+  mutate(betas = pmap(select(., -combo), selection_pca)) %&gt;% select(-pca, -mdata) %&gt;% unnest(betas)
+
+ggplot(vols.beta.yr.combos, aes(x=combo)) + facet_wrap(vars(fitnesstrait), scales=&quot;free_y&quot;) + 
+  geom_line(aes(y=B, color=ifelse(trait %in% traits, &quot;Other trait&quot;, &quot;Volatile&quot;), group=paste(trait, year))) +
+  labs(color=&quot;&quot;)</code></pre>
+<p><img src="images_volatiles2020/moreobs-1.svg" width="960" /></p>
 </div>
 </div>
 </div>
