@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2023-12-21" />
+<meta name="date" content="2024-01-27" />
 
 <title>Maxfield Meadow Ipomopsis Selection</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Selection</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2023-12-21</h4>
+<h4 class="date">2024-01-27</h4>
 
 </div>
 
@@ -390,6 +390,44 @@ mt.mod.indiv %&gt;% select(trait, fitnesstrait, yr, coef) %&gt;% unnest(coef) %&
   geom_hline(yintercept=0) + geom_pointrange() + coord_flip() + scale_color_manual(values=year_pal) + 
   labs(y=&quot;Standardized selection differential S&#39;&quot;, color=&quot;Year&quot;) + theme_bw() + theme(axis.title.y=element_blank())</code></pre>
 <p><img src="images_selection/mt_indiv_mod-1.svg" width="576" /></p>
+<div id="selection-vs.-absolute-snowmelt-precip" class="section level2">
+<h2>Selection vs. absolute snowmelt, precip</h2>
+<pre class="r"><code>selection_mod_abs &lt;- function(trait, response) {
+  mnps.abs &lt;- mnps.plantyr %&gt;% 
+    select(all_of(c(response, trait)), sun_date, precip_est_mm) %&gt;% 
+    rename(&quot;trait&quot; = all_of(trait), &quot;response&quot; = all_of(response)) %&gt;% 
+    filter(!is.infinite(response), !is.nan(response), !is.na(response)) %&gt;% 
+    mutate(response = response/mean(response, na.rm=T), #relative fitness
+           trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
+  options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+  lm(response ~ trait * sun_date + trait * precip_est_mm, data = mnps.abs)
+}
+
+mod.selection.abs &lt;- expand.grid(list(response = fitnesstraits, trait = floraltraits)) %&gt;%
+  mutate(model = pmap(., selection_mod_abs),
+         coefs = map(model, tidy))
+
+mod.selection.tests &lt;- mod.selection.abs %&gt;% 
+    mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
+  select(-model) %&gt;% unnest(coefs) %&gt;% 
+  filter(str_detect(term, &quot;trait&quot;))</code></pre>
+<pre class="r"><code>mod.selection.abs %&gt;% select(-model) %&gt;% unnest(coefs) %&gt;% 
+  ggplot(aes(x=fitnessnames[response], y=estimate)) + facet_wrap(vars(term), scales=&quot;free_y&quot;) +
+  geom_hline(yintercept=0) + geom_point() + scale_x_discrete(&quot;&quot;, guide = guide_axis(angle=90))</code></pre>
+<p><img src="images_selection/selection_abs-1.svg" width="768" /></p>
+<pre class="r"><code>ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), y=estimate, label=trait)) + 
+  facet_wrap(vars(term), labeller = as_labeller(c(trait=&quot;A. Selection on trait (\U03B2)&quot;,
+                                                  `trait:precip_est_mm`=
+                                                    &quot;B. Selection on trait x summer precipitation (\U03B2 / mm)&quot;,
+                                                  `trait:sun_date`=
+                                                    &quot;C. Selection on trait x snowmelt date (\U03B2 / day)&quot;)),
+             scales=&quot;free_y&quot;, ncol=1) + theme_bw() +
+  geom_point(color=&quot;grey90&quot;) + geom_hline(yintercept=0) + 
+  geom_text(data = mod.selection.tests %&gt;% mutate(trait=recode(trait, !!!traitnames)), 
+                  aes(alpha = p.value &lt; 0.05), size=3.5, show.legend = F)+
+  scale_x_discrete(labels=fitnessnames) + labs(x=&quot;Fitness measure&quot;) + theme(axis.title.y=element_blank())</code></pre>
+<p><img src="images_selection/selection_abs-2.svg" width="768" /></p>
+</div>
 </div>
 <div id="selection-gradients-from-pca" class="section level1">
 <h1>Selection gradients from PCA</h1>

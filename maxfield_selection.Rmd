@@ -156,6 +156,49 @@ mt.mod.indiv %>% select(trait, fitnesstrait, yr, coef) %>% unnest(coef) %>% filt
   labs(y="Standardized selection differential S'", color="Year") + theme_bw() + theme(axis.title.y=element_blank())
 ```
 
+## Selection vs. absolute snowmelt, precip
+
+```{r selection_abs_model}
+selection_mod_abs <- function(trait, response) {
+  mnps.abs <- mnps.plantyr %>% 
+    select(all_of(c(response, trait)), sun_date, precip_est_mm) %>% 
+    rename("trait" = all_of(trait), "response" = all_of(response)) %>% 
+    filter(!is.infinite(response), !is.nan(response), !is.na(response)) %>% 
+    mutate(response = response/mean(response, na.rm=T), #relative fitness
+           trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
+  options(contrasts = c("contr.sum", "contr.poly"))
+  lm(response ~ trait * sun_date + trait * precip_est_mm, data = mnps.abs)
+}
+
+mod.selection.abs <- expand.grid(list(response = fitnesstraits, trait = floraltraits)) %>%
+  mutate(model = pmap(., selection_mod_abs),
+         coefs = map(model, tidy))
+
+mod.selection.tests <- mod.selection.abs %>% 
+    mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 
+  select(-model) %>% unnest(coefs) %>% 
+  filter(str_detect(term, "trait"))
+```
+
+```{r selection_abs, fig.width=8, fig.height=7}
+mod.selection.abs %>% select(-model) %>% unnest(coefs) %>% 
+  ggplot(aes(x=fitnessnames[response], y=estimate)) + facet_wrap(vars(term), scales="free_y") +
+  geom_hline(yintercept=0) + geom_point() + scale_x_discrete("", guide = guide_axis(angle=90))
+
+ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), y=estimate, label=trait)) + 
+  facet_wrap(vars(term), labeller = as_labeller(c(trait="A. Selection on trait (\U03B2)",
+                                                  `trait:precip_est_mm`=
+                                                    "B. Selection on trait x summer precipitation (\U03B2 / mm)",
+                                                  `trait:sun_date`=
+                                                    "C. Selection on trait x snowmelt date (\U03B2 / day)")),
+             scales="free_y", ncol=1) + theme_bw() +
+  geom_point(color="grey90") + geom_hline(yintercept=0) + 
+  geom_text(data = mod.selection.tests %>% mutate(trait=recode(trait, !!!traitnames)), 
+                  aes(alpha = p.value < 0.05), size=3.5, show.legend = F)+
+  scale_x_discrete(labels=fitnessnames) + labs(x="Fitness measure") + theme(axis.title.y=element_blank())
+```
+
+
 # Selection gradients from PCA
 
 Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.
