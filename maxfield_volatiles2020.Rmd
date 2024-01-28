@@ -1287,17 +1287,11 @@ tibble(name = fitnesstraits, SR2 = MF$SR2) %>%
 
 Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.
 
-```{r gradients, fig.width=9, fig.height=9}
-# previously split the data before running PCA - now run PCA on the whole dataset
-
+```{r calc_gradients}
 prcomp_std <- function(data) {
   data %>% mutate(across(everything(), ~ (.x-mean(.x, na.rm=T))/sd(.x, na.rm=T))) %>% #center and scale
   prcomp(center = FALSE, scale. = FALSE)
 }
-
-# Run PCA on traits
-vols.PCA <- prcomp_std(vols.good.top)
-summary(vols.PCA) # PCs 1 - 5 explain 82% of the variation, 12 PCs total (12 top volatiles)
 
 calculate_beta <- function(E, slopes, resid.df) {
   data.frame(B = E %*% slopes$A,
@@ -1306,15 +1300,14 @@ calculate_beta <- function(E, slopes, resid.df) {
     rownames_to_column("trait")
 }
 
-#takes vols.PCA as input
 selection_pca <- function(year, water=names(water_pal), snow=names(snow_pal), fitnesstrait = "seeds_est", 
                           n.PCs = 5, #default number of PCs in regression
-                          pca = vols.PCA, mdata = volsmeta.avg.cut) {
-  if(ncol(pca$x) <= n.PCs) {
-    warning(paste("Only ", ncol(pca$x), "PCs"))
-    n.PCs <- ncol(pca$x)
+                          PCA = pca, mdata = meta.pca) {
+  if(ncol(PCA$x) <= n.PCs) {
+    warning(paste("Only ", ncol(PCA$x), "PCs"))
+    n.PCs <- ncol(PCA$x)
   }
-  std.traits <- mdata %>% bind_cols(as.data.frame(pca$x)) %>% 
+  std.traits <- mdata %>% bind_cols(as.data.frame(PCA$x)) %>% 
     filter(year == .env$year, water %in% .env$water, snow %in% .env$snow) %>% 
     select(-any_of(fitnesstrait)) %>% 
     left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
@@ -1328,46 +1321,90 @@ selection_pca <- function(year, water=names(water_pal), snow=names(snow_pal), fi
   selection.on.PCs <- lm(formula(paste("relfitness ~", paste0("PC",1:n.PCs, collapse=" + "))), data = std.traits)
 
   # Convert selection gradients on PCs to gradients on traits
-  calculate_beta(E = pca$rotation[,1:n.PCs],
+  calculate_beta(E = PCA$rotation[,1:n.PCs],
                  slopes = tidy(selection.on.PCs) %>% filter(term != "(Intercept)") %>%
                    rename(A=estimate, SE=std.error), 
                  resid.df = aov(selection.on.PCs)$df.residual)
 }
 
+# Run PCA on  volatiles
+vols.PCA <- prcomp_std(vols.good.top)
+summary(vols.PCA) # PCs 1 - 5 explain 82% of the variation, 12 PCs total (12 top volatiles)
+
+meta.pca <- volsmeta.avg
+pca <- vols.PCA
+vols.beta.yr <- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits)  %>% 
+ mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+vols.beta.water <- expand_grid(year=unique(volsmeta$year), water=names(water_pal), fitnesstrait=fitnesstraits)  %>% 
+ mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+vols.beta.snow <- expand_grid(year=unique(volsmeta$year), snow=names(snow_pal), fitnesstrait=fitnesstraits)  %>% 
+ mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+vols.beta.water.snow <- expand_grid(year=unique(volsmeta$year), water=names(water_pal), snow=names(snow_pal),  fitnesstrait=fitnesstraits)  %>% 
+  mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+
+(floraltraits.pca <- floraltraits[-c(4,8)])  #drop sepal_width - not measured in 2018, drop total flowers
+mnps.PCA <- mnps.plantyr %>% select(all_of(floraltraits.pca)) %>% drop_na() %>% prcomp_std()
+summary(mnps.PCA) # PCs 1 - 4 explain 83% of the variation, 6 PCs total
+
+meta.pca <- mnps.plantyr %>% filter(mnps.plantyr %>% select(all_of(floraltraits.pca)) %>% vctrs::vec_detect_complete())
+pca <- mnps.PCA
+mnps.beta.yr <- expand_grid(year=unique(mnps.plantyr$year), fitnesstrait=fitnesstraits, n.PCs = 4)  %>% 
+ mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+mnps.beta.water <- expand_grid(year=unique(mnps.plantyr$year), water=names(water_pal), fitnesstrait=fitnesstraits, n.PCs = 4)  %>% 
+ mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+mnps.beta.snow <- expand_grid(year=unique(mnps.plantyr$year), snow=names(snow_pal), fitnesstrait=fitnesstraits, n.PCs = 4)  %>% 
+ mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+mnps.beta.water.snow <- expand_grid(year=unique(mnps.plantyr$year), water=names(water_pal), snow=names(snow_pal), 
+                                    fitnesstrait=fitnesstraits, n.PCs = 4)  %>% 
+  mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
+```
+
+```{r gradients, fig.width=11, fig.height=9}
 plot_beta <- function(betas, colorby="year") {
   bs <- betas %>% left_join(ipochemsf, by=c("trait"="name")) %>% 
         mutate(trait = recode(trait, !!!traitnames) %>%  
-             fct_reorder(replace_na(mean.floral,1000))) #order graph by mean emissions
+            fct_reorder(replace_na(mean.floral,1000))) #order graph by mean emissions
   if(colorby=="water_snow")  bs <- bs %>%  mutate(water_snow = paste(water, snow))
   ggplot(bs, aes(y=trait, x = B, xmin=B-SE, xmax=B+SE, alpha=p.value<0.05, shape=year)) + 
     geom_vline(xintercept=0)+ 
     geom_pointrange(mapping=aes_string(color=colorby), position=position_dodge(width=0.5)) + 
-    labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait", shape="Year",
+    labs(x = "Selection gradient (beta) estimated from gradients on PCs", y = "Trait", shape="Year", alpha="P < 0.05",
          color=list(year="Year", water="Precipitation", snow="Snowmelt", 
                     water_snow = "Precipitation and snowmelt")[[colorby]]) +
     scale_color_manual(values=list(year=year_pal, water=water_pal, snow=snow_pal,
                                    water_snow=water_snow_pal)[[colorby]]) +
-    theme_bw()
+    theme_bw() 
 }
+#By year
+plot_beta(bind_rows(vols.beta.yr, mnps.beta.yr)) + 
+  facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))
 
-volsmeta.avg.cut <- volsmeta.avg
+#By water and snow
+plot_beta(bind_rows(vols.beta.water.snow, mnps.beta.water.snow), colorby="water_snow") +
+  facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames)) + coord_cartesian(xlim=c(-2,3.5))
 
-vols.beta.yr <- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits)  %>% 
- mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
-plot_beta(vols.beta.yr)+ facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))
-
-vols.beta.water <- expand_grid(year=unique(volsmeta$year), water=names(water_pal), fitnesstrait=fitnesstraits)  %>% 
- mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
-
-vols.beta.snow <- expand_grid(year=unique(volsmeta$year), snow=names(snow_pal), fitnesstrait=fitnesstraits)  %>% 
- mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
-
-vols.beta.water.snow <- expand_grid(year=unique(volsmeta$year), water=names(water_pal), snow=names(snow_pal),  fitnesstrait=fitnesstraits)  %>% 
-  mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
-
-walk(fitnesstraits, ~print(plot_beta(filter(vols.beta.water.snow, fitnesstrait==.x), colorby="water_snow") + 
-                             facet_wrap(vars(year), nrow=1) + ggtitle(fitnessnames[.x])))
+# walk(fitnesstraits, ~print(plot_beta(filter(bind_rows(vols.beta.water.snow, mnps.beta.water.snow), fitnesstrait==.x), colorby="water_snow") + 
+#                              facet_wrap(vars(year), nrow=1) + ggtitle(fitnessnames[.x])))
 ```
+
+```{r gradient_heatmap, fig.width=11}
+#By year
+bind_rows(vols.beta.yr, mnps.beta.yr) %>% left_join(ipochemsf, by=c("trait"="name")) %>% 
+        mutate(trait = recode(trait, !!!traitnames) %>% fct_reorder(replace_na(mean.floral,1000))) %>% 
+  ggplot(aes(x=year, y=trait, fill=B)) + geom_tile() + 
+  scale_fill_gradient2()+ geom_point(aes(alpha=p.value < 0.05))+ scale_alpha_discrete(range=c(0,1))+
+  facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))
+
+#by water and snow
+bind_rows(vols.beta.water.snow, mnps.beta.water.snow) %>% left_join(ipochemsf, by=c("trait"="name")) %>% 
+        mutate(trait = recode(trait, !!!traitnames) %>% fct_reorder(replace_na(mean.floral,1000))) %>% 
+ggplot(aes(x=paste(water, snow, year), y=trait, fill=B)) + geom_tile() + 
+  scale_fill_gradient2()+ geom_point(aes(alpha=p.value < 0.05))+ scale_alpha_discrete(range=c(0,1))+ labs(x="")+
+  facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames)) + theme(axis.text.x = element_text(angle=90, hjust=0))
+
+#TODO: try modeling gradients against continuous water and snow, plot like plasticity graph 
+```
+
 
 ## Adaptive plasticity
 
@@ -1496,7 +1533,9 @@ plasticity.water %>% left_join(diffbeta) %>%
 
 ```{r selection_abs_model}
 selection_mod_abs <- function(trait, response) {
-  vm.abs <- vols.traits %>% 
+  if(trait %in% ipogood) data <- vols.traits 
+  else data <- mnps.plantyr %>% mutate(prop_uninfested = 1 - prop_infested)
+  vm.abs <- data %>% 
     select(all_of(c(response, trait)), sun_date, precip_est_mm) %>% 
     rename("trait" = all_of(trait), "response" = all_of(response)) %>% 
     filter(!is.infinite(response), !is.nan(response), !is.na(response)) %>% 
@@ -1506,8 +1545,7 @@ selection_mod_abs <- function(trait, response) {
   lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
 }
 
-
-mod.selection.abs <- expand.grid(list(response = fitnesstraits, trait = c(ipogood, traits[c(1:6,8)]))) %>%
+mod.selection.abs <- expand.grid(list(response = fitnesstraits, trait = c(ipogood, floraltraits))) %>%
   mutate(model = pmap(., selection_mod_abs),
          coefs = map(model, tidy))
 
@@ -1540,7 +1578,7 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
                                           "(1Z,4Z,7Z)-1,5,9,9-\ntetramethylcycloundeca-1,4,7-triene", traitnames))), 
                   show.legend = FALSE, size=3.5, box.padding=0, point.padding=0, direction="y", lineheight=0.7)+
   scale_size_area(max_size = 10) + scale_x_discrete(labels=fitnessnames) +
-  scale_color_manual(values=c(class_pal,"Other trait"="black"), guide=guide_legend(override.aes = list(size=5))) + 
+  scale_color_manual(values=c(class_pal,"Other trait"="grey50"), guide=guide_legend(override.aes = list(size=5))) + 
   labs(x="Fitness measure", size="Mean emissions\n(ng/hr/flower)", color="Class") + 
   theme(axis.title.y=element_blank())
 
@@ -1608,26 +1646,26 @@ corrplot(cor(combos$vmn), method="color", type="lower",
 
 ```{r vmnt_pca}
 #TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
-pca <- combos$vmn %>% mutate(across(all_of(ipogood.top), sqrt)) %>% prcomp_std()
+vmn.pca <- combos$vmn %>% mutate(across(all_of(ipogood.top), sqrt)) %>% prcomp_std()
 
-pca.vars <- as.data.frame(pca$rotation) %>% rownames_to_column("variable") %>% 
+vmn.pca.vars <- as.data.frame(vmn.pca$rotation) %>% rownames_to_column("variable") %>% 
   mutate(class=fct_collapse(variable, !!!deframe(select(filter(ipochemsf, name %in% ipogood.top), class, name)), 
                             other_level="Other trait")) 
-pca.labs <- paste0("PC", 1:2, " (", round(100*pca$sdev[1:2]^2/sum(pca$sdev^2), 0), "% explained)") 
+vmn.pca.labs <- paste0("PC", 1:2, " (", round(100*vmn.pca$sdev[1:2]^2/sum(vmn.pca$sdev^2), 0), "% explained)") 
 zoom<-15
-ggplot(bind_cols(combos$vmn, as_tibble(pca$x)), aes(x=PC1, y=PC2)) +
+ggplot(bind_cols(combos$vmn, as_tibble(vmn.pca$x)), aes(x=PC1, y=PC2)) +
   geom_point(shape=21, color="grey80", size=2) + #, fill=`a-pinene` + scale_fill_viridis_c(option = "plasma")
-  geom_segment(data=pca.vars, aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
+  geom_segment(data=vmn.pca.vars, aes(x=0, y=0, xend=PC1*zoom, yend=PC2*zoom), 
                arrow = arrow(length = unit(1/2, "picas")), color="grey80") +
-  geom_text(data=pca.vars, show.legend = F,
+  geom_text(data=vmn.pca.vars, show.legend = F,
             aes(label = greekify(recode(variable, !!!traitnames)), 
                 x = PC1*zoom*1.1, y = PC2*zoom*1.1, color = class,
                 angle =  (180/pi) * atan(PC2/PC1), hjust=if_else(PC1>0,0,1)), size=3)+
   coord_fixed()+ scale_color_manual(values=c(class_pal, "Other trait"="black")) + 
   theme_minimal()+ theme(panel.grid=element_blank(), legend.position = "top") + 
-  geom_point(data=pca.vars, aes(color=class), alpha=0)+ 
+  geom_point(data=vmn.pca.vars, aes(color=class), alpha=0)+ 
   guides(color=guide_legend(override.aes = list(alpha=1, size=3)))+
-  labs(color="", x=pca.labs[1], y=pca.labs[2]) 
+  labs(color="", x=vmn.pca.labs[1], y=vmn.pca.labs[2]) 
 ```
 
 ## Selection gradients
@@ -1635,13 +1673,14 @@ ggplot(bind_cols(combos$vmn, as_tibble(pca$x)), aes(x=PC1, y=PC2)) +
 Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.
 
 ```{r vmnt_gradients, fig.width=9, fig.height=9}
-volsmeta.avg.cut <- #treatments used in selection_pca function
+meta.pca <- #treatments used in selection_pca function
   volsmeta.avg[!is.na(rowSums(vols.traits[,colnames(combos$vmn)])),] #match rows in vmn
 
 #TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
-vols.PCA <- combos$vmn %>% mutate(across(all_of(ipogood.top), sqrt)) %>% prcomp_std()
+vols.PCA <- combos$vmn %>% prcomp_std() #mutate(across(all_of(ipogood.top), sqrt))
 summary(vols.PCA) # PCs 1 - 5 explain 66% of the variation, 18 PCs total (12 volatiles + 6 traits)
 heatmap(vols.PCA$rotation[,1:5], Colv = NA, col=viridis(256, option="magma"), scale="none")
+pca <- vols.PCA
 
 vols.beta.yr <- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits)  %>% 
   mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
@@ -1677,16 +1716,16 @@ ggplot(vols.beta.yr.PCs, aes(x=n.PCs)) + facet_wrap(vars(fitnesstrait), scales="
 ```{r moreobs, fig.width=10}
 map(combos, dim)
 
-combos.PCA <- map(combos,  ~ .x %>% mutate(across(any_of(ipogood.top), sqrt)) %>% prcomp_std())
+combos.PCA <- map(combos,  ~ .x %>% prcomp_std()) #%>% mutate(across(any_of(ipogood.top), sqrt))
 
 #combos.meta <- map(names(combos), ~ volsmeta.avg[pull(vols.traits.combos, .x),])
 combos.meta <- map(names(combos), ~ all.traits.combos[pull(all.traits.combos, .x),])
 
 vols.beta.yr.combos <- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits, 
                                 n.PCs=5)  %>% 
-  cross_join(tibble(pca = combos.PCA, mdata=combos.meta, 
+  cross_join(tibble(PCA = combos.PCA, mdata=combos.meta, 
                     combo = factor(names(combos), levels=names(combos)))) %>% 
-  mutate(betas = pmap(select(., -combo), selection_pca)) %>% select(-pca, -mdata) %>% unnest(betas)
+  mutate(betas = pmap(select(., -combo), selection_pca)) %>% select(-PCA, -mdata) %>% unnest(betas)
 
 ggplot(vols.beta.yr.combos, aes(x=combo)) + facet_wrap(vars(fitnesstrait), scales="free_y") + 
   geom_line(aes(y=B, color=ifelse(trait %in% traits, "Other trait", "Volatile"), group=paste(trait, year))) +
