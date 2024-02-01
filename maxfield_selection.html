@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-01-27" />
+<meta name="date" content="2024-02-01" />
 
 <title>Maxfield Meadow Ipomopsis Selection</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Selection</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-01-27</h4>
+<h4 class="date">2024-02-01</h4>
 
 </div>
 
@@ -494,9 +494,9 @@ mnps.PCA &lt;- mnps.plantyr.std %&gt;% select(all_of(morphtraits.pca)) %&gt;% pr
 summary(mnps.PCA) # PCs 1 - 4 explain ~90% of the variation</code></pre>
 <pre><code>Importance of components:
                          PC1   PC2   PC3    PC4    PC5    PC6    PC7
-Standard deviation     1.739 1.040 0.883 0.7833 0.6551 0.3433 0.3119
-Proportion of Variance 0.492 0.176 0.127 0.0999 0.0699 0.0192 0.0158
-Cumulative Proportion  0.492 0.668 0.795 0.8951 0.9650 0.9842 1.0000</code></pre>
+Standard deviation     1.741 1.040 0.889 0.7728 0.6552 0.3433 0.3119
+Proportion of Variance 0.493 0.176 0.129 0.0972 0.0699 0.0192 0.0158
+Cumulative Proportion  0.493 0.669 0.798 0.8951 0.9650 0.9842 1.0000</code></pre>
 <pre class="r"><code>mnps.PCA.E &lt;- mnps.PCA$rotation[,1:4]
 mnps.plantyr.std.PCA &lt;- bind_cols(mnps.plantyr.std, as.data.frame(mnps.PCA$x))
 

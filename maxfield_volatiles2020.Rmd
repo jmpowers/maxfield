@@ -524,12 +524,16 @@ vols.traits <- bind_cols(volsmeta.avg, vols.good.avg) %>% left_join(mnps.plantyr
 ```
 
 
-## Compound relative amounts
+## Compound amounts
 
 ```{r relamounts}
 vols.good %>% decostand(method = "tot") %>% summarize(across(everything(), mean)) %>% 
   t() %>% as.data.frame() %>% rownames_to_column("name") %>% rename(mean_percent = V1) %>% 
   arrange(desc(mean_percent)) %>% kable(caption = "Mean relative amounts of each volatile")
+
+vols.good %>% summarize(across(everything(), mean)) %>% 
+  t() %>% as.data.frame() %>% rownames_to_column("name") %>% rename(mean_emissions = V1) %>% 
+  arrange(desc(mean_emissions)) %>% kable(caption = "Mean emission rates of each volatile")
 ```
 
 
@@ -1681,17 +1685,14 @@ pca <- vols.PCA
 
 vols.beta.yr <- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits)  %>% 
   mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
-plot_beta(vols.beta.yr)+ facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))
-
 vols.beta.water <- expand_grid(year=unique(volsmeta$year), water=names(water_pal), fitnesstrait=fitnesstraits)  %>% 
   mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
-plot_beta(vols.beta.water, colorby = "water")+ 
-  facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))
-
 vols.beta.snow <- expand_grid(year=unique(volsmeta$year), snow=names(snow_pal), fitnesstrait=fitnesstraits)  %>% 
   mutate(betas = pmap(., selection_pca)) %>% unnest(betas)
-plot_beta(vols.beta.snow, colorby = "snow")+ 
-  facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))
+
+plot_beta(vols.beta.yr, colorby = "year")
+plot_beta(vols.beta.water, colorby = "water")
+plot_beta(vols.beta.snow, colorby = "snow")
 ```
 
 ### Sensitivity to number of PCs

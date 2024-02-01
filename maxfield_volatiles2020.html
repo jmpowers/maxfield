@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-01-28" />
+<meta name="date" content="2024-02-01" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-01-28</h4>
+<h4 class="date">2024-02-01</h4>
 
 </div>
 
@@ -1004,8 +1004,8 @@ traits.class    &lt;- volsmeta.class %&gt;% left_join(mnps.plantyr.traits)
 volsmeta.traits &lt;- volsmeta.avg %&gt;%       left_join(mnps.plantyr.traits) #wide format
 vols.traits &lt;- bind_cols(volsmeta.avg, vols.good.avg) %&gt;% left_join(mnps.plantyr.traits)</code></pre>
 </div>
-<div id="compound-relative-amounts" class="section level2">
-<h2>Compound relative amounts</h2>
+<div id="compound-amounts" class="section level2">
+<h2>Compound amounts</h2>
 <pre class="r"><code>vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% summarize(across(everything(), mean)) %&gt;% 
   t() %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;name&quot;) %&gt;% rename(mean_percent = V1) %&gt;% 
   arrange(desc(mean_percent)) %&gt;% kable(caption = &quot;Mean relative amounts of each volatile&quot;)</code></pre>
@@ -1138,6 +1138,145 @@ align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
 <tr class="even">
 <td align="left">(4E,6Z)-alloocimene</td>
 <td align="right">0.0021</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>vols.good %&gt;% summarize(across(everything(), mean)) %&gt;% 
+  t() %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;name&quot;) %&gt;% rename(mean_emissions = V1) %&gt;% 
+  arrange(desc(mean_emissions)) %&gt;% kable(caption = &quot;Mean emission rates of each volatile&quot;)</code></pre>
+<table>
+<caption>Mean emission rates of each volatile</caption>
+<colgroup>
+<col width="78%" />
+<col width="21%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">name</th>
+<th align="right">mean_emissions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a-pinene</td>
+<td align="right">41.6188</td>
+</tr>
+<tr class="even">
+<td align="left">D-limonene</td>
+<td align="right">17.2745</td>
+</tr>
+<tr class="odd">
+<td align="left">(Z)-b-ocimene</td>
+<td align="right">15.4207</td>
+</tr>
+<tr class="even">
+<td align="left">3-carene</td>
+<td align="right">9.8803</td>
+</tr>
+<tr class="odd">
+<td align="left">(2E)-2,7-dimethylocta-2,6-dien-1-ol</td>
+<td align="right">7.6078</td>
+</tr>
+<tr class="even">
+<td align="left">(E)-hex-3-en-1-ol</td>
+<td align="right">7.5172</td>
+</tr>
+<tr class="odd">
+<td align="left">(E)-b-ocimene</td>
+<td align="right">6.2120</td>
+</tr>
+<tr class="even">
+<td align="left">sabinene</td>
+<td align="right">5.8479</td>
+</tr>
+<tr class="odd">
+<td align="left">b-myrcene</td>
+<td align="right">4.9478</td>
+</tr>
+<tr class="even">
+<td align="left">hexan-1-ol</td>
+<td align="right">4.9090</td>
+</tr>
+<tr class="odd">
+<td align="left">b-caryophyllene</td>
+<td align="right">4.0115</td>
+</tr>
+<tr class="even">
+<td align="left">[(E)-hex-3-enyl] butanoate</td>
+<td align="right">3.6067</td>
+</tr>
+<tr class="odd">
+<td align="left">[(Z)-hex-3-enyl] butanoate</td>
+<td align="right">3.1403</td>
+</tr>
+<tr class="even">
+<td align="left">verbenone</td>
+<td align="right">2.9946</td>
+</tr>
+<tr class="odd">
+<td align="left">a-terpineol</td>
+<td align="right">2.9236</td>
+</tr>
+<tr class="even">
+<td align="left">petasitene</td>
+<td align="right">1.9082</td>
+</tr>
+<tr class="odd">
+<td align="left">[(E)-hex-3-enyl] acetate</td>
+<td align="right">1.8713</td>
+</tr>
+<tr class="even">
+<td align="left">(E)-4-oxohex-2-enal</td>
+<td align="right">1.1695</td>
+</tr>
+<tr class="odd">
+<td align="left">b-caryophyllene oxide</td>
+<td align="right">0.9692</td>
+</tr>
+<tr class="even">
+<td align="left">trans-b-bergamotene</td>
+<td align="right">0.9431</td>
+</tr>
+<tr class="odd">
+<td align="left">3-methylbutan-1-ol</td>
+<td align="right">0.9390</td>
+</tr>
+<tr class="even">
+<td align="left">g-terpinene</td>
+<td align="right">0.9265</td>
+</tr>
+<tr class="odd">
+<td align="left">cis-a-bergamotene</td>
+<td align="right">0.6268</td>
+</tr>
+<tr class="even">
+<td
+align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
+<td align="right">0.5956</td>
+</tr>
+<tr class="odd">
+<td align="left">methyl benzoate</td>
+<td align="right">0.5908</td>
+</tr>
+<tr class="even">
+<td align="left">(3E)-4,8-dimethylnona-1,3,7-triene</td>
+<td align="right">0.5717</td>
+</tr>
+<tr class="odd">
+<td align="left">a-copaene</td>
+<td align="right">0.5297</td>
+</tr>
+<tr class="even">
+<td align="left">pseudoionone</td>
+<td align="right">0.4373</td>
+</tr>
+<tr class="odd">
+<td align="left">2-methylbenzonitrile</td>
+<td align="right">0.2879</td>
+</tr>
+<tr class="even">
+<td align="left">(4E,6Z)-alloocimene</td>
+<td align="right">0.2248</td>
 </tr>
 </tbody>
 </table>
@@ -2905,9 +3044,9 @@ vols.beta.water.snow &lt;- expand_grid(year=unique(volsmeta$year), water=names(w
 summary(mnps.PCA) # PCs 1 - 4 explain 83% of the variation, 6 PCs total</code></pre>
 <pre><code>Importance of components:
                          PC1   PC2   PC3   PC4   PC5    PC6
-Standard deviation     1.541 0.977 0.940 0.876 0.814 0.5967
-Proportion of Variance 0.396 0.159 0.147 0.128 0.110 0.0593
-Cumulative Proportion  0.396 0.555 0.702 0.830 0.941 1.0000</code></pre>
+Standard deviation     1.543 0.985 0.935 0.876 0.806 0.5976
+Proportion of Variance 0.397 0.162 0.146 0.128 0.108 0.0595
+Cumulative Proportion  0.397 0.559 0.704 0.832 0.940 1.0000</code></pre>
 <pre class="r"><code>meta.pca &lt;- mnps.plantyr %&gt;% filter(mnps.plantyr %&gt;% select(all_of(floraltraits.pca)) %&gt;% vctrs::vec_detect_complete())
 pca &lt;- mnps.PCA
 mnps.beta.yr &lt;- expand_grid(year=unique(mnps.plantyr$year), fitnesstrait=fitnesstraits, n.PCs = 4)  %&gt;% 
@@ -3014,9 +3153,9 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
 <pre><code># A tibble: 3 × 3
   `p.value &lt; 0.05` `plasticity.p.value &lt; 0.05`     n
   &lt;lgl&gt;            &lt;lgl&gt;                       &lt;int&gt;
-1 FALSE            FALSE                         419
+1 FALSE            FALSE                         418
 2 FALSE            TRUE                           36
-3 TRUE             FALSE                          31</code></pre>
+3 TRUE             FALSE                          32</code></pre>
 <pre class="r"><code>ggplot(adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;), aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error,
                           y=name, color=year, alpha=plasticity.p.value&lt;0.05)) +  facet_wrap(vars(newenv)) +
   geom_vline(xintercept = 0) + geom_pointrange() + scale_color_manual(values=year_pal) + 
@@ -3079,42 +3218,42 @@ is adaptive across 3 yr</caption>
 <tr class="odd">
 <td align="left">Early</td>
 <td align="left">Estimated total seeds</td>
-<td align="right">21</td>
+<td align="right">22</td>
 <td align="right">54</td>
-<td align="right">0.39</td>
-<td align="right">0.13</td>
+<td align="right">0.41</td>
+<td align="right">0.22</td>
 </tr>
 <tr class="even">
 <td align="left">Early</td>
 <td align="left">Estimated seeds per flower</td>
-<td align="right">26</td>
+<td align="right">25</td>
 <td align="right">54</td>
-<td align="right">0.48</td>
-<td align="right">0.89</td>
+<td align="right">0.46</td>
+<td align="right">0.68</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
 <td align="left">Prop. uneaten fruits</td>
-<td align="right">28</td>
+<td align="right">29</td>
 <td align="right">54</td>
-<td align="right">0.52</td>
-<td align="right">0.89</td>
+<td align="right">0.54</td>
+<td align="right">0.68</td>
 </tr>
 <tr class="even">
 <td align="left">Reduction</td>
 <td align="left">Estimated total seeds</td>
-<td align="right">28</td>
+<td align="right">27</td>
 <td align="right">54</td>
-<td align="right">0.52</td>
-<td align="right">0.89</td>
+<td align="right">0.50</td>
+<td align="right">1.00</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
 <td align="left">Estimated seeds per flower</td>
-<td align="right">26</td>
+<td align="right">27</td>
 <td align="right">54</td>
-<td align="right">0.48</td>
-<td align="right">0.89</td>
+<td align="right">0.50</td>
+<td align="right">1.00</td>
 </tr>
 </tbody>
 </table>
@@ -3167,14 +3306,14 @@ year</caption>
 <tbody>
 <tr class="odd">
 <td align="left">2018</td>
-<td align="right">-0.3299</td>
-<td align="right">0.1812</td>
+<td align="right">-0.3204</td>
+<td align="right">0.1948</td>
 <td align="right">18</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
-<td align="right">-0.2010</td>
-<td align="right">0.4238</td>
+<td align="right">-0.1926</td>
+<td align="right">0.4438</td>
 <td align="right">18</td>
 </tr>
 <tr class="odd">
@@ -3493,7 +3632,7 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.01</td>
-<td align="left">▁▂▇▃▁</td>
+<td align="left">▁▂▇▅▁</td>
 </tr>
 </tbody>
 </table>
@@ -3826,34 +3965,33 @@ vols.PCA &lt;- combos$vmn %&gt;% prcomp_std() #mutate(across(all_of(ipogood.top)
 summary(vols.PCA) # PCs 1 - 5 explain 66% of the variation, 18 PCs total (12 volatiles + 6 traits)</code></pre>
 <pre><code>Importance of components:
                          PC1   PC2   PC3    PC4    PC5    PC6    PC7    PC8
-Standard deviation     2.224 1.559 1.437 1.1280 1.0192 0.9699 0.9346 0.8885
-Proportion of Variance 0.275 0.135 0.115 0.0707 0.0577 0.0523 0.0485 0.0439
-Cumulative Proportion  0.275 0.410 0.524 0.5952 0.6529 0.7052 0.7537 0.7975
+Standard deviation     2.224 1.560 1.437 1.1291 1.0277 0.9840 0.9289 0.8888
+Proportion of Variance 0.275 0.135 0.115 0.0708 0.0587 0.0538 0.0479 0.0439
+Cumulative Proportion  0.275 0.410 0.525 0.5954 0.6541 0.7078 0.7558 0.7997
                           PC9   PC10   PC11   PC12   PC13   PC14   PC15   PC16
-Standard deviation     0.8821 0.8119 0.7582 0.6367 0.5678 0.5476 0.4556 0.4518
-Proportion of Variance 0.0432 0.0366 0.0319 0.0225 0.0179 0.0167 0.0115 0.0113
-Cumulative Proportion  0.8408 0.8774 0.9093 0.9319 0.9498 0.9664 0.9780 0.9893
+Standard deviation     0.8732 0.8094 0.7445 0.6364 0.5664 0.5512 0.4557 0.4522
+Proportion of Variance 0.0424 0.0364 0.0308 0.0225 0.0178 0.0169 0.0115 0.0114
+Cumulative Proportion  0.8420 0.8784 0.9092 0.9317 0.9495 0.9664 0.9779 0.9893
                           PC17    PC18
-Standard deviation     0.37637 0.22559
-Proportion of Variance 0.00787 0.00283
-Cumulative Proportion  0.99717 1.00000</code></pre>
+Standard deviation     0.37606 0.22615
+Proportion of Variance 0.00786 0.00284
+Cumulative Proportion  0.99716 1.00000</code></pre>
 <pre class="r"><code>heatmap(vols.PCA$rotation[,1:5], Colv = NA, col=viridis(256, option=&quot;magma&quot;), scale=&quot;none&quot;)</code></pre>
 <p><img src="images_volatiles2020/vmnt_gradients-1.svg" width="864" /></p>
 <pre class="r"><code>pca &lt;- vols.PCA
 
 vols.beta.yr &lt;- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits)  %&gt;% 
   mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-plot_beta(vols.beta.yr)+ facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))</code></pre>
+vols.beta.water &lt;- expand_grid(year=unique(volsmeta$year), water=names(water_pal), fitnesstrait=fitnesstraits)  %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
+vols.beta.snow &lt;- expand_grid(year=unique(volsmeta$year), snow=names(snow_pal), fitnesstrait=fitnesstraits)  %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
+
+plot_beta(vols.beta.yr, colorby = &quot;year&quot;)</code></pre>
 <p><img src="images_volatiles2020/vmnt_gradients-2.svg" width="864" /></p>
-<pre class="r"><code>vols.beta.water &lt;- expand_grid(year=unique(volsmeta$year), water=names(water_pal), fitnesstrait=fitnesstraits)  %&gt;% 
-  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-plot_beta(vols.beta.water, colorby = &quot;water&quot;)+ 
-  facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))</code></pre>
+<pre class="r"><code>plot_beta(vols.beta.water, colorby = &quot;water&quot;)</code></pre>
 <p><img src="images_volatiles2020/vmnt_gradients-3.svg" width="864" /></p>
-<pre class="r"><code>vols.beta.snow &lt;- expand_grid(year=unique(volsmeta$year), snow=names(snow_pal), fitnesstrait=fitnesstraits)  %&gt;% 
-  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-plot_beta(vols.beta.snow, colorby = &quot;snow&quot;)+ 
-  facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))</code></pre>
+<pre class="r"><code>plot_beta(vols.beta.snow, colorby = &quot;snow&quot;)</code></pre>
 <p><img src="images_volatiles2020/vmnt_gradients-4.svg" width="864" /></p>
 <div id="sensitivity-to-number-of-pcs" class="section level3">
 <h3>Sensitivity to number of PCs</h3>

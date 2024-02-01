@@ -609,6 +609,7 @@ nt <- read_sheet(filter(datasheets, name=="2020 Maxfield Floral Traits"), sheet=
   mutate(plant = as.character(plant),  plantid = paste0(plotid, plant), 
          plot = factor(str_sub(plotid,1,1)), subplot = factor(str_sub(plotid,2,2)),
          year = factor(ifelse(is.na(year), year(date), year)),
+         nectar_conc = if_else(nectar_conc < 12, NA, nectar_conc),#outliers with small volumes - likely incorrect refractometer readings
          nectar_24_h_ul = nectar_48_h_mm * 5 /(2 * 32), #5-uL microcapillary tube 32 mm in length, 2 days
          # units for nectar_conc are degrees Brix = 1 g sucrose / 100 g solution (percentage by mass)
          nectar_density = 1.852e-5 * nectar_conc^2 + 3.665e-3 * nectar_conc + 1, # mg/uL of sucrose solution at 20 C 
