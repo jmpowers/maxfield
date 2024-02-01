@@ -288,6 +288,10 @@ walk2(figs$path, figs$fig, ~system(paste0(&quot;inkscape -o ./figures_volatiles2
 <pre class="r"><code>load(&quot;data/maxfield_data.rda&quot;) #load trait measurements, etc
 load(&quot;data/volatiles/maxfield_volatiles_lessdupes.rda&quot;) # from maxfield_gc.R, loads maxfmeta and maxf (wide GC data)
 
+fitnesstraits &lt;- c(&quot;seeds_est&quot;, &quot;seeds_per_flower&quot;, &quot;prop_uninfested&quot;, &quot;eggs_per_flower&quot;)
+fitnessnames &lt;- c(traitnames, prop_uninfested = &quot;Prop. uneaten fruits&quot;,
+                  eggs_per_flower=&quot;Fly eggs per flower&quot;)[fitnesstraits]
+
 #check for duplicates in vt and maxfmeta
 #vt %&gt;% filter(!exclude %in% c(&quot;flowers&quot;, &quot;incomplete&quot;, &quot;resample&quot;)) %&gt;% count(sampledate.file, plot.file, subplot.file, plant.file) %&gt;% filter(n&gt;1)  #exclude=&quot;resample&quot; #no duplicates in vt
 #I think these plantid duplicates are all just two samples taken on the same day, except maybe 3D858
@@ -1006,15 +1010,15 @@ vols.traits &lt;- bind_cols(volsmeta.avg, vols.good.avg) %&gt;% left_join(mnps.p
 </div>
 <div id="compound-amounts" class="section level2">
 <h2>Compound amounts</h2>
-<pre class="r"><code>vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% summarize(across(everything(), mean)) %&gt;% 
-  t() %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;name&quot;) %&gt;% rename(mean_percent = V1) %&gt;% 
-  arrange(desc(mean_percent)) %&gt;% kable(caption = &quot;Mean relative amounts of each volatile&quot;)</code></pre>
+<pre class="r"><code>vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% #relative amount in each sample
+  pivot_longer(everything()) %&gt;% group_by(name) %&gt;% summarize(mean_rel = mean(value)) %&gt;% 
+  arrange(desc(mean_rel)) %&gt;% kable(caption = &quot;Mean relative amounts of each volatile&quot;)</code></pre>
 <table>
 <caption>Mean relative amounts of each volatile</caption>
 <thead>
 <tr class="header">
 <th align="left">name</th>
-<th align="right">mean_percent</th>
+<th align="right">mean_rel</th>
 </tr>
 </thead>
 <tbody>
@@ -1141,142 +1145,177 @@ align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>vols.good %&gt;% summarize(across(everything(), mean)) %&gt;% 
-  t() %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;name&quot;) %&gt;% rename(mean_emissions = V1) %&gt;% 
-  arrange(desc(mean_emissions)) %&gt;% kable(caption = &quot;Mean emission rates of each volatile&quot;)</code></pre>
+<pre class="r"><code>vols.good.avg %&gt;% #average by plant first
+  pivot_longer(everything()) %&gt;% group_by(name) %&gt;% summarize(mean_emissions = mean(value), sd_emissions=sd(value)) %&gt;% 
+  left_join(ipochemsf) %&gt;%  arrange(class, desc(mean_emissions)) %&gt;% 
+  mutate(meansd = paste(sprintf(mean_emissions, fmt = &#39;%#.1f&#39;), &quot;\U00B1&quot;, sprintf(sd_emissions, fmt = &#39;%#.1f&#39;)),
+         name=greekify(name)) %&gt;% 
+  select(class, name, meansd) %&gt;%  kable(caption = &quot;Mean emission rates of each volatile&quot;)</code></pre>
 <table>
 <caption>Mean emission rates of each volatile</caption>
 <colgroup>
-<col width="78%" />
-<col width="21%" />
+<col width="17%" />
+<col width="67%" />
+<col width="14%" />
 </colgroup>
 <thead>
 <tr class="header">
+<th align="left">class</th>
 <th align="left">name</th>
-<th align="right">mean_emissions</th>
+<th align="left">meansd</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">a-pinene</td>
-<td align="right">41.6188</td>
+<td align="left">Monoterpene</td>
+<td align="left">α-pinene</td>
+<td align="left">42.2 ± 71.3</td>
 </tr>
 <tr class="even">
+<td align="left">Monoterpene</td>
 <td align="left">D-limonene</td>
-<td align="right">17.2745</td>
+<td align="left">16.7 ± 21.0</td>
 </tr>
 <tr class="odd">
-<td align="left">(Z)-b-ocimene</td>
-<td align="right">15.4207</td>
+<td align="left">Monoterpene</td>
+<td align="left">(Z)-β-ocimene</td>
+<td align="left">15.6 ± 23.8</td>
 </tr>
 <tr class="even">
+<td align="left">Monoterpene</td>
 <td align="left">3-carene</td>
-<td align="right">9.8803</td>
+<td align="left">10.1 ± 13.5</td>
 </tr>
 <tr class="odd">
-<td align="left">(2E)-2,7-dimethylocta-2,6-dien-1-ol</td>
-<td align="right">7.6078</td>
+<td align="left">Monoterpene</td>
+<td align="left">(E)-β-ocimene</td>
+<td align="left">6.3 ± 12.1</td>
 </tr>
 <tr class="even">
-<td align="left">(E)-hex-3-en-1-ol</td>
-<td align="right">7.5172</td>
-</tr>
-<tr class="odd">
-<td align="left">(E)-b-ocimene</td>
-<td align="right">6.2120</td>
-</tr>
-<tr class="even">
+<td align="left">Monoterpene</td>
 <td align="left">sabinene</td>
-<td align="right">5.8479</td>
+<td align="left">5.9 ± 7.8</td>
 </tr>
 <tr class="odd">
-<td align="left">b-myrcene</td>
-<td align="right">4.9478</td>
+<td align="left">Monoterpene</td>
+<td align="left">β-myrcene</td>
+<td align="left">4.8 ± 10.2</td>
 </tr>
 <tr class="even">
-<td align="left">hexan-1-ol</td>
-<td align="right">4.9090</td>
-</tr>
-<tr class="odd">
-<td align="left">b-caryophyllene</td>
-<td align="right">4.0115</td>
-</tr>
-<tr class="even">
-<td align="left">[(E)-hex-3-enyl] butanoate</td>
-<td align="right">3.6067</td>
-</tr>
-<tr class="odd">
-<td align="left">[(Z)-hex-3-enyl] butanoate</td>
-<td align="right">3.1403</td>
-</tr>
-<tr class="even">
+<td align="left">Monoterpene</td>
 <td align="left">verbenone</td>
-<td align="right">2.9946</td>
+<td align="left">3.2 ± 5.8</td>
 </tr>
 <tr class="odd">
-<td align="left">a-terpineol</td>
-<td align="right">2.9236</td>
+<td align="left">Monoterpene</td>
+<td align="left">α-terpineol</td>
+<td align="left">3.0 ± 4.6</td>
 </tr>
 <tr class="even">
+<td align="left">Monoterpene</td>
+<td align="left">γ-terpinene</td>
+<td align="left">0.9 ± 1.5</td>
+</tr>
+<tr class="odd">
+<td align="left">Monoterpene</td>
+<td align="left">(3E)-4,8-dimethylnona-1,3,7-triene</td>
+<td align="left">0.6 ± 1.3</td>
+</tr>
+<tr class="even">
+<td align="left">Monoterpene</td>
+<td align="left">(4E,6Z)-alloocimene</td>
+<td align="left">0.2 ± 0.3</td>
+</tr>
+<tr class="odd">
+<td align="left">Benzenoid</td>
+<td align="left">methyl benzoate</td>
+<td align="left">0.6 ± 0.6</td>
+</tr>
+<tr class="even">
+<td align="left">Benzenoid</td>
+<td align="left">2-methylbenzonitrile</td>
+<td align="left">0.3 ± 0.2</td>
+</tr>
+<tr class="odd">
+<td align="left">Sesquiterpene</td>
+<td align="left">β-caryophyllene</td>
+<td align="left">4.1 ± 10.3</td>
+</tr>
+<tr class="even">
+<td align="left">Sesquiterpene</td>
 <td align="left">petasitene</td>
-<td align="right">1.9082</td>
+<td align="left">1.8 ± 4.7</td>
 </tr>
 <tr class="odd">
-<td align="left">[(E)-hex-3-enyl] acetate</td>
-<td align="right">1.8713</td>
+<td align="left">Sesquiterpene</td>
+<td align="left">β-caryophyllene oxide</td>
+<td align="left">1.0 ± 3.7</td>
 </tr>
 <tr class="even">
-<td align="left">(E)-4-oxohex-2-enal</td>
-<td align="right">1.1695</td>
+<td align="left">Sesquiterpene</td>
+<td align="left">trans-β-bergamotene</td>
+<td align="left">1.0 ± 2.0</td>
 </tr>
 <tr class="odd">
-<td align="left">b-caryophyllene oxide</td>
-<td align="right">0.9692</td>
+<td align="left">Sesquiterpene</td>
+<td align="left">cis-α-bergamotene</td>
+<td align="left">0.7 ± 0.9</td>
 </tr>
 <tr class="even">
-<td align="left">trans-b-bergamotene</td>
-<td align="right">0.9431</td>
-</tr>
-<tr class="odd">
-<td align="left">3-methylbutan-1-ol</td>
-<td align="right">0.9390</td>
-</tr>
-<tr class="even">
-<td align="left">g-terpinene</td>
-<td align="right">0.9265</td>
-</tr>
-<tr class="odd">
-<td align="left">cis-a-bergamotene</td>
-<td align="right">0.6268</td>
-</tr>
-<tr class="even">
+<td align="left">Sesquiterpene</td>
 <td
 align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
-<td align="right">0.5956</td>
+<td align="left">0.6 ± 1.7</td>
 </tr>
 <tr class="odd">
-<td align="left">methyl benzoate</td>
-<td align="right">0.5908</td>
+<td align="left">Sesquiterpene</td>
+<td align="left">α-copaene</td>
+<td align="left">0.5 ± 1.3</td>
 </tr>
 <tr class="even">
-<td align="left">(3E)-4,8-dimethylnona-1,3,7-triene</td>
-<td align="right">0.5717</td>
-</tr>
-<tr class="odd">
-<td align="left">a-copaene</td>
-<td align="right">0.5297</td>
-</tr>
-<tr class="even">
+<td align="left">Sesquiterpene</td>
 <td align="left">pseudoionone</td>
-<td align="right">0.4373</td>
+<td align="left">0.5 ± 0.9</td>
 </tr>
 <tr class="odd">
-<td align="left">2-methylbenzonitrile</td>
-<td align="right">0.2879</td>
+<td align="left">Aliphatic</td>
+<td align="left">(2E)-2,7-dimethylocta-2,6-dien-1-ol</td>
+<td align="left">7.4 ± 15.7</td>
 </tr>
 <tr class="even">
-<td align="left">(4E,6Z)-alloocimene</td>
-<td align="right">0.2248</td>
+<td align="left">Aliphatic</td>
+<td align="left">(E)-hex-3-en-1-ol</td>
+<td align="left">6.9 ± 12.2</td>
+</tr>
+<tr class="odd">
+<td align="left">Aliphatic</td>
+<td align="left">hexan-1-ol</td>
+<td align="left">4.9 ± 5.0</td>
+</tr>
+<tr class="even">
+<td align="left">Aliphatic</td>
+<td align="left">[(E)-hex-3-enyl] butanoate</td>
+<td align="left">3.4 ± 7.5</td>
+</tr>
+<tr class="odd">
+<td align="left">Aliphatic</td>
+<td align="left">[(Z)-hex-3-enyl] butanoate</td>
+<td align="left">3.2 ± 8.0</td>
+</tr>
+<tr class="even">
+<td align="left">Aliphatic</td>
+<td align="left">[(E)-hex-3-enyl] acetate</td>
+<td align="left">1.8 ± 3.6</td>
+</tr>
+<tr class="odd">
+<td align="left">Aliphatic</td>
+<td align="left">(E)-4-oxohex-2-enal</td>
+<td align="left">1.2 ± 2.3</td>
+</tr>
+<tr class="even">
+<td align="left">Aliphatic</td>
+<td align="left">3-methylbutan-1-ol</td>
+<td align="left">1.0 ± 1.8</td>
 </tr>
 </tbody>
 </table>
@@ -2655,9 +2694,6 @@ moisture</caption>
 <h1>Selection analyses</h1>
 <div id="fitness-measures" class="section level2">
 <h2>Fitness measures</h2>
-<pre class="r"><code>fitnesstraits &lt;- c(&quot;seeds_est&quot;, &quot;seeds_per_flower&quot;, &quot;prop_uninfested&quot;, &quot;eggs_per_flower&quot;)
-fitnessnames &lt;- c(traitnames, prop_uninfested = &quot;Prop. uneaten fruits&quot;,
-                  eggs_per_flower=&quot;Fly eggs per flower&quot;)[fitnesstraits]</code></pre>
 </div>
 <div id="plots-of-selection-in-treatments-and-years"
 class="section level2">
@@ -2987,9 +3023,8 @@ calculate_beta &lt;- function(E, slopes, resid.df) {
     rownames_to_column(&quot;trait&quot;)
 }
 
-selection_pca &lt;- function(year, water=names(water_pal), snow=names(snow_pal), fitnesstrait = &quot;seeds_est&quot;, 
-                          n.PCs = 5, #default number of PCs in regression
-                          PCA = pca, mdata = meta.pca) {
+selection_pca &lt;- function(year=names(year_pal), water=names(water_pal), snow=names(snow_pal), 
+                          fitnesstrait, n.PCs, PCA, mdata) {
   if(ncol(PCA$x) &lt;= n.PCs) {
     warning(paste(&quot;Only &quot;, ncol(PCA$x), &quot;PCs&quot;))
     n.PCs &lt;- ncol(PCA$x)
@@ -2999,7 +3034,7 @@ selection_pca &lt;- function(year, water=names(water_pal), snow=names(snow_pal),
     select(-any_of(fitnesstrait)) %&gt;% 
     left_join(mnps.plantyr.traits %&gt;% select(year, plotid, plantid, all_of(fitnesstrait)), by=c(&quot;year&quot;, &quot;plotid&quot;, &quot;plantid&quot;)) %&gt;% 
     select(all_of(fitnesstrait), any_of(names(treatments)), starts_with(&quot;PC&quot;)) %&gt;% 
-    rename(&quot;fitness&quot; = fitnesstrait) %&gt;% 
+    rename(&quot;fitness&quot; = all_of(fitnesstrait)) %&gt;% 
     group_by(year) %&gt;% mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep=&quot;unused&quot;) %&gt;% ungroup %&gt;% #relative fitness within year
     drop_na(relfitness) %&gt;% 
     select(where(~sum(is.na(.))==0))
@@ -3013,8 +3048,16 @@ selection_pca &lt;- function(year, water=names(water_pal), snow=names(snow_pal),
                    rename(A=estimate, SE=std.error), 
                  resid.df = aov(selection.on.PCs)$df.residual)
 }
+calculate_all_gradients &lt;- function(trts) {
+  mutate(trts, PCA=list(vols.PCA), mdata = list(volsmeta.avg), n.PCs = 5) %&gt;% 
+  bind_rows(mutate(., 
+                   n.PCs = if_else(year==&quot;2018&quot;, 4, 5),
+                   PCA =   if_else(year==&quot;2018&quot;, list(mnps.PCA.nosepal), list(mnps.PCA.withsepal)),
+                   mdata = if_else(year==&quot;2018&quot;, list(meta.pca.nosepal), list(meta.pca.withsepal)))) %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% select(-PCA, -mdata) %&gt;% unnest(betas)
+}
 
-# Run PCA on  volatiles
+# Run PCAs
 vols.PCA &lt;- prcomp_std(vols.good.top)
 summary(vols.PCA) # PCs 1 - 5 explain 82% of the variation, 12 PCs total (12 top volatiles)</code></pre>
 <pre><code>Importance of components:
@@ -3026,38 +3069,37 @@ Cumulative Proportion  0.401 0.576 0.686 0.7577 0.8165 0.8701 0.9085 0.9396
 Standard deviation     0.5085 0.5072 0.3969 0.22655
 Proportion of Variance 0.0215 0.0214 0.0131 0.00428
 Cumulative Proportion  0.9612 0.9826 0.9957 1.00000</code></pre>
-<pre class="r"><code>meta.pca &lt;- volsmeta.avg
-pca &lt;- vols.PCA
-vols.beta.yr &lt;- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits)  %&gt;% 
- mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-vols.beta.water &lt;- expand_grid(year=unique(volsmeta$year), water=names(water_pal), fitnesstrait=fitnesstraits)  %&gt;% 
- mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-vols.beta.snow &lt;- expand_grid(year=unique(volsmeta$year), snow=names(snow_pal), fitnesstrait=fitnesstraits)  %&gt;% 
- mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-vols.beta.water.snow &lt;- expand_grid(year=unique(volsmeta$year), water=names(water_pal), snow=names(snow_pal),  fitnesstrait=fitnesstraits)  %&gt;% 
-  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
+<pre class="r"><code>(floraltraits.pca &lt;- floraltraits[-8]) #drop total flowers</code></pre>
+<pre><code>[1] &quot;corolla_length&quot; &quot;style_length&quot;   &quot;corolla_width&quot;  &quot;sepal_width&quot;   
+[5] &quot;nectar_24_h_ul&quot; &quot;nectar_conc&quot;    &quot;height_cm&quot;     </code></pre>
+<pre class="r"><code>mnps.PCA.withsepal &lt;- mnps.plantyr %&gt;% select(all_of(floraltraits.pca)) %&gt;% drop_na() %&gt;% prcomp_std()
+mnps.PCA.nosepal &lt;- mnps.plantyr %&gt;% select(all_of(floraltraits.pca[-4])) %&gt;% drop_na() %&gt;% prcomp_std()
 
-(floraltraits.pca &lt;- floraltraits[-c(4,8)])  #drop sepal_width - not measured in 2018, drop total flowers</code></pre>
-<pre><code>[1] &quot;corolla_length&quot; &quot;style_length&quot;   &quot;corolla_width&quot;  &quot;nectar_24_h_ul&quot;
-[5] &quot;nectar_conc&quot;    &quot;height_cm&quot;     </code></pre>
-<pre class="r"><code>mnps.PCA &lt;- mnps.plantyr %&gt;% select(all_of(floraltraits.pca)) %&gt;% drop_na() %&gt;% prcomp_std()
-summary(mnps.PCA) # PCs 1 - 4 explain 83% of the variation, 6 PCs total</code></pre>
+summary(mnps.PCA.withsepal) # PCs 1 - 5 explain 83% of the variation, 7 PCs total</code></pre>
+<pre><code>Importance of components:
+                         PC1   PC2   PC3   PC4   PC5   PC6    PC7
+Standard deviation     1.384 1.136 0.987 0.963 0.861 0.856 0.6459
+Proportion of Variance 0.274 0.184 0.139 0.132 0.106 0.105 0.0596
+Cumulative Proportion  0.274 0.458 0.597 0.730 0.836 0.940 1.0000</code></pre>
+<pre class="r"><code>summary(mnps.PCA.nosepal)   # PCs 1 - 4 explain 83% of the variation, 6 PCs total</code></pre>
 <pre><code>Importance of components:
                          PC1   PC2   PC3   PC4   PC5    PC6
 Standard deviation     1.543 0.985 0.935 0.876 0.806 0.5976
 Proportion of Variance 0.397 0.162 0.146 0.128 0.108 0.0595
 Cumulative Proportion  0.397 0.559 0.704 0.832 0.940 1.0000</code></pre>
-<pre class="r"><code>meta.pca &lt;- mnps.plantyr %&gt;% filter(mnps.plantyr %&gt;% select(all_of(floraltraits.pca)) %&gt;% vctrs::vec_detect_complete())
-pca &lt;- mnps.PCA
-mnps.beta.yr &lt;- expand_grid(year=unique(mnps.plantyr$year), fitnesstrait=fitnesstraits, n.PCs = 4)  %&gt;% 
- mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-mnps.beta.water &lt;- expand_grid(year=unique(mnps.plantyr$year), water=names(water_pal), fitnesstrait=fitnesstraits, n.PCs = 4)  %&gt;% 
- mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-mnps.beta.snow &lt;- expand_grid(year=unique(mnps.plantyr$year), snow=names(snow_pal), fitnesstrait=fitnesstraits, n.PCs = 4)  %&gt;% 
- mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
-mnps.beta.water.snow &lt;- expand_grid(year=unique(mnps.plantyr$year), water=names(water_pal), snow=names(snow_pal), 
-                                    fitnesstrait=fitnesstraits, n.PCs = 4)  %&gt;% 
-  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)</code></pre>
+<pre class="r"><code>meta.pca.withsepal &lt;- mnps.plantyr %&gt;% filter(mnps.plantyr %&gt;% select(all_of(floraltraits.pca)) %&gt;% vctrs::vec_detect_complete())
+meta.pca.nosepal &lt;- mnps.plantyr %&gt;% filter(mnps.plantyr %&gt;% select(all_of(floraltraits.pca[-4])) %&gt;% vctrs::vec_detect_complete())
+
+#Calculate selection gradients in each treatment category
+all.beta.yr &lt;- expand_grid(year=names(year_pal), fitnesstrait=fitnesstraits) %&gt;% 
+  calculate_all_gradients()
+all.beta.water &lt;- expand_grid(year=names(year_pal), fitnesstrait=fitnesstraits, water=names(water_pal)) %&gt;% 
+  calculate_all_gradients()
+all.beta.snow &lt;- expand_grid(year=names(year_pal), fitnesstrait=fitnesstraits, snow=names(snow_pal)) %&gt;% 
+  calculate_all_gradients()
+all.beta.water.snow &lt;- expand_grid(year=names(year_pal), fitnesstrait=fitnesstraits, 
+                                   water=names(water_pal), snow=names(snow_pal)) %&gt;% 
+  calculate_all_gradients()</code></pre>
 <pre class="r"><code>plot_beta &lt;- function(betas, colorby) {
   bs &lt;- betas %&gt;% left_join(ipochemsf, by=c(&quot;trait&quot;=&quot;name&quot;)) %&gt;% 
         mutate(trait = recode(trait, !!!traitnames) %&gt;%  
@@ -3066,7 +3108,7 @@ mnps.beta.water.snow &lt;- expand_grid(year=unique(mnps.plantyr$year), water=nam
   ggplot(bs, aes(y=trait, x = B, xmin=B-SE, xmax=B+SE, alpha=p.value&lt;0.05, shape=year)) + 
     facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))+
     geom_vline(xintercept=0)+ 
-    geom_pointrange(mapping=aes_string(color=colorby), position=position_dodge(width=0.5)) + 
+    geom_pointrange(aes_string(color=colorby), position=position_dodge(width=0.5)) + 
     labs(x = &quot;Selection gradient (beta) estimated from gradients on PCs&quot;, y = &quot;Trait&quot;, shape=&quot;Year&quot;, alpha=&quot;P &lt; 0.05&quot;,
          color=list(year=&quot;Year&quot;, water=&quot;Precipitation&quot;, snow=&quot;Snowmelt&quot;, 
                     water_snow = &quot;Precipitation and snowmelt&quot;)[[colorby]]) +
@@ -3075,15 +3117,15 @@ mnps.beta.water.snow &lt;- expand_grid(year=unique(mnps.plantyr$year), water=nam
     theme_bw() 
 }
 
-plot_beta(bind_rows(vols.beta.yr, mnps.beta.yr), colorby=&quot;year&quot;)</code></pre>
+plot_beta(all.beta.yr, colorby=&quot;year&quot;)</code></pre>
 <p><img src="images_volatiles2020/gradients-1.svg" width="1056" /></p>
-<pre class="r"><code>plot_beta(bind_rows(vols.beta.water, mnps.beta.water), colorby=&quot;water&quot;)</code></pre>
+<pre class="r"><code>plot_beta(all.beta.water, colorby=&quot;water&quot;)</code></pre>
 <p><img src="images_volatiles2020/gradients-2.svg" width="1056" /></p>
-<pre class="r"><code>plot_beta(bind_rows(vols.beta.snow, mnps.beta.snow), colorby=&quot;snow&quot;)</code></pre>
+<pre class="r"><code>plot_beta(all.beta.snow, colorby=&quot;snow&quot;)</code></pre>
 <p><img src="images_volatiles2020/gradients-3.svg" width="1056" /></p>
-<pre class="r"><code>plot_beta(bind_rows(vols.beta.water.snow, mnps.beta.water.snow), colorby=&quot;water_snow&quot;) + coord_cartesian(xlim=c(-2,3.5))</code></pre>
+<pre class="r"><code>plot_beta(all.beta.water.snow, colorby=&quot;water_snow&quot;) + coord_cartesian(xlim=c(-2,3.5))</code></pre>
 <p><img src="images_volatiles2020/gradients-4.svg" width="1056" /></p>
-<pre class="r"><code>bind_rows(vols.beta.yr, mnps.beta.yr) %&gt;% left_join(ipochemsf, by=c(&quot;trait&quot;=&quot;name&quot;)) %&gt;% 
+<pre class="r"><code>all.beta.yr %&gt;% left_join(ipochemsf, by=c(&quot;trait&quot;=&quot;name&quot;)) %&gt;% 
         mutate(trait = recode(trait, !!!traitnames) %&gt;% fct_reorder(replace_na(mean.floral,1000))) %&gt;% 
   ggplot(aes(x=year, y=trait, fill=B)) + geom_tile() + 
   scale_fill_gradient2()+ geom_point(aes(alpha=p.value &lt; 0.05))+ scale_alpha_discrete(range=c(0,1))+
@@ -3113,8 +3155,8 @@ plot_beta(bind_rows(vols.beta.yr, mnps.beta.yr), colorby=&quot;year&quot;)</code
   group_by(multiplecomps, name, year) %&gt;% #two comparisons to Control made within each volatile and year 
   mutate(plasticity.p.value = ifelse(multiplecomps, p.adjust(p.value, method=&quot;fdr&quot;), p.value)) %&gt;% 
   ungroup %&gt;% select(year, name, newenv, plasticity.p.value, estimate, std.error) %&gt;% 
-  left_join(bind_rows(rename(bind_rows(vols.beta.water, mnps.beta.water), newenv=water),
-                    rename(bind_rows(vols.beta.snow, mnps.beta.snow), newenv=snow)) %&gt;% 
+  left_join(bind_rows(rename(all.beta.water, newenv=water),
+                    rename(all.beta.snow, newenv=snow)) %&gt;% 
             filter(fitnesstrait!=&quot;eggs_per_flower&quot;) %&gt;% 
   rename(name=trait)) %&gt;% left_join(ipochemsf %&gt;% select(-starts_with(&quot;area&quot;))) %&gt;% 
   mutate(class = fct_na_value_to_level(class, &quot;Other trait&quot;))
@@ -3153,9 +3195,9 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
 <pre><code># A tibble: 3 × 3
   `p.value &lt; 0.05` `plasticity.p.value &lt; 0.05`     n
   &lt;lgl&gt;            &lt;lgl&gt;                       &lt;int&gt;
-1 FALSE            FALSE                         418
-2 FALSE            TRUE                           36
-3 TRUE             FALSE                          32</code></pre>
+1 FALSE            FALSE                         429
+2 FALSE            TRUE                           42
+3 TRUE             FALSE                          33</code></pre>
 <pre class="r"><code>ggplot(adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;), aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error,
                           y=name, color=year, alpha=plasticity.p.value&lt;0.05)) +  facet_wrap(vars(newenv)) +
   geom_vline(xintercept = 0) + geom_pointrange() + scale_color_manual(values=year_pal) + 
@@ -3168,9 +3210,10 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
   mutate(prop = adaptive/n,
          p.value=map2_dbl(adaptive, n, ~ prop.test(.x, .y)$p.value),
          fitnesstrait = fitnessnames[fitnesstrait]) %&gt;% 
-  kable(caption=paste(&quot;Proportion of&quot;, ncol(vols.good.top), &quot;volatiles and&quot;, length(floraltraits.pca), &quot;other traits whose plasticity is adaptive across 3 yr&quot;), digits=2)</code></pre>
+  kable(caption=paste(&quot;Proportion of&quot;, ncol(vols.good.top), &quot;volatiles and&quot;, length(floraltraits.pca), 
+                      &quot;other traits whose plasticity is adaptive across 3 yr&quot;), digits=2)</code></pre>
 <table>
-<caption>Proportion of 12 volatiles and 6 other traits whose plasticity
+<caption>Proportion of 12 volatiles and 7 other traits whose plasticity
 is adaptive across 3 yr</caption>
 <thead>
 <tr class="header">
@@ -3186,72 +3229,72 @@ is adaptive across 3 yr</caption>
 <tr class="odd">
 <td align="left">Addition</td>
 <td align="left">Prop. uneaten fruits</td>
-<td align="right">20</td>
-<td align="right">54</td>
-<td align="right">0.37</td>
+<td align="right">21</td>
+<td align="right">56</td>
+<td align="right">0.38</td>
 <td align="right">0.08</td>
 </tr>
 <tr class="even">
 <td align="left">Addition</td>
 <td align="left">Estimated total seeds</td>
-<td align="right">23</td>
-<td align="right">54</td>
+<td align="right">24</td>
+<td align="right">56</td>
 <td align="right">0.43</td>
-<td align="right">0.34</td>
+<td align="right">0.35</td>
 </tr>
 <tr class="odd">
 <td align="left">Addition</td>
 <td align="left">Estimated seeds per flower</td>
-<td align="right">26</td>
-<td align="right">54</td>
-<td align="right">0.48</td>
-<td align="right">0.89</td>
+<td align="right">28</td>
+<td align="right">56</td>
+<td align="right">0.50</td>
+<td align="right">1.00</td>
 </tr>
 <tr class="even">
 <td align="left">Early</td>
 <td align="left">Prop. uneaten fruits</td>
-<td align="right">21</td>
-<td align="right">54</td>
-<td align="right">0.39</td>
-<td align="right">0.13</td>
+<td align="right">23</td>
+<td align="right">56</td>
+<td align="right">0.41</td>
+<td align="right">0.23</td>
 </tr>
 <tr class="odd">
 <td align="left">Early</td>
 <td align="left">Estimated total seeds</td>
 <td align="right">22</td>
-<td align="right">54</td>
-<td align="right">0.41</td>
-<td align="right">0.22</td>
+<td align="right">56</td>
+<td align="right">0.39</td>
+<td align="right">0.14</td>
 </tr>
 <tr class="even">
 <td align="left">Early</td>
 <td align="left">Estimated seeds per flower</td>
-<td align="right">25</td>
-<td align="right">54</td>
-<td align="right">0.46</td>
-<td align="right">0.68</td>
+<td align="right">27</td>
+<td align="right">56</td>
+<td align="right">0.48</td>
+<td align="right">0.89</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
 <td align="left">Prop. uneaten fruits</td>
 <td align="right">29</td>
-<td align="right">54</td>
-<td align="right">0.54</td>
-<td align="right">0.68</td>
+<td align="right">56</td>
+<td align="right">0.52</td>
+<td align="right">0.89</td>
 </tr>
 <tr class="even">
 <td align="left">Reduction</td>
 <td align="left">Estimated total seeds</td>
-<td align="right">27</td>
-<td align="right">54</td>
-<td align="right">0.50</td>
-<td align="right">1.00</td>
+<td align="right">29</td>
+<td align="right">56</td>
+<td align="right">0.52</td>
+<td align="right">0.89</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
 <td align="left">Estimated seeds per flower</td>
-<td align="right">27</td>
-<td align="right">54</td>
+<td align="right">28</td>
+<td align="right">56</td>
 <td align="right">0.50</td>
 <td align="right">1.00</td>
 </tr>
@@ -3312,15 +3355,15 @@ year</caption>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
-<td align="right">-0.1926</td>
-<td align="right">0.4438</td>
-<td align="right">18</td>
+<td align="right">-0.1606</td>
+<td align="right">0.5113</td>
+<td align="right">19</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
-<td align="right">0.8256</td>
+<td align="right">0.8158</td>
 <td align="right">0.0000</td>
-<td align="right">18</td>
+<td align="right">19</td>
 </tr>
 </tbody>
 </table>
@@ -3981,11 +4024,14 @@ Cumulative Proportion  0.99716 1.00000</code></pre>
 <pre class="r"><code>pca &lt;- vols.PCA
 
 vols.beta.yr &lt;- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits)  %&gt;% 
-  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
+  mutate(PCA=list(vols.PCA), mdata=list(meta.pca), n.PCs = 5) %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% select(-PCA, -mdata) %&gt;% unnest(betas)
 vols.beta.water &lt;- expand_grid(year=unique(volsmeta$year), water=names(water_pal), fitnesstrait=fitnesstraits)  %&gt;% 
-  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
+  mutate(PCA=list(vols.PCA), mdata=list(meta.pca), n.PCs = 5) %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% select(-PCA, -mdata) %&gt;% unnest(betas)
 vols.beta.snow &lt;- expand_grid(year=unique(volsmeta$year), snow=names(snow_pal), fitnesstrait=fitnesstraits)  %&gt;% 
-  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
+  mutate(PCA=list(vols.PCA), mdata=list(meta.pca), n.PCs = 5) %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% select(-PCA, -mdata) %&gt;% unnest(betas)
 
 plot_beta(vols.beta.yr, colorby = &quot;year&quot;)</code></pre>
 <p><img src="images_volatiles2020/vmnt_gradients-2.svg" width="864" /></p>
@@ -3996,14 +4042,13 @@ plot_beta(vols.beta.yr, colorby = &quot;year&quot;)</code></pre>
 <div id="sensitivity-to-number-of-pcs" class="section level3">
 <h3>Sensitivity to number of PCs</h3>
 <pre class="r"><code>vols.beta.yr.PCs &lt;- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits, 
-                                n.PCs=2:17)  %&gt;% 
-  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
+                                n.PCs=2:17) %&gt;% 
+  mutate(PCA=list(vols.PCA), mdata=list(meta.pca)) %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% select(-PCA, -mdata) %&gt;% unnest(betas)
 ggplot(vols.beta.yr.PCs, aes(x=n.PCs)) + facet_wrap(vars(fitnesstrait), scales=&quot;free_y&quot;) + 
   geom_line(aes(y=B, color=ifelse(trait %in% traits, &quot;Other trait&quot;, &quot;Volatile&quot;), group=paste(trait, year))) +
-  labs(color=&quot;&quot;) #+ geom_vline(xintercept=5) + ylim(c(-0.66,1)) + </code></pre>
+  labs(color=&quot;&quot;)</code></pre>
 <p><img src="images_volatiles2020/numberPCs-1.svg" width="960" /></p>
-<pre class="r"><code>  #geom_line(data=tibble(cumul_expl=summary(vols.PCA)$importance[3,]) %&gt;% mutate(n.PCs = 1:nrow(.)),
-  #          aes(y=cumul_expl), color=&quot;black&quot;)</code></pre>
 </div>
 <div id="sensitivity-to-more-observations" class="section level3">
 <h3>Sensitivity to more observations</h3>
