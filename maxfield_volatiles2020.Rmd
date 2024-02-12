@@ -1532,7 +1532,7 @@ plasticity.water %>% left_join(diffbeta) %>%
 ## Selection vs. absolute snowmelt, precip
 
 ```{r selection_abs_model}
-selection_mod_abs <- function(trait, response) {
+selection_mod_abs <- function(trait, response, usetrait=TRUE) {
   if(trait %in% ipogood) data <- vols.traits 
   else data <- mnps.plantyr %>% mutate(prop_uninfested = 1 - prop_infested)
   vm.abs <- data %>% 
@@ -1542,7 +1542,8 @@ selection_mod_abs <- function(trait, response) {
     mutate(response = response/mean(response, na.rm=T), #relative fitness
            trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
   options(contrasts = c("contr.sum", "contr.poly"))
-  lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
+  if(usetrait) lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
+  else         lm(response ~ sun_date + precip_est_mm, data = vm.abs)
 }
 
 mod.selection.abs <- expand.grid(list(response = fitnesstraits, trait = c(ipogood, floraltraits))) %>%
@@ -1558,19 +1559,26 @@ mod.selection.tests <- mod.selection.abs %>%
   filter(str_detect(term, "trait"))
 ```
 
-```{r selection_abs, fig.width=8, fig.height=7}
+```{r abs_model}
+#ignore trait and get the direct effects on fitness
+tibble(response = fitnesstraits, trait = floraltraits[1], usetrait=FALSE) %>% #dummy trait not used
+  mutate(model = pmap(., selection_mod_abs),
+         coefs = map(model, tidy)) %>% select(response, coefs) %>% unnest(coefs) %>% 
+  filter(term !="(Intercept)") %>% kable()
+```
+
+
+```{r selection_abs, fig.width=9, fig.height=7}
 mod.selection.abs %>% select(-model) %>% unnest(coefs) %>% 
   ggplot(aes(x=response, y=estimate)) + facet_wrap(vars(term), scales="free_y") +
   geom_hline(yintercept=0) + geom_boxplot()
 
 library(ggrepel)
+term_labels <- c(trait="Selection on trait (\U03B2)",
+                 `trait:precip_est_mm`="Selection x summer precipitation (\U03B2 / mm)",
+                 `trait:sun_date`="Selection x snowmelt date (\U03B2 / day)")
 ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), y=estimate, label=greekify(trait))) + 
-  facet_wrap(vars(term), labeller = as_labeller(c(trait="A. Selection on trait (\U03B2)",
-                                                  `trait:precip_est_mm`=
-                                                    "B. Selection on trait x summer precipitation (\U03B2 / mm)",
-                                                  `trait:sun_date`=
-                                                    "C. Selection on trait x snowmelt date (\U03B2 / day)")),
-             scales="free_y", ncol=1) + theme_bw() +
+  facet_wrap(vars(term), labeller = as_labeller(term_labels), scales="free_y", ncol=1) + theme_bw() +
   geom_point(aes(size=replace_na(mean.floral, 1),  #default size for non-vol traits
                  color=fct_na_value_to_level(class, "Other trait"))) + geom_hline(yintercept=0) + 
   geom_text_repel(data = filter(mod.selection.tests, p.value < 0.05) %>% 
@@ -1581,6 +1589,19 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
   scale_color_manual(values=c(class_pal,"Other trait"="grey50"), guide=guide_legend(override.aes = list(size=5))) + 
   labs(x="Fitness measure", size="Mean emissions\n(ng/hr/flower)", color="Class") + 
   theme(axis.title.y=element_blank())
+
+mod.selection.tests %>% filter(trait %in% c(ipogood.top, floraltraits)) %>% 
+  mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
+  ggplot(aes(x=estimate,y=trait, color=response, alpha=p.value < 0.05, xmin=estimate-std.error, xmax=estimate+std.error)) + 
+  facet_wrap(vars(term), labeller = as_labeller(term_labels), scales="free_x", nrow=1) + 
+  geom_vline(xintercept=0)+ 
+  geom_pointrange(position = position_dodge2(width=0.6, reverse=T))+
+  scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames)+
+  scale_alpha_discrete("P < 0.05", range=c(0.3, 1), guide="none")+ 
+  scale_x_continuous(expand = expansion(c(0,0)))+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = "top",
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
 
 mod.selection.abs %>% filter(trait=="a-pinene") %>% 
   mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 

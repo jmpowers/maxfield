@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-02-01" />
+<meta name="date" content="2024-02-09" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-02-01</h4>
+<h4 class="date">2024-02-09</h4>
 
 </div>
 
@@ -3381,7 +3381,7 @@ plasticity.water %&gt;% left_join(diffbeta) %&gt;%
 </div>
 <div id="selection-vs.-absolute-snowmelt-precip" class="section level2">
 <h2>Selection vs. absolute snowmelt, precip</h2>
-<pre class="r"><code>selection_mod_abs &lt;- function(trait, response) {
+<pre class="r"><code>selection_mod_abs &lt;- function(trait, response, usetrait=TRUE) {
   if(trait %in% ipogood) data &lt;- vols.traits 
   else data &lt;- mnps.plantyr %&gt;% mutate(prop_uninfested = 1 - prop_infested)
   vm.abs &lt;- data %&gt;% 
@@ -3391,7 +3391,8 @@ plasticity.water %&gt;% left_join(diffbeta) %&gt;%
     mutate(response = response/mean(response, na.rm=T), #relative fitness
            trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
   options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-  lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
+  if(usetrait) lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
+  else         lm(response ~ sun_date + precip_est_mm, data = vm.abs)
 }
 
 mod.selection.abs &lt;- expand.grid(list(response = fitnesstraits, trait = c(ipogood, floraltraits))) %&gt;%
@@ -3405,18 +3406,107 @@ mod.selection.tests &lt;- mod.selection.abs %&gt;%
     mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
   select(-model) %&gt;% unnest(coefs) %&gt;% 
   filter(str_detect(term, &quot;trait&quot;))</code></pre>
+<pre class="r"><code>#ignore trait and get the direct effects on fitness
+tibble(response = fitnesstraits, trait = floraltraits[1], usetrait=FALSE) %&gt;% #dummy trait not used
+  mutate(model = pmap(., selection_mod_abs),
+         coefs = map(model, tidy)) %&gt;% select(response, coefs) %&gt;% unnest(coefs) %&gt;% 
+  filter(term !=&quot;(Intercept)&quot;) %&gt;% kable()</code></pre>
+<table>
+<colgroup>
+<col width="25%" />
+<col width="20%" />
+<col width="13%" />
+<col width="14%" />
+<col width="14%" />
+<col width="11%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">response</th>
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">seeds_est</td>
+<td align="left">sun_date</td>
+<td align="right">0.0143</td>
+<td align="right">0.0023</td>
+<td align="right">6.2046</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_est</td>
+<td align="left">precip_est_mm</td>
+<td align="right">-0.0002</td>
+<td align="right">0.0008</td>
+<td align="right">-0.3022</td>
+<td align="right">0.7627</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_per_flower</td>
+<td align="left">sun_date</td>
+<td align="right">0.0115</td>
+<td align="right">0.0018</td>
+<td align="right">6.3507</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_flower</td>
+<td align="left">precip_est_mm</td>
+<td align="right">0.0001</td>
+<td align="right">0.0006</td>
+<td align="right">0.1900</td>
+<td align="right">0.8494</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_uninfested</td>
+<td align="left">sun_date</td>
+<td align="right">-0.0023</td>
+<td align="right">0.0007</td>
+<td align="right">-3.2801</td>
+<td align="right">0.0011</td>
+</tr>
+<tr class="even">
+<td align="left">prop_uninfested</td>
+<td align="left">precip_est_mm</td>
+<td align="right">-0.0004</td>
+<td align="right">0.0002</td>
+<td align="right">-1.5186</td>
+<td align="right">0.1294</td>
+</tr>
+<tr class="odd">
+<td align="left">eggs_per_flower</td>
+<td align="left">sun_date</td>
+<td align="right">-0.0219</td>
+<td align="right">0.0026</td>
+<td align="right">-8.4504</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="even">
+<td align="left">eggs_per_flower</td>
+<td align="left">precip_est_mm</td>
+<td align="right">-0.0004</td>
+<td align="right">0.0009</td>
+<td align="right">-0.4217</td>
+<td align="right">0.6734</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>mod.selection.abs %&gt;% select(-model) %&gt;% unnest(coefs) %&gt;% 
   ggplot(aes(x=response, y=estimate)) + facet_wrap(vars(term), scales=&quot;free_y&quot;) +
   geom_hline(yintercept=0) + geom_boxplot()</code></pre>
-<p><img src="images_volatiles2020/selection_abs-1.svg" width="768" /></p>
+<p><img src="images_volatiles2020/selection_abs-1.svg" width="864" /></p>
 <pre class="r"><code>library(ggrepel)
+term_labels &lt;- c(trait=&quot;Selection on trait (\U03B2)&quot;,
+                 `trait:precip_est_mm`=&quot;Selection x summer precipitation (\U03B2 / mm)&quot;,
+                 `trait:sun_date`=&quot;Selection x snowmelt date (\U03B2 / day)&quot;)
 ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), y=estimate, label=greekify(trait))) + 
-  facet_wrap(vars(term), labeller = as_labeller(c(trait=&quot;A. Selection on trait (\U03B2)&quot;,
-                                                  `trait:precip_est_mm`=
-                                                    &quot;B. Selection on trait x summer precipitation (\U03B2 / mm)&quot;,
-                                                  `trait:sun_date`=
-                                                    &quot;C. Selection on trait x snowmelt date (\U03B2 / day)&quot;)),
-             scales=&quot;free_y&quot;, ncol=1) + theme_bw() +
+  facet_wrap(vars(term), labeller = as_labeller(term_labels), scales=&quot;free_y&quot;, ncol=1) + theme_bw() +
   geom_point(aes(size=replace_na(mean.floral, 1),  #default size for non-vol traits
                  color=fct_na_value_to_level(class, &quot;Other trait&quot;))) + geom_hline(yintercept=0) + 
   geom_text_repel(data = filter(mod.selection.tests, p.value &lt; 0.05) %&gt;% 
@@ -3427,7 +3517,20 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
   scale_color_manual(values=c(class_pal,&quot;Other trait&quot;=&quot;grey50&quot;), guide=guide_legend(override.aes = list(size=5))) + 
   labs(x=&quot;Fitness measure&quot;, size=&quot;Mean emissions\n(ng/hr/flower)&quot;, color=&quot;Class&quot;) + 
   theme(axis.title.y=element_blank())</code></pre>
-<p><img src="images_volatiles2020/selection_abs-2.svg" width="768" /></p>
+<p><img src="images_volatiles2020/selection_abs-2.svg" width="864" /></p>
+<pre class="r"><code>mod.selection.tests %&gt;% filter(trait %in% c(ipogood.top, floraltraits)) %&gt;% 
+  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
+  ggplot(aes(x=estimate,y=trait, color=response, alpha=p.value &lt; 0.05, xmin=estimate-std.error, xmax=estimate+std.error)) + 
+  facet_wrap(vars(term), labeller = as_labeller(term_labels), scales=&quot;free_x&quot;, nrow=1) + 
+  geom_vline(xintercept=0)+ 
+  geom_pointrange(position = position_dodge2(width=0.6, reverse=T))+
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames)+
+  scale_alpha_discrete(&quot;P &lt; 0.05&quot;, range=c(0.3, 1), guide=&quot;none&quot;)+ 
+  scale_x_continuous(expand = expansion(c(0,0)))+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = &quot;top&quot;,
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())</code></pre>
+<p><img src="images_volatiles2020/selection_abs-3.svg" width="864" /></p>
 <pre class="r"><code>mod.selection.abs %&gt;% filter(trait==&quot;a-pinene&quot;) %&gt;% 
   mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
   select(-c(model, coefs)) %&gt;% unnest(tests) %&gt;% filter(str_detect(term, &quot;trait&quot;)) %&gt;% kable()</code></pre>
