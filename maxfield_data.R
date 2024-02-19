@@ -534,7 +534,7 @@ licor %>%
   select(year, date, sampleID, Obs, HHMMSS, Photo, Cond, Ci) %>% group_by(year, date, sampleID) %>% 
   summarize(first_Obs = first(Obs), all_Obs = paste(Obs, collapse=","), n_Obs = n(), 
             HHMMSS = paste(HHMMSS, collapse=","), across(where(is.numeric), mean)) %>% 
-  arrange(date, first_Obs) %>%  write_tsv("../licor_sampleID.tsv")
+  arrange(date, first_Obs) %>%  write_tsv("data/licor_sampleID.tsv")
 
 # group by plantid and tally for each year
 #note that this averages across dates if a plant was remeasured, including if loose-formatted SampleID is different
