@@ -498,7 +498,7 @@ lt.subplotround <- lt.plantyr %>%
 # licor -------------------------------------------------------------------
 # Parser for LICOR files adapted from https://www.ericrscott.com/post/li-cor-wrangling/
 
-licor.path <- "../licor/tsv/"
+licor.path <- "data/licor/"
 licor.files <- list.files(licor.path)
 licor.dates <- coalesce(mdy(licor.files), ymd(licor.files))
 
@@ -711,7 +711,7 @@ sds20.date.zeroed <- sds20.date %>%
   mutate(julian=as.integer(as.character(julian)),
          seeds_per_fruit = seeds/fruits,
          fruits_with_seeds = fruits + fruits_split + fruits_fly_with_seeds,
-         fruits_nonaborted = fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar + fruits_split,
+         fruits_nonaborted = fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar,
          prop_infested	= (fruits_fly_no_seeds + fruits_fly_with_seeds + fruits_caterpillar) / fruits_nonaborted,
          fruiting = fruits_nonaborted > 0)
 
@@ -787,7 +787,7 @@ sds <- bind_rows(sds18, sds19, sds20) %>%
     fruits_aborted	= aborts + flowers_buds_collected_last,
     seeds_est	= seeds + seeds_fly + (flowers_buds_collected_early + flowers_destroyed + fruits_early_uncountable) * (seeds/(fruits + fruits_aborted + fruits_fly_with_seeds + fruits_fly_no_seeds + fruits_caterpillar)) + fruits_split * seeds_per_fruit, 
     fruits_with_seeds	= fruits + fruits_split + fruits_fly_with_seeds, 
-    fruits_nonaborted	= fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar + fruits_split,
+    fruits_nonaborted	= fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar,
     flowers_est	= fruits_nonaborted + aborts + flowers_buds + flowers_destroyed,# aborts used to be fruits_aborted, which includes flowers_buds_collected_last, but these are already in flowers_buds
     prop_infested	= (fruits_fly_no_seeds + fruits_fly_with_seeds + fruits_caterpillar) / fruits_nonaborted,
     prop_aborted	= fruits_aborted / (fruits_nonaborted + fruits_aborted),
