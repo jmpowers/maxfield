@@ -1,0 +1,33 @@
+"OPEN 6.2.4"
+"Thr Aug 15 2019 12:56:25"
+<open><version>"6.2.4"</version></open>
+<open><configfile>"/User/Configs/UserPrefs/2x3 LED.xml"</configfile></open>
+<open><light><source>"6400-02 or -02B LED Source"</source><par_in>1<sensor>"SI-3781"<cal>-0.93<actinity>1.00</actinity><transm>1.00</transm></cal></sensor><transm>1</transm></par_in><par_out>1<sensor>"Q49599"<cal>7.26</cal></sensor></par_out></light></open>
+<open><comps><file>"/User/Configs/Comps/StdComps_6.2"<header>""</header><extras></extras></file><energybal>no<f_parIn>1</f_parIn><f_parOut>0</f_parOut><alphaK>0.16</alphaK></energybal><bc_total>5.036<stomatal_ratio>1</stomatal_ratio><bc_oneside>2.518<type>2</type><table>"/Sys/Lib/StdBLCTable"</table><area>1</area><slope>-0.219565</slope><offset>2.73739</offset><fan>5</fan></bc_oneside></bc_total></comps></open>
+<open><prompts><onlog>off</onlog><items>"Default (none)"</items></prompts></open>
+<open><constants><oxygen>21 %</oxygen><bb_vapor>1.5</bb_vapor><bb_oxy>0.9</bb_oxy></constants></open>
+<open><stability><items>"Std Stability"<items[1]><id>-2</id><size>15</size><pcv><onoff>0</onoff><value>1</value></pcv><std><onoff>0</onoff><value>1</value></std><slp><onoff>1</onoff><value>1</value></slp></items[1]><items[2]><id>-5</id><size>15</size><pcv><onoff>0</onoff><value>1</value></pcv><std><onoff>0</onoff><value>1</value></std><slp><onoff>1</onoff><value>1</value></slp></items[2]><items[3]><id>-7</id><size>15</size><pcv><onoff>0</onoff><value>1</value></pcv><std><onoff>0</onoff><value>1</value></std><slp><onoff>1</onoff><value>1</value></slp></items[3]></items></stability></open>
+<open><log><format>"StdLogFmt_6.0"<items>{ -35 -21 -36 -76 30 23 36 21 25 221 -33 111 -34 11 -9 -10 -8 -1 -2 -4 -5 -14 -15 -7 -12 -13 -11 -65 -66 -72 -18 -19 -77 -78 -79 -23  }<hdr>{  }</hdr></items></format><options><beep>on</beep><hdr>normal</hdr><rem>normal</rem><stab>no</stab><stats>no<mean>no</mean><file>no</file><period>15</period></stats><excel>yes</excel><controls>yes</controls><comm>no</comm></options><datafile>"/User/08152019_maxfield_redos"</datafile><button><action>"Normal Log"<code>" LogOneObsManual "</code></action></button><autoprog>"/User/Configs/AutoProgs/AutoLog2"<active>no</active></autoprog></log></open>
+<open><a2d><avgtime>4.0 secs</avgtime><userchans><ch20>"Off"</ch20><ch21>"Off"</ch21><ch22>"Off"</ch22><ch23>"Off"</ch23></userchans></a2d></open>
+<open><matching><type>0</type><disp>'a'</disp><settings><CO2Limit>10.0</CO2Limit><H2OLimit>1.0</H2OLimit><MaxAutoTime>60</MaxAutoTime></settings></matching></open>
+<li6400><factory><unit>"PSC-3840"</unit><serviced>"1 Jul 2013"</serviced><fuseaware>0</fuseaware><co2mixer>yes</co2mixer><co2><coeffs>{ 0 0.213319 2.22998e-05 2.13159e-08 -3.88664e-12 3.69888e-16  }</coeffs><dvdt>-4.7</dvdt><xs>{ 0.0009 -0.0002  }</xs></co2><h2o><coeffs>{ 0 0.00572751 2.23485e-06 -7.37877e-12  }</coeffs><dvdt>-1.7</dvdt><xs>{ 0.0009 -0.0028  }</xs></h2o><flow>{ 0 0.3568  }</flow><press>{ 88.437 0.00551  }</press></factory></li6400>
+<li6400><user><flow_zero>-625.0</flow_zero><irga_zero><co2>156.2 -1289.1<at>28.2605</at></co2><h2o>1289.1 1328.1<at>28.3213</at></h2o></irga_zero><irga_span><co2>{ 0.99237 0.992833  }</co2><h2o>{ 1.00426 0.996799  }</h2o></irga_span><irga_match><co2>{ 0.419543 -15.0573  }</co2><h2o>{ 0.0658738 0.366659  }</h2o></irga_match><co2_mixer><pump_mv>4500</pump_mv><ppm>{ 2923.74 1333.04 536.94 344.371 188.031 135.747 111.531 106.737  }</ppm><mv>{ 5000 3000 1500 1000 500 300 200 100  }</mv></co2_mixer><parin_offset>0</parin_offset><led_cal><unit>"SI-3781"</unit><mv>{ 10 25 50 100 1000 2000 3000 4000 5000  }</mv><qntm>{ 4.69642 15.4417 35.4805 82.2863 972.665 1922.29 2824.32 3690.14 4518.2  }</qntm></led_cal><lcf_cal><unit>"unknown"</unit><red><mv>{ 50 100 500 1000 1500 5000  }</mv><qntm>{ 50 100 500 1000 2000 5000  }</qntm></red><blue><mv>{ 100 200 500 1000 2000 5000  }</mv><qntm>{ 10 20 50 100 200 500  }</qntm></blue></lcf_cal></user></li6400>
+"12:56:26 "
+$STARTOFDATA$
+"Obs"	"HHMMSS"	"FTime"	"EBal?"	"Photo"	"Cond"	"Ci"	"Trmmol"	"VpdL"	"CTleaf"	"Area"	"BLC_1"	"StmRat"	"BLCond"	"Tair"	"Tleaf"	"TBlk"	"CO2R"	"CO2S"	"H2OR"	"H2OS"	"RH_R"	"RH_S"	"Flow"	"PARi"	"PARo"	"Press"	"CsMch"	"HsMch"	"StableF"	"BLCslope"	"BLCoffst"	"f_parin"	"f_parout"	"alphaK"	"Status"
+"12:57:21 2b137"
+1	"13:00:44"	287.0	0	8.58	0.0619	156	2.71	3.13	27.29	1	2.52	1	5.04	25.35	27.29	23.96	401.81	399.88	6.531	7.069	14.61	15.81	499.8	1799	833	72.63	-15.1	0.367	1.0	-0.22	2.74	1.00	0.00	0.16	111115
+2	"13:02:07"	370.0	0	10	0.0625	121	2.68	3.07	27.09	1	2.52	1	5.04	24.80	27.09	23.47	401.27	399.05	6.750	7.284	15.60	16.83	499.8	1799	171	72.62	-15.1	0.367	1.0	-0.22	2.74	1.00	0.00	0.16	111115
+"13:04:27 5b289"
+"13:04:59 Flow: Fixed -> 500 umol/s"
+3	"13:09:07"	791.0	0	15.2	0.178	237	7.37	3.03	27.33	1	2.52	1	5.04	24.71	27.33	22.96	402.94	399.31	7.135	8.597	16.58	19.97	499.8	1799	1572	72.61	-14.1	0.4	0.7	-0.22	2.74	1.00	0.00	0.16	111115
+4	"13:10:18"	862.0	0	16.9	0.163	208	6.72	3	27.15	1	2.52	1	5.04	24.32	27.15	22.53	402.88	398.96	7.134	8.467	16.97	20.14	499.7	1801	1865	72.61	-14.1	0.4	0.7	-0.22	2.74	1.00	0.00	0.16	111115
+"13:13:17 3d888"
+5	"13:15:43"	1186.5	0	3.42	0.0428	248	1.82	3.03	27.05	1	2.52	1	5.04	24.44	27.05	23.09	400.13	399.30	7.382	7.743	17.43	18.29	499.8	1799	748	72.62	-14.1	0.4	0.7	-0.22	2.74	1.00	0.00	0.16	111115
+6	"13:16:32"	1235.5	0	3.27	0.0446	259	1.91	3.04	27.13	1	2.52	1	5.04	24.29	27.13	22.61	400.20	399.40	7.461	7.839	17.78	18.68	499.8	1800	752	72.62	-14.1	0.4	1.0	-0.22	2.74	1.00	0.00	0.16	111115
+"13:19:03 2c299"
+7	"13:22:00"	1564.0	0	2.64	0.0145	91.5	0.63	3.07	27.31	1	2.52	1	5.04	24.50	27.31	22.88	400.91	400.33	7.736	7.861	18.20	18.50	499.8	1800	754	72.62	-14.1	0.4	1.0	-0.22	2.74	1.00	0.00	0.16	111115
+8	"13:23:58"	1682.0	0	3.11	0.015	51.6	0.643	3.04	27.19	1	2.52	1	5.04	23.69	27.19	21.76	400.93	400.25	7.838	7.965	19.36	19.68	499.9	1800	761	72.62	-14.1	0.4	1.0	-0.22	2.74	1.00	0.00	0.16	111115
+"13:26:27 3a658"
+9	"13:29:29"	2013.5	0	7.31	0.0721	214	3.06	3.03	27.14	1	2.52	1	5.04	24.76	27.14	23.47	401.01	399.30	7.303	7.910	16.92	18.33	499.7	1800	1707	72.62	-14.1	0.4	1.0	-0.22	2.74	1.00	0.00	0.16	111115
+10	"13:30:45"	2089.5	0	6.43	0.0698	228	2.97	3.05	27.17	1	2.52	1	5.04	24.66	27.17	23.29	400.84	399.32	7.218	7.808	16.83	18.20	499.9	1799	1711	72.62	-14.1	0.4	1.0	-0.22	2.74	1.00	0.00	0.16	111115
