@@ -1153,8 +1153,6 @@ ggplot(left_join(select(volsmeta.avg,-VWC), sm.subplotyear), aes(x = VWC, color 
 
 # Selection analyses
 
-## Fitness measures
-
 ## Plots of selection in treatments and years
 
 ```{r selection, fig.width=16, fig.height=10}
@@ -1435,11 +1433,12 @@ library(ggpubr)
 adaptive.plasticity.data %>% filter(newenv!="R_A") %>% 
   mutate(fitnesstrait=factor(fitnesstrait, levels = sort(fitnesstraits)),
          plasticity.signif = plasticity.p.value < 0.05, selection.signif= p.value < 0.05,
-         plasticity.selection.signif = interaction(factor(plasticity.signif), factor(selection.signif))) %>% 
+         plasticity.selection.signif = interaction(factor(plasticity.signif), factor(selection.signif)),
+         log2FC = log2(estimate+1)) %>%  #log2(fold change) is symmetric for increases and decreases. Add 1 to get ratio.
   group_by(newenv) %>% nest() %>% 
   pwalk(function(newenv, data) { 
-    print(ggplot(data, aes(x=estimate, y=B, color=class)) + 
-            labs(x=paste("Emissions change with",envnames[newenv]), 
+    print(ggplot(data, aes(x=log2FC, y=B, color=class)) + 
+            labs(x=paste("Plasticity to ",envnames[newenv],"(log2 fold change)"), 
                  y=paste("Selection gradient \U03B2 under",envnames[newenv])) + 
             facet_grid(rows=vars(year), cols=vars(fitnesstrait), scales="fixed", 
                        labeller=as_labeller(c(fitnessnames, set_names(levels(treatments$year)))))+
@@ -1447,23 +1446,23 @@ adaptive.plasticity.data %>% filter(newenv!="R_A") %>%
             annotate("rect", xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= "black", alpha=0.1) + 
             annotate("rect", xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= "black", alpha=0.1) +
             geom_errorbar(aes(ymin=B-SE, ymax=B+SE)) + 
-            geom_errorbarh(aes(xmin=estimate-std.error, xmax=estimate+std.error)) +
+            geom_errorbarh(aes(xmin=log2(estimate+1-std.error), xmax=log2(estimate+1+std.error))) +#TODO check math
             geom_point(aes(shape = plasticity.selection.signif), size=2.5) + 
             scale_shape_manual("adjusted P<0.05", values=c(1,17,19,15), guide=guide_legend(override.aes = list(size=5)),
-                               labels=c("neither", "plasticity", "selection","both"), drop=FALSE)+
-            scale_x_continuous(labels=scales::percent, breaks=c(-4:4)/ifelse(max(data$estimate)<1,2,1)) + 
-            coord_cartesian(ylim = c(min(data$B)*1.05, max(data$B)*1.05), xlim = c(min(data$estimate)*1.05, max(data$estimate)*1.05))+
+                               labels=c("neither", "plasticity", "selection","both"), drop=FALSE)+ 
+            coord_cartesian(ylim = c(min(data$B)*1.05, max(data$B)*1.05), xlim = c(min(data$log2FC)*1.05, max(data$log2FC)*1.05))+
             scale_color_manual("Compound class", values=c(class_pal,"Other trait"="black"), 
                                guide=guide_legend(override.aes = list(size=5))) + 
             theme_bw() + theme(axis.text = element_text(size=7)))})
 
 adaptive.plasticity.data %>% filter(newenv != "R_A") %>% count(p.value < 0.05, plasticity.p.value < 0.05)
 
-ggplot(adaptive.plasticity.data %>% filter(newenv!="R_A"), aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error,
+ggplot(adaptive.plasticity.data %>% filter(newenv!="R_A"), 
+       aes(x=log2(estimate+1), xmin=log2(estimate+1-std.error), xmax=log2(estimate+1+std.error),
                           y=name, color=year, alpha=plasticity.p.value<0.05)) +  facet_wrap(vars(newenv)) +
   geom_vline(xintercept = 0) + geom_pointrange() + scale_color_manual(values=year_pal) + 
   theme_bw() + theme(panel.grid.major.y=element_blank(), axis.title.y=element_blank()) +
-  labs(x="Plastic change in new environment compared to control")
+  labs(x="Plasticity to new environment (log2 fold change)")
 ```
 
 ```{r adaptive_quadrants}
@@ -1489,27 +1488,22 @@ compare.plasticity <- full_join(
     select(year, name, class, mean.floral, estimate, std.error) %>%
     rename(E_N=estimate, E_N.SE=std.error) %>% distinct()) #3 rows each, one for each fitness trait
 
-ggplot(compare.plasticity, aes(x=R_A, xmin=R_A-R_A.SE, xmax=R_A+R_A.SE, 
-                               y=E_N, ymin=E_N-E_N.SE, ymax=E_N+E_N.SE, color=class)) + 
+ggplot(compare.plasticity, aes(x=log2(R_A+1), xmin=log2(R_A+1-R_A.SE), xmax=log2(R_A+1+R_A.SE), 
+                               y=log2(E_N+1), ymin=log2(E_N+1-E_N.SE), ymax=log2(E_N+1+E_N.SE), color=class)) + 
   facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0) + geom_hline(yintercept=0) +
   annotate("rect", xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= "black", alpha=0.1) + 
   annotate("rect", xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= "black", alpha=0.1) +
-  scale_alpha_manual(values=c(0,1), guide="none")+ 
   geom_errorbar() + geom_errorbarh() + geom_point(aes(size=replace_na(mean.floral, 10))) + 
   scale_size_area("Mean emissions\n(ng/hr/flower)", max_size=3) +
-  scale_x_continuous(labels=scales::percent) + 
-  scale_y_continuous(labels=scales::percent) + 
-  coord_cartesian(ylim = c(min(compare.plasticity$E_N)*1.05, max(compare.plasticity$E_N)*1.05), 
-                  xlim = c(min(compare.plasticity$R_A)*1.05, max(compare.plasticity$R_A)*1.05))+
   scale_color_manual("Compound class", values=c(class_pal, "Other trait"="black"), 
                      guide=guide_legend(override.aes = list(size=5))) + theme_bw() +
-  labs(x="Plasticity to reduced precipitation (vs. additional)",
-       y="Plasticity to early snowmelt (vs. normal)")
+  labs(x="Plasticity to reduced vs. additional precipitation\n(log2 fold change)", #NaNs from negative xmins
+       y="Plasticity to early snowmelt (log2 fold change)")
 
 compare.plasticity %>% group_by(year) %>%  
-  summarize(snow_water_cor = cor(R_A, E_N, use="complete"),
-            snow_water_p = cor.test(R_A, E_N, use="complete")$p.value, n=n()) %>% 
+  summarize(snow_water_cor = cor(log2(R_A+1), log2(E_N+1), use="complete"),
+            snow_water_p = cor.test(log2(R_A+1), log2(E_N+1), use="complete")$p.value, n=n()) %>% 
   kable(caption="correlation between plasticity to water and snowmelt in each year")
 
 ```
@@ -1532,7 +1526,7 @@ plasticity.water %>% left_join(diffbeta) %>%
 ## Selection vs. absolute snowmelt, precip
 
 ```{r selection_abs_model}
-selection_mod_abs <- function(trait, response, usetrait=TRUE) {
+selection_mod_abs <- function(trait, response, use_trait=TRUE, use_env=TRUE) {
   if(trait %in% ipogood) data <- vols.traits 
   else data <- mnps.plantyr %>% mutate(prop_uninfested = 1 - prop_infested)
   vm.abs <- data %>% 
@@ -1542,8 +1536,10 @@ selection_mod_abs <- function(trait, response, usetrait=TRUE) {
     mutate(response = response/mean(response, na.rm=T), #relative fitness
            trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
   options(contrasts = c("contr.sum", "contr.poly"))
-  if(usetrait) lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
-  else         lm(response ~ sun_date + precip_est_mm, data = vm.abs)
+  if(use_trait) {
+    if(use_env) lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
+    else        lm(response ~ trait, data = vm.abs)
+  } else        lm(response ~ sun_date + precip_est_mm, data = vm.abs)
 }
 
 mod.selection.abs <- expand.grid(list(response = fitnesstraits, trait = c(ipogood, floraltraits))) %>%
@@ -1557,11 +1553,28 @@ mod.selection.tests <- mod.selection.abs %>%
     mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 
   select(-model) %>% unnest(coefs) %>% 
   filter(str_detect(term, "trait"))
+
+#Drop environmental interactions if both not significant
+mod.selection.abs.drop <- expand.grid(list(response = fitnesstraits, trait = c(ipogood, floraltraits))) %>%
+  left_join(mod.selection.tests %>% select(response, trait, term, p.value) %>% 
+              mutate(response=as.character(response)) %>% 
+              filter(term != "trait") %>% pivot_wider(names_from = term, values_from = p.value) %>% 
+              mutate(use_env = `trait:sun_date` < 0.05 | `trait:precip_est_mm` < 0.05, .keep="unused")) %>% 
+  mutate(model = pmap(., selection_mod_abs),
+         coefs = map(model, tidy))
+
+mod.selection.tests.drop <- mod.selection.abs.drop %>% 
+  left_join(ipochemsf, by=c("trait"="name")) %>% 
+  mutate(freq.floral = replace_na(freq.floral, 1)) %>% #morph/nectar traits
+  filter(freq.floral>0.1) %>% 
+    mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %>% 
+  select(-model) %>% unnest(coefs) %>% 
+  filter(str_detect(term, "trait"))
 ```
 
 ```{r abs_model}
 #ignore trait and get the direct effects on fitness
-tibble(response = fitnesstraits, trait = floraltraits[1], usetrait=FALSE) %>% #dummy trait not used
+tibble(response = fitnesstraits, trait = floraltraits[1], use_trait=FALSE) %>% #dummy trait not used
   mutate(model = pmap(., selection_mod_abs),
          coefs = map(model, tidy)) %>% select(response, coefs) %>% unnest(coefs) %>% 
   filter(term !="(Intercept)") %>% kable()
@@ -1590,15 +1603,17 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
   labs(x="Fitness measure", size="Mean emissions\n(ng/hr/flower)", color="Class") + 
   theme(axis.title.y=element_blank())
 
-mod.selection.tests %>% filter(trait %in% c(ipogood.top, floraltraits)) %>% 
+mod.selection.tests.drop %>% 
+  complete(response, trait, term) %>% # make dodging consistent 
+  filter(trait %in% c(ipogood.top, floraltraits)) %>% 
   mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
-  ggplot(aes(x=estimate,y=trait, color=response, alpha=p.value < 0.05, xmin=estimate-std.error, xmax=estimate+std.error)) + 
-  facet_wrap(vars(term), labeller = as_labeller(term_labels), scales="free_x", nrow=1) + 
+  ggplot(aes(x=estimate,y=trait, color=response, shape=p.value < 0.05, xmin=estimate-std.error, xmax=estimate+std.error)) + 
+  facet_grid(cols=vars(term), labeller = as_labeller(term_labels), scales="free_x") + 
   geom_vline(xintercept=0)+ 
-  geom_pointrange(position = position_dodge2(width=0.6, reverse=T))+
+  geom_pointrange(position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
   scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames)+
-  scale_alpha_discrete("P < 0.05", range=c(0.3, 1), guide="none")+ 
+  scale_shape_manual("P < 0.05", values=c(1,19), guide="none")+ 
   scale_x_continuous(expand = expansion(c(0,0)))+
   theme_bw() + theme(axis.title=element_blank(), legend.position = "top",
                      panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())

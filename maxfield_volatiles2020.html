@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-02-19" />
+<meta name="date" content="2024-02-21" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-02-19</h4>
+<h4 class="date">2024-02-21</h4>
 
 </div>
 
@@ -2692,9 +2692,6 @@ moisture</caption>
 </div>
 <div id="selection-analyses" class="section level1">
 <h1>Selection analyses</h1>
-<div id="fitness-measures" class="section level2">
-<h2>Fitness measures</h2>
-</div>
 <div id="plots-of-selection-in-treatments-and-years"
 class="section level2">
 <h2>Plots of selection in treatments and years</h2>
@@ -3169,11 +3166,12 @@ library(ggpubr)
 adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
   mutate(fitnesstrait=factor(fitnesstrait, levels = sort(fitnesstraits)),
          plasticity.signif = plasticity.p.value &lt; 0.05, selection.signif= p.value &lt; 0.05,
-         plasticity.selection.signif = interaction(factor(plasticity.signif), factor(selection.signif))) %&gt;% 
+         plasticity.selection.signif = interaction(factor(plasticity.signif), factor(selection.signif)),
+         log2FC = log2(estimate+1)) %&gt;%  #log2(fold change) is symmetric for increases and decreases. Add 1 to get ratio.
   group_by(newenv) %&gt;% nest() %&gt;% 
   pwalk(function(newenv, data) { 
-    print(ggplot(data, aes(x=estimate, y=B, color=class)) + 
-            labs(x=paste(&quot;Emissions change with&quot;,envnames[newenv]), 
+    print(ggplot(data, aes(x=log2FC, y=B, color=class)) + 
+            labs(x=paste(&quot;Plasticity to &quot;,envnames[newenv],&quot;(log2 fold change)&quot;), 
                  y=paste(&quot;Selection gradient \U03B2 under&quot;,envnames[newenv])) + 
             facet_grid(rows=vars(year), cols=vars(fitnesstrait), scales=&quot;fixed&quot;, 
                        labeller=as_labeller(c(fitnessnames, set_names(levels(treatments$year)))))+
@@ -3181,12 +3179,11 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
             annotate(&quot;rect&quot;, xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= &quot;black&quot;, alpha=0.1) + 
             annotate(&quot;rect&quot;, xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= &quot;black&quot;, alpha=0.1) +
             geom_errorbar(aes(ymin=B-SE, ymax=B+SE)) + 
-            geom_errorbarh(aes(xmin=estimate-std.error, xmax=estimate+std.error)) +
+            geom_errorbarh(aes(xmin=log2(estimate+1-std.error), xmax=log2(estimate+1+std.error))) +#TODO check math
             geom_point(aes(shape = plasticity.selection.signif), size=2.5) + 
             scale_shape_manual(&quot;adjusted P&lt;0.05&quot;, values=c(1,17,19,15), guide=guide_legend(override.aes = list(size=5)),
-                               labels=c(&quot;neither&quot;, &quot;plasticity&quot;, &quot;selection&quot;,&quot;both&quot;), drop=FALSE)+
-            scale_x_continuous(labels=scales::percent, breaks=c(-4:4)/ifelse(max(data$estimate)&lt;1,2,1)) + 
-            coord_cartesian(ylim = c(min(data$B)*1.05, max(data$B)*1.05), xlim = c(min(data$estimate)*1.05, max(data$estimate)*1.05))+
+                               labels=c(&quot;neither&quot;, &quot;plasticity&quot;, &quot;selection&quot;,&quot;both&quot;), drop=FALSE)+ 
+            coord_cartesian(ylim = c(min(data$B)*1.05, max(data$B)*1.05), xlim = c(min(data$log2FC)*1.05, max(data$log2FC)*1.05))+
             scale_color_manual(&quot;Compound class&quot;, values=c(class_pal,&quot;Other trait&quot;=&quot;black&quot;), 
                                guide=guide_legend(override.aes = list(size=5))) + 
             theme_bw() + theme(axis.text = element_text(size=7)))})</code></pre>
@@ -3198,11 +3195,12 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
 1 FALSE            FALSE                         432
 2 FALSE            TRUE                           42
 3 TRUE             FALSE                          30</code></pre>
-<pre class="r"><code>ggplot(adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;), aes(x=estimate, xmin=estimate-std.error, xmax=estimate+std.error,
+<pre class="r"><code>ggplot(adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;), 
+       aes(x=log2(estimate+1), xmin=log2(estimate+1-std.error), xmax=log2(estimate+1+std.error),
                           y=name, color=year, alpha=plasticity.p.value&lt;0.05)) +  facet_wrap(vars(newenv)) +
   geom_vline(xintercept = 0) + geom_pointrange() + scale_color_manual(values=year_pal) + 
   theme_bw() + theme(panel.grid.major.y=element_blank(), axis.title.y=element_blank()) +
-  labs(x=&quot;Plastic change in new environment compared to control&quot;)</code></pre>
+  labs(x=&quot;Plasticity to new environment (log2 fold change)&quot;)</code></pre>
 <p><img src="images_volatiles2020/adaptive-4.svg" width="672" /></p>
 <pre class="r"><code>adaptive.plasticity.data %&gt;% 
   mutate(adaptive = sign(B) == sign(estimate)) %&gt;% filter(newenv !=&quot;R_A&quot;) %&gt;% 
@@ -3313,27 +3311,22 @@ class="section level2">
     select(year, name, class, mean.floral, estimate, std.error) %&gt;%
     rename(E_N=estimate, E_N.SE=std.error) %&gt;% distinct()) #3 rows each, one for each fitness trait
 
-ggplot(compare.plasticity, aes(x=R_A, xmin=R_A-R_A.SE, xmax=R_A+R_A.SE, 
-                               y=E_N, ymin=E_N-E_N.SE, ymax=E_N+E_N.SE, color=class)) + 
+ggplot(compare.plasticity, aes(x=log2(R_A+1), xmin=log2(R_A+1-R_A.SE), xmax=log2(R_A+1+R_A.SE), 
+                               y=log2(E_N+1), ymin=log2(E_N+1-E_N.SE), ymax=log2(E_N+1+E_N.SE), color=class)) + 
   facet_wrap(vars(year), ncol=1)+
   geom_vline(xintercept=0) + geom_hline(yintercept=0) +
   annotate(&quot;rect&quot;, xmin = 0, xmax = Inf, ymin = 0, ymax = -Inf, fill= &quot;black&quot;, alpha=0.1) + 
   annotate(&quot;rect&quot;, xmin = 0, xmax = -Inf, ymin = Inf, ymax = 0, fill= &quot;black&quot;, alpha=0.1) +
-  scale_alpha_manual(values=c(0,1), guide=&quot;none&quot;)+ 
   geom_errorbar() + geom_errorbarh() + geom_point(aes(size=replace_na(mean.floral, 10))) + 
   scale_size_area(&quot;Mean emissions\n(ng/hr/flower)&quot;, max_size=3) +
-  scale_x_continuous(labels=scales::percent) + 
-  scale_y_continuous(labels=scales::percent) + 
-  coord_cartesian(ylim = c(min(compare.plasticity$E_N)*1.05, max(compare.plasticity$E_N)*1.05), 
-                  xlim = c(min(compare.plasticity$R_A)*1.05, max(compare.plasticity$R_A)*1.05))+
   scale_color_manual(&quot;Compound class&quot;, values=c(class_pal, &quot;Other trait&quot;=&quot;black&quot;), 
                      guide=guide_legend(override.aes = list(size=5))) + theme_bw() +
-  labs(x=&quot;Plasticity to reduced precipitation (vs. additional)&quot;,
-       y=&quot;Plasticity to early snowmelt (vs. normal)&quot;)</code></pre>
+  labs(x=&quot;Plasticity to reduced vs. additional precipitation\n(log2 fold change)&quot;, #NaNs from negative xmins
+       y=&quot;Plasticity to early snowmelt (log2 fold change)&quot;)</code></pre>
 <p><img src="images_volatiles2020/snow_v_water-1.svg" width="432" /></p>
 <pre class="r"><code>compare.plasticity %&gt;% group_by(year) %&gt;%  
-  summarize(snow_water_cor = cor(R_A, E_N, use=&quot;complete&quot;),
-            snow_water_p = cor.test(R_A, E_N, use=&quot;complete&quot;)$p.value, n=n()) %&gt;% 
+  summarize(snow_water_cor = cor(log2(R_A+1), log2(E_N+1), use=&quot;complete&quot;),
+            snow_water_p = cor.test(log2(R_A+1), log2(E_N+1), use=&quot;complete&quot;)$p.value, n=n()) %&gt;% 
   kable(caption=&quot;correlation between plasticity to water and snowmelt in each year&quot;)</code></pre>
 <table>
 <caption>correlation between plasticity to water and snowmelt in each
@@ -3349,20 +3342,20 @@ year</caption>
 <tbody>
 <tr class="odd">
 <td align="left">2018</td>
-<td align="right">-0.3204</td>
-<td align="right">0.1948</td>
+<td align="right">-0.2665</td>
+<td align="right">0.2850</td>
 <td align="right">18</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
 <td align="right">-0.1606</td>
-<td align="right">0.5113</td>
+<td align="right">0.5112</td>
 <td align="right">19</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
-<td align="right">0.8158</td>
-<td align="right">0.0000</td>
+<td align="right">0.7297</td>
+<td align="right">0.0004</td>
 <td align="right">19</td>
 </tr>
 </tbody>
@@ -3381,7 +3374,7 @@ plasticity.water %&gt;% left_join(diffbeta) %&gt;%
 </div>
 <div id="selection-vs.-absolute-snowmelt-precip" class="section level2">
 <h2>Selection vs. absolute snowmelt, precip</h2>
-<pre class="r"><code>selection_mod_abs &lt;- function(trait, response, usetrait=TRUE) {
+<pre class="r"><code>selection_mod_abs &lt;- function(trait, response, use_trait=TRUE, use_env=TRUE) {
   if(trait %in% ipogood) data &lt;- vols.traits 
   else data &lt;- mnps.plantyr %&gt;% mutate(prop_uninfested = 1 - prop_infested)
   vm.abs &lt;- data %&gt;% 
@@ -3391,8 +3384,10 @@ plasticity.water %&gt;% left_join(diffbeta) %&gt;%
     mutate(response = response/mean(response, na.rm=T), #relative fitness
            trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
   options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
-  if(usetrait) lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
-  else         lm(response ~ sun_date + precip_est_mm, data = vm.abs)
+  if(use_trait) {
+    if(use_env) lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
+    else        lm(response ~ trait, data = vm.abs)
+  } else        lm(response ~ sun_date + precip_est_mm, data = vm.abs)
 }
 
 mod.selection.abs &lt;- expand.grid(list(response = fitnesstraits, trait = c(ipogood, floraltraits))) %&gt;%
@@ -3405,9 +3400,26 @@ mod.selection.tests &lt;- mod.selection.abs %&gt;%
   filter(freq.floral&gt;0.1) %&gt;% 
     mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
   select(-model) %&gt;% unnest(coefs) %&gt;% 
+  filter(str_detect(term, &quot;trait&quot;))
+
+#Drop environmental interactions if both not significant
+mod.selection.abs.drop &lt;- expand.grid(list(response = fitnesstraits, trait = c(ipogood, floraltraits))) %&gt;%
+  left_join(mod.selection.tests %&gt;% select(response, trait, term, p.value) %&gt;% 
+              mutate(response=as.character(response)) %&gt;% 
+              filter(term != &quot;trait&quot;) %&gt;% pivot_wider(names_from = term, values_from = p.value) %&gt;% 
+              mutate(use_env = `trait:sun_date` &lt; 0.05 | `trait:precip_est_mm` &lt; 0.05, .keep=&quot;unused&quot;)) %&gt;% 
+  mutate(model = pmap(., selection_mod_abs),
+         coefs = map(model, tidy))
+
+mod.selection.tests.drop &lt;- mod.selection.abs.drop %&gt;% 
+  left_join(ipochemsf, by=c(&quot;trait&quot;=&quot;name&quot;)) %&gt;% 
+  mutate(freq.floral = replace_na(freq.floral, 1)) %&gt;% #morph/nectar traits
+  filter(freq.floral&gt;0.1) %&gt;% 
+    mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
+  select(-model) %&gt;% unnest(coefs) %&gt;% 
   filter(str_detect(term, &quot;trait&quot;))</code></pre>
 <pre class="r"><code>#ignore trait and get the direct effects on fitness
-tibble(response = fitnesstraits, trait = floraltraits[1], usetrait=FALSE) %&gt;% #dummy trait not used
+tibble(response = fitnesstraits, trait = floraltraits[1], use_trait=FALSE) %&gt;% #dummy trait not used
   mutate(model = pmap(., selection_mod_abs),
          coefs = map(model, tidy)) %&gt;% select(response, coefs) %&gt;% unnest(coefs) %&gt;% 
   filter(term !=&quot;(Intercept)&quot;) %&gt;% kable()</code></pre>
@@ -3518,15 +3530,17 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
   labs(x=&quot;Fitness measure&quot;, size=&quot;Mean emissions\n(ng/hr/flower)&quot;, color=&quot;Class&quot;) + 
   theme(axis.title.y=element_blank())</code></pre>
 <p><img src="images_volatiles2020/selection_abs-2.svg" width="864" /></p>
-<pre class="r"><code>mod.selection.tests %&gt;% filter(trait %in% c(ipogood.top, floraltraits)) %&gt;% 
+<pre class="r"><code>mod.selection.tests.drop %&gt;% 
+  complete(response, trait, term) %&gt;% # make dodging consistent 
+  filter(trait %in% c(ipogood.top, floraltraits)) %&gt;% 
   mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
-  ggplot(aes(x=estimate,y=trait, color=response, alpha=p.value &lt; 0.05, xmin=estimate-std.error, xmax=estimate+std.error)) + 
-  facet_wrap(vars(term), labeller = as_labeller(term_labels), scales=&quot;free_x&quot;, nrow=1) + 
+  ggplot(aes(x=estimate,y=trait, color=response, shape=p.value &lt; 0.05, xmin=estimate-std.error, xmax=estimate+std.error)) + 
+  facet_grid(cols=vars(term), labeller = as_labeller(term_labels), scales=&quot;free_x&quot;) + 
   geom_vline(xintercept=0)+ 
-  geom_pointrange(position = position_dodge2(width=0.6, reverse=T))+
+  geom_pointrange(position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;))+
   scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames)+
-  scale_alpha_discrete(&quot;P &lt; 0.05&quot;, range=c(0.3, 1), guide=&quot;none&quot;)+ 
+  scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;)+ 
   scale_x_continuous(expand = expansion(c(0,0)))+
   theme_bw() + theme(axis.title=element_blank(), legend.position = &quot;top&quot;,
                      panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())</code></pre>
