@@ -3817,6 +3817,7 @@ samples_per_plant %&gt;% mutate(across(c(scent, morph, nectar), ~!is.na(.x))) %&
 <p><img src="images_volatiles2020/overlap-2.svg" width="768" /></p>
 <pre class="r"><code>traits.m &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;, &quot;style_length&quot;) #exclude sepal_width (no 2018), anther min/max
 traits.n &lt;- c(&quot;nectar_24_h_ul&quot;, &quot;nectar_conc&quot;)
+overlaps &lt;- c(&quot;v&quot;,&quot;vm&quot;,&quot;vn&quot;,&quot;vmn&quot;,&quot;mn&quot;,&quot;n&quot;,&quot;m&quot;)
 # drop plants with missing data for combinations of measurements
 combos &lt;- list(v=vols.good.top, 
                vm=vols.traits %&gt;% select(all_of(c(ipogood.top, traits.m, &quot;height_cm&quot;))) %&gt;% drop_na(), 
@@ -4073,6 +4074,163 @@ all.traits.combos %&gt;% group_by(year, water, snow) %&gt;%
 </tr>
 </tbody>
 </table>
+</div>
+<div id="fitness-of-overlaps" class="section level2">
+<h2>Fitness of overlaps</h2>
+<pre class="r"><code>fitnesstraits.plus &lt;- c(fitnesstraits, &quot;height_cm&quot;, &quot;flowers_est&quot;)
+fitness.overlaps &lt;- all.traits.combos %&gt;% select(all_of(c(overlaps, fitnesstraits.plus, colnames(treatments)))) %&gt;% 
+  pivot_longer(all_of(overlaps), names_to = &quot;overlap&quot;, values_to=&quot;included&quot;) %&gt;%
+  mutate(overlap = factor(overlap, levels=c(&quot;v&quot;,&quot;m&quot;,&quot;n&quot;,&quot;vn&quot;,&quot;vm&quot;,&quot;mn&quot;,&quot;vmn&quot;))) %&gt;% 
+  pivot_longer(all_of(fitnesstraits.plus), names_to = &quot;fitnesstrait&quot;, values_to=&quot;value&quot;) %&gt;% 
+  filter(included)
+
+fitness.overlaps %&gt;% group_by(fitnesstrait, overlap, year) %&gt;% drop_na(value) %&gt;% summarize(mean = mean(value), se = sd(value)/sqrt(n())) %&gt;% 
+  ggplot(aes(x=overlap, y=mean, ymin=mean-se, ymax=mean+se, color=year, shape=overlap)) + guides(shape=&quot;none&quot;) +
+  facet_wrap(vars(fitnesstrait), scales=&quot;free_y&quot;, labeller = as_labeller(c(traitnames, fitnessnames))) + geom_pointrange() +
+  scale_shape_manual(values = c(1,1,1,2,2,2,4)) + scale_color_manual(&quot;Year&quot;, values=year_pal)+
+  theme_bw() + theme(panel.grid.major.x = element_blank(), legend.position=&quot;top&quot;) +
+  scale_y_continuous(limits = c(0, NA), expand = expansion(c(0,0.05))) </code></pre>
+<p><img src="images_volatiles2020/vmnt_fitness-1.svg" width="768" /></p>
+<pre class="r"><code>fitness.overlaps.tests &lt;- fitness.overlaps %&gt;% 
+  filter(overlap %in% c(&quot;v&quot;,&quot;vmn&quot;)) %&gt;% group_by(fitnesstrait) %&gt;% nest() %&gt;% 
+  mutate(model=map(data, ~lm(value ~ overlap + year, data = .x)),
+         test = map(model, ~tidy(anova(.x))),
+         emm = map(model, ~tidy(emmeans(.x, specs= ~ overlap)))) %&gt;% select(-data, -model) 
+
+fitness.overlaps.tests %&gt;% select(-emm) %&gt;% unnest(test) %&gt;% filter(term!=&quot;Residuals&quot;) %&gt;% kable(digits=3)</code></pre>
+<table>
+<colgroup>
+<col width="25%" />
+<col width="12%" />
+<col width="4%" />
+<col width="15%" />
+<col width="15%" />
+<col width="15%" />
+<col width="12%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">fitnesstrait</th>
+<th align="left">term</th>
+<th align="right">df</th>
+<th align="right">sumsq</th>
+<th align="right">meansq</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">seeds_est</td>
+<td align="left">overlap</td>
+<td align="right">1</td>
+<td align="right">1.458e+04</td>
+<td align="right">1.458e+04</td>
+<td align="right">1.141</td>
+<td align="right">0.286</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_est</td>
+<td align="left">year</td>
+<td align="right">2</td>
+<td align="right">3.212e+05</td>
+<td align="right">1.606e+05</td>
+<td align="right">12.570</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_per_flower</td>
+<td align="left">overlap</td>
+<td align="right">1</td>
+<td align="right">3.530e-01</td>
+<td align="right">3.530e-01</td>
+<td align="right">0.129</td>
+<td align="right">0.720</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_per_flower</td>
+<td align="left">year</td>
+<td align="right">2</td>
+<td align="right">2.511e+02</td>
+<td align="right">1.255e+02</td>
+<td align="right">45.842</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_uninfested</td>
+<td align="left">overlap</td>
+<td align="right">1</td>
+<td align="right">0.000e+00</td>
+<td align="right">0.000e+00</td>
+<td align="right">0.005</td>
+<td align="right">0.942</td>
+</tr>
+<tr class="even">
+<td align="left">prop_uninfested</td>
+<td align="left">year</td>
+<td align="right">2</td>
+<td align="right">1.222e+00</td>
+<td align="right">6.110e-01</td>
+<td align="right">18.856</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">eggs_per_flower</td>
+<td align="left">overlap</td>
+<td align="right">1</td>
+<td align="right">8.000e-03</td>
+<td align="right">8.000e-03</td>
+<td align="right">0.504</td>
+<td align="right">0.478</td>
+</tr>
+<tr class="even">
+<td align="left">eggs_per_flower</td>
+<td align="left">year</td>
+<td align="right">2</td>
+<td align="right">2.094e+00</td>
+<td align="right">1.047e+00</td>
+<td align="right">65.156</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">height_cm</td>
+<td align="left">overlap</td>
+<td align="right">1</td>
+<td align="right">3.846e+02</td>
+<td align="right">3.846e+02</td>
+<td align="right">4.789</td>
+<td align="right">0.029</td>
+</tr>
+<tr class="even">
+<td align="left">height_cm</td>
+<td align="left">year</td>
+<td align="right">2</td>
+<td align="right">1.780e+04</td>
+<td align="right">8.902e+03</td>
+<td align="right">110.847</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">flowers_est</td>
+<td align="left">overlap</td>
+<td align="right">1</td>
+<td align="right">1.567e+03</td>
+<td align="right">1.567e+03</td>
+<td align="right">2.274</td>
+<td align="right">0.132</td>
+</tr>
+<tr class="even">
+<td align="left">flowers_est</td>
+<td align="left">year</td>
+<td align="right">2</td>
+<td align="right">7.564e+03</td>
+<td align="right">3.782e+03</td>
+<td align="right">5.489</td>
+<td align="right">0.004</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>#fitness.overlaps.tests %&gt;% select(-test) %&gt;% unnest(emm) %&gt;% select(-statistic, -p.value) %&gt;% kable(digits=3)</code></pre>
 </div>
 <div id="correlations-1" class="section level2">
 <h2>Correlations</h2>

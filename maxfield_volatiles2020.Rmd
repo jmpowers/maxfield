@@ -1646,6 +1646,7 @@ samples_per_plant %>% mutate(across(c(scent, morph, nectar, height), ~!is.na(.x)
 
 traits.m <- c("corolla_length", "corolla_width", "style_length") #exclude sepal_width (no 2018), anther min/max
 traits.n <- c("nectar_24_h_ul", "nectar_conc")
+overlaps <- c("v","vm","vn","vmn","mn","n","m")
 # drop plants with missing data for combinations of measurements
 combos <- list(v=vols.good.top, 
                vm=vols.traits %>% select(all_of(c(ipogood.top, traits.m, "height_cm"))) %>% drop_na(), 
@@ -1667,6 +1668,33 @@ all.traits.combos <- full_join(bind_cols(volsmeta.avg, vols.good.avg),
 
 all.traits.combos %>% group_by(year, water, snow) %>% 
   summarize(across(all_of(names(combos)), sum)) %>% kable(caption="plants with each set of measurements")
+```
+
+## Fitness of overlaps
+
+```{r vmnt_fitness}
+fitnesstraits.plus <- c(fitnesstraits, "height_cm", "flowers_est")
+fitness.overlaps <- all.traits.combos %>% select(all_of(c(overlaps, fitnesstraits.plus, colnames(treatments)))) %>% 
+  pivot_longer(all_of(overlaps), names_to = "overlap", values_to="included") %>%
+  mutate(overlap = factor(overlap, levels=c("v","m","n","vn","vm","mn","vmn"))) %>% 
+  pivot_longer(all_of(fitnesstraits.plus), names_to = "fitnesstrait", values_to="value") %>% 
+  filter(included)
+
+fitness.overlaps %>% group_by(fitnesstrait, overlap, year) %>% drop_na(value) %>% summarize(mean = mean(value), se = sd(value)/sqrt(n())) %>% 
+  ggplot(aes(x=overlap, y=mean, ymin=mean-se, ymax=mean+se, color=year, shape=overlap)) + guides(shape="none") +
+  facet_wrap(vars(fitnesstrait), scales="free_y", labeller = as_labeller(c(traitnames, fitnessnames))) + geom_pointrange() +
+  scale_shape_manual(values = c(1,1,1,2,2,2,4)) + scale_color_manual("Year", values=year_pal)+
+  theme_bw() + theme(panel.grid.major.x = element_blank(), legend.position="top") +
+  scale_y_continuous(limits = c(0, NA), expand = expansion(c(0,0.05))) 
+
+fitness.overlaps.tests <- fitness.overlaps %>% 
+  filter(overlap %in% c("v","vmn")) %>% group_by(fitnesstrait) %>% nest() %>% 
+  mutate(model=map(data, ~lm(value ~ overlap + year, data = .x)),
+         test = map(model, ~tidy(anova(.x))),
+         emm = map(model, ~tidy(emmeans(.x, specs= ~ overlap)))) %>% select(-data, -model) 
+
+fitness.overlaps.tests %>% select(-emm) %>% unnest(test) %>% filter(term!="Residuals") %>% kable(digits=3)
+#fitness.overlaps.tests %>% select(-test) %>% unnest(emm) %>% select(-statistic, -p.value) %>% kable(digits=3)
 ```
 
 ## Correlations
