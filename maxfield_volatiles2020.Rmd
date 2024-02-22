@@ -560,6 +560,7 @@ volsmeta %>% count(year, sampledate) %>% count(year) %>%
 
 volsmeta %>% count(year, plantid) %>% ggplot(aes(x=n, fill=year)) + facet_wrap(vars(year), ncol=1) +geom_histogram(binwidth=1) +
   xlab("samples per plant") + scale_fill_manual(values=year_pal, guide="none") + theme_minimal()
+volsmeta %>% count(year, plantid) %>% count(n>1)
 ```
 
 ## Time of day
@@ -587,6 +588,16 @@ list(water=chisq.test(with(vt, table(sampledate, water))),
      snow=chisq.test(with(vt, table(sampledate, snow))),
      water_snow=chisq.test(with(vt, table(sampledate, paste(water, snow))))) %>% 
   map_dfr(tidy, .id="treatment") %>% kable(caption="Test of randomness of treatments on each sampling date")
+
+ggplot(volsmeta, aes(x=bag, fill=paste(water, snow))) + geom_density(alpha=0.5) + facet_wrap(vars(year), ncol=1) + 
+  labs(fill="Precipitation, snowmelt", x="Bag time", y="Samples") + scale_fill_manual(values=water_snow_pal)+ theme_minimal() 
+
+list(water=chisq.test(with(vt, table(hour(bag), water))),
+     snow=chisq.test(with(vt, table(hour(bag), snow))),
+     water_snow=chisq.test(with(vt, table(hour(bag), paste(water, snow))))) %>% 
+  map_dfr(tidy, .id="treatment") %>% kable(caption="Test of randomness of treatments on each hour")
+
+vt %>% group_by(water, snow) %>% summarize(bag=mean(bag, na.rm=T))
 ```
 
 ## Flowers and buds
@@ -978,7 +989,9 @@ ggplot(mapping=aes(x=CAP1, y=CAP2, label=greekify(Label))) +
   geom_text(data=cap.df %>% filter(Score=="biplot") %>% 
               mutate(Label=c("Snowmelt", "Precipitation")),
             aes(x=CAP1*2, y=CAP2*2, angle=atan(CAP2/CAP1)*180/pi), hjust=c(0,1), fontface="bold") +
-  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+ labs(x=ax.labs[1], y=ax.labs[2])+
+  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5) %>% 
+              mutate(nudge = c(0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0)),
+            aes(x=CAP1*3, y=CAP2*3+nudge*0.1), size=3)+ labs(x=ax.labs[1], y=ax.labs[2])+
   scale_color_manual("Year", values=year_pal) + coord_fixed() + 
   theme_bw() + theme(panel.grid = element_blank())
 ```
@@ -1013,7 +1026,7 @@ options(contrasts = c("contr.sum", "contr.poly"))
 #TODO this code partially repeats chunk above
 mod.class.abs <- volsmeta.class %>% group_by(name) %>% nest() %>% 
   mutate(model = map(data, ~lmer(value ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=.)),
-         test = map(model, ~tidy(anova(.x))),
+         test = map(model, ~tidy(anova(.x, ddf="Ken"))),
          emm.grid = map(model, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date, at=grid.points))))
 
 ggplot(volsmeta.class, aes(x = sun_date, y = value, color=precip_est_mm)) + facet_wrap(vars(name), scales="free_y") + 
@@ -1667,7 +1680,9 @@ all.traits.combos <- full_join(bind_cols(volsmeta.avg, vols.good.avg),
          m =  vctrs::vec_detect_complete(.[,colnames(combos$m)]))
 
 all.traits.combos %>% group_by(year, water, snow) %>% 
-  summarize(across(all_of(names(combos)), sum)) %>% kable(caption="plants with each set of measurements")
+  summarize(across(all_of(names(combos)), sum)) %>% 
+  select(Year=year, Precipitation=water, Snowmelt=snow, Volatiles=v, Morphology=m, Nectar=n, `All Traits`=vmn) %>% 
+  kable(caption="plants with each set of measurements")
 ```
 
 ## Fitness of overlaps
@@ -1709,6 +1724,8 @@ pheatmap(cor(combos$vmn, method="pearson"),
          annotation_col=corr.annot, annotation_row=corr.annot, 
          annotation_colors = list(Class=c(class_pal, "Other trait"="black")),
          labels_row=corr.labs, labels_col=corr.labs)
+
+cor(combos$vmn, method="pearson")[ipogood.top,c(traits.m, traits.n, "height_cm")] %>% as.vector() %>% summary()
 ```
 
 ## PCA
@@ -1748,7 +1765,10 @@ meta.pca <- #treatments used in selection_pca function
 #TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
 vols.PCA <- combos$vmn %>% prcomp_std() #mutate(across(all_of(ipogood.top), sqrt))
 summary(vols.PCA) # PCs 1 - 5 explain 66% of the variation, 18 PCs total (12 volatiles + 6 traits)
-heatmap(vols.PCA$rotation[,1:5], Colv = NA, col=viridis(256, option="magma"), scale="none")
+rot.range <- max(abs(vols.PCA$rotation[,1:5]))
+pheatmap(vols.PCA$rotation[,1:5], cluster_cols = FALSE,
+         breaks = seq(-rot.range, rot.range, length.out=100), 
+         color = colorRampPalette(rev(brewer.pal(n = 11, name ="RdBu")))(100))
 pca <- vols.PCA
 
 vols.beta.yr <- expand_grid(year=unique(volsmeta$year), fitnesstrait=fitnesstraits)  %>% 

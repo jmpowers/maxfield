@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-02-21" />
+<meta name="date" content="2024-02-22" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-02-21</h4>
+<h4 class="date">2024-02-22</h4>
 
 </div>
 
@@ -1598,6 +1598,10 @@ align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
 <pre class="r"><code>volsmeta %&gt;% count(year, plantid) %&gt;% ggplot(aes(x=n, fill=year)) + facet_wrap(vars(year), ncol=1) +geom_histogram(binwidth=1) +
   xlab(&quot;samples per plant&quot;) + scale_fill_manual(values=year_pal, guide=&quot;none&quot;) + theme_minimal()</code></pre>
 <p><img src="images_volatiles2020/samplesizes_filtered-1.svg" width="960" /></p>
+<pre class="r"><code>volsmeta %&gt;% count(year, plantid) %&gt;% count(n&gt;1)</code></pre>
+<pre><code>  n &gt; 1   n
+1 FALSE 313
+2  TRUE  61</code></pre>
 </div>
 <div id="time-of-day" class="section level2">
 <h2>Time of day</h2>
@@ -1662,6 +1666,59 @@ date</caption>
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>ggplot(volsmeta, aes(x=bag, fill=paste(water, snow))) + geom_density(alpha=0.5) + facet_wrap(vars(year), ncol=1) + 
+  labs(fill=&quot;Precipitation, snowmelt&quot;, x=&quot;Bag time&quot;, y=&quot;Samples&quot;) + scale_fill_manual(values=water_snow_pal)+ theme_minimal() </code></pre>
+<p><img src="images_volatiles2020/random_sampling-2.svg" width="480" /></p>
+<pre class="r"><code>list(water=chisq.test(with(vt, table(hour(bag), water))),
+     snow=chisq.test(with(vt, table(hour(bag), snow))),
+     water_snow=chisq.test(with(vt, table(hour(bag), paste(water, snow))))) %&gt;% 
+  map_dfr(tidy, .id=&quot;treatment&quot;) %&gt;% kable(caption=&quot;Test of randomness of treatments on each hour&quot;)</code></pre>
+<table>
+<caption>Test of randomness of treatments on each hour</caption>
+<thead>
+<tr class="header">
+<th align="left">treatment</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+<th align="right">parameter</th>
+<th align="left">method</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">water</td>
+<td align="right">26.91</td>
+<td align="right">0.0080</td>
+<td align="right">12</td>
+<td align="left">Pearson’s Chi-squared test</td>
+</tr>
+<tr class="even">
+<td align="left">snow</td>
+<td align="right">20.96</td>
+<td align="right">0.0019</td>
+<td align="right">6</td>
+<td align="left">Pearson’s Chi-squared test</td>
+</tr>
+<tr class="odd">
+<td align="left">water_snow</td>
+<td align="right">68.84</td>
+<td align="right">0.0001</td>
+<td align="right">30</td>
+<td align="left">Pearson’s Chi-squared test</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>vt %&gt;% group_by(water, snow) %&gt;% summarize(bag=mean(bag, na.rm=T))</code></pre>
+<pre><code># A tibble: 6 × 3
+# Groups:   water [3]
+  water     snow   bag                
+  &lt;fct&gt;     &lt;fct&gt;  &lt;dttm&gt;             
+1 Addition  Early  1899-12-30 10:30:52
+2 Addition  Normal 1899-12-30 10:36:03
+3 Control   Early  1899-12-30 10:45:08
+4 Control   Normal 1899-12-30 10:37:02
+5 Reduction Early  1899-12-30 10:40:25
+6 Reduction Normal 1899-12-30 10:34:01</code></pre>
 </div>
 <div id="flowers-and-buds" class="section level2">
 <h2>Flowers and buds</h2>
@@ -2293,7 +2350,9 @@ ggplot(mapping=aes(x=CAP1, y=CAP2, label=greekify(Label))) +
   geom_text(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;) %&gt;% 
               mutate(Label=c(&quot;Snowmelt&quot;, &quot;Precipitation&quot;)),
             aes(x=CAP1*2, y=CAP2*2, angle=atan(CAP2/CAP1)*180/pi), hjust=c(0,1), fontface=&quot;bold&quot;) +
-  geom_text(data=cap.df %&gt;% left_join(ipochemsf, by=c(&quot;Label&quot;=&quot;name&quot;)) %&gt;% filter(Score==&quot;species&quot;, mean.floral&gt;1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+ labs(x=ax.labs[1], y=ax.labs[2])+
+  geom_text(data=cap.df %&gt;% left_join(ipochemsf, by=c(&quot;Label&quot;=&quot;name&quot;)) %&gt;% filter(Score==&quot;species&quot;, mean.floral&gt;1.5) %&gt;% 
+              mutate(nudge = c(0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0)),
+            aes(x=CAP1*3, y=CAP2*3+nudge*0.1), size=3)+ labs(x=ax.labs[1], y=ax.labs[2])+
   scale_color_manual(&quot;Year&quot;, values=year_pal) + coord_fixed() + 
   theme_bw() + theme(panel.grid = element_blank())</code></pre>
 <p><img src="images_volatiles2020/cap_abs-1.svg" width="624" /></p>
@@ -2363,7 +2422,7 @@ options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
 #TODO this code partially repeats chunk above
 mod.class.abs &lt;- volsmeta.class %&gt;% group_by(name) %&gt;% nest() %&gt;% 
   mutate(model = map(data, ~lmer(value ~ sun_date * precip_est_mm + (1|plot) + (1|plotid), data=.)),
-         test = map(model, ~tidy(anova(.x))),
+         test = map(model, ~tidy(anova(.x, ddf=&quot;Ken&quot;))),
          emm.grid = map(model, ~ summary(emmeans(.x, ~ precip_est_mm * sun_date, at=grid.points))))
 
 ggplot(volsmeta.class, aes(x = sun_date, y = value, color=precip_est_mm)) + facet_wrap(vars(name), scales=&quot;free_y&quot;) + 
@@ -3839,21 +3898,29 @@ all.traits.combos &lt;- full_join(bind_cols(volsmeta.avg, vols.good.avg),
          m =  vctrs::vec_detect_complete(.[,colnames(combos$m)]))
 
 all.traits.combos %&gt;% group_by(year, water, snow) %&gt;% 
-  summarize(across(all_of(names(combos)), sum)) %&gt;% kable(caption=&quot;plants with each set of measurements&quot;)</code></pre>
+  summarize(across(all_of(names(combos)), sum)) %&gt;% 
+  select(Year=year, Precipitation=water, Snowmelt=snow, Volatiles=v, Morphology=m, Nectar=n, `All Traits`=vmn) %&gt;% 
+  kable(caption=&quot;plants with each set of measurements&quot;)</code></pre>
 <table>
 <caption>plants with each set of measurements</caption>
+<colgroup>
+<col width="7%" />
+<col width="20%" />
+<col width="13%" />
+<col width="14%" />
+<col width="16%" />
+<col width="10%" />
+<col width="16%" />
+</colgroup>
 <thead>
 <tr class="header">
-<th align="left">year</th>
-<th align="left">water</th>
-<th align="left">snow</th>
-<th align="right">v</th>
-<th align="right">vm</th>
-<th align="right">vn</th>
-<th align="right">vmn</th>
-<th align="right">mn</th>
-<th align="right">n</th>
-<th align="right">m</th>
+<th align="left">Year</th>
+<th align="left">Precipitation</th>
+<th align="left">Snowmelt</th>
+<th align="right">Volatiles</th>
+<th align="right">Morphology</th>
+<th align="right">Nectar</th>
+<th align="right">All Traits</th>
 </tr>
 </thead>
 <tbody>
@@ -3862,216 +3929,162 @@ all.traits.combos %&gt;% group_by(year, water, snow) %&gt;%
 <td align="left">Addition</td>
 <td align="left">Early</td>
 <td align="right">21</td>
-<td align="right">19</td>
-<td align="right">16</td>
-<td align="right">16</td>
-<td align="right">17</td>
-<td align="right">17</td>
 <td align="right">20</td>
+<td align="right">17</td>
+<td align="right">16</td>
 </tr>
 <tr class="even">
 <td align="left">2018</td>
 <td align="left">Addition</td>
 <td align="left">Normal</td>
 <td align="right">19</td>
-<td align="right">16</td>
-<td align="right">14</td>
-<td align="right">14</td>
-<td align="right">16</td>
-<td align="right">17</td>
 <td align="right">19</td>
+<td align="right">17</td>
+<td align="right">14</td>
 </tr>
 <tr class="odd">
 <td align="left">2018</td>
 <td align="left">Control</td>
 <td align="left">Early</td>
 <td align="right">21</td>
-<td align="right">15</td>
-<td align="right">12</td>
-<td align="right">9</td>
-<td align="right">16</td>
-<td align="right">19</td>
 <td align="right">32</td>
+<td align="right">19</td>
+<td align="right">9</td>
 </tr>
 <tr class="even">
 <td align="left">2018</td>
 <td align="left">Control</td>
 <td align="left">Normal</td>
 <td align="right">26</td>
-<td align="right">23</td>
-<td align="right">12</td>
-<td align="right">12</td>
-<td align="right">19</td>
-<td align="right">19</td>
 <td align="right">37</td>
+<td align="right">19</td>
+<td align="right">12</td>
 </tr>
 <tr class="odd">
 <td align="left">2018</td>
 <td align="left">Reduction</td>
 <td align="left">Early</td>
 <td align="right">15</td>
-<td align="right">12</td>
-<td align="right">6</td>
-<td align="right">6</td>
-<td align="right">11</td>
-<td align="right">11</td>
 <td align="right">26</td>
+<td align="right">11</td>
+<td align="right">6</td>
 </tr>
 <tr class="even">
 <td align="left">2018</td>
 <td align="left">Reduction</td>
 <td align="left">Normal</td>
 <td align="right">10</td>
-<td align="right">10</td>
-<td align="right">7</td>
-<td align="right">7</td>
-<td align="right">9</td>
-<td align="right">9</td>
 <td align="right">14</td>
+<td align="right">9</td>
+<td align="right">7</td>
 </tr>
 <tr class="odd">
 <td align="left">2019</td>
 <td align="left">Addition</td>
 <td align="left">Early</td>
 <td align="right">14</td>
-<td align="right">8</td>
-<td align="right">10</td>
-<td align="right">7</td>
-<td align="right">8</td>
-<td align="right">11</td>
 <td align="right">9</td>
+<td align="right">11</td>
+<td align="right">7</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
 <td align="left">Addition</td>
 <td align="left">Normal</td>
 <td align="right">37</td>
-<td align="right">29</td>
-<td align="right">31</td>
-<td align="right">28</td>
-<td align="right">32</td>
-<td align="right">36</td>
 <td align="right">35</td>
+<td align="right">36</td>
+<td align="right">28</td>
 </tr>
 <tr class="odd">
 <td align="left">2019</td>
 <td align="left">Control</td>
 <td align="left">Early</td>
 <td align="right">23</td>
-<td align="right">19</td>
-<td align="right">18</td>
-<td align="right">17</td>
-<td align="right">30</td>
+<td align="right">33</td>
 <td align="right">34</td>
-<td align="right">33</td>
+<td align="right">17</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
 <td align="left">Control</td>
 <td align="left">Normal</td>
 <td align="right">22</td>
-<td align="right">16</td>
-<td align="right">19</td>
-<td align="right">16</td>
 <td align="right">28</td>
 <td align="right">33</td>
-<td align="right">28</td>
+<td align="right">16</td>
 </tr>
 <tr class="odd">
 <td align="left">2019</td>
 <td align="left">Reduction</td>
 <td align="left">Early</td>
 <td align="right">16</td>
-<td align="right">11</td>
-<td align="right">11</td>
-<td align="right">11</td>
 <td align="right">14</td>
 <td align="right">14</td>
-<td align="right">14</td>
+<td align="right">11</td>
 </tr>
 <tr class="even">
 <td align="left">2019</td>
 <td align="left">Reduction</td>
 <td align="left">Normal</td>
 <td align="right">19</td>
-<td align="right">18</td>
-<td align="right">17</td>
-<td align="right">17</td>
-<td align="right">21</td>
 <td align="right">23</td>
 <td align="right">23</td>
+<td align="right">17</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
 <td align="left">Addition</td>
 <td align="left">Early</td>
 <td align="right">22</td>
-<td align="right">19</td>
-<td align="right">14</td>
-<td align="right">13</td>
-<td align="right">15</td>
-<td align="right">19</td>
 <td align="right">21</td>
+<td align="right">19</td>
+<td align="right">13</td>
 </tr>
 <tr class="even">
 <td align="left">2020</td>
 <td align="left">Addition</td>
 <td align="left">Normal</td>
 <td align="right">18</td>
-<td align="right">13</td>
-<td align="right">15</td>
-<td align="right">11</td>
-<td align="right">19</td>
-<td align="right">26</td>
 <td align="right">27</td>
+<td align="right">26</td>
+<td align="right">11</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
 <td align="left">Control</td>
 <td align="left">Early</td>
 <td align="right">31</td>
-<td align="right">22</td>
-<td align="right">18</td>
-<td align="right">16</td>
-<td align="right">23</td>
-<td align="right">34</td>
 <td align="right">38</td>
+<td align="right">34</td>
+<td align="right">16</td>
 </tr>
 <tr class="even">
 <td align="left">2020</td>
 <td align="left">Control</td>
 <td align="left">Normal</td>
 <td align="right">30</td>
-<td align="right">21</td>
-<td align="right">17</td>
-<td align="right">12</td>
-<td align="right">17</td>
-<td align="right">27</td>
 <td align="right">30</td>
+<td align="right">27</td>
+<td align="right">12</td>
 </tr>
 <tr class="odd">
 <td align="left">2020</td>
 <td align="left">Reduction</td>
 <td align="left">Early</td>
 <td align="right">16</td>
-<td align="right">10</td>
-<td align="right">13</td>
-<td align="right">8</td>
-<td align="right">10</td>
-<td align="right">15</td>
 <td align="right">14</td>
+<td align="right">15</td>
+<td align="right">8</td>
 </tr>
 <tr class="even">
 <td align="left">2020</td>
 <td align="left">Reduction</td>
 <td align="left">Normal</td>
 <td align="right">14</td>
-<td align="right">10</td>
-<td align="right">9</td>
+<td align="right">13</td>
+<td align="right">13</td>
 <td align="right">8</td>
-<td align="right">11</td>
-<td align="right">13</td>
-<td align="right">13</td>
 </tr>
 </tbody>
 </table>
@@ -4245,6 +4258,9 @@ pheatmap(cor(combos$vmn, method=&quot;pearson&quot;),
          annotation_colors = list(Class=c(class_pal, &quot;Other trait&quot;=&quot;black&quot;)),
          labels_row=corr.labs, labels_col=corr.labs)</code></pre>
 <p><img src="images_volatiles2020/vmnt_corr-1.svg" width="672" /></p>
+<pre class="r"><code>cor(combos$vmn, method=&quot;pearson&quot;)[ipogood.top,c(traits.m, traits.n, &quot;height_cm&quot;)] %&gt;% as.vector() %&gt;% summary()</code></pre>
+<pre><code>    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+-0.22289 -0.05428  0.00036 -0.00948  0.06100  0.17454 </code></pre>
 </div>
 <div id="pca" class="section level2">
 <h2>PCA</h2>
@@ -4295,7 +4311,10 @@ Cumulative Proportion  0.8420 0.8784 0.9092 0.9317 0.9495 0.9664 0.9779 0.9893
 Standard deviation     0.37606 0.22615
 Proportion of Variance 0.00786 0.00284
 Cumulative Proportion  0.99716 1.00000</code></pre>
-<pre class="r"><code>heatmap(vols.PCA$rotation[,1:5], Colv = NA, col=viridis(256, option=&quot;magma&quot;), scale=&quot;none&quot;)</code></pre>
+<pre class="r"><code>rot.range &lt;- max(abs(vols.PCA$rotation[,1:5]))
+pheatmap(vols.PCA$rotation[,1:5], cluster_cols = FALSE,
+         breaks = seq(-rot.range, rot.range, length.out=100), 
+         color = colorRampPalette(rev(brewer.pal(n = 11, name =&quot;RdBu&quot;)))(100))</code></pre>
 <p><img src="images_volatiles2020/vmnt_gradients-1.svg" width="864" /></p>
 <pre class="r"><code>pca &lt;- vols.PCA
 
