@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-02-19" />
+<meta name="date" content="2024-02-21" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-02-19</h4>
+<h4 class="date">2024-02-21</h4>
 
 </div>
 
@@ -1302,17 +1302,17 @@ bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits
          n_per_plant_year = n_measurements / plant_year,
          n_per_plant = n_measurements/ plant,
          plant_per_subplot_per_year = plant_year / 24 / 3) %&gt;% kable(digits=2)</code></pre>
-<table>
+<table style="width:100%;">
 <colgroup>
+<col width="17%" />
+<col width="9%" />
+<col width="10%" />
+<col width="7%" />
+<col width="3%" />
 <col width="14%" />
 <col width="10%" />
-<col width="11%" />
 <col width="7%" />
-<col width="4%" />
-<col width="15%" />
-<col width="11%" />
-<col width="8%" />
-<col width="18%" />
+<col width="17%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -1494,7 +1494,7 @@ bind_rows(n_measurements = count_measurements(bind_rows(mnps, lt, pt), alltraits
 <td align="right">8.42</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="right">528</td>
 <td align="right">505</td>
 <td align="right">505</td>
@@ -1976,7 +1976,7 @@ Anova_table(fitness.size.mod.tests) %&gt;% kable()</code></pre>
 <td align="right">0.0000</td>
 <td align="right">0.0058</td>
 <td align="right">0.9566</td>
-<td align="right">0.0636</td>
+<td align="right">0.0635</td>
 <td align="right">0.9118</td>
 <td align="right">0.5483</td>
 <td align="right">0.7510</td>
@@ -2458,16 +2458,16 @@ mod.split.coefs &lt;- map_dfr(mod.split, tidy, .id=&quot;trait&quot;)
 mod.split.tests &lt;- map(mod.split, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * snow * water)), .id = &quot;trait&quot;)
   anova_table(mod.split.tests, mod.split) %&gt;% kable()</code></pre>
-<table style="width:100%;">
+<table>
 <colgroup>
-<col width="19%" />
+<col width="24%" />
 <col width="6%" />
 <col width="6%" />
 <col width="6%" />
+<col width="8%" />
 <col width="9%" />
-<col width="10%" />
-<col width="10%" />
-<col width="15%" />
+<col width="9%" />
+<col width="14%" />
 <col width="6%" />
 <col width="8%" />
 </colgroup>
@@ -2608,14 +2608,14 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.0001</td>
-<td align="right">0.7306</td>
-<td align="right">0.6293</td>
+<td align="right">0.0000</td>
+<td align="right">0.7414</td>
+<td align="right">0.6392</td>
 <td align="right">0.0008</td>
-<td align="right">0.1500</td>
-<td align="right">0.3858</td>
-<td align="right">0.4199</td>
-<td align="right">0.1228</td>
+<td align="right">0.1436</td>
+<td align="right">0.4027</td>
+<td align="right">0.4183</td>
+<td align="right">0.1249</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
@@ -2667,15 +2667,15 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="right">0.0000</td>
-<td align="right">0.2729</td>
-<td align="right">0.5398</td>
-<td align="right">0.1098</td>
-<td align="right">0.2161</td>
-<td align="right">0.0588</td>
-<td align="right">0.6785</td>
-<td align="right">0.1119</td>
+<td align="right">0.7002</td>
+<td align="right">0.7708</td>
+<td align="right">0.6764</td>
+<td align="right">0.0484</td>
+<td align="right">0.0539</td>
+<td align="right">0.7745</td>
+<td align="right">0.1656</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="odd">
@@ -2836,9 +2836,9 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">12.8602</td>
+<td align="right">13.3622</td>
 <td align="right">0.0000</td>
-<td align="right">103.5604</td>
+<td align="right">103.6131</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -2870,10 +2870,10 @@ mod.split.emm &lt;- map_dfr(mod.split, ~ summary(emmeans(ref_grid(.x), ~ year * 
 <td align="right">NA</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="right">0.0000</td>
 <td align="right">0.0000</td>
-<td align="right">2.0948</td>
+<td align="right">2.8033</td>
 <td align="right">NA</td>
 </tr>
 <tr class="odd">
@@ -3076,8 +3076,8 @@ mod.split.glht %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">-12.5091</td>
-<td align="right">0.5309</td>
+<td align="right">-12.2706</td>
+<td align="right">0.5423</td>
 </tr>
 <tr class="even">
 <td align="left">fruits_nonaborted</td>
@@ -3100,9 +3100,9 @@ mod.split.glht %&gt;% kable()</code></pre>
 <td align="right">0.2133</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
-<td align="right">-0.9169</td>
-<td align="right">0.0105</td>
+<td align="left">seeds_initiated_per_flower</td>
+<td align="right">-0.9058</td>
+<td align="right">0.0587</td>
 </tr>
 <tr class="odd">
 <td align="left">sla</td>
@@ -3207,8 +3207,8 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.6625</td>
-<td align="right">0.6260</td>
+<td align="right">0.6740</td>
+<td align="right">0.6346</td>
 </tr>
 <tr class="even">
 <td align="left">fruits_nonaborted</td>
@@ -3231,9 +3231,9 @@ mod.split.tests.water %&gt;% select(trait, contrast, adj.p.value) %&gt;% pivot_w
 <td align="right">0.7152</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
-<td align="right">0.4136</td>
-<td align="right">0.8935</td>
+<td align="left">seeds_initiated_per_flower</td>
+<td align="right">0.6956</td>
+<td align="right">0.9859</td>
 </tr>
 <tr class="odd">
 <td align="left">sla</td>
@@ -3654,11 +3654,11 @@ mod.abs.tests &lt;- map(mod.abs, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy
 anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 <table>
 <colgroup>
-<col width="25%" />
+<col width="30%" />
 <col width="10%" />
-<col width="16%" />
-<col width="27%" />
-<col width="8%" />
+<col width="15%" />
+<col width="25%" />
+<col width="7%" />
 <col width="10%" />
 </colgroup>
 <thead>
@@ -3754,10 +3754,10 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.0025</td>
-<td align="right">0.8845</td>
-<td align="right">0.8463</td>
-<td align="right">0.0693</td>
+<td align="right">0.0019</td>
+<td align="right">0.8528</td>
+<td align="right">0.8151</td>
+<td align="right">0.0712</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
@@ -3793,11 +3793,11 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
-<td align="right">0.0004</td>
-<td align="right">0.5681</td>
-<td align="right">0.5878</td>
-<td align="right">0.0804</td>
+<td align="left">seeds_initiated_per_flower</td>
+<td align="right">0.0000</td>
+<td align="right">0.4640</td>
+<td align="right">0.5109</td>
+<td align="right">0.1334</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="odd">
@@ -3851,15 +3851,15 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tbody>
 </table>
 <pre class="r"><code>mod.abs.coefs %&gt;% filter(effect==&quot;fixed&quot;, term!=&quot;(Intercept)&quot;) %&gt;% pivot_wider(id_cols=trait, names_from=term, values_from=c(&quot;estimate&quot;,&quot;std.error&quot;)) %&gt;% kable()</code></pre>
-<table>
+<table style="width:100%;">
 <colgroup>
-<col width="12%" />
+<col width="15%" />
 <col width="10%" />
 <col width="13%" />
 <col width="18%" />
-<col width="11%" />
-<col width="14%" />
-<col width="19%" />
+<col width="10%" />
+<col width="13%" />
+<col width="18%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -3965,11 +3965,11 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">1.7736</td>
-<td align="right">0.1206</td>
-<td align="right">-0.0013</td>
-<td align="right">0.5790</td>
-<td align="right">0.8225</td>
+<td align="right">1.8216</td>
+<td align="right">0.1541</td>
+<td align="right">-0.0015</td>
+<td align="right">0.5796</td>
+<td align="right">0.8234</td>
 <td align="right">0.0064</td>
 </tr>
 <tr class="even">
@@ -4009,13 +4009,13 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 <td align="right">0.0000</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
-<td align="right">0.0418</td>
-<td align="right">0.0094</td>
+<td align="left">seeds_initiated_per_flower</td>
+<td align="right">0.0736</td>
+<td align="right">0.0162</td>
 <td align="right">-0.0001</td>
-<td align="right">0.0115</td>
-<td align="right">0.0163</td>
-<td align="right">0.0001</td>
+<td align="right">0.0154</td>
+<td align="right">0.0218</td>
+<td align="right">0.0002</td>
 </tr>
 <tr class="odd">
 <td align="left">sla</td>
@@ -4157,9 +4157,9 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">15.9106</td>
+<td align="right">16.0739</td>
 <td align="right">0.0000</td>
-<td align="right">104.7375</td>
+<td align="right">104.8275</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -4191,10 +4191,10 @@ anova_table(mod.abs.tests, mod.abs) %&gt;% kable()</code></pre>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="right">0.0000</td>
 <td align="right">0.0000</td>
-<td align="right">2.1052</td>
+<td align="right">2.8237</td>
 <td align="right">NA</td>
 </tr>
 <tr class="odd">
@@ -4324,14 +4324,14 @@ mod.abs.emm.avg.compensate &lt;- mod.abs.emm.avg %&gt;%
 mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <table>
 <colgroup>
-<col width="13%" />
+<col width="16%" />
 <col width="9%" />
-<col width="13%" />
+<col width="12%" />
 <col width="7%" />
-<col width="11%" />
-<col width="15%" />
+<col width="10%" />
+<col width="14%" />
 <col width="5%" />
-<col width="23%" />
+<col width="22%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -4448,12 +4448,12 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.0152</td>
+<td align="right">0.0154</td>
 <td align="right">-0.0004</td>
 <td align="right">0.0026</td>
 <td align="right">0.0011</td>
-<td align="right">-37.6179</td>
-<td align="right">105.1995</td>
+<td align="right">-37.6151</td>
+<td align="right">103.9884</td>
 <td align="right">-0.4277</td>
 </tr>
 <tr class="even">
@@ -4497,14 +4497,14 @@ mod.abs.emm.avg.compensate %&gt;% select(-predictor) %&gt;% kable()</code></pre>
 <td align="right">0.0970</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
-<td align="right">0.0163</td>
-<td align="right">0.0001</td>
-<td align="right">0.0026</td>
-<td align="right">0.0010</td>
-<td align="right">114.9275</td>
-<td align="right">776.6405</td>
-<td align="right">1.3068</td>
+<td align="left">seeds_initiated_per_flower</td>
+<td align="right">0.0210</td>
+<td align="right">0.0005</td>
+<td align="right">0.0025</td>
+<td align="right">0.0009</td>
+<td align="right">45.8251</td>
+<td align="right">93.0024</td>
+<td align="right">0.5210</td>
 </tr>
 <tr class="odd">
 <td align="left">sla</td>
@@ -4610,7 +4610,7 @@ mod.abs.emm.plot.precip_est_mm &lt;-
 #mt.exclude.compensate &lt;- mt.mod.abs.tests %&gt;% filter(term %in% c(&quot;precip_est_mm&quot;, &quot;sun_date&quot;), p.value &gt; 0.05) %&gt;% pull(trait) %&gt;% unique  #if P&gt; 0.05 for effect of summer precip or snowmelt
 exclude.compensate&lt;- c(&quot;&quot;)#c(&quot;height_cm&quot;, #snowmelt/precip slope too big and P &gt; 0.05 for both
                       #    &quot;sepal_width&quot;,#sepal_width has interaction with sun_date,
-                       # &quot;seeds_per_flower&quot;, &quot;seeds_per_fruit&quot;, &quot;seeds_est&quot;, &quot;open&quot;)
+                       # &quot;seeds_initiated_per_flower&quot;, &quot;seeds_per_fruit&quot;, &quot;seeds_est&quot;, &quot;open&quot;)
 mod.abs.emm.compensate &lt;- mod.abs.emm %&gt;% 
   pivot_wider(names_from=predictor, values_from=c(trend, SE), id_cols=c(trait, sun_date, precip_est_mm)) %&gt;% 
   mutate(predictor = &quot;compensation&quot;,
@@ -4773,12 +4773,12 @@ mod.abs.lag &lt;- c(map(set_names(traits),
                  ~ lmer(mnps.plantyr[[.x]]  ~ sun_date_lag * precip_est_mm + (1|plot) + (1|plotid), data=mnps.plantyr)))
 mod.abs.lag.tests &lt;- map(mod.abs.lag, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, .id=&quot;trait&quot;)
 anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
-<table style="width:100%;">
+<table>
 <colgroup>
-<col width="23%" />
+<col width="27%" />
+<col width="13%" />
 <col width="14%" />
-<col width="15%" />
-<col width="29%" />
+<col width="27%" />
 <col width="7%" />
 <col width="9%" />
 </colgroup>
@@ -4875,10 +4875,10 @@ anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.0015</td>
-<td align="right">0.5903</td>
-<td align="right">0.5009</td>
-<td align="right">0.0677</td>
+<td align="right">0.0011</td>
+<td align="right">0.5608</td>
+<td align="right">0.4712</td>
+<td align="right">0.0695</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
@@ -4914,11 +4914,11 @@ anova_table(mod.abs.lag.tests, mod.abs.lag) %&gt;% kable()</code></pre>
 <td align="left">FALSE</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
-<td align="right">0.0002</td>
-<td align="right">0.1198</td>
-<td align="right">0.0896</td>
-<td align="right">0.0579</td>
+<td align="left">seeds_initiated_per_flower</td>
+<td align="right">0.0000</td>
+<td align="right">0.1016</td>
+<td align="right">0.0608</td>
+<td align="right">0.0963</td>
 <td align="left">TRUE</td>
 </tr>
 </tbody>
@@ -4972,13 +4972,13 @@ mod.sm.tests &lt;- map(mod.sm, anova, ddf=&quot;Ken&quot;) %&gt;% map_dfr(tidy, 
 anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 <table>
 <colgroup>
-<col width="30%" />
-<col width="10%" />
-<col width="10%" />
-<col width="13%" />
-<col width="13%" />
-<col width="10%" />
-<col width="13%" />
+<col width="36%" />
+<col width="9%" />
+<col width="9%" />
+<col width="12%" />
+<col width="12%" />
+<col width="9%" />
+<col width="12%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -5084,11 +5084,11 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">0.8023</td>
-<td align="right">0.2543</td>
-<td align="right">0.2465</td>
+<td align="right">0.8058</td>
+<td align="right">0.2558</td>
+<td align="right">0.2536</td>
 <td align="right">NA</td>
-<td align="right">0.0810</td>
+<td align="right">0.0828</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="even">
@@ -5128,12 +5128,12 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 <td align="left">FALSE</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
-<td align="right">0.5445</td>
-<td align="right">0.8820</td>
-<td align="right">0.7828</td>
+<td align="left">seeds_initiated_per_flower</td>
+<td align="right">0.2301</td>
+<td align="right">0.6992</td>
+<td align="right">0.7005</td>
 <td align="right">NA</td>
-<td align="right">0.0798</td>
+<td align="right">0.1382</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="odd">
@@ -5265,8 +5265,8 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
-<td align="right">14.5458</td>
-<td align="right">104.4497</td>
+<td align="right">14.6594</td>
+<td align="right">104.5501</td>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
@@ -5294,9 +5294,9 @@ anova_table(mod.sm.tests, mod.sm) %&gt;% kable()</code></pre>
 <td align="right">NA</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="right">0.0000</td>
-<td align="right">2.1097</td>
+<td align="right">2.8206</td>
 <td align="right">NA</td>
 </tr>
 <tr class="odd">
@@ -8236,7 +8236,7 @@ ggplot(ph.plantyr, aes(x=height_cm, y=open, color=water)) + geom_point() + geom_
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/seed_phenology-2.png" width="672" /></p>
 <pre class="r"><code>ggplot(sds20.date.zeroed, aes(x=julian, y=prop_infested, color=water, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun=&quot;mean&quot;, geom=&quot;line&quot;) + scale_color_manual(values=water_pal)+
-  labs(y=&quot;Proportion of nonaborted fruits infested&quot;, x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;)+ scale_linetype_manual(values=c(2,1)) +
+  labs(y=traitnames[&quot;prop_infested&quot;], x=&quot;Day of year&quot;, color=&quot;Precipitation&quot;, shape=&quot;Snow&quot;, linetype=&quot;Snow&quot;)+ scale_linetype_manual(values=c(2,1)) +
   scale_y_continuous(labels = scales::percent)+ theme_minimal() + 
   theme(legend.key.size = unit(2, &quot;lines&quot;))</code></pre>
 <p><img src="images/seed_phenology-3.png" width="672" /></p>

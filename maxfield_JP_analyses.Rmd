@@ -1287,7 +1287,7 @@ mod.abs.emm.plot.precip_est_mm <-
 #mt.exclude.compensate <- mt.mod.abs.tests %>% filter(term %in% c("precip_est_mm", "sun_date"), p.value > 0.05) %>% pull(trait) %>% unique  #if P> 0.05 for effect of summer precip or snowmelt
 exclude.compensate<- c("")#c("height_cm", #snowmelt/precip slope too big and P > 0.05 for both
                       #    "sepal_width",#sepal_width has interaction with sun_date,
-                       # "seeds_per_flower", "seeds_per_fruit", "seeds_est", "open")
+                       # "seeds_initiated_per_flower", "seeds_per_fruit", "seeds_est", "open")
 mod.abs.emm.compensate <- mod.abs.emm %>% 
   pivot_wider(names_from=predictor, values_from=c(trend, SE), id_cols=c(trait, sun_date, precip_est_mm)) %>% 
   mutate(predictor = "compensation",
@@ -2207,7 +2207,7 @@ ggplot(sds20.date.zeroed, aes(x=julian, y=seeds, color=water, shape=snow, linety
   theme(legend.key.size = unit(2, "lines"))
 
 ggplot(sds20.date.zeroed, aes(x=julian, y=prop_infested, color=water, shape=snow, linetype=snow))+geom_jitter(width=2, height=0) + stat_summary(fun="mean", geom="line") + scale_color_manual(values=water_pal)+
-  labs(y="Proportion of nonaborted fruits infested", x="Day of year", color="Precipitation", shape="Snow", linetype="Snow")+ scale_linetype_manual(values=c(2,1)) +
+  labs(y=traitnames["prop_infested"], x="Day of year", color="Precipitation", shape="Snow", linetype="Snow")+ scale_linetype_manual(values=c(2,1)) +
   scale_y_continuous(labels = scales::percent)+ theme_minimal() + 
   theme(legend.key.size = unit(2, "lines"))
 

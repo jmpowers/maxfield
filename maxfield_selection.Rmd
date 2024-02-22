@@ -30,7 +30,7 @@ load("data/maxfield_data.rda") #load trait measurements, etc
 mnps.plantyr <- mnps.plantyr %>% mutate(prop_uninfested = 1 - prop_infested)
 #TODO eggs_per_flower has some high values when the eggs were averaged over 1 observation but the flowers were averaged over multiple weeks. need to calculate this before averaging
 
-fitnesstraits <- c("seeds_est", "seeds_per_flower", "prop_uninfested", "eggs_per_flower")
+fitnesstraits <- c("seeds_est", "seeds_initiated_per_flower", "prop_uninfested", "eggs_per_flower")
 fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
                   eggs_per_flower="Fly eggs per flower")[fitnesstraits]
 morphtraits <- c("corolla_length", "corolla_width","style_length","anther_max","anther_min","sepal_width","nectar_24_h_ul", "nectar_conc")#floral traits less height and flower number, plus anthers
@@ -249,7 +249,7 @@ ggplot(mt.morph.pca) + geom_point(aes(x=PC1, y=PC2, color=corolla_width/corolla_
 
 ## Gradients from averaged traits
 
-```{r gradients, fig.width=8, fig.height=6}
+```{r gradients, fig.width=9, fig.height=6}
 morphtraits.pca <- morphtraits[-6]  #remove sepal_width (not measured in 2018)
 #Standardize traits by mean and fitness by mean within each year
 mnps.plantyr.std <- mnps.plantyr %>% select(all_of(morphtraits.pca),all_of(fitnesstraits), any_of(names(treatments))) %>%

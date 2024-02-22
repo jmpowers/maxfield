@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-02-19" />
+<meta name="date" content="2024-02-21" />
 
 <title>Maxfield Meadow Ipomopsis Selection</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Selection</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-02-19</h4>
+<h4 class="date">2024-02-21</h4>
 
 </div>
 
@@ -273,7 +273,7 @@ load(&quot;data/maxfield_data.rda&quot;) #load trait measurements, etc
 mnps.plantyr &lt;- mnps.plantyr %&gt;% mutate(prop_uninfested = 1 - prop_infested)
 #TODO eggs_per_flower has some high values when the eggs were averaged over 1 observation but the flowers were averaged over multiple weeks. need to calculate this before averaging
 
-fitnesstraits &lt;- c(&quot;seeds_est&quot;, &quot;seeds_per_flower&quot;, &quot;prop_uninfested&quot;, &quot;eggs_per_flower&quot;)
+fitnesstraits &lt;- c(&quot;seeds_est&quot;, &quot;seeds_initiated_per_flower&quot;, &quot;prop_uninfested&quot;, &quot;eggs_per_flower&quot;)
 fitnessnames &lt;- c(traitnames, prop_uninfested = &quot;Prop. uneaten fruits&quot;,
                   eggs_per_flower=&quot;Fly eggs per flower&quot;)[fitnesstraits]
 morphtraits &lt;- c(&quot;corolla_length&quot;, &quot;corolla_width&quot;,&quot;style_length&quot;,&quot;anther_max&quot;,&quot;anther_min&quot;,&quot;sepal_width&quot;,&quot;nectar_24_h_ul&quot;, &quot;nectar_conc&quot;)#floral traits less height and flower number, plus anthers
@@ -541,7 +541,7 @@ plot_beta &lt;- function(betas, colorby=&quot;year&quot;) {
 mnps.beta.yr &lt;- expand_grid(year=unique(mnps.plantyr$year), fitnesstrait=fitnesstraits)  %&gt;% 
  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
 plot_beta(mnps.beta.yr)+ facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))</code></pre>
-<p><img src="images_selection/gradients-1.svg" width="768" /></p>
+<p><img src="images_selection/gradients-1.svg" width="864" /></p>
 <pre class="r"><code>mnps.beta.water &lt;- expand_grid(year=unique(mnps.plantyr$year), water=names(water_pal), fitnesstrait=fitnesstraits)  %&gt;% 
  mutate(betas = pmap(., selection_pca)) %&gt;% unnest(betas)
 
@@ -553,7 +553,7 @@ mnps.beta.water.snow &lt;- expand_grid(year=unique(mnps.plantyr$year), water=nam
 
 walk(fitnesstraits, ~print(plot_beta(filter(mnps.beta.water.snow, fitnesstrait==.x), colorby=&quot;water_snow&quot;) + 
                              facet_wrap(vars(year), nrow=1) + ggtitle(fitnessnames[.x])))</code></pre>
-<p><img src="images_selection/gradients-2.svg" width="768" /><img src="images_selection/gradients-3.svg" width="768" /><img src="images_selection/gradients-4.svg" width="768" /><img src="images_selection/gradients-5.svg" width="768" /></p>
+<p><img src="images_selection/gradients-2.svg" width="864" /><img src="images_selection/gradients-3.svg" width="864" /><img src="images_selection/gradients-4.svg" width="864" /><img src="images_selection/gradients-5.svg" width="864" /></p>
 </div>
 </div>
 <div id="adaptive-plasticity" class="section level1">

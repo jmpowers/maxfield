@@ -288,7 +288,7 @@ walk2(figs$path, figs$fig, ~system(paste0(&quot;inkscape -o ./figures_volatiles2
 <pre class="r"><code>load(&quot;data/maxfield_data.rda&quot;) #load trait measurements, etc
 load(&quot;data/volatiles/maxfield_volatiles_lessdupes.rda&quot;) # from maxfield_gc.R, loads maxfmeta and maxf (wide GC data)
 
-fitnesstraits &lt;- c(&quot;seeds_est&quot;, &quot;seeds_per_flower&quot;, &quot;prop_uninfested&quot;, &quot;eggs_per_flower&quot;)
+fitnesstraits &lt;- c(&quot;seeds_est&quot;, &quot;seeds_initiated_per_flower&quot;, &quot;prop_uninfested&quot;, &quot;eggs_per_flower&quot;)
 fitnessnames &lt;- c(traitnames, prop_uninfested = &quot;Prop. uneaten fruits&quot;,
                   eggs_per_flower=&quot;Fly eggs per flower&quot;)[fitnesstraits]
 
@@ -2758,17 +2758,17 @@ mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&g
 <table>
 <caption>Selection of emissions in each treatment</caption>
 <colgroup>
-<col width="25%" />
-<col width="12%" />
-<col width="21%" />
-<col width="20%" />
-<col width="20%" />
+<col width="22%" />
+<col width="11%" />
+<col width="30%" />
+<col width="17%" />
+<col width="17%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th align="left">term</th>
 <th align="right">seeds_est</th>
-<th align="right">seeds_per_flower</th>
+<th align="right">seeds_initiated_per_flower</th>
 <th align="right">prop_uninfested</th>
 <th align="right">eggs_per_flower</th>
 </tr>
@@ -2783,162 +2783,162 @@ mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&g
 </tr>
 <tr class="even">
 <td align="left">year</td>
-<td align="right">0.1626</td>
-<td align="right">0.0017</td>
+<td align="right">0.1537</td>
+<td align="right">0.0002</td>
 <td align="right">0.0195</td>
 <td align="right">0.0001</td>
 </tr>
 <tr class="odd">
 <td align="left">water</td>
-<td align="right">0.8014</td>
-<td align="right">0.2019</td>
+<td align="right">0.7896</td>
+<td align="right">0.1752</td>
 <td align="right">0.1956</td>
 <td align="right">0.7397</td>
 </tr>
 <tr class="even">
 <td align="left">snow</td>
-<td align="right">0.1463</td>
-<td align="right">0.2518</td>
+<td align="right">0.1488</td>
+<td align="right">0.0486</td>
 <td align="right">0.9359</td>
 <td align="right">0.5315</td>
 </tr>
 <tr class="odd">
 <td align="left">Monoterpene</td>
-<td align="right">0.1076</td>
-<td align="right">0.4766</td>
+<td align="right">0.1071</td>
+<td align="right">0.4060</td>
 <td align="right">0.4452</td>
 <td align="right">0.2254</td>
 </tr>
 <tr class="even">
 <td align="left">Sesquiterpene</td>
-<td align="right">0.1586</td>
-<td align="right">0.3727</td>
+<td align="right">0.1551</td>
+<td align="right">0.8037</td>
 <td align="right">0.0474</td>
 <td align="right">0.4738</td>
 </tr>
 <tr class="odd">
 <td align="left">Benzenoid</td>
-<td align="right">0.0356</td>
-<td align="right">0.0826</td>
+<td align="right">0.0364</td>
+<td align="right">0.1616</td>
 <td align="right">0.1065</td>
 <td align="right">0.2793</td>
 </tr>
 <tr class="even">
 <td align="left">Aliphatic</td>
-<td align="right">0.8461</td>
-<td align="right">0.5016</td>
+<td align="right">0.8359</td>
+<td align="right">0.9843</td>
 <td align="right">0.1488</td>
 <td align="right">0.4622</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
-<td align="right">0.0265</td>
-<td align="right">0.0042</td>
+<td align="right">0.0250</td>
+<td align="right">0.0079</td>
 <td align="right">0.3516</td>
 <td align="right">0.9918</td>
 </tr>
 <tr class="even">
 <td align="left">year:snow</td>
 <td align="right">0.0049</td>
-<td align="right">0.1159</td>
+<td align="right">0.2384</td>
 <td align="right">0.9392</td>
 <td align="right">0.5826</td>
 </tr>
 <tr class="odd">
 <td align="left">water:snow</td>
-<td align="right">0.5009</td>
-<td align="right">0.4805</td>
+<td align="right">0.5099</td>
+<td align="right">0.3636</td>
 <td align="right">0.4333</td>
 <td align="right">0.6556</td>
 </tr>
 <tr class="even">
 <td align="left">snow:Monoterpene</td>
-<td align="right">0.4237</td>
-<td align="right">0.8731</td>
+<td align="right">0.4274</td>
+<td align="right">0.4716</td>
 <td align="right">0.2862</td>
 <td align="right">0.7961</td>
 </tr>
 <tr class="odd">
 <td align="left">water:Monoterpene</td>
-<td align="right">0.7156</td>
-<td align="right">0.3256</td>
+<td align="right">0.7127</td>
+<td align="right">0.2189</td>
 <td align="right">0.5441</td>
 <td align="right">0.3852</td>
 </tr>
 <tr class="even">
 <td align="left">year:Monoterpene</td>
-<td align="right">0.8306</td>
-<td align="right">0.7532</td>
+<td align="right">0.8323</td>
+<td align="right">0.8468</td>
 <td align="right">0.0389</td>
 <td align="right">0.2138</td>
 </tr>
 <tr class="odd">
 <td align="left">snow:Sesquiterpene</td>
-<td align="right">0.7053</td>
-<td align="right">0.3176</td>
+<td align="right">0.7163</td>
+<td align="right">0.0643</td>
 <td align="right">0.0408</td>
 <td align="right">0.1206</td>
 </tr>
 <tr class="even">
 <td align="left">water:Sesquiterpene</td>
-<td align="right">0.1791</td>
-<td align="right">0.0785</td>
+<td align="right">0.1759</td>
+<td align="right">0.3984</td>
 <td align="right">0.0028</td>
 <td align="right">0.7928</td>
 </tr>
 <tr class="odd">
 <td align="left">year:Sesquiterpene</td>
-<td align="right">0.3452</td>
-<td align="right">0.5528</td>
+<td align="right">0.3478</td>
+<td align="right">0.9459</td>
 <td align="right">0.0886</td>
 <td align="right">0.3888</td>
 </tr>
 <tr class="even">
 <td align="left">snow:Benzenoid</td>
-<td align="right">0.9224</td>
-<td align="right">0.3050</td>
+<td align="right">0.9208</td>
+<td align="right">0.7359</td>
 <td align="right">0.9692</td>
 <td align="right">0.5361</td>
 </tr>
 <tr class="odd">
 <td align="left">water:Benzenoid</td>
-<td align="right">0.2788</td>
-<td align="right">0.5963</td>
+<td align="right">0.2726</td>
+<td align="right">0.4656</td>
 <td align="right">0.1633</td>
 <td align="right">0.8231</td>
 </tr>
 <tr class="even">
 <td align="left">year:Benzenoid</td>
-<td align="right">0.0959</td>
-<td align="right">0.1374</td>
+<td align="right">0.0980</td>
+<td align="right">0.2695</td>
 <td align="right">0.5823</td>
 <td align="right">0.4417</td>
 </tr>
 <tr class="odd">
 <td align="left">snow:Aliphatic</td>
-<td align="right">0.4415</td>
-<td align="right">0.9141</td>
+<td align="right">0.4506</td>
+<td align="right">0.3569</td>
 <td align="right">0.2377</td>
 <td align="right">0.2837</td>
 </tr>
 <tr class="even">
 <td align="left">water:Aliphatic</td>
-<td align="right">0.0282</td>
-<td align="right">0.2324</td>
+<td align="right">0.0287</td>
+<td align="right">0.2621</td>
 <td align="right">0.9405</td>
 <td align="right">0.1466</td>
 </tr>
 <tr class="odd">
 <td align="left">year:Aliphatic</td>
-<td align="right">0.2377</td>
-<td align="right">0.6235</td>
+<td align="right">0.2451</td>
+<td align="right">0.6675</td>
 <td align="right">0.7327</td>
 <td align="right">0.3630</td>
 </tr>
 <tr class="even">
 <td align="left">year:water:snow</td>
-<td align="right">0.5979</td>
-<td align="right">0.8364</td>
+<td align="right">0.5939</td>
+<td align="right">0.7958</td>
 <td align="right">0.2198</td>
 <td align="right">0.0697</td>
 </tr>
@@ -3189,12 +3189,13 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
             theme_bw() + theme(axis.text = element_text(size=7)))})</code></pre>
 <p><img src="images_volatiles2020/adaptive-1.svg" width="672" /><img src="images_volatiles2020/adaptive-2.svg" width="672" /><img src="images_volatiles2020/adaptive-3.svg" width="672" /></p>
 <pre class="r"><code>adaptive.plasticity.data %&gt;% filter(newenv != &quot;R_A&quot;) %&gt;% count(p.value &lt; 0.05, plasticity.p.value &lt; 0.05)</code></pre>
-<pre><code># A tibble: 3 × 3
+<pre><code># A tibble: 4 × 3
   `p.value &lt; 0.05` `plasticity.p.value &lt; 0.05`     n
   &lt;lgl&gt;            &lt;lgl&gt;                       &lt;int&gt;
-1 FALSE            FALSE                         432
-2 FALSE            TRUE                           42
-3 TRUE             FALSE                          30</code></pre>
+1 FALSE            FALSE                         427
+2 FALSE            TRUE                           41
+3 TRUE             FALSE                          35
+4 TRUE             TRUE                            1</code></pre>
 <pre class="r"><code>ggplot(adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;), 
        aes(x=log2(estimate+1), xmin=log2(estimate+1-std.error), xmax=log2(estimate+1+std.error),
                           y=name, color=year, alpha=plasticity.p.value&lt;0.05)) +  facet_wrap(vars(newenv)) +
@@ -3234,7 +3235,7 @@ is adaptive across 3 yr</caption>
 </tr>
 <tr class="even">
 <td align="left">Addition</td>
-<td align="left">Estimated total seeds</td>
+<td align="left">Total seeds</td>
 <td align="right">24</td>
 <td align="right">56</td>
 <td align="right">0.43</td>
@@ -3242,11 +3243,11 @@ is adaptive across 3 yr</caption>
 </tr>
 <tr class="odd">
 <td align="left">Addition</td>
-<td align="left">Estimated seeds per flower</td>
-<td align="right">28</td>
+<td align="left">Seeds initiated per flower</td>
+<td align="right">30</td>
 <td align="right">56</td>
-<td align="right">0.50</td>
-<td align="right">1.00</td>
+<td align="right">0.54</td>
+<td align="right">0.69</td>
 </tr>
 <tr class="even">
 <td align="left">Early</td>
@@ -3258,7 +3259,7 @@ is adaptive across 3 yr</caption>
 </tr>
 <tr class="odd">
 <td align="left">Early</td>
-<td align="left">Estimated total seeds</td>
+<td align="left">Total seeds</td>
 <td align="right">22</td>
 <td align="right">56</td>
 <td align="right">0.39</td>
@@ -3266,11 +3267,11 @@ is adaptive across 3 yr</caption>
 </tr>
 <tr class="even">
 <td align="left">Early</td>
-<td align="left">Estimated seeds per flower</td>
-<td align="right">23</td>
+<td align="left">Seeds initiated per flower</td>
+<td align="right">25</td>
 <td align="right">56</td>
-<td align="right">0.41</td>
-<td align="right">0.23</td>
+<td align="right">0.45</td>
+<td align="right">0.50</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
@@ -3282,7 +3283,7 @@ is adaptive across 3 yr</caption>
 </tr>
 <tr class="even">
 <td align="left">Reduction</td>
-<td align="left">Estimated total seeds</td>
+<td align="left">Total seeds</td>
 <td align="right">29</td>
 <td align="right">56</td>
 <td align="right">0.52</td>
@@ -3290,11 +3291,11 @@ is adaptive across 3 yr</caption>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
-<td align="left">Estimated seeds per flower</td>
-<td align="right">27</td>
+<td align="left">Seeds initiated per flower</td>
+<td align="right">30</td>
 <td align="right">56</td>
-<td align="right">0.48</td>
-<td align="right">0.89</td>
+<td align="right">0.54</td>
+<td align="right">0.69</td>
 </tr>
 </tbody>
 </table>
@@ -3425,12 +3426,12 @@ tibble(response = fitnesstraits, trait = floraltraits[1], use_trait=FALSE) %&gt;
   filter(term !=&quot;(Intercept)&quot;) %&gt;% kable()</code></pre>
 <table>
 <colgroup>
-<col width="25%" />
-<col width="20%" />
-<col width="13%" />
-<col width="14%" />
-<col width="14%" />
+<col width="34%" />
+<col width="17%" />
 <col width="11%" />
+<col width="12%" />
+<col width="12%" />
+<col width="10%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -3446,9 +3447,9 @@ tibble(response = fitnesstraits, trait = floraltraits[1], use_trait=FALSE) %&gt;
 <tr class="odd">
 <td align="left">seeds_est</td>
 <td align="left">sun_date</td>
-<td align="right">0.0143</td>
+<td align="right">0.0144</td>
 <td align="right">0.0023</td>
-<td align="right">6.2046</td>
+<td align="right">6.2980</td>
 <td align="right">0.0000</td>
 </tr>
 <tr class="even">
@@ -3456,24 +3457,24 @@ tibble(response = fitnesstraits, trait = floraltraits[1], use_trait=FALSE) %&gt;
 <td align="left">precip_est_mm</td>
 <td align="right">-0.0002</td>
 <td align="right">0.0008</td>
-<td align="right">-0.3022</td>
-<td align="right">0.7627</td>
+<td align="right">-0.2999</td>
+<td align="right">0.7644</td>
 </tr>
 <tr class="odd">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="left">sun_date</td>
-<td align="right">0.0120</td>
+<td align="right">0.0156</td>
 <td align="right">0.0018</td>
-<td align="right">6.6187</td>
+<td align="right">8.7855</td>
 <td align="right">0.0000</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="left">precip_est_mm</td>
-<td align="right">0.0002</td>
+<td align="right">0.0004</td>
 <td align="right">0.0006</td>
-<td align="right">0.2628</td>
-<td align="right">0.7929</td>
+<td align="right">0.6541</td>
+<td align="right">0.5133</td>
 </tr>
 <tr class="odd">
 <td align="left">prop_uninfested</td>
@@ -3548,15 +3549,15 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <pre class="r"><code>mod.selection.abs %&gt;% filter(trait==&quot;a-pinene&quot;) %&gt;% 
   mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
   select(-c(model, coefs)) %&gt;% unnest(tests) %&gt;% filter(str_detect(term, &quot;trait&quot;)) %&gt;% kable()</code></pre>
-<table style="width:100%;">
+<table>
 <colgroup>
-<col width="22%" />
-<col width="12%" />
-<col width="27%" />
-<col width="9%" />
-<col width="4%" />
-<col width="13%" />
+<col width="32%" />
 <col width="10%" />
+<col width="23%" />
+<col width="8%" />
+<col width="3%" />
+<col width="11%" />
+<col width="9%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -3574,55 +3575,55 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">seeds_est</td>
 <td align="left">a-pinene</td>
 <td align="left">trait</td>
-<td align="right">0.2044</td>
+<td align="right">0.2035</td>
 <td align="right">1</td>
-<td align="right">0.2800</td>
-<td align="right">0.5971</td>
+<td align="right">0.2815</td>
+<td align="right">0.5961</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_est</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:sun_date</td>
-<td align="right">0.5086</td>
+<td align="right">0.5121</td>
 <td align="right">1</td>
-<td align="right">0.6965</td>
-<td align="right">0.4046</td>
+<td align="right">0.7082</td>
+<td align="right">0.4007</td>
 </tr>
 <tr class="odd">
 <td align="left">seeds_est</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:precip_est_mm</td>
-<td align="right">0.5297</td>
+<td align="right">0.5490</td>
 <td align="right">1</td>
-<td align="right">0.7255</td>
-<td align="right">0.3950</td>
+<td align="right">0.7592</td>
+<td align="right">0.3843</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">trait</td>
-<td align="right">0.9262</td>
+<td align="right">0.4582</td>
 <td align="right">1</td>
-<td align="right">2.6510</td>
-<td align="right">0.1045</td>
+<td align="right">1.3366</td>
+<td align="right">0.2486</td>
 </tr>
 <tr class="odd">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:sun_date</td>
-<td align="right">0.5707</td>
+<td align="right">0.1912</td>
 <td align="right">1</td>
-<td align="right">1.6336</td>
-<td align="right">0.2022</td>
+<td align="right">0.5577</td>
+<td align="right">0.4558</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">trait:precip_est_mm</td>
-<td align="right">1.0857</td>
+<td align="right">0.6413</td>
 <td align="right">1</td>
-<td align="right">3.1074</td>
-<td align="right">0.0790</td>
+<td align="right">1.8707</td>
+<td align="right">0.1724</td>
 </tr>
 <tr class="odd">
 <td align="left">prop_uninfested</td>
@@ -3757,14 +3758,14 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <td align="left">trait</td>
 <td align="right">0</td>
 <td align="right">1</td>
-<td align="right">0.05</td>
+<td align="right">0.04</td>
 <td align="right">0.3</td>
 <td align="right">-0.73</td>
 <td align="right">-0.13</td>
-<td align="right">0.04</td>
+<td align="right">0.03</td>
 <td align="right">0.18</td>
-<td align="right">1.02</td>
-<td align="left">▁▅▇▂▁</td>
+<td align="right">1.01</td>
+<td align="left">▁▆▇▂▁</td>
 </tr>
 <tr class="even">
 <td align="left">estimate</td>
@@ -3778,7 +3779,7 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
-<td align="left">▁▃▆▇▁</td>
+<td align="left">▁▂▆▇▂</td>
 </tr>
 <tr class="odd">
 <td align="left">estimate</td>
@@ -4098,15 +4099,15 @@ fitness.overlaps %&gt;% group_by(fitnesstrait, overlap, year) %&gt;% drop_na(val
          emm = map(model, ~tidy(emmeans(.x, specs= ~ overlap)))) %&gt;% select(-data, -model) 
 
 fitness.overlaps.tests %&gt;% select(-emm) %&gt;% unnest(test) %&gt;% filter(term!=&quot;Residuals&quot;) %&gt;% kable(digits=3)</code></pre>
-<table>
+<table style="width:100%;">
 <colgroup>
-<col width="25%" />
-<col width="12%" />
-<col width="4%" />
-<col width="15%" />
-<col width="15%" />
-<col width="15%" />
-<col width="12%" />
+<col width="35%" />
+<col width="10%" />
+<col width="3%" />
+<col width="13%" />
+<col width="13%" />
+<col width="13%" />
+<col width="10%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -4124,36 +4125,36 @@ fitness.overlaps.tests %&gt;% select(-emm) %&gt;% unnest(test) %&gt;% filter(ter
 <td align="left">seeds_est</td>
 <td align="left">overlap</td>
 <td align="right">1</td>
-<td align="right">1.458e+04</td>
-<td align="right">1.458e+04</td>
-<td align="right">1.141</td>
-<td align="right">0.286</td>
+<td align="right">1.511e+04</td>
+<td align="right">1.511e+04</td>
+<td align="right">1.180</td>
+<td align="right">0.278</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_est</td>
 <td align="left">year</td>
 <td align="right">2</td>
-<td align="right">3.212e+05</td>
-<td align="right">1.606e+05</td>
-<td align="right">12.570</td>
+<td align="right">3.337e+05</td>
+<td align="right">1.669e+05</td>
+<td align="right">13.028</td>
 <td align="right">0.000</td>
 </tr>
 <tr class="odd">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="left">overlap</td>
 <td align="right">1</td>
-<td align="right">3.530e-01</td>
-<td align="right">3.530e-01</td>
-<td align="right">0.129</td>
-<td align="right">0.720</td>
+<td align="right">9.440e-01</td>
+<td align="right">9.440e-01</td>
+<td align="right">0.174</td>
+<td align="right">0.677</td>
 </tr>
 <tr class="even">
-<td align="left">seeds_per_flower</td>
+<td align="left">seeds_initiated_per_flower</td>
 <td align="left">year</td>
 <td align="right">2</td>
-<td align="right">2.511e+02</td>
-<td align="right">1.255e+02</td>
-<td align="right">45.842</td>
+<td align="right">8.216e+02</td>
+<td align="right">4.108e+02</td>
+<td align="right">75.617</td>
 <td align="right">0.000</td>
 </tr>
 <tr class="odd">

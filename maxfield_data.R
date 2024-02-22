@@ -785,14 +785,16 @@ sds <- bind_rows(sds18, sds19, sds20) %>%
     flowers_destroyed = flowers_morphology_nectar + flowers_volatiles, #TODO + flowers_color
     seeds_per_fruit	= seeds / fruits,
     fruits_aborted	= aborts + flowers_buds_collected_last,
-    seeds_est	= seeds + seeds_fly + (flowers_buds_collected_early + flowers_destroyed + fruits_early_uncountable) * (seeds/(fruits + fruits_aborted + fruits_fly_with_seeds + fruits_fly_no_seeds + fruits_caterpillar)) + fruits_split * seeds_per_fruit, 
+    seeds_est	= seeds + seeds_fly + (flowers_buds_collected_early + flowers_destroyed + fruits_early_uncountable) * (seeds/(fruits + aborts + fruits_fly_with_seeds + fruits_fly_no_seeds + fruits_caterpillar)) + fruits_split * seeds_per_fruit, #changed fruits_aborted to aborts (assume flowers that were collected early are not assumed to abort like flowers_buds_collected_last)
     fruits_with_seeds	= fruits + fruits_split + fruits_fly_with_seeds, 
-    fruits_nonaborted	= fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar,
+    fruits_nonaborted	= fruits_with_seeds + fruits_fly_no_seeds + fruits_caterpillar, #used to have fruits_split but those are already included in fruits_with_seeds
     flowers_est	= fruits_nonaborted + aborts + flowers_buds + flowers_destroyed,# aborts used to be fruits_aborted, which includes flowers_buds_collected_last, but these are already in flowers_buds
     prop_infested	= (fruits_fly_no_seeds + fruits_fly_with_seeds + fruits_caterpillar) / fruits_nonaborted,
     prop_aborted	= fruits_aborted / (fruits_nonaborted + fruits_aborted),
     prop_nonaborted	= fruits_nonaborted / (fruits_nonaborted + fruits_aborted),
-    seeds_per_flower = seeds_est / flowers_est)
+    seeds_per_flower = seeds_est / flowers_est,
+    seeds_initiated_per_flower = (fruits_nonaborted * seeds_per_fruit) / 
+      (fruits_nonaborted + aborts + flowers_buds))#denominator is flowers_est, less flowers_destroyed
 
 ######## Merge morphology, nectar, phenology, and seeds ####
 mnps <- bind_rows(mt, ph.raw, sds) #was ph but filling in doesn't work for 2018 #TODO make sure swap doesn't break graphs
@@ -846,7 +848,7 @@ timings %>% mutate(range=paste(begin,end,sep=" - "), .keep="unused") %>%
 
 # traitnames --------------------------------------------------------------
 
-traits <- c("corolla_length", "style_length", "corolla_width", "sepal_width", "nectar_24_h_ul", "nectar_conc","nectar_sugar_24_h_mg","height_cm","open","seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_per_flower") #exclude anthers
+traits <- c("corolla_length", "style_length", "corolla_width", "sepal_width", "nectar_24_h_ul", "nectar_conc","nectar_sugar_24_h_mg","height_cm","open","seeds_per_fruit", "seeds_est", "fruits_nonaborted",  "flowers_est", "prop_infested", "prop_aborted", "seeds_initiated_per_flower") #exclude anthers
 floraltraits <- traits[c(1:6,8,13)]
 seedtraits <- traits[10:16] 
 leaftraits <- c("sla","trichome_density","water_content")
@@ -858,8 +860,8 @@ fitnessnames <- set_names(c("Survival","RGR (year\U207B\U00B9)","Flowering"), fi
 traitnames <- set_names(c(
   "Corolla length", "Style length", "Corolla width", "Sepal width", 
   "Nectar production", "Nectar concentration", "Nectar sucrose", "Inflorescence height", 
-  "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Flower number", 
-  "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower",
+  "Open flowers", "Seeds per fruit", "Total seeds", "Nonaborted fruits", "Flower number", 
+  "Prop. fruits eaten","Prop. fruits aborted","Seeds initiated per flower",
   "Specific leaf area", "Trichome density", "Leaf water content", 
   "Photosynthetic rate", "Stomatal conductance", "Intrinsic water-use efficiency"), alltraits)
 
@@ -867,8 +869,8 @@ traitnames.units <- set_names(c(
   "Corolla length (mm)", "Style length (mm)", "Corolla width (mm)", "Sepal width (mm)", 
   "Nectar production (\U00B5L/day)", "Nectar conc. (% by mass)", "Nectar sucrose (mg/day)", 
   "Inflorescence height (cm)", 
-  "Open flowers", "Seeds per fruit", "Estimated total seeds", "Nonaborted fruits", "Flower number", 
-  "Prop. nonaborted fruits infested","Prop. fruits aborted","Estimated seeds per flower",
+  "Open flowers", "Seeds per fruit", "Total seeds", "Nonaborted fruits", "Flower number", 
+  "Prop. fruits eaten","Prop. fruits aborted","Seeds initiated per flower",
   "Specific leaf area (cm\U00B2 g\U207B\U00B9)", "Trichome density (cm\U207B\U00B2)", "Leaf water content (g H\U2082O g\U207B\U00B9)", 
   "Photosynthetic rate (\U00B5mol CO\U2082 m\U207B\U00B2 s\U207B\U00B9)", 
   "Stomatal conductance (mol H\U2082O m\U207B\U00B2 s\U207B\U00B9)", 

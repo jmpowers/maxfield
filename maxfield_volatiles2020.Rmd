@@ -51,7 +51,7 @@ walk2(figs$path, figs$fig, ~system(paste0("inkscape -o ./figures_volatiles2020/F
 load("data/maxfield_data.rda") #load trait measurements, etc
 load("data/volatiles/maxfield_volatiles_lessdupes.rda") # from maxfield_gc.R, loads maxfmeta and maxf (wide GC data)
 
-fitnesstraits <- c("seeds_est", "seeds_per_flower", "prop_uninfested", "eggs_per_flower")
+fitnesstraits <- c("seeds_est", "seeds_initiated_per_flower", "prop_uninfested", "eggs_per_flower")
 fitnessnames <- c(traitnames, prop_uninfested = "Prop. uneaten fruits",
                   eggs_per_flower="Fly eggs per flower")[fitnesstraits]
 
