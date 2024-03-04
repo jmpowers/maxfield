@@ -1333,11 +1333,17 @@ selection_pca <- function(year=names(year_pal), water=names(water_pal), snow=nam
     select(where(~sum(is.na(.))==0))
   
   # Regress relative fitness on PCs
-  selection.on.PCs <- lm(formula(paste("relfitness ~", paste0("PC",1:n.PCs, collapse=" + "))), data = std.traits)
-
+  if(length(year)+length(water)+length(snow)==8) {
+      selection.on.PCs <- lm(formula(paste("relfitness ~", paste0("PC",1:n.PCs, collapse=" + "), 
+                                           " + precip_est_mm * sun_date")), data = std.traits) 
+      #account for direct environmental effects on fitness 
+  } else { 
+      selection.on.PCs <- lm(formula(paste("relfitness ~", paste0("PC",1:n.PCs, collapse=" + "))), data = std.traits)
+  }
+  
   # Convert selection gradients on PCs to gradients on traits
   calculate_beta(E = PCA$rotation[,1:n.PCs],
-                 slopes = tidy(selection.on.PCs) %>% filter(term != "(Intercept)") %>%
+                 slopes = tidy(selection.on.PCs) %>% filter(str_sub(term,1,2) == "PC") %>%
                    rename(A=estimate, SE=std.error), 
                  resid.df = aov(selection.on.PCs)$df.residual)
 }
@@ -1425,6 +1431,21 @@ all.beta.snow.allyrs <- expand_grid(fitnesstrait=fitnesstraits, snow=names(snow_
 
 plot_beta(all.beta.water.allyrs, colorby="water") 
 plot_beta(all.beta.snow.allyrs, colorby="snow")
+
+all.beta.allyrs <- expand_grid(fitnesstrait=fitnesstraits) %>% 
+  calculate_all_gradients_nosepal() #run the PC model with continuous environmental variables
+all.beta.allyrs %>% 
+  mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
+  ggplot(aes(x=B,y=trait, color=fitnesstrait, shape=p.value < 0.05, xmin=B-SE, xmax=B+SE)) + 
+  geom_vline(xintercept=0)+ 
+  geom_pointrange(position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
+  scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames)+
+  scale_shape_manual("P < 0.05", values=c(1,19), guide="none")+ 
+  scale_x_continuous(expand = expansion(c(0,0)))+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = "top",
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
+
 ```
 
 ## Adaptive plasticity
@@ -1623,7 +1644,7 @@ tibble(response = fitnesstraits, trait = floraltraits[1], use_trait=FALSE) %>% #
 ```
 
 
-```{r selection_abs, fig.width=9, fig.height=7}
+```{r selection_abs, fig.width=11, fig.height=7}
 mod.selection.abs %>% select(-model) %>% unnest(coefs) %>% 
   ggplot(aes(x=response, y=estimate)) + facet_wrap(vars(term), scales="free_y") +
   geom_hline(yintercept=0) + geom_boxplot()
@@ -1631,7 +1652,8 @@ mod.selection.abs %>% select(-model) %>% unnest(coefs) %>%
 library(ggrepel)
 term_labels <- c(trait="Selection on trait (\U03B2)",
                  `trait:precip_est_mm`="Selection x summer precipitation (\U03B2 / mm)",
-                 `trait:sun_date`="Selection x snowmelt date (\U03B2 / day)")
+                 `trait:sun_date`="Selection x snowmelt date (\U03B2 / day)",
+                 PCA="Direct selection (\U03B2)")
 ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), y=estimate, label=greekify(trait))) + 
   facet_wrap(vars(term), labeller = as_labeller(term_labels), scales="free_y", ncol=1) + theme_bw() +
   geom_point(aes(size=replace_na(mean.floral, 1),  #default size for non-vol traits
@@ -1647,6 +1669,8 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 
 mod.selection.tests.drop %>% 
   complete(response, trait, term) %>% # make dodging consistent 
+  #add similar PCA analysis (no interactions btn trait and enrironment though)
+  bind_rows(all.beta.allyrs %>% rename(estimate=B, std.error=SE, response=fitnesstrait) %>% mutate(term = "PCA")) %>% 
   filter(trait %in% c(ipogood.top, floraltraits)) %>% 
   mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
