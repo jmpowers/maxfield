@@ -3098,7 +3098,7 @@ selection_pca &lt;- function(year=names(year_pal), water=names(water_pal), snow=
   # Regress relative fitness on PCs
   if(length(year)+length(water)+length(snow)==8) {
       selection.on.PCs &lt;- lm(formula(paste(&quot;relfitness ~&quot;, paste0(&quot;PC&quot;,1:n.PCs, collapse=&quot; + &quot;), 
-                                           &quot; + precip_est_mm * sun_date&quot;)), data = std.traits) 
+                                           &quot; + precip_est_mm + sun_date&quot;)), data = std.traits) 
       #account for direct environmental effects on fitness 
   } else { 
       selection.on.PCs &lt;- lm(formula(paste(&quot;relfitness ~&quot;, paste0(&quot;PC&quot;,1:n.PCs, collapse=&quot; + &quot;))), data = std.traits)
@@ -3208,7 +3208,7 @@ plot_beta(all.beta.water.allyrs, colorby=&quot;water&quot;) </code></pre>
 <pre class="r"><code>plot_beta(all.beta.snow.allyrs, colorby=&quot;snow&quot;)</code></pre>
 <p><img src="images_volatiles2020/gradients_allyrs-2.svg" width="864" /></p>
 <pre class="r"><code>all.beta.allyrs &lt;- expand_grid(fitnesstrait=fitnesstraits) %&gt;% 
-  calculate_all_gradients_nosepal() #run the PC model with continuous environmental variables
+  calculate_all_gradients_nosepal() #run the PCA model with continuous environmental variables
 all.beta.allyrs %&gt;% 
   mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
@@ -3531,11 +3531,12 @@ plasticity.water %&gt;% left_join(diffbeta) %&gt;%
   if(trait %in% ipogood) data &lt;- vols.traits 
   else data &lt;- mnps.plantyr %&gt;% mutate(prop_uninfested = 1 - prop_infested)
   vm.abs &lt;- data %&gt;% 
-    select(all_of(c(response, trait)), sun_date, precip_est_mm) %&gt;% 
+    select(all_of(c(response, trait)), sun_date, precip_est_mm, year) %&gt;% 
     rename(&quot;trait&quot; = all_of(trait), &quot;response&quot; = all_of(response)) %&gt;% 
     filter(!is.infinite(response), !is.nan(response), !is.na(response)) %&gt;% 
-    mutate(response = response/mean(response, na.rm=T), #relative fitness
-           trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
+    mutate(trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) %&gt;% #center and scale
+    group_by(year) %&gt;% #relative fitness within year
+    mutate(response = response/mean(response, na.rm=T)) %&gt;% ungroup() 
   options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
   if(use_trait) {
     if(use_env) lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
@@ -3571,7 +3572,7 @@ mod.selection.tests.drop &lt;- mod.selection.abs.drop %&gt;%
     mutate(tests = map(model, ~ tidy(car::Anova(.x, type=3)))) %&gt;% 
   select(-model) %&gt;% unnest(coefs) %&gt;% 
   filter(str_detect(term, &quot;trait&quot;))</code></pre>
-<pre class="r"><code>#ignore trait and get the direct effects on fitness
+<pre class="r"><code>#ignore trait and get the direct effects on fitness 
 tibble(response = fitnesstraits, trait = floraltraits[1], use_trait=FALSE) %&gt;% #dummy trait not used
   mutate(model = pmap(., selection_mod_abs),
          coefs = map(model, tidy)) %&gt;% select(response, coefs) %&gt;% unnest(coefs) %&gt;% 
@@ -3599,66 +3600,66 @@ tibble(response = fitnesstraits, trait = floraltraits[1], use_trait=FALSE) %&gt;
 <tr class="odd">
 <td align="left">seeds_est</td>
 <td align="left">sun_date</td>
-<td align="right">0.0144</td>
-<td align="right">0.0023</td>
-<td align="right">6.2980</td>
-<td align="right">0.0000</td>
+<td align="right">-3e-04</td>
+<td align="right">0.0024</td>
+<td align="right">-0.1368</td>
+<td align="right">0.8912</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_est</td>
 <td align="left">precip_est_mm</td>
-<td align="right">-0.0002</td>
-<td align="right">0.0008</td>
-<td align="right">-0.2999</td>
-<td align="right">0.7644</td>
-</tr>
-<tr class="odd">
-<td align="left">seeds_initiated_per_flower</td>
-<td align="left">sun_date</td>
-<td align="right">0.0156</td>
-<td align="right">0.0018</td>
-<td align="right">8.7855</td>
-<td align="right">0.0000</td>
-</tr>
-<tr class="even">
-<td align="left">seeds_initiated_per_flower</td>
-<td align="left">precip_est_mm</td>
-<td align="right">0.0004</td>
-<td align="right">0.0006</td>
-<td align="right">0.6541</td>
-<td align="right">0.5133</td>
-</tr>
-<tr class="odd">
-<td align="left">prop_uninfested</td>
-<td align="left">sun_date</td>
-<td align="right">-0.0029</td>
-<td align="right">0.0008</td>
-<td align="right">-3.8165</td>
-<td align="right">0.0001</td>
-</tr>
-<tr class="even">
-<td align="left">prop_uninfested</td>
-<td align="left">precip_est_mm</td>
-<td align="right">-0.0005</td>
-<td align="right">0.0003</td>
-<td align="right">-1.9405</td>
-<td align="right">0.0528</td>
-</tr>
-<tr class="odd">
-<td align="left">eggs_per_flower</td>
-<td align="left">sun_date</td>
-<td align="right">-0.0219</td>
-<td align="right">0.0026</td>
-<td align="right">-8.4504</td>
-<td align="right">0.0000</td>
-</tr>
-<tr class="even">
-<td align="left">eggs_per_flower</td>
-<td align="left">precip_est_mm</td>
-<td align="right">-0.0004</td>
+<td align="right">2e-04</td>
 <td align="right">0.0009</td>
-<td align="right">-0.4217</td>
-<td align="right">0.6734</td>
+<td align="right">0.2667</td>
+<td align="right">0.7898</td>
+</tr>
+<tr class="odd">
+<td align="left">seeds_initiated_per_flower</td>
+<td align="left">sun_date</td>
+<td align="right">2e-04</td>
+<td align="right">0.0019</td>
+<td align="right">0.1226</td>
+<td align="right">0.9025</td>
+</tr>
+<tr class="even">
+<td align="left">seeds_initiated_per_flower</td>
+<td align="left">precip_est_mm</td>
+<td align="right">1e-04</td>
+<td align="right">0.0007</td>
+<td align="right">0.1796</td>
+<td align="right">0.8576</td>
+</tr>
+<tr class="odd">
+<td align="left">prop_uninfested</td>
+<td align="left">sun_date</td>
+<td align="right">1e-04</td>
+<td align="right">0.0008</td>
+<td align="right">0.1606</td>
+<td align="right">0.8725</td>
+</tr>
+<tr class="even">
+<td align="left">prop_uninfested</td>
+<td align="left">precip_est_mm</td>
+<td align="right">-1e-04</td>
+<td align="right">0.0003</td>
+<td align="right">-0.2039</td>
+<td align="right">0.8385</td>
+</tr>
+<tr class="odd">
+<td align="left">eggs_per_flower</td>
+<td align="left">sun_date</td>
+<td align="right">2e-04</td>
+<td align="right">0.0024</td>
+<td align="right">0.0720</td>
+<td align="right">0.9426</td>
+</tr>
+<tr class="even">
+<td align="left">eggs_per_flower</td>
+<td align="left">precip_est_mm</td>
+<td align="right">1e-03</td>
+<td align="right">0.0008</td>
+<td align="right">1.1748</td>
+<td align="right">0.2405</td>
 </tr>
 </tbody>
 </table>
@@ -3686,7 +3687,7 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <p><img src="images_volatiles2020/selection_abs-2.svg" width="1056" /></p>
 <pre class="r"><code>mod.selection.tests.drop %&gt;% 
   complete(response, trait, term) %&gt;% # make dodging consistent 
-  #add similar PCA analysis (no interactions btn trait and enrironment though)
+  #add similar PCA model (no interactions between trait and environment though)
   bind_rows(all.beta.allyrs %&gt;% rename(estimate=B, std.error=SE, response=fitnesstrait) %&gt;% mutate(term = &quot;PCA&quot;)) %&gt;% 
   filter(trait %in% c(ipogood.top, floraltraits)) %&gt;% 
   mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
@@ -3733,40 +3734,40 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">a-pinene</td>
 <td align="left">FALSE</td>
 <td align="left">trait</td>
-<td align="right">2.9114</td>
+<td align="right">0.3944</td>
 <td align="right">1</td>
-<td align="right">3.8850</td>
-<td align="right">0.0496</td>
+<td align="right">0.5048</td>
+<td align="right">0.4779</td>
 </tr>
 <tr class="even">
 <td align="left">seeds_initiated_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">FALSE</td>
 <td align="left">trait</td>
-<td align="right">6.5067</td>
+<td align="right">0.9444</td>
 <td align="right">1</td>
-<td align="right">15.6363</td>
-<td align="right">0.0001</td>
+<td align="right">2.6198</td>
+<td align="right">0.1066</td>
 </tr>
 <tr class="odd">
 <td align="left">prop_uninfested</td>
 <td align="left">a-pinene</td>
 <td align="left">FALSE</td>
 <td align="left">trait</td>
-<td align="right">0.6030</td>
+<td align="right">0.3760</td>
 <td align="right">1</td>
-<td align="right">9.5869</td>
-<td align="right">0.0021</td>
+<td align="right">6.2105</td>
+<td align="right">0.0132</td>
 </tr>
 <tr class="even">
 <td align="left">eggs_per_flower</td>
 <td align="left">a-pinene</td>
 <td align="left">FALSE</td>
 <td align="left">trait</td>
-<td align="right">0.2787</td>
+<td align="right">0.6620</td>
 <td align="right">1</td>
-<td align="right">0.2843</td>
-<td align="right">0.5942</td>
+<td align="right">0.8922</td>
+<td align="right">0.3456</td>
 </tr>
 </tbody>
 </table>
@@ -3802,8 +3803,8 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">FALSE</td>
 <td align="left">(Intercept)</td>
 <td align="right">1.0000</td>
-<td align="right">0.0496</td>
-<td align="right">20.1742</td>
+<td align="right">0.0506</td>
+<td align="right">19.7579</td>
 <td align="right">0.0000</td>
 </tr>
 <tr class="even">
@@ -3811,10 +3812,10 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">a-pinene</td>
 <td align="left">FALSE</td>
 <td align="left">trait</td>
-<td align="right">0.0979</td>
-<td align="right">0.0496</td>
-<td align="right">1.9711</td>
-<td align="right">0.0496</td>
+<td align="right">0.0360</td>
+<td align="right">0.0507</td>
+<td align="right">0.7105</td>
+<td align="right">0.4779</td>
 </tr>
 <tr class="odd">
 <td align="left">seeds_initiated_per_flower</td>
@@ -3822,8 +3823,8 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">FALSE</td>
 <td align="left">(Intercept)</td>
 <td align="right">1.0000</td>
-<td align="right">0.0369</td>
-<td align="right">27.0731</td>
+<td align="right">0.0344</td>
+<td align="right">29.0872</td>
 <td align="right">0.0000</td>
 </tr>
 <tr class="even">
@@ -3831,10 +3832,10 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">a-pinene</td>
 <td align="left">FALSE</td>
 <td align="left">trait</td>
-<td align="right">0.1463</td>
-<td align="right">0.0370</td>
-<td align="right">3.9543</td>
-<td align="right">0.0001</td>
+<td align="right">0.0557</td>
+<td align="right">0.0344</td>
+<td align="right">1.6186</td>
+<td align="right">0.1066</td>
 </tr>
 <tr class="odd">
 <td align="left">prop_uninfested</td>
@@ -3842,8 +3843,8 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">FALSE</td>
 <td align="left">(Intercept)</td>
 <td align="right">1.0000</td>
-<td align="right">0.0139</td>
-<td align="right">72.1041</td>
+<td align="right">0.0136</td>
+<td align="right">73.4923</td>
 <td align="right">0.0000</td>
 </tr>
 <tr class="even">
@@ -3851,10 +3852,10 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">a-pinene</td>
 <td align="left">FALSE</td>
 <td align="left">trait</td>
-<td align="right">-0.0430</td>
-<td align="right">0.0139</td>
-<td align="right">-3.0963</td>
-<td align="right">0.0021</td>
+<td align="right">-0.0340</td>
+<td align="right">0.0136</td>
+<td align="right">-2.4921</td>
+<td align="right">0.0132</td>
 </tr>
 <tr class="odd">
 <td align="left">eggs_per_flower</td>
@@ -3862,8 +3863,8 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">FALSE</td>
 <td align="left">(Intercept)</td>
 <td align="right">1.0000</td>
-<td align="right">0.0538</td>
-<td align="right">18.5980</td>
+<td align="right">0.0468</td>
+<td align="right">21.3755</td>
 <td align="right">0.0000</td>
 </tr>
 <tr class="even">
@@ -3871,10 +3872,10 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 <td align="left">a-pinene</td>
 <td align="left">FALSE</td>
 <td align="left">trait</td>
-<td align="right">-0.0287</td>
-<td align="right">0.0538</td>
-<td align="right">-0.5332</td>
-<td align="right">0.5942</td>
+<td align="right">0.0443</td>
+<td align="right">0.0469</td>
+<td align="right">0.9446</td>
+<td align="right">0.3456</td>
 </tr>
 </tbody>
 </table>
@@ -3925,7 +3926,7 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <col width="9%" />
 <col width="13%" />
 <col width="4%" />
-<col width="3%" />
+<col width="4%" />
 <col width="5%" />
 <col width="5%" />
 <col width="4%" />
@@ -3955,14 +3956,14 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <td align="left">trait</td>
 <td align="right">0</td>
 <td align="right">1</td>
-<td align="right">0.04</td>
-<td align="right">0.3</td>
-<td align="right">-0.73</td>
-<td align="right">-0.13</td>
-<td align="right">0.03</td>
+<td align="right">0.05</td>
+<td align="right">0.32</td>
+<td align="right">-0.95</td>
+<td align="right">-0.15</td>
+<td align="right">0.06</td>
 <td align="right">0.18</td>
-<td align="right">1.01</td>
-<td align="left">▁▆▇▂▁</td>
+<td align="right">1.61</td>
+<td align="left">▁▇▇▁▁</td>
 </tr>
 <tr class="even">
 <td align="left">estimate</td>
@@ -3970,13 +3971,13 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <td align="right">0</td>
 <td align="right">1</td>
 <td align="right">0.00</td>
-<td align="right">0.0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
-<td align="left">▁▂▆▇▂</td>
+<td align="right">0.00</td>
+<td align="left">▁▃▇▇▁</td>
 </tr>
 <tr class="odd">
 <td align="left">estimate</td>
@@ -3984,13 +3985,13 @@ skim(mod.selection.tests %&gt;% group_by(term), estimate)</code></pre>
 <td align="right">0</td>
 <td align="right">1</td>
 <td align="right">0.00</td>
-<td align="right">0.0</td>
+<td align="right">0.00</td>
 <td align="right">-0.01</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 <td align="right">0.01</td>
-<td align="left">▁▂▇▅▁</td>
+<td align="left">▁▂▇▂▁</td>
 </tr>
 </tbody>
 </table>

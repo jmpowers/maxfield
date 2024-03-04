@@ -1335,7 +1335,7 @@ selection_pca <- function(year=names(year_pal), water=names(water_pal), snow=nam
   # Regress relative fitness on PCs
   if(length(year)+length(water)+length(snow)==8) {
       selection.on.PCs <- lm(formula(paste("relfitness ~", paste0("PC",1:n.PCs, collapse=" + "), 
-                                           " + precip_est_mm * sun_date")), data = std.traits) 
+                                           " + precip_est_mm + sun_date")), data = std.traits) 
       #account for direct environmental effects on fitness 
   } else { 
       selection.on.PCs <- lm(formula(paste("relfitness ~", paste0("PC",1:n.PCs, collapse=" + "))), data = std.traits)
@@ -1433,7 +1433,7 @@ plot_beta(all.beta.water.allyrs, colorby="water")
 plot_beta(all.beta.snow.allyrs, colorby="snow")
 
 all.beta.allyrs <- expand_grid(fitnesstrait=fitnesstraits) %>% 
-  calculate_all_gradients_nosepal() #run the PC model with continuous environmental variables
+  calculate_all_gradients_nosepal() #run the PCA model with continuous environmental variables
 all.beta.allyrs %>% 
   mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
@@ -1593,11 +1593,12 @@ selection_mod_abs <- function(trait, response, use_trait=TRUE, use_env=TRUE) {
   if(trait %in% ipogood) data <- vols.traits 
   else data <- mnps.plantyr %>% mutate(prop_uninfested = 1 - prop_infested)
   vm.abs <- data %>% 
-    select(all_of(c(response, trait)), sun_date, precip_est_mm) %>% 
+    select(all_of(c(response, trait)), sun_date, precip_est_mm, year) %>% 
     rename("trait" = all_of(trait), "response" = all_of(response)) %>% 
     filter(!is.infinite(response), !is.nan(response), !is.na(response)) %>% 
-    mutate(response = response/mean(response, na.rm=T), #relative fitness
-           trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) #center and scale
+    mutate(trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) %>% #center and scale
+    group_by(year) %>% #relative fitness within year
+    mutate(response = response/mean(response, na.rm=T)) %>% ungroup() 
   options(contrasts = c("contr.sum", "contr.poly"))
   if(use_trait) {
     if(use_env) lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
@@ -1636,7 +1637,7 @@ mod.selection.tests.drop <- mod.selection.abs.drop %>%
 ```
 
 ```{r abs_model}
-#ignore trait and get the direct effects on fitness
+#ignore trait and get the direct effects on fitness 
 tibble(response = fitnesstraits, trait = floraltraits[1], use_trait=FALSE) %>% #dummy trait not used
   mutate(model = pmap(., selection_mod_abs),
          coefs = map(model, tidy)) %>% select(response, coefs) %>% unnest(coefs) %>% 
@@ -1669,7 +1670,7 @@ ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), 
 
 mod.selection.tests.drop %>% 
   complete(response, trait, term) %>% # make dodging consistent 
-  #add similar PCA analysis (no interactions btn trait and enrironment though)
+  #add similar PCA model (no interactions between trait and environment though)
   bind_rows(all.beta.allyrs %>% rename(estimate=B, std.error=SE, response=fitnesstrait) %>% mutate(term = "PCA")) %>% 
   filter(trait %in% c(ipogood.top, floraltraits)) %>% 
   mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
