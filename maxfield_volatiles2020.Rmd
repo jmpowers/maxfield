@@ -1328,7 +1328,8 @@ selection_pca <- function(year=names(year_pal), water=names(water_pal), snow=nam
     left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
     select(all_of(fitnesstrait), any_of(names(treatments)), starts_with("PC")) %>% 
     rename("fitness" = all_of(fitnesstrait)) %>% 
-    group_by(year) %>% mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% ungroup %>% #relative fitness within year
+    #group_by(year) %>% 
+    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% #relative fitness across years
     drop_na(relfitness) %>% 
     select(where(~sum(is.na(.))==0))
   
@@ -1597,8 +1598,8 @@ selection_mod_abs <- function(trait, response, use_trait=TRUE, use_env=TRUE) {
     rename("trait" = all_of(trait), "response" = all_of(response)) %>% 
     filter(!is.infinite(response), !is.nan(response), !is.na(response)) %>% 
     mutate(trait = (trait-mean(trait, na.rm=T))/sd(trait, na.rm=T)) %>% #center and scale
-    group_by(year) %>% #relative fitness within year
-    mutate(response = response/mean(response, na.rm=T)) %>% ungroup() 
+    #group_by(year) %>% 
+    mutate(response = response/mean(response, na.rm=T)) #%>% ungroup() #relative fitness across years
   options(contrasts = c("contr.sum", "contr.poly"))
   if(use_trait) {
     if(use_env) lm(response ~ trait * sun_date + trait * precip_est_mm, data = vm.abs)
@@ -1654,7 +1655,7 @@ library(ggrepel)
 term_labels <- c(trait="Selection on trait (\U03B2)",
                  `trait:precip_est_mm`="Selection x summer precipitation (\U03B2 / mm)",
                  `trait:sun_date`="Selection x snowmelt date (\U03B2 / day)",
-                 PCA="Direct selection (\U03B2)")
+                 PCA="Direct selection on trait (\U03B2)")
 ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), y=estimate, label=greekify(trait))) + 
   facet_wrap(vars(term), labeller = as_labeller(term_labels), scales="free_y", ncol=1) + theme_bw() +
   geom_point(aes(size=replace_na(mean.floral, 1),  #default size for non-vol traits
