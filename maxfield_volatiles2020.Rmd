@@ -1201,7 +1201,7 @@ walk(fitnesstraits, ~
                theme_bw() + scale_x_sqrt() + scale_color_manual(values=water_snow_pal)))
 ```
 
-```{r selection_class_gradient, fig.width=9.5, fig.height=6}
+```{r selection_class_gradient, fig.width=5.5, fig.height=6.5}
 trait.class.wide <- bind_cols(volsmeta.avg, vols.class) %>% left_join(mnps.plantyr.traits) %>% 
   select(plantid, year, water, snow, all_of(fitnesstraits), all_of(names(class_pal))) 
  #mutate(across(all_of(names(class_pal)), sqrt))
@@ -1235,7 +1235,8 @@ mod.selection %>% unnest(test) %>% select(fitnesstrait, term, p.value) %>%
   filter(term!="Residuals") %>% 
   kable(caption="Selection of emissions in each treatment", digits=4)
 
-mod.selection %>% select(fitnesstrait, emt) %>% unnest(emt) %>% 
+mod.selection %>% filter(fitnesstrait != "eggs_per_flower") %>% 
+  select(fitnesstrait, emt) %>% unnest(emt) %>% 
   mutate(classsd = class.sd[class],
          trend.std = trend * classsd,
          uSE = (trend + SE) * classsd,
@@ -1246,8 +1247,8 @@ mod.selection %>% select(fitnesstrait, emt) %>% unnest(emt) %>%
   geom_hline(yintercept=0)+
   geom_pointrange(position=position_dodge(width=0.5), size=0.2) +
   scale_color_manual(values=water_snow_pal) +
-  labs(x="Compound class", y = "Standardized selection gradient", color="Precipitation, snowmelt") +
-  theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1))
+  labs(x="Compound class", y = "Standardized selection gradient", color="Precipitation,\nsnowmelt") +
+  theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1), legend.position="top")
 ```
 
 
@@ -1386,7 +1387,7 @@ all.beta.water.snow <- expand_grid(year=names(year_pal), fitnesstrait=fitnesstra
 ```{r gradients, fig.width=11, fig.height=9}
 plot_beta <- function(betas, colorby) {
   bs <- betas %>% left_join(ipochemsf, by=c("trait"="name")) %>% 
-        mutate(trait = recode(trait, !!!traitnames) %>%  
+        mutate(trait = recode(trait, !!!traitnames) %>%  greekify() %>% 
             fct_reorder(replace_na(mean.floral,1000))) #order graph by mean emissions
   if(colorby=="water_snow")  bs <- bs %>%  mutate(water_snow = paste(water, snow))
   ggplot(bs, aes(y=trait, x = B, xmin=B-SE, xmax=B+SE, shape=p.value<0.05)) + #shape=year
@@ -1434,7 +1435,7 @@ plot_beta(all.beta.water.allyrs, colorby="water")
 plot_beta(all.beta.snow.allyrs, colorby="snow")
 
 all.beta.allyrs <- expand_grid(fitnesstrait=fitnesstraits) %>% 
-  calculate_all_gradients_nosepal() #run the PCA model with continuous environmental variables
+  calculate_all_gradients_nosepal() #run the PC model with continuous environmental variables
 all.beta.allyrs %>% 
   mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
@@ -1782,7 +1783,9 @@ pheatmap(cor(combos$vmn, method="pearson"),
          annotation_colors = list(Class=c(class_pal, "Other trait"="black")),
          labels_row=corr.labs, labels_col=corr.labs)
 
-cor(combos$vmn, method="pearson")[ipogood.top,c(traits.m, traits.n, "height_cm")] %>% as.vector() %>% summary()
+cor(combos$vmn, method="pearson")[ipogood.top,c(traits.m, traits.n, "height_cm")] %>% abs() %>%  as.vector() %>% summary()
+cor(combos$vmn, method="pearson")[ipogood.top, ipogood.top] %>% as.vector() %>% na_if(1) %>% abs() %>% summary()
+cor(combos$vmn, method="pearson")[c(traits.m, traits.n, "height_cm"), c(traits.m, traits.n, "height_cm")] %>% as.vector() %>% na_if(1) %>% abs() %>% summary()
 ```
 
 ## PCA
@@ -1816,7 +1819,7 @@ ggplot(bind_cols(combos$vmn, as_tibble(vmn.pca$x)), aes(x=PC1, y=PC2)) +
 Following method of [Chong et al. 2018](https://doi.org/10.1002/evl3.63) for reconstructing selection estimates from estimates of selection on PCs: Beta = E * A.
 
 ```{r vmnt_gradients, fig.width=9, fig.height=5}
-meta.pca <- #treatments used in selection_pca function
+meta.pca <- #treatments used in selection_pca function 
   volsmeta.avg[!is.na(rowSums(vols.traits[,colnames(combos$vmn)])),] #match rows in vmn
 
 #TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm

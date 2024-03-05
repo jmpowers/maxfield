@@ -3003,7 +3003,8 @@ mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&g
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>mod.selection %&gt;% select(fitnesstrait, emt) %&gt;% unnest(emt) %&gt;% 
+<pre class="r"><code>mod.selection %&gt;% filter(fitnesstrait != &quot;eggs_per_flower&quot;) %&gt;% 
+  select(fitnesstrait, emt) %&gt;% unnest(emt) %&gt;% 
   mutate(classsd = class.sd[class],
          trend.std = trend * classsd,
          uSE = (trend + SE) * classsd,
@@ -3014,9 +3015,9 @@ mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&g
   geom_hline(yintercept=0)+
   geom_pointrange(position=position_dodge(width=0.5), size=0.2) +
   scale_color_manual(values=water_snow_pal) +
-  labs(x=&quot;Compound class&quot;, y = &quot;Standardized selection gradient&quot;, color=&quot;Precipitation, snowmelt&quot;) +
-  theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1))</code></pre>
-<p><img src="images_volatiles2020/selection_class_gradient-1.svg" width="912" /></p>
+  labs(x=&quot;Compound class&quot;, y = &quot;Standardized selection gradient&quot;, color=&quot;Precipitation,\nsnowmelt&quot;) +
+  theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1), legend.position=&quot;top&quot;)</code></pre>
+<p><img src="images_volatiles2020/selection_class_gradient-1.svg" width="528" /></p>
 </div>
 </div>
 <div id="joint-species-distribution-model-1" class="section level2">
@@ -3165,7 +3166,7 @@ all.beta.water.snow &lt;- expand_grid(year=names(year_pal), fitnesstrait=fitness
   calculate_all_gradients()</code></pre>
 <pre class="r"><code>plot_beta &lt;- function(betas, colorby) {
   bs &lt;- betas %&gt;% left_join(ipochemsf, by=c(&quot;trait&quot;=&quot;name&quot;)) %&gt;% 
-        mutate(trait = recode(trait, !!!traitnames) %&gt;%  
+        mutate(trait = recode(trait, !!!traitnames) %&gt;%  greekify() %&gt;% 
             fct_reorder(replace_na(mean.floral,1000))) #order graph by mean emissions
   if(colorby==&quot;water_snow&quot;)  bs &lt;- bs %&gt;%  mutate(water_snow = paste(water, snow))
   ggplot(bs, aes(y=trait, x = B, xmin=B-SE, xmax=B+SE, shape=p.value&lt;0.05)) + #shape=year
@@ -3209,7 +3210,7 @@ plot_beta(all.beta.water.allyrs, colorby=&quot;water&quot;) </code></pre>
 <pre class="r"><code>plot_beta(all.beta.snow.allyrs, colorby=&quot;snow&quot;)</code></pre>
 <p><img src="images_volatiles2020/gradients_allyrs-2.svg" width="864" /></p>
 <pre class="r"><code>all.beta.allyrs &lt;- expand_grid(fitnesstrait=fitnesstraits) %&gt;% 
-  calculate_all_gradients_nosepal() #run the PCA model with continuous environmental variables
+  calculate_all_gradients_nosepal() #run the PC model with continuous environmental variables
 all.beta.allyrs %&gt;% 
   mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
@@ -4398,9 +4399,15 @@ pheatmap(cor(combos$vmn, method=&quot;pearson&quot;),
          annotation_colors = list(Class=c(class_pal, &quot;Other trait&quot;=&quot;black&quot;)),
          labels_row=corr.labs, labels_col=corr.labs)</code></pre>
 <p><img src="images_volatiles2020/vmnt_corr-1.svg" width="672" /></p>
-<pre class="r"><code>cor(combos$vmn, method=&quot;pearson&quot;)[ipogood.top,c(traits.m, traits.n, &quot;height_cm&quot;)] %&gt;% as.vector() %&gt;% summary()</code></pre>
-<pre><code>    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
--0.22289 -0.05428  0.00036 -0.00948  0.06100  0.17454 </code></pre>
+<pre class="r"><code>cor(combos$vmn, method=&quot;pearson&quot;)[ipogood.top,c(traits.m, traits.n, &quot;height_cm&quot;)] %&gt;% abs() %&gt;%  as.vector() %&gt;% summary()</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+0.00023 0.03092 0.06109 0.07159 0.10097 0.22289 </code></pre>
+<pre class="r"><code>cor(combos$vmn, method=&quot;pearson&quot;)[ipogood.top, ipogood.top] %&gt;% as.vector() %&gt;% na_if(1) %&gt;% abs() %&gt;% summary()</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
+  0.008   0.152   0.261   0.319   0.468   0.906      12 </code></pre>
+<pre class="r"><code>cor(combos$vmn, method=&quot;pearson&quot;)[c(traits.m, traits.n, &quot;height_cm&quot;), c(traits.m, traits.n, &quot;height_cm&quot;)] %&gt;% as.vector() %&gt;% na_if(1) %&gt;% abs() %&gt;% summary()</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
+  0.143   0.188   0.264   0.265   0.286   0.579       6 </code></pre>
 </div>
 <div id="pca" class="section level2">
 <h2>PCA</h2>
@@ -4432,7 +4439,7 @@ ggplot(bind_cols(combos$vmn, as_tibble(vmn.pca$x)), aes(x=PC1, y=PC2)) +
 <p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong
 et al. 2018</a> for reconstructing selection estimates from estimates of
 selection on PCs: Beta = E * A.</p>
-<pre class="r"><code>meta.pca &lt;- #treatments used in selection_pca function
+<pre class="r"><code>meta.pca &lt;- #treatments used in selection_pca function 
   volsmeta.avg[!is.na(rowSums(vols.traits[,colnames(combos$vmn)])),] #match rows in vmn
 
 #TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
