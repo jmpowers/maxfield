@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-03-04" />
+<meta name="date" content="2024-03-05" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-03-04</h4>
+<h4 class="date">2024-03-05</h4>
 
 </div>
 
@@ -3240,13 +3240,14 @@ all.beta.allyrs %&gt;%
                                                             &quot;Reduction - Addition = 0&quot;),
                                                   snow = c(&quot;Early - Normal = 0&quot;))), multcomp::adjusted(type=&quot;none&quot;))))) %&gt;%#adjust later 
   select(year, name, emm, test) %&gt;% unnest(c(emm, test)) %&gt;% 
-  mutate(estimate=estimate/emmean, std.error=std.error/emmean, #divide estimated difference in means by emm in Normal Control subplots
+  mutate(difference=estimate, #difference in glht means
+         estimate=estimate/emmean, std.error=std.error/emmean, #divide estimated difference in means by emm in Normal Control subplots
          contrast = str_replace(str_remove_all(contrast, &quot;[a-z\\s]&quot;),&quot;-&quot;,&quot;_&quot;),
          newenv = recode(contrast, &quot;A_C&quot;=&quot;Addition&quot;, &quot;R_C&quot;=&quot;Reduction&quot;,&quot;E_N&quot;=&quot;Early&quot;),
          multiplecomps = contrast %in% c(&quot;A_C&quot;,&quot;R_C&quot;)) %&gt;% #these two reuse the same control data
   group_by(multiplecomps, name, year) %&gt;% #two comparisons to Control made within each volatile and year 
   mutate(plasticity.p.value = ifelse(multiplecomps, p.adjust(p.value, method=&quot;fdr&quot;), p.value)) %&gt;% 
-  ungroup %&gt;% select(year, name, newenv, plasticity.p.value, estimate, std.error) %&gt;% 
+  ungroup %&gt;% select(year, name, newenv, plasticity.p.value, difference, estimate, std.error) %&gt;% 
   left_join(bind_rows(rename(all.beta.water, newenv=water),
                     rename(all.beta.snow, newenv=snow)) %&gt;% 
             filter(fitnesstrait!=&quot;eggs_per_flower&quot;) %&gt;% 
@@ -3301,7 +3302,8 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
   labs(x=&quot;Plasticity to new environment (log2 fold change)&quot;) + coord_cartesian(xlim=c(-2,2))+
   scale_shape_manual(values=c(1,19))</code></pre>
 <p><img src="images_volatiles2020/adaptive-4.svg" width="672" /></p>
-<pre class="r"><code>adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
+<pre class="r"><code>#log2 fold change
+adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
   mutate(traitgroup = if_else(name %in% ipogood.top, &quot;volatile&quot;, &quot;other&quot;)) %&gt;% 
   group_by(newenv, traitgroup) %&gt;% 
   summarize(absolute_foldchange = mean(abs(log2(estimate+1))),
@@ -3354,6 +3356,74 @@ traits</caption>
 <td align="left">volatile</td>
 <td align="right">0.45</td>
 <td align="right">0.46</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>#Cohen&#39;s d
+vols.sd &lt;- map_dbl(ipogood, ~sd(vols.good[[.x]])) %&gt;% set_names(ipogood)
+plasticity.cohens.d &lt;-adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
+  left_join(enframe(c(vols.sd, alltraits.sd), value=&quot;trait.sd&quot;)) %&gt;% 
+  mutate(cohens.d = difference / trait.sd) %&gt;% 
+  mutate(traitgroup = if_else(name %in% ipogood.top, &quot;volatile&quot;, &quot;other&quot;)) 
+
+ggplot(plasticity.cohens.d, aes(x=traitgroup, y=cohens.d, color=year)) +
+  facet_wrap(vars(newenv)) + geom_hline(yintercept = 0)+
+  geom_boxplot(position=position_dodge(width=0.8)) + geom_point(position=position_dodge(width=0.8)) +
+  scale_color_manual(values=year_pal) + theme_bw() +
+  labs(x=&quot;Type of trait&quot;, y=&quot;Effect size (Cohen&#39;s d)&quot;, color=&quot;Year&quot;)</code></pre>
+<p><img src="images_volatiles2020/adaptive-5.svg" width="672" /></p>
+<pre class="r"><code>plasticity.cohens.d %&gt;% 
+  group_by(newenv, traitgroup) %&gt;% 
+  summarize(absolute_cohen = mean(abs(cohens.d)),
+            sd = sd(abs(cohens.d))) %&gt;% 
+  kable(caption = &quot;Mean absolute Cohen&#39;s d for volatiles and other traits&quot;, digits=2)</code></pre>
+<table>
+<caption>Mean absolute Cohen’s d for volatiles and other
+traits</caption>
+<thead>
+<tr class="header">
+<th align="left">newenv</th>
+<th align="left">traitgroup</th>
+<th align="right">absolute_cohen</th>
+<th align="right">sd</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Addition</td>
+<td align="left">other</td>
+<td align="right">0.27</td>
+<td align="right">0.16</td>
+</tr>
+<tr class="even">
+<td align="left">Addition</td>
+<td align="left">volatile</td>
+<td align="right">0.12</td>
+<td align="right">0.09</td>
+</tr>
+<tr class="odd">
+<td align="left">Early</td>
+<td align="left">other</td>
+<td align="right">0.12</td>
+<td align="right">0.15</td>
+</tr>
+<tr class="even">
+<td align="left">Early</td>
+<td align="left">volatile</td>
+<td align="right">0.13</td>
+<td align="right">0.13</td>
+</tr>
+<tr class="odd">
+<td align="left">Reduction</td>
+<td align="left">other</td>
+<td align="right">0.20</td>
+<td align="right">0.20</td>
+</tr>
+<tr class="even">
+<td align="left">Reduction</td>
+<td align="left">volatile</td>
+<td align="right">0.19</td>
+<td align="right">0.17</td>
 </tr>
 </tbody>
 </table>
@@ -4476,6 +4546,21 @@ plot_beta(vols.beta.water, colorby=&quot;water&quot;) </code></pre>
 <p><img src="images_volatiles2020/vmnt_gradients-2.svg" width="864" /></p>
 <pre class="r"><code>plot_beta(vols.beta.snow, colorby=&quot;snow&quot;)</code></pre>
 <p><img src="images_volatiles2020/vmnt_gradients-3.svg" width="864" /></p>
+<pre class="r"><code>vols.beta.allyrs &lt;- expand_grid(fitnesstrait=fitnesstraits) %&gt;% 
+  mutate(PCA=list(vols.PCA), mdata=list(meta.pca), n.PCs = 5) %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% select(-PCA, -mdata) %&gt;% unnest(betas) #run the PC model with continuous environmental variables
+vols.beta.allyrs %&gt;% 
+  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
+  ggplot(aes(x=B,y=trait, color=fitnesstrait, shape=p.value &lt; 0.05, xmin=B-SE, xmax=B+SE)) + 
+  geom_vline(xintercept=0)+ 
+  geom_pointrange(position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;))+
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames)+
+  scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;)+ 
+  scale_x_continuous(expand = expansion(c(0,0)))+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = &quot;top&quot;,
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())</code></pre>
+<p><img src="images_volatiles2020/vmnt_gradients-4.svg" width="864" /></p>
 <div id="sensitivity-to-number-of-pcs" class="section level3">
 <h3>Sensitivity to number of PCs</h3>
 <pre class="r"><code>vols.beta.yr.PCs &lt;- expand_grid(fitnesstrait=fitnesstraits, 

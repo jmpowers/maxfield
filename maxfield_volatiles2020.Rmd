@@ -1467,13 +1467,14 @@ adaptive.plasticity.data <-
                                                             "Reduction - Addition = 0"),
                                                   snow = c("Early - Normal = 0"))), multcomp::adjusted(type="none"))))) %>%#adjust later 
   select(year, name, emm, test) %>% unnest(c(emm, test)) %>% 
-  mutate(estimate=estimate/emmean, std.error=std.error/emmean, #divide estimated difference in means by emm in Normal Control subplots
+  mutate(difference=estimate, #difference in glht means
+         estimate=estimate/emmean, std.error=std.error/emmean, #divide estimated difference in means by emm in Normal Control subplots
          contrast = str_replace(str_remove_all(contrast, "[a-z\\s]"),"-","_"),
          newenv = recode(contrast, "A_C"="Addition", "R_C"="Reduction","E_N"="Early"),
          multiplecomps = contrast %in% c("A_C","R_C")) %>% #these two reuse the same control data
   group_by(multiplecomps, name, year) %>% #two comparisons to Control made within each volatile and year 
   mutate(plasticity.p.value = ifelse(multiplecomps, p.adjust(p.value, method="fdr"), p.value)) %>% 
-  ungroup %>% select(year, name, newenv, plasticity.p.value, estimate, std.error) %>% 
+  ungroup %>% select(year, name, newenv, plasticity.p.value, difference, estimate, std.error) %>% 
   left_join(bind_rows(rename(all.beta.water, newenv=water),
                     rename(all.beta.snow, newenv=snow)) %>% 
             filter(fitnesstrait!="eggs_per_flower") %>% 
@@ -1522,12 +1523,32 @@ ggplot(adaptive.plasticity.data %>% filter(newenv!="R_A") %>%
   labs(x="Plasticity to new environment (log2 fold change)") + coord_cartesian(xlim=c(-2,2))+
   scale_shape_manual(values=c(1,19))
 
+#log2 fold change
 adaptive.plasticity.data %>% filter(newenv!="R_A") %>% 
   mutate(traitgroup = if_else(name %in% ipogood.top, "volatile", "other")) %>% 
   group_by(newenv, traitgroup) %>% 
   summarize(absolute_foldchange = mean(abs(log2(estimate+1))),
             sd = sd(abs(log2(estimate+1)))) %>% 
   kable(caption = "Mean absolute log2 fold change for volatiles and other traits", digits=2)
+
+#Cohen's d
+vols.sd <- map_dbl(ipogood, ~sd(vols.good[[.x]])) %>% set_names(ipogood)
+plasticity.cohens.d <-adaptive.plasticity.data %>% filter(newenv!="R_A") %>% 
+  left_join(enframe(c(vols.sd, alltraits.sd), value="trait.sd")) %>% 
+  mutate(cohens.d = difference / trait.sd) %>% 
+  mutate(traitgroup = if_else(name %in% ipogood.top, "volatile", "other")) 
+
+ggplot(plasticity.cohens.d, aes(x=traitgroup, y=cohens.d, color=year)) +
+  facet_wrap(vars(newenv)) + geom_hline(yintercept = 0)+
+  geom_boxplot(position=position_dodge(width=0.8)) + geom_point(position=position_dodge(width=0.8)) +
+  scale_color_manual(values=year_pal) + theme_bw() +
+  labs(x="Type of trait", y="Effect size (Cohen's d)", color="Year")
+
+plasticity.cohens.d %>% 
+  group_by(newenv, traitgroup) %>% 
+  summarize(absolute_cohen = mean(abs(cohens.d)),
+            sd = sd(abs(cohens.d))) %>% 
+  kable(caption = "Mean absolute Cohen's d for volatiles and other traits", digits=2)
 ```
 
 ```{r adaptive_quadrants}
@@ -1840,6 +1861,21 @@ vols.beta.snow <- expand_grid(snow=names(snow_pal), fitnesstrait=fitnesstraits) 
 
 plot_beta(vols.beta.water, colorby="water") 
 plot_beta(vols.beta.snow, colorby="snow")
+
+vols.beta.allyrs <- expand_grid(fitnesstrait=fitnesstraits) %>% 
+  mutate(PCA=list(vols.PCA), mdata=list(meta.pca), n.PCs = 5) %>% 
+  mutate(betas = pmap(., selection_pca)) %>% select(-PCA, -mdata) %>% unnest(betas) #run the PC model with continuous environmental variables
+vols.beta.allyrs %>% 
+  mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
+  ggplot(aes(x=B,y=trait, color=fitnesstrait, shape=p.value < 0.05, xmin=B-SE, xmax=B+SE)) + 
+  geom_vline(xintercept=0)+ 
+  geom_pointrange(position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
+  scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames)+
+  scale_shape_manual("P < 0.05", values=c(1,19), guide="none")+ 
+  scale_x_continuous(expand = expansion(c(0,0)))+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = "top",
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
 ```
 
 ### Sensitivity to number of PCs
