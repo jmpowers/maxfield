@@ -1319,7 +1319,7 @@ calculate_beta <- function(E, slopes, resid.df) {
 
 selection_pca <- function(year=names(year_pal), water=names(water_pal), snow=names(snow_pal), 
                           fitnesstrait, n.PCs, PCA, mdata) {
-  if(ncol(PCA$x) <= n.PCs) {
+  if(ncol(PCA$x) < n.PCs) {
     warning(paste("Only ", ncol(PCA$x), "PCs"))
     n.PCs <- ncol(PCA$x)
   }
@@ -1417,7 +1417,7 @@ all.beta.yr %>% left_join(ipochemsf, by=c("trait"="name")) %>%
 ```
 
 ```{r gradients_allyrs, fig.width=9, fig.height=5}
-calculate_all_gradients_nosepal <- function(trts) {
+calculate_all_gradients_nosepal <- function(trts) { 
   mutate(trts, PCA=list(vols.PCA), mdata = list(volsmeta.avg), n.PCs = 5) %>% 
   bind_rows(mutate(., 
                    n.PCs = 4,
@@ -1449,6 +1449,80 @@ all.beta.allyrs %>%
                      panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
 
 ```
+
+### Trait multiple regression
+
+```{r traitreg}
+trait_mult_reg <- function(fitnesstrait, regtraits) {
+  std.traits <- meta.pca.nosepal %>% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %>%  #center and scale traits
+    select(-any_of(fitnesstrait)) %>% 
+    left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %>% 
+    rename("fitness" = all_of(fitnesstrait)) %>% 
+    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% #relative fitness across years
+    drop_na(relfitness) %>% 
+    select(where(~sum(is.na(.))==0))
+  
+    selection.on.traits <- lm(formula(paste("relfitness ~", paste0(regtraits, collapse=" + "), 
+                                           " + precip_est_mm + sun_date")), data = std.traits) 
+    selection.on.traits %>% tidy() %>% rename(B=estimate, SE=std.error, trait=term)
+}
+
+multregs <- expand_grid(fitnesstrait=fitnesstraits) %>% 
+  mutate(betas = map(fitnesstrait, ~trait_mult_reg(.x, regtraits=floraltraits.pca[-4]))) %>% unnest(betas)
+
+mnps.PCA.nosepal <- mnps.plantyr %>% select(all_of(floraltraits.pca[-4])) %>% drop_na() %>% prcomp_std()
+summary(mnps.PCA.nosepal)   # PCs 1 - 4 explain 83% of the variation, 6 PCs total
+PCregs <- expand_grid(fitnesstrait=fitnesstraits, n.PCs = 2:6) %>%
+    mutate(PCA =   list(mnps.PCA.nosepal),
+           mdata = list(meta.pca.nosepal)) %>% 
+  mutate(betas = pmap(., selection_pca)) %>% select(-PCA, -mdata) %>% unnest(betas)
+
+PCmultregs <- bind_rows(PCregs,  multregs) %>% mutate(n.PCs = replace_na(as.character(n.PCs), "traits")) %>% 
+  filter(trait %in% floraltraits.pca) %>% 
+  mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top)))))
+
+ggplot(PCmultregs, aes(x=B,y=trait, color=fitnesstrait, shape=p.value < 0.05, xmin=B-SE, xmax=B+SE)) + 
+  facet_wrap(vars(n.PCs), scales = "fixed") + 
+  geom_vline(xintercept=0)+ 
+  geom_pointrange(position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
+  scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames)+
+  scale_shape_manual("P < 0.05", values=c(1,19), guide="none")+ 
+  scale_x_continuous(expand = expansion(c(0,0)))+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = "top",
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
+
+ggplot(PCmultregs, aes(x=n.PCs,y=B, color=trait, shape=p.value < 0.05, ymin=B-SE, ymax=B+SE)) +
+  geom_line(aes(group=paste(fitnesstrait, trait)))+ geom_pointrange() +
+  facet_wrap(vars(fitnesstrait))+
+  scale_shape_manual("P < 0.05", values=c(1,19), guide="none") + theme_bw()
+```
+
+```{r simplePCA, eval=FALSE}
+simpletraits <- floraltraits.pca[-4] #no sepal width
+simpledata <- mnps.plantyr %>% select(all_of(simpletraits), relfitness = seeds_est) %>% drop_na() %>% 
+  mutate(across(all_of(simpletraits), ~ (.x-mean(.x))/sd(.x)), #center and scale traits
+         relfitness = relfitness / mean(relfitness)) #relative fitness
+
+simplepca <- prcomp(simpledata[,simpletraits], center = FALSE, scale. = FALSE)
+summary(simplepca)
+simplelm.pca <- lm(formula(paste("relfitness ~", paste0("PC",1:length(simpletraits), collapse=" + "))), 
+                   data = simpledata %>% bind_cols(as.data.frame(simplepca$x)))
+simplebeta.pca <- calculate_beta(E = simplepca$rotation[,1:length(simpletraits)],
+                                 slopes = tidy(simplelm.pca) %>% filter(str_sub(term,1,2) == "PC") %>% 
+                                   rename(A=estimate, SE=std.error), 
+                                 resid.df = aov(simplelm.pca)$df.residual) %>% as_tibble()
+
+simplelm <-     lm(formula(paste("relfitness ~", paste0(simpletraits, collapse=" + "))), data = simpledata) 
+simplebeta <- tidy(simplelm) %>% rename(B=estimate, SE=std.error, trait = term) %>% 
+  select(-statistic) %>% filter(trait!="(Intercept)")
+
+simplebeta
+simplebeta.pca
+```
+
 
 ## Adaptive plasticity
 
@@ -1714,8 +1788,7 @@ mod.selection.abs.drop %>% filter(trait=="a-pinene") %>%
 mod.selection.abs.drop %>% filter(trait=="a-pinene") %>% 
   select(-model) %>% unnest(coefs) %>% kable()
 
-library(skimr)
-skim(mod.selection.tests %>% group_by(term), estimate)
+mod.selection.tests.drop %>% group_by(term) %>% summarize(min=min(estimate), max=max(estimate)) %>% kable(digits=4)
 ```
 
 # Volatiles vs. floral traits
@@ -1882,13 +1955,36 @@ vols.beta.allyrs %>%
 
 
 ```{r numberPCs, fig.width=10}
+trait_mult_reg_combined <- function(fitnesstrait, regtraits) {
+  std.traits <- bind_cols(combos$vmn, meta.pca) %>% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %>%  #center and scale traits
+    select(-any_of(fitnesstrait)) %>% 
+    left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %>% 
+    rename("fitness" = all_of(fitnesstrait)) %>% 
+    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% #relative fitness across years
+    drop_na(relfitness) %>% 
+    select(where(~sum(is.na(.))==0))
+  
+    selection.on.traits <- lm(formula(paste("relfitness ~", paste0(regtraits, collapse=" + "), 
+                                           " + precip_est_mm + sun_date")), data = std.traits) 
+    selection.on.traits %>% tidy() %>% rename(B=estimate, SE=std.error, trait=term)
+}
+
+multregs.combined <- expand_grid(fitnesstrait=fitnesstraits) %>% 
+  mutate(betas = map(fitnesstrait, ~trait_mult_reg_combined(.x, regtraits=floraltraits.pca[-4]))) %>% unnest(betas) %>% 
+  filter(trait != "(Intercept)")
+
 vols.beta.yr.PCs <- expand_grid(fitnesstrait=fitnesstraits, 
                                 n.PCs=2:17) %>% 
   mutate(PCA=list(vols.PCA), mdata=list(meta.pca)) %>% 
   mutate(betas = pmap(., selection_pca)) %>% select(-PCA, -mdata) %>% unnest(betas)
-ggplot(vols.beta.yr.PCs, aes(x=n.PCs)) + facet_wrap(vars(fitnesstrait), scales="free_y") + 
-  geom_line(aes(y=B, color=ifelse(trait %in% traits, "Other trait", "Volatile"), group=paste(trait))) +#, year
-  labs(color="")
+
+bind_rows(multregs.combined, vols.beta.yr.PCs) %>% 
+  mutate(n.PCs = replace_na(as.character(n.PCs), "traits") %>% factor(levels=c(2:17,"traits"))) %>% 
+ggplot(aes(x=n.PCs)) + facet_wrap(vars(fitnesstrait), scales="free_y") + 
+  geom_line(aes(y=B, color=if_else(trait %in% traits, trait, "Volatile"), group=paste(trait))) +#, year
+  labs(color="") + geom_vline(xintercept=5)
 ```
 
 ### Sensitivity to more observations
