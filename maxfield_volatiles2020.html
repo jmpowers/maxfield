@@ -4467,7 +4467,7 @@ pheatmap(cor(combos$vmn, method=&quot;pearson&quot;),
 <div id="pca" class="section level2">
 <h2>PCA</h2>
 <pre class="r"><code>#TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
-vmn.pca &lt;- combos$vmn %&gt;% mutate(across(all_of(ipogood.top), sqrt)) %&gt;% prcomp_std()
+vmn.pca &lt;- combos$vmn %&gt;% prcomp_std() #mutate(across(all_of(ipogood.top), sqrt)) %&gt;% 
 
 vmn.pca.vars &lt;- as.data.frame(vmn.pca$rotation) %&gt;% rownames_to_column(&quot;variable&quot;) %&gt;% 
   mutate(class=fct_collapse(variable, !!!deframe(select(filter(ipochemsf, name %in% ipogood.top), class, name)), 
@@ -4488,6 +4488,12 @@ ggplot(bind_cols(combos$vmn, as_tibble(vmn.pca$x)), aes(x=PC1, y=PC2)) +
   guides(color=guide_legend(override.aes = list(alpha=1, size=3)))+
   labs(color=&quot;&quot;, x=vmn.pca.labs[1], y=vmn.pca.labs[2]) </code></pre>
 <p><img src="images_volatiles2020/vmnt_pca-1.svg" width="768" /></p>
+<pre class="r"><code>vmn.pca.vars %&gt;% pivot_longer(starts_with(&quot;PC&quot;), names_to = &quot;axis&quot;, values_to = &quot;loading&quot;) %&gt;%
+  mutate(axis=as.integer(str_sub(axis, 3)), variable=if_else(class==&quot;Other trait&quot;, variable,&quot;Volatile&quot;)) %&gt;% 
+  ggplot(aes(x=axis, y=loading, color=variable, group=variable, alpha=class==&quot;Other trait&quot;)) + 
+  geom_hline(yintercept=0) + geom_point() + theme_minimal() + guides(alpha=&quot;none&quot;)+
+  scale_x_continuous(breaks = 0:20, minor_breaks = NULL)</code></pre>
+<p><img src="images_volatiles2020/vmnt_pca-2.svg" width="768" /></p>
 </div>
 <div id="selection-gradients-1" class="section level2">
 <h2>Selection gradients</h2>
@@ -4569,16 +4575,30 @@ multregs.combined &lt;- expand_grid(fitnesstrait=fitnesstraits) %&gt;%
   filter(trait != &quot;(Intercept)&quot;)
 
 vols.beta.yr.PCs &lt;- expand_grid(fitnesstrait=fitnesstraits, 
-                                n.PCs=2:17) %&gt;% 
+                                n.PCs=2:18) %&gt;% 
   mutate(PCA=list(vols.PCA), mdata=list(meta.pca)) %&gt;% 
   mutate(betas = pmap(., selection_pca)) %&gt;% select(-PCA, -mdata) %&gt;% unnest(betas)
 
 bind_rows(multregs.combined, vols.beta.yr.PCs) %&gt;% 
-  mutate(n.PCs = replace_na(as.character(n.PCs), &quot;traits&quot;) %&gt;% factor(levels=c(2:17,&quot;traits&quot;))) %&gt;% 
+  mutate(n.PCs = replace_na(as.character(n.PCs), &quot;traits&quot;) %&gt;% factor(levels=c(2:18,&quot;traits&quot;))) %&gt;% 
 ggplot(aes(x=n.PCs)) + facet_wrap(vars(fitnesstrait), scales=&quot;free_y&quot;) + 
-  geom_line(aes(y=B, color=if_else(trait %in% traits, trait, &quot;Volatile&quot;), group=paste(trait))) +#, year
-  labs(color=&quot;&quot;) + geom_vline(xintercept=5)</code></pre>
+  geom_line(aes(y=B, color=if_else(trait %in% traits, trait, NA), group=paste(trait), linewidth=trait %in% traits)) +#, year
+  labs(color=&quot;&quot;) + geom_vline(xintercept=&quot;5&quot;) + scale_linewidth_manual(values=c(0.5,2))</code></pre>
 <p><img src="images_volatiles2020/numberPCs-1.svg" width="960" /></p>
+<pre class="r"><code>beta.compare.mr &lt;- vols.beta.yr.PCs %&gt;% left_join(multregs.combined %&gt;% rename(B.mr = B, SE.mr=SE, p.value.mr = p.value)) %&gt;%
+  drop_na() %&gt;% mutate(error = B - B.mr, signerror=sign(B)!=sign(B.mr)) 
+ggplot(beta.compare.mr, aes(x=n.PCs, y=abs(error), color=trait)) + geom_hline(yintercept=0) + 
+    geom_line(data=beta.compare.mr %&gt;% group_by(fitnesstrait, n.PCs) %&gt;% summarize(error=mean(abs(error))), 
+              color=&quot;black&quot;, linewidth=2)+
+      geom_line(data=beta.compare.mr %&gt;% group_by(fitnesstrait, n.PCs) %&gt;% summarize(error=sum(signerror)/60), 
+              color=&quot;grey40&quot;, linewidth=2)+
+      geom_line(data=beta.compare.mr %&gt;% group_by(fitnesstrait, n.PCs) %&gt;% summarize(SE=mean(SE)), aes(y=SE), color=&quot;brown&quot;, linewidth=2)+
+  geom_line(data=summary(vols.PCA)$importance %&gt;% t() %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;axis&quot;) %&gt;% mutate(n.PCs=as.integer(str_sub(axis,3))), aes(y=`Proportion of Variance`),color=&quot;purple&quot;,  linewidth=2)+
+  geom_line() +
+  facet_wrap(vars(fitnesstrait)) + scale_x_continuous(breaks=0:20, minor_breaks=NULL) +
+  labs(subtitle=&quot;absolute error (black), sign_error/10 (grey),\nSE of estimates (brown), PC explained (purple)&quot;) +
+  coord_cartesian(ylim=c(0, 0.15)) + theme_bw()</code></pre>
+<p><img src="images_volatiles2020/numberPCs-2.svg" width="960" /></p>
 </div>
 <div id="sensitivity-to-more-observations" class="section level3">
 <h3>Sensitivity to more observations</h3>

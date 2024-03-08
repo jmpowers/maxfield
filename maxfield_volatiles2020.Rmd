@@ -1886,7 +1886,7 @@ cor(combos$vmn, method="pearson")[c(traits.m, traits.n, "height_cm"), c(traits.m
 
 ```{r vmnt_pca}
 #TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
-vmn.pca <- combos$vmn %>% mutate(across(all_of(ipogood.top), sqrt)) %>% prcomp_std()
+vmn.pca <- combos$vmn %>% prcomp_std() #mutate(across(all_of(ipogood.top), sqrt)) %>% 
 
 vmn.pca.vars <- as.data.frame(vmn.pca$rotation) %>% rownames_to_column("variable") %>% 
   mutate(class=fct_collapse(variable, !!!deframe(select(filter(ipochemsf, name %in% ipogood.top), class, name)), 
@@ -1906,6 +1906,12 @@ ggplot(bind_cols(combos$vmn, as_tibble(vmn.pca$x)), aes(x=PC1, y=PC2)) +
   geom_point(data=vmn.pca.vars, aes(color=class), alpha=0)+ 
   guides(color=guide_legend(override.aes = list(alpha=1, size=3)))+
   labs(color="", x=vmn.pca.labs[1], y=vmn.pca.labs[2]) 
+
+vmn.pca.vars %>% pivot_longer(starts_with("PC"), names_to = "axis", values_to = "loading") %>%
+  mutate(axis=as.integer(str_sub(axis, 3)), variable=if_else(class=="Other trait", variable,"Volatile")) %>% 
+  ggplot(aes(x=axis, y=loading, color=variable, group=variable, alpha=class=="Other trait")) + 
+  geom_hline(yintercept=0) + geom_point() + theme_minimal() + guides(alpha="none")+
+  scale_x_continuous(breaks = 0:20, minor_breaks = NULL)
 ```
 
 ## Selection gradients
@@ -1976,15 +1982,30 @@ multregs.combined <- expand_grid(fitnesstrait=fitnesstraits) %>%
   filter(trait != "(Intercept)")
 
 vols.beta.yr.PCs <- expand_grid(fitnesstrait=fitnesstraits, 
-                                n.PCs=2:17) %>% 
+                                n.PCs=2:18) %>% 
   mutate(PCA=list(vols.PCA), mdata=list(meta.pca)) %>% 
   mutate(betas = pmap(., selection_pca)) %>% select(-PCA, -mdata) %>% unnest(betas)
 
 bind_rows(multregs.combined, vols.beta.yr.PCs) %>% 
-  mutate(n.PCs = replace_na(as.character(n.PCs), "traits") %>% factor(levels=c(2:17,"traits"))) %>% 
+  mutate(n.PCs = replace_na(as.character(n.PCs), "traits") %>% factor(levels=c(2:18,"traits"))) %>% 
 ggplot(aes(x=n.PCs)) + facet_wrap(vars(fitnesstrait), scales="free_y") + 
-  geom_line(aes(y=B, color=if_else(trait %in% traits, trait, "Volatile"), group=paste(trait))) +#, year
-  labs(color="") + geom_vline(xintercept=5)
+  geom_line(aes(y=B, color=if_else(trait %in% traits, trait, NA), group=paste(trait), linewidth=trait %in% traits)) +#, year
+  labs(color="") + geom_vline(xintercept="5") + scale_linewidth_manual(values=c(0.5,2))
+
+beta.compare.mr <- vols.beta.yr.PCs %>% left_join(multregs.combined %>% rename(B.mr = B, SE.mr=SE, p.value.mr = p.value)) %>%
+  drop_na() %>% mutate(error = B - B.mr, signerror=sign(B)!=sign(B.mr)) 
+ggplot(beta.compare.mr, aes(x=n.PCs, y=abs(error), color=trait)) + geom_hline(yintercept=0) + 
+    geom_line(data=beta.compare.mr %>% group_by(fitnesstrait, n.PCs) %>% summarize(error=mean(abs(error))), 
+              color="black", linewidth=2)+
+      geom_line(data=beta.compare.mr %>% group_by(fitnesstrait, n.PCs) %>% summarize(error=sum(signerror)/60), 
+              color="grey40", linewidth=2)+
+      geom_line(data=beta.compare.mr %>% group_by(fitnesstrait, n.PCs) %>% summarize(SE=mean(SE)), aes(y=SE), color="brown", linewidth=2)+
+  geom_line(data=summary(vols.PCA)$importance %>% t() %>% as.data.frame() %>% rownames_to_column("axis") %>% mutate(n.PCs=as.integer(str_sub(axis,3))), aes(y=`Proportion of Variance`),color="purple",  linewidth=2)+
+  geom_line() +
+  facet_wrap(vars(fitnesstrait)) + scale_x_continuous(breaks=0:20, minor_breaks=NULL) +
+  labs(subtitle="absolute error (black), sign_error/10 (grey),\nSE of estimates (brown), PC explained (purple)") +
+  coord_cartesian(ylim=c(0, 0.15)) + theme_bw()
+
 ```
 
 ### Sensitivity to more observations
