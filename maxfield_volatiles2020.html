@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-03-07" />
+<meta name="date" content="2024-03-08" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-03-07</h4>
+<h4 class="date">2024-03-08</h4>
 
 </div>
 
@@ -3242,7 +3242,8 @@ all.beta.allyrs %&gt;%
 }
 
 multregs &lt;- expand_grid(fitnesstrait=fitnesstraits) %&gt;% 
-  mutate(betas = map(fitnesstrait, ~trait_mult_reg(.x, regtraits=floraltraits.pca[-4]))) %&gt;% unnest(betas)
+  mutate(betas = map(fitnesstrait, ~trait_mult_reg(.x, regtraits=floraltraits.pca[-4]))) %&gt;% unnest(betas)  %&gt;% 
+  filter(trait != &quot;(Intercept)&quot;)
 
 mnps.PCA.nosepal &lt;- mnps.plantyr %&gt;% select(all_of(floraltraits.pca[-4])) %&gt;% drop_na() %&gt;% prcomp_std()
 summary(mnps.PCA.nosepal)   # PCs 1 - 4 explain 83% of the variation, 6 PCs total</code></pre>
@@ -3257,25 +3258,81 @@ Cumulative Proportion  0.397 0.559 0.704 0.832 0.940 1.0000</code></pre>
   mutate(betas = pmap(., selection_pca)) %&gt;% select(-PCA, -mdata) %&gt;% unnest(betas)
 
 PCmultregs &lt;- bind_rows(PCregs,  multregs) %&gt;% mutate(n.PCs = replace_na(as.character(n.PCs), &quot;traits&quot;)) %&gt;% 
-  filter(trait %in% floraltraits.pca) %&gt;% 
-  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
-           factor(levels = rev(c(traitnames, greekify(ipogood.top)))))
+  filter(trait %in% floraltraits.pca) %&gt;% mutate(trait = recode(trait, !!!traitnames))
 
-ggplot(PCmultregs, aes(x=B,y=trait, color=fitnesstrait, shape=p.value &lt; 0.05, xmin=B-SE, xmax=B+SE)) + 
-  facet_wrap(vars(n.PCs), scales = &quot;fixed&quot;) + 
-  geom_vline(xintercept=0)+ 
-  geom_pointrange(position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;))+
-  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames)+
-  scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;)+ 
-  scale_x_continuous(expand = expansion(c(0,0)))+
-  theme_bw() + theme(axis.title=element_blank(), legend.position = &quot;top&quot;,
-                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())</code></pre>
-<p><img src="images_volatiles2020/traitreg-1.svg" width="768" /></p>
-<pre class="r"><code>ggplot(PCmultregs, aes(x=n.PCs,y=B, color=trait, shape=p.value &lt; 0.05, ymin=B-SE, ymax=B+SE)) +
+ggplot(PCmultregs, aes(x=n.PCs,y=B, color=trait, shape=p.value &lt; 0.05, ymin=B-SE, ymax=B+SE)) +
   geom_line(aes(group=paste(fitnesstrait, trait)))+ geom_pointrange() +
   facet_wrap(vars(fitnesstrait))+
   scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;) + theme_bw()</code></pre>
+<p><img src="images_volatiles2020/traitreg-1.svg" width="768" /></p>
+<pre class="r"><code>beta.compare.mr &lt;- PCregs %&gt;% left_join(multregs %&gt;% rename(B.mr = B, SE.mr=SE, p.value.mr = p.value)) %&gt;%
+  drop_na() %&gt;% mutate(error = B - B.mr, signerror=sign(B)!=sign(B.mr)) %&gt;% mutate(trait = recode(trait, !!!traitnames))
+ggplot(beta.compare.mr, aes(x=n.PCs, y=abs(error), color=trait)) + geom_hline(yintercept=0) + 
+  geom_line(data=beta.compare.mr %&gt;% group_by(fitnesstrait, n.PCs) %&gt;% summarize(error=mean(abs(error))), 
+            color=&quot;black&quot;, linewidth=2)+
+  geom_line(data=beta.compare.mr %&gt;% group_by(fitnesstrait, n.PCs) %&gt;% summarize(error=sum(signerror)/60), 
+            color=&quot;grey40&quot;, linewidth=2)+
+  geom_line(data=beta.compare.mr %&gt;% group_by(fitnesstrait, n.PCs) %&gt;% summarize(SE=mean(SE)), aes(y=SE), color=&quot;brown&quot;, linewidth=2)+
+  geom_line(data=summary(mnps.PCA.nosepal)$importance %&gt;% t() %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;axis&quot;) %&gt;% mutate(n.PCs=as.integer(str_sub(axis,3))), aes(y=`Proportion of Variance`),color=&quot;purple&quot;,  linewidth=2)+
+  geom_line() +
+  facet_wrap(vars(fitnesstrait)) + scale_x_continuous(breaks=0:20, minor_breaks=NULL) +
+  labs(subtitle=&quot;absolute error (black), sign_error/10 (grey),\nSE of estimates (brown), PC explained (purple)&quot;) +
+  coord_cartesian(ylim=c(0, 0.15)) + theme_bw()</code></pre>
 <p><img src="images_volatiles2020/traitreg-2.svg" width="768" /></p>
+</div>
+<div id="volatiles-multiple-regression" class="section level3">
+<h3>Volatiles multiple regression</h3>
+<pre class="r"><code>vol_mult_reg &lt;- function(fitnesstrait, regtraits) {
+  std.traits &lt;- bind_cols(volsmeta.avg, vols.good.top) %&gt;% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %&gt;%  #center and scale traits
+    select(-any_of(fitnesstrait)) %&gt;% 
+    left_join(mnps.plantyr.traits %&gt;% select(year, plotid, plantid, all_of(fitnesstrait)), by=c(&quot;year&quot;, &quot;plotid&quot;, &quot;plantid&quot;)) %&gt;% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %&gt;% 
+    rename(&quot;fitness&quot; = all_of(fitnesstrait)) %&gt;% 
+    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep=&quot;unused&quot;) %&gt;% #relative fitness across years
+    drop_na(relfitness) %&gt;% 
+    select(where(~sum(is.na(.))==0)) %&gt;% 
+    rename_with(~str_remove_all(.x, &quot;[\\s\\-\\(\\)23]&quot;))
+  
+    selection.on.traits &lt;- lm(formula(paste(&quot;relfitness ~&quot;, paste0(str_remove_all(regtraits, &quot;[\\s\\-\\(\\)23]&quot;), collapse=&quot; + &quot;), 
+                                           &quot; + precip_est_mm + sun_date&quot;)), data = std.traits) 
+    selection.on.traits %&gt;% tidy() %&gt;% rename(B=estimate, SE=std.error, trait=term)
+}
+
+multregs &lt;- expand_grid(fitnesstrait=fitnesstraits) %&gt;% 
+  mutate(betas = map(fitnesstrait, ~vol_mult_reg(.x, regtraits=ipogood.top))) %&gt;% unnest(betas)  %&gt;% 
+  filter(trait != &quot;(Intercept)&quot;)
+
+vols.PCA &lt;- vols.good.top %&gt;% prcomp_std()
+PCregs &lt;- expand_grid(fitnesstrait=fitnesstraits, n.PCs = 2:12) %&gt;%
+    mutate(PCA =   list(vols.PCA),
+           mdata = list(volsmeta.avg)) %&gt;% 
+  mutate(betas = pmap(., selection_pca)) %&gt;% select(-PCA, -mdata) %&gt;% unnest(betas) %&gt;% 
+  mutate(trait = str_remove_all(trait, &quot;[\\s\\-\\(\\)23]&quot;))
+
+PCmultregs &lt;- bind_rows(PCregs,  multregs) %&gt;% 
+  mutate(n.PCs = replace_na(as.character(n.PCs), &quot;traits&quot;) %&gt;% factor(levels=c(2:12,&quot;traits&quot;))) %&gt;% 
+  filter(!trait %in% c(&quot;sun_date&quot;, &quot;precip_est_mm&quot;))
+
+ggplot(PCmultregs, aes(x=n.PCs,y=B, color=trait, shape=p.value &lt; 0.05, ymin=B-SE, ymax=B+SE)) +
+  geom_line(aes(group=paste(fitnesstrait, trait)))+ geom_pointrange() +
+  facet_wrap(vars(fitnesstrait))+
+  scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;) + theme_bw()</code></pre>
+<p><img src="images_volatiles2020/volreg-1.svg" width="768" /></p>
+<pre class="r"><code>beta.compare.mr &lt;- PCregs %&gt;% left_join(multregs %&gt;% rename(B.mr = B, SE.mr=SE, p.value.mr = p.value)) %&gt;%
+  drop_na() %&gt;% mutate(error = B - B.mr, signerror=sign(B)!=sign(B.mr)) 
+ggplot(beta.compare.mr, aes(x=n.PCs, y=abs(error), color=trait)) + geom_hline(yintercept=0) + 
+  geom_line(data=beta.compare.mr %&gt;% group_by(fitnesstrait, n.PCs) %&gt;% summarize(error=mean(abs(error))), 
+            color=&quot;black&quot;, linewidth=2)+
+  geom_line(data=beta.compare.mr %&gt;% group_by(fitnesstrait, n.PCs) %&gt;% summarize(error=sum(signerror)/60), 
+            color=&quot;grey40&quot;, linewidth=2)+
+  geom_line(data=beta.compare.mr %&gt;% group_by(fitnesstrait, n.PCs) %&gt;% summarize(SE=mean(SE)), aes(y=SE), color=&quot;brown&quot;, linewidth=2)+
+  geom_line(data=summary(vols.PCA)$importance %&gt;% t() %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;axis&quot;) %&gt;% mutate(n.PCs=as.integer(str_sub(axis,3))), aes(y=`Proportion of Variance`),color=&quot;purple&quot;,  linewidth=2)+
+  geom_line() +
+  facet_wrap(vars(fitnesstrait)) + scale_x_continuous(breaks=0:20, minor_breaks=NULL) +
+  labs(subtitle=&quot;absolute error (black), sign_error/10 (grey),\nSE of estimates (brown), PC explained (purple)&quot;) +
+  coord_cartesian(ylim=c(0, 0.2)) + theme_bw()</code></pre>
+<p><img src="images_volatiles2020/volreg-2.svg" width="768" /></p>
 <pre class="r"><code>simpletraits &lt;- floraltraits.pca[-4] #no sepal width
 simpledata &lt;- mnps.plantyr %&gt;% select(all_of(simpletraits), relfitness = seeds_est) %&gt;% drop_na() %&gt;% 
   mutate(across(all_of(simpletraits), ~ (.x-mean(.x))/sd(.x)), #center and scale traits

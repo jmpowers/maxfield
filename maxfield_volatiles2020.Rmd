@@ -1470,7 +1470,8 @@ trait_mult_reg <- function(fitnesstrait, regtraits) {
 }
 
 multregs <- expand_grid(fitnesstrait=fitnesstraits) %>% 
-  mutate(betas = map(fitnesstrait, ~trait_mult_reg(.x, regtraits=floraltraits.pca[-4]))) %>% unnest(betas)
+  mutate(betas = map(fitnesstrait, ~trait_mult_reg(.x, regtraits=floraltraits.pca[-4]))) %>% unnest(betas)  %>% 
+  filter(trait != "(Intercept)")
 
 mnps.PCA.nosepal <- mnps.plantyr %>% select(all_of(floraltraits.pca[-4])) %>% drop_na() %>% prcomp_std()
 summary(mnps.PCA.nosepal)   # PCs 1 - 4 explain 83% of the variation, 6 PCs total
@@ -1480,24 +1481,81 @@ PCregs <- expand_grid(fitnesstrait=fitnesstraits, n.PCs = 2:6) %>%
   mutate(betas = pmap(., selection_pca)) %>% select(-PCA, -mdata) %>% unnest(betas)
 
 PCmultregs <- bind_rows(PCregs,  multregs) %>% mutate(n.PCs = replace_na(as.character(n.PCs), "traits")) %>% 
-  filter(trait %in% floraltraits.pca) %>% 
-  mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
-           factor(levels = rev(c(traitnames, greekify(ipogood.top)))))
-
-ggplot(PCmultregs, aes(x=B,y=trait, color=fitnesstrait, shape=p.value < 0.05, xmin=B-SE, xmax=B+SE)) + 
-  facet_wrap(vars(n.PCs), scales = "fixed") + 
-  geom_vline(xintercept=0)+ 
-  geom_pointrange(position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
-  scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames)+
-  scale_shape_manual("P < 0.05", values=c(1,19), guide="none")+ 
-  scale_x_continuous(expand = expansion(c(0,0)))+
-  theme_bw() + theme(axis.title=element_blank(), legend.position = "top",
-                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
+  filter(trait %in% floraltraits.pca) %>% mutate(trait = recode(trait, !!!traitnames))
 
 ggplot(PCmultregs, aes(x=n.PCs,y=B, color=trait, shape=p.value < 0.05, ymin=B-SE, ymax=B+SE)) +
   geom_line(aes(group=paste(fitnesstrait, trait)))+ geom_pointrange() +
   facet_wrap(vars(fitnesstrait))+
   scale_shape_manual("P < 0.05", values=c(1,19), guide="none") + theme_bw()
+
+beta.compare.mr <- PCregs %>% left_join(multregs %>% rename(B.mr = B, SE.mr=SE, p.value.mr = p.value)) %>%
+  drop_na() %>% mutate(error = B - B.mr, signerror=sign(B)!=sign(B.mr)) %>% mutate(trait = recode(trait, !!!traitnames))
+ggplot(beta.compare.mr, aes(x=n.PCs, y=abs(error), color=trait)) + geom_hline(yintercept=0) + 
+  geom_line(data=beta.compare.mr %>% group_by(fitnesstrait, n.PCs) %>% summarize(error=mean(abs(error))), 
+            color="black", linewidth=2)+
+  geom_line(data=beta.compare.mr %>% group_by(fitnesstrait, n.PCs) %>% summarize(error=sum(signerror)/60), 
+            color="grey40", linewidth=2)+
+  geom_line(data=beta.compare.mr %>% group_by(fitnesstrait, n.PCs) %>% summarize(SE=mean(SE)), aes(y=SE), color="brown", linewidth=2)+
+  geom_line(data=summary(mnps.PCA.nosepal)$importance %>% t() %>% as.data.frame() %>% rownames_to_column("axis") %>% mutate(n.PCs=as.integer(str_sub(axis,3))), aes(y=`Proportion of Variance`),color="purple",  linewidth=2)+
+  geom_line() +
+  facet_wrap(vars(fitnesstrait)) + scale_x_continuous(breaks=0:20, minor_breaks=NULL) +
+  labs(subtitle="absolute error (black), sign_error/10 (grey),\nSE of estimates (brown), PC explained (purple)") +
+  coord_cartesian(ylim=c(0, 0.15)) + theme_bw()
+```
+
+### Volatiles multiple regression
+
+```{r volreg}
+vol_mult_reg <- function(fitnesstrait, regtraits) {
+  std.traits <- bind_cols(volsmeta.avg, vols.good.top) %>% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %>%  #center and scale traits
+    select(-any_of(fitnesstrait)) %>% 
+    left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %>% 
+    rename("fitness" = all_of(fitnesstrait)) %>% 
+    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% #relative fitness across years
+    drop_na(relfitness) %>% 
+    select(where(~sum(is.na(.))==0)) %>% 
+    rename_with(~str_remove_all(.x, "[\\s\\-\\(\\)23]"))
+  
+    selection.on.traits <- lm(formula(paste("relfitness ~", paste0(str_remove_all(regtraits, "[\\s\\-\\(\\)23]"), collapse=" + "), 
+                                           " + precip_est_mm + sun_date")), data = std.traits) 
+    selection.on.traits %>% tidy() %>% rename(B=estimate, SE=std.error, trait=term)
+}
+
+multregs <- expand_grid(fitnesstrait=fitnesstraits) %>% 
+  mutate(betas = map(fitnesstrait, ~vol_mult_reg(.x, regtraits=ipogood.top))) %>% unnest(betas)  %>% 
+  filter(trait != "(Intercept)")
+
+vols.PCA <- vols.good.top %>% prcomp_std()
+PCregs <- expand_grid(fitnesstrait=fitnesstraits, n.PCs = 2:12) %>%
+    mutate(PCA =   list(vols.PCA),
+           mdata = list(volsmeta.avg)) %>% 
+  mutate(betas = pmap(., selection_pca)) %>% select(-PCA, -mdata) %>% unnest(betas) %>% 
+  mutate(trait = str_remove_all(trait, "[\\s\\-\\(\\)23]"))
+
+PCmultregs <- bind_rows(PCregs,  multregs) %>% 
+  mutate(n.PCs = replace_na(as.character(n.PCs), "traits") %>% factor(levels=c(2:12,"traits"))) %>% 
+  filter(!trait %in% c("sun_date", "precip_est_mm"))
+
+ggplot(PCmultregs, aes(x=n.PCs,y=B, color=trait, shape=p.value < 0.05, ymin=B-SE, ymax=B+SE)) +
+  geom_line(aes(group=paste(fitnesstrait, trait)))+ geom_pointrange() +
+  facet_wrap(vars(fitnesstrait))+
+  scale_shape_manual("P < 0.05", values=c(1,19), guide="none") + theme_bw()
+
+beta.compare.mr <- PCregs %>% left_join(multregs %>% rename(B.mr = B, SE.mr=SE, p.value.mr = p.value)) %>%
+  drop_na() %>% mutate(error = B - B.mr, signerror=sign(B)!=sign(B.mr)) 
+ggplot(beta.compare.mr, aes(x=n.PCs, y=abs(error), color=trait)) + geom_hline(yintercept=0) + 
+  geom_line(data=beta.compare.mr %>% group_by(fitnesstrait, n.PCs) %>% summarize(error=mean(abs(error))), 
+            color="black", linewidth=2)+
+  geom_line(data=beta.compare.mr %>% group_by(fitnesstrait, n.PCs) %>% summarize(error=sum(signerror)/60), 
+            color="grey40", linewidth=2)+
+  geom_line(data=beta.compare.mr %>% group_by(fitnesstrait, n.PCs) %>% summarize(SE=mean(SE)), aes(y=SE), color="brown", linewidth=2)+
+  geom_line(data=summary(vols.PCA)$importance %>% t() %>% as.data.frame() %>% rownames_to_column("axis") %>% mutate(n.PCs=as.integer(str_sub(axis,3))), aes(y=`Proportion of Variance`),color="purple",  linewidth=2)+
+  geom_line() +
+  facet_wrap(vars(fitnesstrait)) + scale_x_continuous(breaks=0:20, minor_breaks=NULL) +
+  labs(subtitle="absolute error (black), sign_error/10 (grey),\nSE of estimates (brown), PC explained (purple)") +
+  coord_cartesian(ylim=c(0, 0.2)) + theme_bw()
 ```
 
 ```{r simplePCA, eval=FALSE}
