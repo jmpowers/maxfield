@@ -2087,3 +2087,54 @@ ggplot(vols.beta.yr.combos, aes(x=combo)) + facet_wrap(vars(fitnesstrait), scale
   labs(color="")
 ```
 
+## Elastic net
+
+```{r elasticnet}
+library(glmnet)
+trait_en_reg_combined <- function(fitnesstrait, regtraits, en_alpha) {
+  std.traits <- bind_cols(combos$vmn, meta.pca) %>% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %>%  #center and scale traits
+    select(-any_of(fitnesstrait)) %>% 
+    left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %>% 
+    rename("fitness" = all_of(fitnesstrait)) %>% 
+    mutate(relfitness = scale(fitness/mean(fitness, na.rm=T), center=T, scale=F), .keep="unused") %>% #relative fitness across years
+    drop_na(relfitness) %>% 
+    select(where(~sum(is.na(.))==0))
+  
+  Y = std.traits %>% select(relfitness) %>% as.matrix()
+  X = std.traits %>% select(all_of(c(regtraits, "precip_est_mm", "sun_date"))) %>% as.matrix()
+  
+  best_lambda <- cv.glmnet(x=X, y=Y, alpha = 0.5)$lambda.min
+  
+  selection.on.traits <- glmnet(x=X, y=Y, alpha = 0.5, lambda = best_lambda) 
+  
+  coefs <- coef(selection.on.traits, x=X, y=Y, s=best_lambda/nrow(Y), exact=TRUE)[-1]
+  si <- selectiveInference::fixedLassoInf(X, Y, coefs, best_lambda) 
+  
+  selection.on.traits %>% tidy() %>% rename(B=estimate, trait=term) #%>% 
+  # left_join(data.frame(trait = names(si$vars), p.value = si$pv,
+  #                      partial = si$coef0, conf_low = si$ci[,1], conf_high = si$ci[,2]),
+  #           by="trait")
+}
+
+enregs.combined <- expand_grid(fitnesstrait=fitnesstraits, en_alpha = c(0, 0.5, 1),
+                               regtraits = list(c(ipogood.top, floraltraits.pca[-4]))) %>% 
+  mutate(betas = pmap(., trait_en_reg_combined)) %>% 
+  unnest(betas) %>% filter(!trait %in% c("(Intercept)", "precip_est_mm", "sun_date"))
+
+enregs.combined %>% filter(en_alpha==0.5) %>% #TODO get en_alpha working in glmnet
+  mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
+  ggplot(aes(x=B,y=trait, color=fitnesstrait)) + 
+  facet_wrap(vars(en_alpha)) + 
+  geom_vline(xintercept=0)+ 
+  geom_point(position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
+ # geom_pointrange(aes(x=partial, xmin=conf_low, xmax=conf_high, shape = p.value < 0.05),
+ #                 position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
+  #  scale_shape_manual("P < 0.05", values=c(1,19), guide="none")+ 
+  scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames)+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = "top",
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
+```
+
