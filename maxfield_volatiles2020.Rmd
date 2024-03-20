@@ -2089,7 +2089,7 @@ ggplot(vols.beta.yr.combos, aes(x=combo)) + facet_wrap(vars(fitnesstrait), scale
 
 ## Elastic net
 
-```{r elasticnet}
+```{r elasticnet, fig.width=10, fig.height=10}
 library(glmnet)
 trait_en_reg_combined <- function(fitnesstrait, regtraits, en_alpha) {
   std.traits <- bind_cols(combos$vmn, meta.pca) %>% 
@@ -2105,35 +2105,51 @@ trait_en_reg_combined <- function(fitnesstrait, regtraits, en_alpha) {
   Y = std.traits %>% select(relfitness) %>% as.matrix()
   X = std.traits %>% select(all_of(c(regtraits, "precip_est_mm", "sun_date"))) %>% as.matrix()
   
-  best_lambda <- cv.glmnet(x=X, y=Y, alpha = 0.5)$lambda.min
-  
-  selection.on.traits <- glmnet(x=X, y=Y, alpha = 0.5, lambda = best_lambda) 
-  
-  coefs <- coef(selection.on.traits, x=X, y=Y, s=best_lambda/nrow(Y), exact=TRUE)[-1]
-  si <- selectiveInference::fixedLassoInf(X, Y, coefs, best_lambda) 
-  
-  selection.on.traits %>% tidy() %>% rename(B=estimate, trait=term) #%>% 
-  # left_join(data.frame(trait = names(si$vars), p.value = si$pv,
-  #                      partial = si$coef0, conf_low = si$ci[,1], conf_high = si$ci[,2]),
-  #           by="trait")
-}
+  crossvalidate <- cv.glmnet(x=X, y=Y, alpha = en_alpha)
+  #plot(crossvalidate, main=paste(fitnesstrait, "alpha=", en_alpha))
+  best_lambda <- crossvalidate$lambda.min
 
-enregs.combined <- expand_grid(fitnesstrait=fitnesstraits, en_alpha = c(0, 0.5, 1),
+  selection.on.traits <- glmnet(x=X, y=Y, alpha = en_alpha, lambda = best_lambda) 
+  #the discussion in the selectiveInference help about how to scale lambda is confusing.
+  #running with coef(s = lambda/nrow(Y)) and then fixedlassoInf(lambda = best_lamda) works
+  #but if example lambda=0.8 is unscaled by n, then it should be
+  #coef(s = lambda) and then fixedlassoInf(lambda = best_lamda* nrow(Y)), which gives a polyhedral constraint error
+  coefs <- coef(selection.on.traits, x=X, y=Y, s=best_lambda/nrow(Y), exact=TRUE, alpha=en_alpha)[-1]
+
+  si <- selectiveInference::fixedLassoInf(x=X, y=Y, beta=coefs, lambda=best_lambda) 
+  
+  selection.on.traits %>% tidy() %>% rename(B=estimate, trait=term) %>% 
+  left_join(data.frame(trait = names(si$vars), p.value = si$pv,
+                       partial = si$coef0, conf_low = si$ci[,1], conf_high = si$ci[,2]),
+            by="trait")
+}
+enregs.combined <- expand_grid(fitnesstrait=fitnesstraits, en_alpha = seq(0, 1, by=0.25),
                                regtraits = list(c(ipogood.top, floraltraits.pca[-4]))) %>% 
   mutate(betas = pmap(., trait_en_reg_combined)) %>% 
   unnest(betas) %>% filter(!trait %in% c("(Intercept)", "precip_est_mm", "sun_date"))
 
-enregs.combined %>% filter(en_alpha==0.5) %>% #TODO get en_alpha working in glmnet
+enregs.combined %>% 
+  mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
+  ggplot(aes(y=B,x=en_alpha, color=fitnesstrait)) + facet_wrap(vars(trait)) +
+  geom_hline(yintercept=0) + geom_point()+  geom_path() +
+  scale_shape_manual("P < 0.05", values=c(1,19), guide="none")+
+  scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames) +
+  theme_bw() + theme(legend.position = "top") +
+  labs(x="Elastic net alpha (0 = ridge, 1 = lasso)")
+
+enregs.combined %>% filter(en_alpha %in% c(0,0.5, 1)) %>% 
   mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
   ggplot(aes(x=B,y=trait, color=fitnesstrait)) + 
   facet_wrap(vars(en_alpha)) + 
   geom_vline(xintercept=0)+ 
   geom_point(position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
- # geom_pointrange(aes(x=partial, xmin=conf_low, xmax=conf_high, shape = p.value < 0.05),
- #                 position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
-  #  scale_shape_manual("P < 0.05", values=c(1,19), guide="none")+ 
+ geom_pointrange(aes(x=partial, xmin=conf_low, xmax=conf_high, shape = p.value < 0.05),
+                 position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
+  scale_shape_manual("P < 0.05", values=c(1,19), guide="none")+
   scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames)+
+  coord_cartesian(xlim=c(-1,1))+
   theme_bw() + theme(axis.title=element_blank(), legend.position = "top",
                      panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
 ```

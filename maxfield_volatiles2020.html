@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-03-08" />
+<meta name="date" content="2024-03-19" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-03-08</h4>
+<h4 class="date">2024-03-19</h4>
 
 </div>
 
@@ -4696,6 +4696,72 @@ ggplot(vols.beta.yr.combos, aes(x=combo)) + facet_wrap(vars(fitnesstrait), scale
   labs(color=&quot;&quot;)</code></pre>
 <p><img src="images_volatiles2020/moreobs-1.svg" width="960" /></p>
 </div>
+</div>
+<div id="elastic-net" class="section level2">
+<h2>Elastic net</h2>
+<pre class="r"><code>library(glmnet)
+trait_en_reg_combined &lt;- function(fitnesstrait, regtraits, en_alpha) {
+  std.traits &lt;- bind_cols(combos$vmn, meta.pca) %&gt;% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %&gt;%  #center and scale traits
+    select(-any_of(fitnesstrait)) %&gt;% 
+    left_join(mnps.plantyr.traits %&gt;% select(year, plotid, plantid, all_of(fitnesstrait)), by=c(&quot;year&quot;, &quot;plotid&quot;, &quot;plantid&quot;)) %&gt;% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %&gt;% 
+    rename(&quot;fitness&quot; = all_of(fitnesstrait)) %&gt;% 
+    mutate(relfitness = scale(fitness/mean(fitness, na.rm=T), center=T, scale=F), .keep=&quot;unused&quot;) %&gt;% #relative fitness across years
+    drop_na(relfitness) %&gt;% 
+    select(where(~sum(is.na(.))==0))
+  
+  Y = std.traits %&gt;% select(relfitness) %&gt;% as.matrix()
+  X = std.traits %&gt;% select(all_of(c(regtraits, &quot;precip_est_mm&quot;, &quot;sun_date&quot;))) %&gt;% as.matrix()
+  
+  crossvalidate &lt;- cv.glmnet(x=X, y=Y, alpha = en_alpha)
+  #plot(crossvalidate, main=paste(fitnesstrait, &quot;alpha=&quot;, en_alpha))
+  best_lambda &lt;- crossvalidate$lambda.min
+
+  selection.on.traits &lt;- glmnet(x=X, y=Y, alpha = en_alpha, lambda = best_lambda) 
+  #the discussion in the selectiveInference help about how to scale lambda is confusing.
+  #running with coef(s = lambda/nrow(Y)) and then fixedlassoInf(lambda = best_lamda) works
+  #but if example lambda=0.8 is unscaled by n, then it should be
+  #coef(s = lambda) and then fixedlassoInf(lambda = best_lamda* nrow(Y)), which gives a polyhedral constraint error
+  coefs &lt;- coef(selection.on.traits, x=X, y=Y, s=best_lambda/nrow(Y), exact=TRUE, alpha=en_alpha)[-1]
+
+  si &lt;- selectiveInference::fixedLassoInf(x=X, y=Y, beta=coefs, lambda=best_lambda) 
+  
+  selection.on.traits %&gt;% tidy() %&gt;% rename(B=estimate, trait=term) %&gt;% 
+  left_join(data.frame(trait = names(si$vars), p.value = si$pv,
+                       partial = si$coef0, conf_low = si$ci[,1], conf_high = si$ci[,2]),
+            by=&quot;trait&quot;)
+}
+enregs.combined &lt;- expand_grid(fitnesstrait=fitnesstraits, en_alpha = seq(0, 1, by=0.25),
+                               regtraits = list(c(ipogood.top, floraltraits.pca[-4]))) %&gt;% 
+  mutate(betas = pmap(., trait_en_reg_combined)) %&gt;% 
+  unnest(betas) %&gt;% filter(!trait %in% c(&quot;(Intercept)&quot;, &quot;precip_est_mm&quot;, &quot;sun_date&quot;))
+
+enregs.combined %&gt;% 
+  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
+  ggplot(aes(y=B,x=en_alpha, color=fitnesstrait)) + facet_wrap(vars(trait)) +
+  geom_hline(yintercept=0) + geom_point()+  geom_path() +
+  scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;)+
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames) +
+  theme_bw() + theme(legend.position = &quot;top&quot;) +
+  labs(x=&quot;Elastic net alpha (0 = ridge, 1 = lasso)&quot;)</code></pre>
+<p><img src="images_volatiles2020/elasticnet-1.svg" width="960" /></p>
+<pre class="r"><code>enregs.combined %&gt;% filter(en_alpha %in% c(0,0.5, 1)) %&gt;% 
+  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
+  ggplot(aes(x=B,y=trait, color=fitnesstrait)) + 
+  facet_wrap(vars(en_alpha)) + 
+  geom_vline(xintercept=0)+ 
+  geom_point(position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;))+
+ geom_pointrange(aes(x=partial, xmin=conf_low, xmax=conf_high, shape = p.value &lt; 0.05),
+                 position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;))+
+  scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;)+
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames)+
+  coord_cartesian(xlim=c(-1,1))+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = &quot;top&quot;,
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())</code></pre>
+<p><img src="images_volatiles2020/elasticnet-2.svg" width="960" /></p>
 </div>
 </div>
 
