@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-03-19" />
+<meta name="date" content="2024-03-22" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-03-19</h4>
+<h4 class="date">2024-03-22</h4>
 
 </div>
 
@@ -3354,6 +3354,86 @@ simplebeta &lt;- tidy(simplelm) %&gt;% rename(B=estimate, SE=std.error, trait = 
 simplebeta
 simplebeta.pca</code></pre>
 </div>
+<div id="elastic-net" class="section level3">
+<h3>Elastic net</h3>
+<pre class="r"><code>library(glmnet)
+trait_en_reg &lt;- function(fitnesstrait, regtraits, en_alpha) {
+    std.traits &lt;- meta.pca.nosepal %&gt;% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %&gt;%  #center and scale traits
+    select(-any_of(fitnesstrait)) %&gt;% 
+    left_join(mnps.plantyr.traits %&gt;% select(year, plotid, plantid, all_of(fitnesstrait)), by=c(&quot;year&quot;, &quot;plotid&quot;, &quot;plantid&quot;)) %&gt;% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %&gt;% 
+    rename(&quot;fitness&quot; = all_of(fitnesstrait)) %&gt;% 
+    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep=&quot;unused&quot;) %&gt;% #relative fitness across years
+    drop_na(relfitness) %&gt;% 
+    select(where(~sum(is.na(.))==0))
+  
+  Y = std.traits %&gt;% select(relfitness) %&gt;% as.matrix()
+  X = std.traits %&gt;% select(all_of(c(regtraits, &quot;precip_est_mm&quot;, &quot;sun_date&quot;))) %&gt;% as.matrix()
+  crossvalidate &lt;- cv.glmnet(x=X, y=Y, alpha = en_alpha)
+  best_lambda &lt;- crossvalidate$lambda.min
+  glmnet(x=X, y=Y, alpha = en_alpha, lambda = best_lambda) %&gt;% tidy() %&gt;% rename(B=estimate, trait=term)
+}
+
+enregs &lt;- expand_grid(fitnesstrait=fitnesstraits, en_alpha = seq(0, 1, by=0.25),
+                               regtraits = list(c(floraltraits.pca[-4]))) %&gt;% 
+  mutate(betas = pmap(., trait_en_reg)) %&gt;% select(-regtraits) %&gt;% 
+  unnest(betas) %&gt;% filter(!trait %in% c(&quot;(Intercept)&quot;, &quot;precip_est_mm&quot;, &quot;sun_date&quot;)) 
+
+ggplot(enregs, aes(y=B,x=en_alpha, color=fitnesstrait)) + facet_wrap(vars(trait)) +
+  geom_hline(yintercept=0) + geom_point()+  geom_path() + labs(x=&quot;Elastic net alpha (0 = ridge, 1 = lasso)&quot;) +
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames) + theme_bw() + theme(legend.position = &quot;top&quot;) </code></pre>
+<p><img src="images_volatiles2020/elasticnet_morph-1.svg" width="768" /></p>
+<pre class="r"><code>enregs %&gt;% filter(en_alpha==0.5) %&gt;% 
+  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
+  ggplot(aes(x=B,y=trait, color=fitnesstrait)) + 
+  geom_vline(xintercept=0)+ 
+  geom_point(position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;), size=4)+
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames)+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = &quot;top&quot;,
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())</code></pre>
+<p><img src="images_volatiles2020/elasticnet_morph-2.svg" width="768" /></p>
+<pre class="r"><code>library(glmnet)
+vol_en_reg &lt;- function(fitnesstrait, regtraits, en_alpha) {
+  std.traits &lt;- bind_cols(volsmeta.avg, vols.good.top) %&gt;% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %&gt;%  #center and scale traits
+    select(-any_of(fitnesstrait)) %&gt;% 
+    left_join(mnps.plantyr.traits %&gt;% select(year, plotid, plantid, all_of(fitnesstrait)), by=c(&quot;year&quot;, &quot;plotid&quot;, &quot;plantid&quot;)) %&gt;% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %&gt;% 
+    rename(&quot;fitness&quot; = all_of(fitnesstrait)) %&gt;% 
+    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep=&quot;unused&quot;) %&gt;% #relative fitness across years
+    drop_na(relfitness) %&gt;% 
+    select(where(~sum(is.na(.))==0))# %&gt;% 
+    #rename_with(~str_remove_all(.x, &quot;[\\s\\-\\(\\)23]&quot;))
+  
+  Y = std.traits %&gt;% select(relfitness) %&gt;% as.matrix()
+  X = std.traits %&gt;% select(all_of(c(regtraits, &quot;precip_est_mm&quot;, &quot;sun_date&quot;))) %&gt;% as.matrix()
+  crossvalidate &lt;- cv.glmnet(x=X, y=Y, alpha = en_alpha)
+  best_lambda &lt;- crossvalidate$lambda.min
+  glmnet(x=X, y=Y, alpha = en_alpha, lambda = best_lambda) %&gt;% tidy() %&gt;% rename(B=estimate, trait=term)
+}
+
+enregs.vol &lt;- expand_grid(fitnesstrait=fitnesstraits, en_alpha = seq(0, 1, by=0.25),
+                               regtraits = list(c(ipogood.top))) %&gt;% 
+  mutate(betas = pmap(., vol_en_reg)) %&gt;% select(-regtraits) %&gt;% 
+  unnest(betas) %&gt;% filter(!trait %in% c(&quot;(Intercept)&quot;, &quot;precip_est_mm&quot;, &quot;sun_date&quot;)) %&gt;% 
+  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) 
+
+ggplot(enregs.vol, aes(y=B,x=en_alpha, color=fitnesstrait)) + facet_wrap(vars(trait)) +
+  geom_hline(yintercept=0) + geom_point()+  geom_path() + labs(x=&quot;Elastic net alpha (0 = ridge, 1 = lasso)&quot;) +
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames) + theme_bw() + theme(legend.position = &quot;top&quot;) </code></pre>
+<p><img src="images_volatiles2020/elasticnet_vols-1.svg" width="768" /></p>
+<pre class="r"><code>enregs.vol %&gt;% filter(en_alpha==0.5) %&gt;% 
+  ggplot(aes(x=B,y=trait, color=fitnesstrait)) + 
+  geom_vline(xintercept=0)+ 
+  geom_point(position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;), size=4)+
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames)+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = &quot;top&quot;,
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())</code></pre>
+<p><img src="images_volatiles2020/elasticnet_vols-2.svg" width="768" /></p>
+</div>
 </div>
 <div id="adaptive-plasticity" class="section level2">
 <h2>Adaptive plasticity</h2>
@@ -4341,6 +4421,8 @@ all.traits.combos %&gt;% group_by(year, water, snow) %&gt;%
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>meta.pca &lt;- #treatments used in selection_pca function 
+  volsmeta.avg[!is.na(rowSums(vols.traits[,colnames(combos$vmn)])),] #match rows in vmn</code></pre>
 </div>
 <div id="fitness-of-overlaps" class="section level2">
 <h2>Fitness of overlaps</h2>
@@ -4557,10 +4639,7 @@ ggplot(bind_cols(combos$vmn, as_tibble(vmn.pca$x)), aes(x=PC1, y=PC2)) +
 <p>Following method of <a href="https://doi.org/10.1002/evl3.63">Chong
 et al. 2018</a> for reconstructing selection estimates from estimates of
 selection on PCs: Beta = E * A.</p>
-<pre class="r"><code>meta.pca &lt;- #treatments used in selection_pca function 
-  volsmeta.avg[!is.na(rowSums(vols.traits[,colnames(combos$vmn)])),] #match rows in vmn
-
-#TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
+<pre class="r"><code>#TODO consider sqrt transformation: https://bcrc.bio.umass.edu/projects/selection_analysis/Main.htm
 vols.PCA &lt;- combos$vmn %&gt;% prcomp_std() #mutate(across(all_of(ipogood.top), sqrt))
 summary(vols.PCA) # PCs 1 - 5 explain 66% of the variation, 18 PCs total (12 volatiles + 6 traits)</code></pre>
 <pre><code>Importance of components:
@@ -4697,7 +4776,7 @@ ggplot(vols.beta.yr.combos, aes(x=combo)) + facet_wrap(vars(fitnesstrait), scale
 <p><img src="images_volatiles2020/moreobs-1.svg" width="960" /></p>
 </div>
 </div>
-<div id="elastic-net" class="section level2">
+<div id="elastic-net-1" class="section level2">
 <h2>Elastic net</h2>
 <pre class="r"><code>library(glmnet)
 trait_en_reg_combined &lt;- function(fitnesstrait, regtraits, en_alpha) {
@@ -4717,51 +4796,90 @@ trait_en_reg_combined &lt;- function(fitnesstrait, regtraits, en_alpha) {
   crossvalidate &lt;- cv.glmnet(x=X, y=Y, alpha = en_alpha)
   #plot(crossvalidate, main=paste(fitnesstrait, &quot;alpha=&quot;, en_alpha))
   best_lambda &lt;- crossvalidate$lambda.min
-
-  selection.on.traits &lt;- glmnet(x=X, y=Y, alpha = en_alpha, lambda = best_lambda) 
-  #the discussion in the selectiveInference help about how to scale lambda is confusing.
-  #running with coef(s = lambda/nrow(Y)) and then fixedlassoInf(lambda = best_lamda) works
-  #but if example lambda=0.8 is unscaled by n, then it should be
-  #coef(s = lambda) and then fixedlassoInf(lambda = best_lamda* nrow(Y)), which gives a polyhedral constraint error
-  coefs &lt;- coef(selection.on.traits, x=X, y=Y, s=best_lambda/nrow(Y), exact=TRUE, alpha=en_alpha)[-1]
-
-  si &lt;- selectiveInference::fixedLassoInf(x=X, y=Y, beta=coefs, lambda=best_lambda) 
   
-  selection.on.traits %&gt;% tidy() %&gt;% rename(B=estimate, trait=term) %&gt;% 
-  left_join(data.frame(trait = names(si$vars), p.value = si$pv,
-                       partial = si$coef0, conf_low = si$ci[,1], conf_high = si$ci[,2]),
-            by=&quot;trait&quot;)
+  en_model &lt;- glmnet(x=X, y=Y, alpha = en_alpha, lambda = best_lambda)
+  selection.on.traits &lt;- en_model %&gt;% tidy() %&gt;% rename(B=estimate, trait=term)
+  
+  if(en_alpha == 1) {  #note fixedLassoInf only works for lasso, not ridge or elastic net!
+    #the discussion in the selectiveInference help about how to scale lambda is confusing.
+    #running with coef(s = lambda/nrow(Y)) and then fixedlassoInf(lambda = best_lamda) works
+    #but if example lambda=0.8 is unscaled by n, then it should be
+    #coef(s = lambda) and then fixedlassoInf(lambda = best_lamda* nrow(Y)), which gives a polyhedral constraint error
+    #See https://stackoverflow.com/questions/68147109/r-how-to-translate-lasso-lambda-values-from-the-cv-glmnet-function-into-the-s
+
+    coefs &lt;- glmnet::coef.glmnet(en_model, x=X, y=Y, s=best_lambda, exact=TRUE, alpha=en_alpha)[-1]
+
+    si &lt;- selectiveInference::fixedLassoInf(x=X, y=Y, beta=coefs, lambda=best_lambda*nrow(Y)) #multiply by sample size to scale
+    selection.on.traits &lt;- selection.on.traits %&gt;%
+      left_join(data.frame(trait = names(si$vars), p.value = si$pv, 
+                           partial = si$coef0, conf_low = si$ci[,1], conf_high = si$ci[,2]), by=&quot;trait&quot;)
+  }
+  selection.on.traits
 }
 enregs.combined &lt;- expand_grid(fitnesstrait=fitnesstraits, en_alpha = seq(0, 1, by=0.25),
                                regtraits = list(c(ipogood.top, floraltraits.pca[-4]))) %&gt;% 
-  mutate(betas = pmap(., trait_en_reg_combined)) %&gt;% 
-  unnest(betas) %&gt;% filter(!trait %in% c(&quot;(Intercept)&quot;, &quot;precip_est_mm&quot;, &quot;sun_date&quot;))
+  mutate(betas = pmap(., trait_en_reg_combined)) %&gt;% select(-regtraits) %&gt;% 
+  unnest(betas) %&gt;% filter(!trait %in% c(&quot;(Intercept)&quot;, &quot;precip_est_mm&quot;, &quot;sun_date&quot;)) %&gt;% 
+  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top)))))
 
-enregs.combined %&gt;% 
-  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
-           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
-  ggplot(aes(y=B,x=en_alpha, color=fitnesstrait)) + facet_wrap(vars(trait)) +
-  geom_hline(yintercept=0) + geom_point()+  geom_path() +
+ggplot(enregs.combined, aes(y=B,x=en_alpha, color=fitnesstrait)) + facet_wrap(vars(trait)) +
+  geom_hline(yintercept=0) + geom_point()+  geom_path() + labs(x=&quot;Elastic net alpha (0 = ridge, 1 = lasso)&quot;) +
+  geom_pointrange(aes(y=partial, ymin=conf_low, ymax=conf_high, shape = p.value &lt; 0.05))+
   scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;)+
-  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames) +
-  theme_bw() + theme(legend.position = &quot;top&quot;) +
-  labs(x=&quot;Elastic net alpha (0 = ridge, 1 = lasso)&quot;)</code></pre>
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames) + theme_bw() + theme(legend.position = &quot;top&quot;) + 
+  coord_cartesian(ylim=c(-0.5,0.5)) </code></pre>
 <p><img src="images_volatiles2020/elasticnet-1.svg" width="960" /></p>
-<pre class="r"><code>enregs.combined %&gt;% filter(en_alpha %in% c(0,0.5, 1)) %&gt;% 
-  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+<pre class="r"><code>enregs.combined %&gt;% filter(en_alpha==0.5) %&gt;% 
+    mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
   ggplot(aes(x=B,y=trait, color=fitnesstrait)) + 
-  facet_wrap(vars(en_alpha)) + 
   geom_vline(xintercept=0)+ 
-  geom_point(position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;))+
- geom_pointrange(aes(x=partial, xmin=conf_low, xmax=conf_high, shape = p.value &lt; 0.05),
-                 position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;))+
-  scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;)+
+  geom_point(position = position_dodge2(width=0.6, reverse=T, preserve = &quot;single&quot;), size=4)+
   scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames)+
-  coord_cartesian(xlim=c(-1,1))+
   theme_bw() + theme(axis.title=element_blank(), legend.position = &quot;top&quot;,
                      panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())</code></pre>
 <p><img src="images_volatiles2020/elasticnet-2.svg" width="960" /></p>
+<pre class="r"><code>bind_rows(combo=enregs.combined, sep=bind_rows(enregs, enregs.vol), .id=&quot;analysis&quot;) %&gt;% 
+  filter(en_alpha==0.5) %&gt;% 
+    mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %&gt;% 
+  ggplot(aes(x=B,y=trait, fill=fitnesstrait, color=fitnesstrait, shape=analysis, group=paste(trait, fitnesstrait))) + 
+  geom_vline(xintercept=0)+ 
+  geom_path(position = position_dodge2(width=0.5, preserve=&quot;single&quot;, reverse=T))+
+  geom_point(position = position_dodge2(width=0.5, preserve=&quot;single&quot;, reverse=T), size=4)+
+  scale_fill_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames, guide=guide_legend(override.aes = list(shape=21)))+
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames)+
+  scale_shape_manual(&quot;Analysis of volatiles and other traits&quot;, values = c(combo=18,sep=21), labels=c(combo=&quot;Combined&quot;, sep=&quot;Separate&quot;), 
+                      guide=guide_legend(override.aes = list(fill=&quot;black&quot;))) + 
+  theme_bw() + theme(axis.title=element_blank(), legend.position = &quot;top&quot;, legend.box = &quot;vertical&quot;,
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())</code></pre>
+<p><img src="images_volatiles2020/elasticnet_separate_combined-1.svg" width="816" /></p>
+<div id="stability" class="section level3">
+<h3>Stability</h3>
+<pre class="r"><code>enregs.combined &lt;- expand_grid(fitnesstrait=fitnesstraits, en_alpha = 1, n=1:10, 
+                               regtraits = list(c(ipogood.top, floraltraits.pca[-4]))) %&gt;% 
+  mutate(betas = pmap(select(.,-n), trait_en_reg_combined)) %&gt;% select(-regtraits) %&gt;% 
+  unnest(betas) %&gt;% filter(!trait %in% c(&quot;(Intercept)&quot;, &quot;precip_est_mm&quot;, &quot;sun_date&quot;)) %&gt;% 
+  mutate(trait = trait %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) 
+
+ggplot(enregs.combined, aes(y=log10(lambda),x=n, color=fitnesstrait)) + facet_wrap(vars(trait)) + 
+  geom_path() + geom_point() + labs(x=&quot;Run number&quot;) +
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames) + theme_bw() + theme(legend.position = &quot;top&quot;) </code></pre>
+<p><img src="images_volatiles2020/elasticnet_stability-1.svg" width="960" /></p>
+<pre class="r"><code>ggplot(enregs.combined, aes(y=B,x=n, color=fitnesstrait)) + facet_wrap(vars(trait)) +
+  geom_hline(yintercept=0) + geom_point()+  geom_path() + labs(x=&quot;Run number&quot;) +
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames) + theme_bw() + theme(legend.position = &quot;top&quot;) </code></pre>
+<p><img src="images_volatiles2020/elasticnet_stability-2.svg" width="960" /></p>
+<pre class="r"><code>ggplot(enregs.combined, aes(y=B,x=n, color=fitnesstrait)) + facet_wrap(vars(trait)) +
+  geom_hline(yintercept=0) + geom_point()+  geom_path() +  labs(x=&quot;Run number&quot;) +
+  geom_pointrange(aes(y=partial, ymin=conf_low, ymax=conf_high, shape = p.value &lt; 0.05))+
+  scale_shape_manual(&quot;P &lt; 0.05&quot;, values=c(1,19), guide=&quot;none&quot;)+
+  scale_color_brewer(&quot;Fitness measure&quot;, palette = &quot;Dark2&quot;, labels = fitnessnames) + theme_bw() + theme(legend.position = &quot;top&quot;) +
+  coord_cartesian(ylim=c(-1,1)) </code></pre>
+<p><img src="images_volatiles2020/elasticnet_stability-3.svg" width="960" /></p>
+</div>
 </div>
 </div>
 
