@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -1893,7 +1893,8 @@ library(ggrepel)
 term_labels <- c(trait="Selection on trait (\U03B2)",
                  `trait:precip_est_mm`="Selection x summer precipitation (\U03B2 / mm)",
                  `trait:sun_date`="Selection x snowmelt date (\U03B2 / day)",
-                 PCA="Direct selection on trait (\U03B2)")
+                 PCA="Direct selection on trait (\U03B2)",
+                 en = "Elastic net selection (\U03B2)")
 ggplot(mod.selection.tests, aes(x=factor(response, levels=sort(fitnesstraits)), y=estimate, label=greekify(trait))) + 
   facet_wrap(vars(term), labeller = as_labeller(term_labels), scales="free_y", ncol=1) + theme_bw() +
   geom_point(aes(size=replace_na(mean.floral, 1),  #default size for non-vol traits
@@ -2215,9 +2216,7 @@ trait_en_reg_combined <- function(fitnesstrait, regtraits, en_alpha) {
 enregs.combined <- expand_grid(fitnesstrait=fitnesstraits, en_alpha = seq(0, 1, by=0.25),
                                regtraits = list(c(ipogood.top, floraltraits.pca[-4]))) %>% 
   mutate(betas = pmap(., trait_en_reg_combined)) %>% select(-regtraits) %>% 
-  unnest(betas) %>% filter(!trait %in% c("(Intercept)", "precip_est_mm", "sun_date")) %>% 
-  mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
-           factor(levels = rev(c(traitnames, greekify(ipogood.top)))))
+  unnest(betas) %>% filter(!trait %in% c("(Intercept)", "precip_est_mm", "sun_date"))
 
 ggplot(enregs.combined, aes(y=B,x=en_alpha, color=fitnesstrait)) + facet_wrap(vars(trait)) +
   geom_hline(yintercept=0) + geom_point()+  geom_path() + labs(x="Elastic net alpha (0 = ridge, 1 = lasso)") +
@@ -2253,6 +2252,34 @@ bind_rows(combo=enregs.combined, sep=bind_rows(enregs, enregs.vol), .id="analysi
   theme_bw() + theme(axis.title=element_blank(), legend.position = "top", legend.box = "vertical",
                      panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
 ```
+
+```{r elasticnet_abs, fig.width=11, fig.height=7}
+mod.selection.tests.drop %>% 
+  complete(response, trait, term) %>% # make dodging consistent 
+  #add similar PCA model (no interactions between trait and environment though)
+  bind_rows(bind_rows(separate = bind_rows(enregs, enregs.vol),
+                      combined = enregs.combined, .id="analysis") %>% 
+               mutate(term="en") %>% filter(en_alpha==0.5) %>% 
+              rename(estimate=B, response=fitnesstrait)) %>% 
+  filter(trait %in% c(ipogood.top, floraltraits)) %>% 
+  mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
+           factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
+  ggplot(aes(x=estimate,y=trait, color=response, 
+             shape=if_else(!is.na(analysis), analysis, as.character(p.value < 0.05)), 
+             xmin=estimate-std.error, xmax=estimate+std.error)) + 
+  facet_grid(cols=vars(term), labeller = as_labeller(term_labels), scales="free_x") + 
+  geom_vline(xintercept=0)+ 
+  geom_path(aes(group=paste(response, trait)), 
+            position=position_dodge2(width=0.6, reverse=T, preserve = "single"))+
+  geom_pointrange(position = position_dodge2(width=0.6, reverse=T, preserve = "single"))+
+  scale_color_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames)+
+  scale_shape_manual(values=c(`FALSE`=1,`TRUE`=19, separate=19, combined=18), 
+                     na.value=19, guide="none")+ 
+  scale_x_continuous(expand = expansion(mult=c(0.02,0.02)))+
+  theme_bw() + theme(axis.title=element_blank(), legend.position = "top",
+                     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
+```
+
 
 ### Stability
 
