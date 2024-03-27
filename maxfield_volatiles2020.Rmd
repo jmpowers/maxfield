@@ -1711,7 +1711,8 @@ calculate_all_indiv <- function(trts) {
     filter(!is.na(model)) %>% #some combinations with zero rows
     mutate(n = map_int(model, ~nrow(model.frame(.x))),
            coefs = map(model, tidy)) %>% 
-    select(-model) %>% unnest(coefs) %>% filter(term=="trait")
+    select(-model) %>% unnest(coefs) %>% filter(term=="trait") %>% 
+    rename(fitnesstrait=response, B=estimate, SE=std.error)
 }
 
 indiv.beta.water <- expand_grid(response=fitnesstraits,  trait = c(ipogood, floraltraits),
@@ -1723,8 +1724,8 @@ indiv.beta.snow <- expand_grid(response=fitnesstraits,  trait = c(ipogood, flora
 ```{r indiv_selection_heatmap, fig.width=10}
 indiv.beta.snow %>% left_join(ipochemsf, by=c("trait"="name")) %>% 
         mutate(trait = recode(trait, !!!traitnames) %>% fct_reorder(replace_na(mean.floral,1000))) %>% 
-ggplot(aes(y=trait, x = paste0(year,"\n", snow), fill=estimate)) + 
-  facet_wrap(vars(response), nrow = 1, labeller = as_labeller(fitnessnames)) + 
+ggplot(aes(y=trait, x = paste0(year,"\n", snow), fill=B)) + 
+  facet_wrap(vars(fitnesstrait), nrow = 1, labeller = as_labeller(fitnessnames)) + 
   geom_tile() + geom_point(aes(alpha = p.value < 0.05)) + labs(x="",y="", fill="Selection") + 
   scale_fill_gradient2(midpoint=0)+ scale_alpha_discrete(range=c(0,1), guide="none") + theme_minimal()
 ```
@@ -1753,8 +1754,8 @@ adaptive.plasticity.data <-
   group_by(multiplecomps, name, year) %>% #two comparisons to Control made within each volatile and year 
   mutate(plasticity.p.value = ifelse(multiplecomps, p.adjust(p.value, method="fdr"), p.value)) %>% 
   ungroup %>% select(year, name, newenv, plasticity.p.value, difference, estimate, std.error) %>% 
-  left_join(bind_rows(rename(all.beta.water, newenv=water),
-                    rename(all.beta.snow, newenv=snow)) %>% 
+  left_join(bind_rows(rename(indiv.beta.water, newenv=water), #was all.beta.water for the PCA analysis
+                    rename(indiv.beta.snow, newenv=snow)) %>% 
             filter(fitnesstrait!="eggs_per_flower") %>% 
   rename(name=trait)) %>% left_join(ipochemsf %>% select(-starts_with("area"))) %>% 
   mutate(class = fct_na_value_to_level(class, "Other trait"))
@@ -1830,7 +1831,7 @@ plasticity.cohens.d %>%
 ```
 
 ```{r adaptive_quadrants}
-adaptive.plasticity.data %>% 
+adaptive.plasticity.data %>%
   mutate(adaptive = sign(B) == sign(estimate)) %>% filter(newenv !="R_A") %>% 
   group_by(newenv, fitnesstrait) %>% summarize(adaptive=sum(adaptive), n=n(), .groups="drop") %>% 
   mutate(prop = adaptive/n,

@@ -3463,11 +3463,10 @@ plot_beta_en(en.beta.water.allyrs, colorby=&quot;water&quot;)</code></pre>
                                      year=names(year_pal), water=names(water_pal), snow=names(snow_pal)) {
   if(trait %in% ipogood) data &lt;- vols.traits 
   else data &lt;- mnps.plantyr %&gt;% mutate(prop_uninfested = 1 - prop_infested)
-  std.traits &lt;- data %&gt;% 
-    select(all_of(c(response, trait)), year, water, snow) %&gt;% 
-    rename(&quot;trait&quot; = all_of(trait), &quot;response&quot; = all_of(response)) %&gt;% 
+  std.traits &lt;- data[, c(response, trait, &quot;year&quot;,&quot;water&quot;,&quot;snow&quot;)] %&gt;% 
+    set_names(c(&quot;response&quot;,&quot;trait&quot;,&quot;year&quot;,&quot;water&quot;,&quot;snow&quot;)) %&gt;% 
     filter(year %in% .env$year, water %in% .env$water, snow %in% .env$snow) %&gt;% 
-    filter(!is.infinite(response), !is.nan(response), !is.na(response)) %&gt;% drop_na(trait) %&gt;% 
+    filter(!is.infinite(response), !is.nan(response), !is.na(response), !is.na(trait)) %&gt;% 
     mutate(trait = (trait-mean(trait))/sd(trait), response = response/mean(response)) 
   options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
   if(nrow(std.traits) == 0) return(NA)
@@ -3478,20 +3477,21 @@ calculate_all_indiv &lt;- function(trts) {
     filter(!is.na(model)) %&gt;% #some combinations with zero rows
     mutate(n = map_int(model, ~nrow(model.frame(.x))),
            coefs = map(model, tidy)) %&gt;% 
-    select(-model) %&gt;% unnest(coefs) %&gt;% filter(term==&quot;trait&quot;)
+    select(-model) %&gt;% unnest(coefs) %&gt;% filter(term==&quot;trait&quot;) %&gt;% 
+    rename(fitnesstrait=response, B=estimate, SE=std.error)
 }
 
 indiv.beta.water &lt;- expand_grid(response=fitnesstraits,  trait = c(ipogood, floraltraits),
                                 year=names(year_pal), water=names(water_pal)) %&gt;% calculate_all_indiv()
 indiv.beta.snow &lt;- expand_grid(response=fitnesstraits,  trait = c(ipogood, floraltraits),
                                 year=names(year_pal), snow=names(snow_pal)) %&gt;% calculate_all_indiv()</code></pre>
-<pre class="r"><code>indiv.beta.water %&gt;% left_join(ipochemsf, by=c(&quot;trait&quot;=&quot;name&quot;)) %&gt;% 
+<pre class="r"><code>indiv.beta.snow %&gt;% left_join(ipochemsf, by=c(&quot;trait&quot;=&quot;name&quot;)) %&gt;% 
         mutate(trait = recode(trait, !!!traitnames) %&gt;% fct_reorder(replace_na(mean.floral,1000))) %&gt;% 
-ggplot(aes(y=trait, x = paste0(year,&quot;\n&quot;, water), fill=estimate)) + 
-  facet_wrap(vars(response), nrow = 1, labeller = as_labeller(fitnessnames)) + 
+ggplot(aes(y=trait, x = paste0(year,&quot;\n&quot;, snow), fill=B)) + 
+  facet_wrap(vars(fitnesstrait), nrow = 1, labeller = as_labeller(fitnessnames)) + 
   geom_tile() + geom_point(aes(alpha = p.value &lt; 0.05)) + labs(x=&quot;&quot;,y=&quot;&quot;, fill=&quot;Selection&quot;) + 
   scale_fill_gradient2(midpoint=0)+ scale_alpha_discrete(range=c(0,1), guide=&quot;none&quot;) + theme_minimal()</code></pre>
-<p><img src="images_volatiles2020/indiv_selection_heatmap-1.svg" width="768" /></p>
+<p><img src="images_volatiles2020/indiv_selection_heatmap-1.svg" width="960" /></p>
 <div id="selection-gradient-vs.-plasticity" class="section level3">
 <h3>Selection gradient vs. plasticity</h3>
 <pre class="r"><code>adaptive.plasticity.data &lt;- 
@@ -3514,8 +3514,8 @@ ggplot(aes(y=trait, x = paste0(year,&quot;\n&quot;, water), fill=estimate)) +
   group_by(multiplecomps, name, year) %&gt;% #two comparisons to Control made within each volatile and year 
   mutate(plasticity.p.value = ifelse(multiplecomps, p.adjust(p.value, method=&quot;fdr&quot;), p.value)) %&gt;% 
   ungroup %&gt;% select(year, name, newenv, plasticity.p.value, difference, estimate, std.error) %&gt;% 
-  left_join(bind_rows(rename(all.beta.water, newenv=water),
-                    rename(all.beta.snow, newenv=snow)) %&gt;% 
+  left_join(bind_rows(rename(indiv.beta.water, newenv=water), #was all.beta.water for the PCA analysis
+                    rename(indiv.beta.snow, newenv=snow)) %&gt;% 
             filter(fitnesstrait!=&quot;eggs_per_flower&quot;) %&gt;% 
   rename(name=trait)) %&gt;% left_join(ipochemsf %&gt;% select(-starts_with(&quot;area&quot;))) %&gt;% 
   mutate(class = fct_na_value_to_level(class, &quot;Other trait&quot;))
@@ -3551,13 +3551,12 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
             theme_bw() + theme(axis.text = element_text(size=7)))})</code></pre>
 <p><img src="images_volatiles2020/adaptive-1.svg" width="672" /><img src="images_volatiles2020/adaptive-2.svg" width="672" /><img src="images_volatiles2020/adaptive-3.svg" width="672" /></p>
 <pre class="r"><code>adaptive.plasticity.data %&gt;% filter(newenv != &quot;R_A&quot;) %&gt;% count(p.value &lt; 0.05, plasticity.p.value &lt; 0.05)</code></pre>
-<pre><code># A tibble: 4 × 3
+<pre><code># A tibble: 3 × 3
   `p.value &lt; 0.05` `plasticity.p.value &lt; 0.05`     n
   &lt;lgl&gt;            &lt;lgl&gt;                       &lt;int&gt;
-1 FALSE            FALSE                         427
-2 FALSE            TRUE                           41
-3 TRUE             FALSE                          35
-4 TRUE             TRUE                            1</code></pre>
+1 FALSE            FALSE                         418
+2 FALSE            TRUE                           42
+3 TRUE             FALSE                          44</code></pre>
 <pre class="r"><code>ggplot(adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
          mutate(name = name %&gt;% greekify() %&gt;% recode(!!!traitnames) %&gt;% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))),
@@ -3693,7 +3692,7 @@ traits</caption>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>adaptive.plasticity.data %&gt;% 
+<pre class="r"><code>adaptive.plasticity.data %&gt;%
   mutate(adaptive = sign(B) == sign(estimate)) %&gt;% filter(newenv !=&quot;R_A&quot;) %&gt;% 
   group_by(newenv, fitnesstrait) %&gt;% summarize(adaptive=sum(adaptive), n=n(), .groups=&quot;drop&quot;) %&gt;% 
   mutate(prop = adaptive/n,
@@ -3726,26 +3725,26 @@ is adaptive across 3 yr</caption>
 <tr class="even">
 <td align="left">Addition</td>
 <td align="left">Total seeds</td>
-<td align="right">24</td>
+<td align="right">28</td>
 <td align="right">56</td>
-<td align="right">0.43</td>
-<td align="right">0.35</td>
+<td align="right">0.50</td>
+<td align="right">1.00</td>
 </tr>
 <tr class="odd">
 <td align="left">Addition</td>
 <td align="left">Seeds initiated per flower</td>
-<td align="right">30</td>
+<td align="right">25</td>
 <td align="right">56</td>
-<td align="right">0.54</td>
-<td align="right">0.69</td>
+<td align="right">0.45</td>
+<td align="right">0.50</td>
 </tr>
 <tr class="even">
 <td align="left">Early</td>
 <td align="left">Prop. uneaten fruits</td>
-<td align="right">24</td>
+<td align="right">27</td>
 <td align="right">56</td>
-<td align="right">0.43</td>
-<td align="right">0.35</td>
+<td align="right">0.48</td>
+<td align="right">0.89</td>
 </tr>
 <tr class="odd">
 <td align="left">Early</td>
@@ -3758,33 +3757,33 @@ is adaptive across 3 yr</caption>
 <tr class="even">
 <td align="left">Early</td>
 <td align="left">Seeds initiated per flower</td>
-<td align="right">25</td>
+<td align="right">24</td>
 <td align="right">56</td>
-<td align="right">0.45</td>
-<td align="right">0.50</td>
+<td align="right">0.43</td>
+<td align="right">0.35</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
 <td align="left">Prop. uneaten fruits</td>
-<td align="right">26</td>
+<td align="right">31</td>
 <td align="right">56</td>
-<td align="right">0.46</td>
-<td align="right">0.69</td>
+<td align="right">0.55</td>
+<td align="right">0.50</td>
 </tr>
 <tr class="even">
 <td align="left">Reduction</td>
 <td align="left">Total seeds</td>
-<td align="right">29</td>
+<td align="right">32</td>
 <td align="right">56</td>
-<td align="right">0.52</td>
-<td align="right">0.89</td>
+<td align="right">0.57</td>
+<td align="right">0.35</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
 <td align="left">Seeds initiated per flower</td>
-<td align="right">30</td>
+<td align="right">26</td>
 <td align="right">56</td>
-<td align="right">0.54</td>
+<td align="right">0.46</td>
 <td align="right">0.69</td>
 </tr>
 </tbody>
