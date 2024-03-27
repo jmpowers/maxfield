@@ -10,7 +10,7 @@ output:
     toc: yes
     toc_float: TRUE
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 <style type="text/css">
 .main-container { max-width: 1000px; margin-left: 0; margin-right: auto; }
@@ -1585,8 +1585,10 @@ simplebeta.pca
 
 ```{r elasticnet_morph}
 library(glmnet)
-trait_en_reg <- function(fitnesstrait, regtraits, en_alpha) {
-    std.traits <- meta.pca.nosepal %>% 
+trait_en_reg <- function(fitnesstrait, regtraits, en_alpha, data,
+                         year=names(year_pal), water=names(water_pal), snow=names(snow_pal)) {
+  std.traits <- data %>% 
+    filter(year %in% .env$year, water %in% .env$water, snow %in% .env$snow) %>% 
     mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %>%  #center and scale traits
     select(-any_of(fitnesstrait)) %>% 
     left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
@@ -1597,15 +1599,19 @@ trait_en_reg <- function(fitnesstrait, regtraits, en_alpha) {
     select(where(~sum(is.na(.))==0))
   
   Y = std.traits %>% select(relfitness) %>% as.matrix()
-  X = std.traits %>% select(all_of(c(regtraits, "precip_est_mm", "sun_date"))) %>% as.matrix()
+  if(length(year)+length(water)+length(snow)==8) {
+    X = std.traits %>% select(all_of(c(regtraits, "precip_est_mm", "sun_date"))) %>% as.matrix()
+  } else {
+    X = std.traits %>% select(all_of(regtraits)) %>% as.matrix()
+  }
   crossvalidate <- cv.glmnet(x=X, y=Y, alpha = en_alpha)
   best_lambda <- crossvalidate$lambda.min
   glmnet(x=X, y=Y, alpha = en_alpha, lambda = best_lambda) %>% tidy() %>% rename(B=estimate, trait=term)
 }
 
 enregs <- expand_grid(fitnesstrait=fitnesstraits, en_alpha = seq(0, 1, by=0.25),
-                               regtraits = list(c(floraltraits.pca[-4]))) %>% 
-  mutate(betas = pmap(., trait_en_reg)) %>% select(-regtraits) %>% 
+                               regtraits = list(c(floraltraits.pca[-4])), data=list(meta.pca.nosepal)) %>% 
+  mutate(betas = pmap(., trait_en_reg)) %>% select(-regtraits, -data) %>% 
   unnest(betas) %>% filter(!trait %in% c("(Intercept)", "precip_est_mm", "sun_date")) 
 
 ggplot(enregs, aes(y=B,x=en_alpha, color=fitnesstrait)) + facet_wrap(vars(trait)) +
@@ -1625,29 +1631,9 @@ enregs %>% filter(en_alpha==0.5) %>%
 ```
 
 ```{r elasticnet_vols}
-library(glmnet)
-vol_en_reg <- function(fitnesstrait, regtraits, en_alpha) {
-  std.traits <- bind_cols(volsmeta.avg, vols.good.top) %>% 
-    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %>%  #center and scale traits
-    select(-any_of(fitnesstrait)) %>% 
-    left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
-    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %>% 
-    rename("fitness" = all_of(fitnesstrait)) %>% 
-    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% #relative fitness across years
-    drop_na(relfitness) %>% 
-    select(where(~sum(is.na(.))==0))# %>% 
-    #rename_with(~str_remove_all(.x, "[\\s\\-\\(\\)23]"))
-  
-  Y = std.traits %>% select(relfitness) %>% as.matrix()
-  X = std.traits %>% select(all_of(c(regtraits, "precip_est_mm", "sun_date"))) %>% as.matrix()
-  crossvalidate <- cv.glmnet(x=X, y=Y, alpha = en_alpha)
-  best_lambda <- crossvalidate$lambda.min
-  glmnet(x=X, y=Y, alpha = en_alpha, lambda = best_lambda) %>% tidy() %>% rename(B=estimate, trait=term)
-}
-
 enregs.vol <- expand_grid(fitnesstrait=fitnesstraits, en_alpha = seq(0, 1, by=0.25),
-                               regtraits = list(c(ipogood.top))) %>% 
-  mutate(betas = pmap(., vol_en_reg)) %>% select(-regtraits) %>% 
+                               regtraits = list(c(ipogood.top)), data = list(bind_cols(volsmeta.avg, vols.good.top))) %>% 
+  mutate(betas = pmap(., trait_en_reg)) %>% select(-regtraits, -data) %>% 
   unnest(betas) %>% filter(!trait %in% c("(Intercept)", "precip_est_mm", "sun_date")) %>% 
   mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) 
@@ -1666,7 +1652,83 @@ enregs.vol %>% filter(en_alpha==0.5) %>%
 
 ```
 
+```{r elasticnet_treatments}
+calculate_all_gradients_nosepal_en <- function(trts) { 
+  mutate(trts,  data = list(bind_cols(volsmeta.avg, vols.good.top)), regtraits = list(ipogood.top)) %>% 
+  bind_rows(mutate(trts, data = list(meta.pca.nosepal), regtraits = list(c(floraltraits.pca[-4])))) %>% 
+  mutate(en_alpha=0.5) %>% 
+  mutate(betas = pmap(., trait_en_reg)) %>% select(-regtraits) %>% unnest(betas)
+}
+
+en.beta.water <- expand_grid(fitnesstrait=fitnesstraits, year=names(year_pal), water=names(water_pal)) %>%
+  calculate_all_gradients_nosepal_en()
+en.beta.snow <- expand_grid(fitnesstrait=fitnesstraits, year=names(year_pal), snow=names(snow_pal)) %>%
+  calculate_all_gradients_nosepal_en()
+
+en.beta.water.allyrs <- expand_grid(fitnesstrait=fitnesstraits, water=names(water_pal)) %>% mutate(year=list(names(year_pal))) %>%
+  calculate_all_gradients_nosepal_en()
+en.beta.snow.allyrs <- expand_grid(fitnesstrait=fitnesstraits, snow=names(snow_pal)) %>% mutate(year=list(names(year_pal))) %>%
+  calculate_all_gradients_nosepal_en()
+
+plot_beta_en <- function(betas, colorby) {
+  betas %>% left_join(ipochemsf, by=c("trait"="name")) %>% 
+    mutate(trait = recode(trait, !!!traitnames) %>%  greekify() %>% 
+             fct_reorder(replace_na(mean.floral,1000))) %>%  #order graph by mean emissions
+    filter(trait != "(Intercept)") %>% 
+    ggplot(aes(y=trait, x = B)) + 
+    facet_wrap(vars(fitnesstrait), nrow=1, labeller=as_labeller(fitnessnames))+
+    geom_vline(xintercept=0)+ 
+    geom_point(aes_string(color=colorby), position=position_dodge(width=0.5)) + 
+    labs(x = "Selection gradient (beta)", y = "Trait",
+         color=list(year="Year", water="Precipitation", snow="Snowmelt", 
+                    water_snow = "Precipitation and snowmelt")[[colorby]]) +
+    scale_color_manual(values=list(year=year_pal, water=water_pal, snow=snow_pal)[[colorby]]) +
+    theme_bw() 
+}
+plot_beta_en(en.beta.water.allyrs, colorby="water")
+plot_beta_en(en.beta.snow.allyrs, colorby="snow")
+```
+
+
 ## Adaptive plasticity
+
+```{r indiv_selection_treatments}
+selection_mod_treatments <- function(response, trait, 
+                                     year=names(year_pal), water=names(water_pal), snow=names(snow_pal)) {
+  if(trait %in% ipogood) data <- vols.traits 
+  else data <- mnps.plantyr %>% mutate(prop_uninfested = 1 - prop_infested)
+  std.traits <- data[, c(response, trait, "year","water","snow")] %>% 
+    set_names(c("response","trait","year","water","snow")) %>% 
+    filter(year %in% .env$year, water %in% .env$water, snow %in% .env$snow) %>% 
+    filter(!is.infinite(response), !is.nan(response), !is.na(response), !is.na(trait)) %>% 
+    mutate(trait = (trait-mean(trait))/sd(trait), response = response/mean(response)) 
+  options(contrasts = c("contr.sum", "contr.poly"))
+  if(nrow(std.traits) == 0) return(NA)
+  else return(lm(response ~ trait, data = std.traits))
+}
+calculate_all_indiv <- function(trts) { 
+  trts %>% mutate(model = pmap(., selection_mod_treatments)) %>%
+    filter(!is.na(model)) %>% #some combinations with zero rows
+    mutate(n = map_int(model, ~nrow(model.frame(.x))),
+           coefs = map(model, tidy)) %>% 
+    select(-model) %>% unnest(coefs) %>% filter(term=="trait")
+}
+
+indiv.beta.water <- expand_grid(response=fitnesstraits,  trait = c(ipogood, floraltraits),
+                                year=names(year_pal), water=names(water_pal)) %>% calculate_all_indiv()
+indiv.beta.snow <- expand_grid(response=fitnesstraits,  trait = c(ipogood, floraltraits),
+                                year=names(year_pal), snow=names(snow_pal)) %>% calculate_all_indiv()
+```
+
+```{r indiv_selection_heatmap, fig.width=10}
+indiv.beta.snow %>% left_join(ipochemsf, by=c("trait"="name")) %>% 
+        mutate(trait = recode(trait, !!!traitnames) %>% fct_reorder(replace_na(mean.floral,1000))) %>% 
+ggplot(aes(y=trait, x = paste0(year,"\n", snow), fill=estimate)) + 
+  facet_wrap(vars(response), nrow = 1, labeller = as_labeller(fitnessnames)) + 
+  geom_tile() + geom_point(aes(alpha = p.value < 0.05)) + labs(x="",y="", fill="Selection") + 
+  scale_fill_gradient2(midpoint=0)+ scale_alpha_discrete(range=c(0,1), guide="none") + theme_minimal()
+```
+
 
 ### Selection gradient vs. plasticity
 
@@ -2242,7 +2304,7 @@ bind_rows(combo=enregs.combined, sep=bind_rows(enregs, enregs.vol), .id="analysi
     mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
   ggplot(aes(x=B,y=trait, fill=fitnesstrait, color=fitnesstrait, shape=analysis, group=paste(trait, fitnesstrait))) + 
-  geom_vline(xintercept=0)+ 
+  geom_vline(xintercept=c(-0.05, 0, 0.05), linetype=c(2,1,2))+ 
   geom_path(position = position_dodge2(width=0.5, preserve="single", reverse=T))+
   geom_point(position = position_dodge2(width=0.5, preserve="single", reverse=T), size=4)+
   scale_fill_brewer("Fitness measure", palette = "Dark2", labels = fitnessnames, guide=guide_legend(override.aes = list(shape=21)))+
