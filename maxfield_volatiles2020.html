@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-03-28" />
+<meta name="date" content="2024-03-29" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-03-28</h4>
+<h4 class="date">2024-03-29</h4>
 
 </div>
 
@@ -3577,7 +3577,7 @@ adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;%
   scale_shape_manual(values=c(1,19))</code></pre>
 <p><img src="images_volatiles2020/adaptive-4.svg" width="672" /></p>
 <pre class="r"><code>#log2 fold change
-adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
+plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
   mutate(traitgroup = if_else(name %in% ipogood.top, &quot;volatile&quot;, &quot;other&quot;)) %&gt;% 
   group_by(newenv, traitgroup) %&gt;% 
   summarize(absolute_foldchange = mean(abs(log2(estimate+1))),
@@ -3617,7 +3617,7 @@ traits</caption>
 <td align="left">Early</td>
 <td align="left">volatile</td>
 <td align="right">0.29</td>
-<td align="right">0.25</td>
+<td align="right">0.26</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
@@ -3629,13 +3629,13 @@ traits</caption>
 <td align="left">Reduction</td>
 <td align="left">volatile</td>
 <td align="right">0.45</td>
-<td align="right">0.46</td>
+<td align="right">0.47</td>
 </tr>
 </tbody>
 </table>
 <pre class="r"><code>#Cohen&#39;s d
 vols.sd &lt;- map_dbl(ipogood, ~sd(vols.good[[.x]])) %&gt;% set_names(ipogood)
-plasticity.cohens.d &lt;-adaptive.plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
+plasticity.cohens.d &lt;- plasticity.data %&gt;% filter(newenv!=&quot;R_A&quot;) %&gt;% 
   left_join(enframe(c(vols.sd, alltraits.sd), value=&quot;trait.sd&quot;)) %&gt;% 
   mutate(cohens.d = difference / trait.sd) %&gt;% 
   mutate(traitgroup = if_else(name %in% ipogood.top, &quot;volatile&quot;, &quot;other&quot;)) 
@@ -3646,11 +3646,13 @@ ggplot(plasticity.cohens.d, aes(x=traitgroup, y=cohens.d, color=year)) +
   scale_color_manual(values=year_pal) + theme_bw() +
   labs(x=&quot;Type of trait&quot;, y=&quot;Effect size (Cohen&#39;s d)&quot;, color=&quot;Year&quot;)</code></pre>
 <p><img src="images_volatiles2020/adaptive-5.svg" width="672" /></p>
-<pre class="r"><code>plasticity.cohens.d %&gt;% 
+<pre class="r"><code>plasticity.cohens.d.summary &lt;- plasticity.cohens.d %&gt;% 
   group_by(newenv, traitgroup) %&gt;% 
   summarize(absolute_cohen = mean(abs(cohens.d)),
-            sd = sd(abs(cohens.d))) %&gt;% 
-  kable(caption = &quot;Mean absolute Cohen&#39;s d for volatiles and other traits&quot;, digits=2)</code></pre>
+            sd = sd(abs(cohens.d)),
+            se = sd/sqrt(n()),
+            n = n()) 
+kable(plasticity.cohens.d.summary, caption = &quot;Mean absolute Cohen&#39;s d for volatiles and other traits&quot;, digits=2)</code></pre>
 <table>
 <caption>Mean absolute Cohen’s d for volatiles and other
 traits</caption>
@@ -3660,6 +3662,8 @@ traits</caption>
 <th align="left">traitgroup</th>
 <th align="right">absolute_cohen</th>
 <th align="right">sd</th>
+<th align="right">se</th>
+<th align="right">n</th>
 </tr>
 </thead>
 <tbody>
@@ -3668,36 +3672,81 @@ traits</caption>
 <td align="left">other</td>
 <td align="right">0.27</td>
 <td align="right">0.16</td>
+<td align="right">0.04</td>
+<td align="right">20</td>
 </tr>
 <tr class="even">
 <td align="left">Addition</td>
 <td align="left">volatile</td>
 <td align="right">0.12</td>
 <td align="right">0.09</td>
+<td align="right">0.02</td>
+<td align="right">36</td>
 </tr>
 <tr class="odd">
 <td align="left">Early</td>
 <td align="left">other</td>
 <td align="right">0.12</td>
-<td align="right">0.15</td>
+<td align="right">0.16</td>
+<td align="right">0.04</td>
+<td align="right">20</td>
 </tr>
 <tr class="even">
 <td align="left">Early</td>
 <td align="left">volatile</td>
 <td align="right">0.13</td>
 <td align="right">0.13</td>
+<td align="right">0.02</td>
+<td align="right">36</td>
 </tr>
 <tr class="odd">
 <td align="left">Reduction</td>
 <td align="left">other</td>
 <td align="right">0.20</td>
 <td align="right">0.20</td>
+<td align="right">0.04</td>
+<td align="right">20</td>
 </tr>
 <tr class="even">
 <td align="left">Reduction</td>
 <td align="left">volatile</td>
 <td align="right">0.19</td>
 <td align="right">0.17</td>
+<td align="right">0.03</td>
+<td align="right">36</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>plasticity.cohens.d.summary %&gt;% select(-sd, -n) %&gt;% 
+  pivot_wider(names_from=traitgroup, values_from = c(absolute_cohen, se)) %&gt;% 
+  mutate(z = (absolute_cohen_other - absolute_cohen_volatile)/sqrt(se_other^2 + se_volatile^2),
+         p.value = pnorm(abs(z), mean = 0, sd = 1, lower.tail = FALSE)*2, .keep = &quot;unused&quot;) %&gt;% #two-tailed z test 
+  kable(caption = &quot;Z test of difference in absolute Cohen&#39;s d for volatiles and other traits&quot;)</code></pre>
+<table>
+<caption>Z test of difference in absolute Cohen’s d for volatiles and
+other traits</caption>
+<thead>
+<tr class="header">
+<th align="left">newenv</th>
+<th align="right">z</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Addition</td>
+<td align="right">3.8152</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="even">
+<td align="left">Early</td>
+<td align="right">-0.2903</td>
+<td align="right">0.7716</td>
+</tr>
+<tr class="odd">
+<td align="left">Reduction</td>
+<td align="right">0.2988</td>
+<td align="right">0.7651</td>
 </tr>
 </tbody>
 </table>

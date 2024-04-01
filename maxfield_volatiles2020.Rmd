@@ -1812,7 +1812,7 @@ ggplot(adaptive.plasticity.data %>% filter(newenv!="R_A") %>%
   scale_shape_manual(values=c(1,19))
 
 #log2 fold change
-adaptive.plasticity.data %>% filter(newenv!="R_A") %>% 
+plasticity.data %>% filter(newenv!="R_A") %>% 
   mutate(traitgroup = if_else(name %in% ipogood.top, "volatile", "other")) %>% 
   group_by(newenv, traitgroup) %>% 
   summarize(absolute_foldchange = mean(abs(log2(estimate+1))),
@@ -1821,7 +1821,7 @@ adaptive.plasticity.data %>% filter(newenv!="R_A") %>%
 
 #Cohen's d
 vols.sd <- map_dbl(ipogood, ~sd(vols.good[[.x]])) %>% set_names(ipogood)
-plasticity.cohens.d <-adaptive.plasticity.data %>% filter(newenv!="R_A") %>% 
+plasticity.cohens.d <- plasticity.data %>% filter(newenv!="R_A") %>% 
   left_join(enframe(c(vols.sd, alltraits.sd), value="trait.sd")) %>% 
   mutate(cohens.d = difference / trait.sd) %>% 
   mutate(traitgroup = if_else(name %in% ipogood.top, "volatile", "other")) 
@@ -1832,11 +1832,18 @@ ggplot(plasticity.cohens.d, aes(x=traitgroup, y=cohens.d, color=year)) +
   scale_color_manual(values=year_pal) + theme_bw() +
   labs(x="Type of trait", y="Effect size (Cohen's d)", color="Year")
 
-plasticity.cohens.d %>% 
+plasticity.cohens.d.summary <- plasticity.cohens.d %>% 
   group_by(newenv, traitgroup) %>% 
   summarize(absolute_cohen = mean(abs(cohens.d)),
-            sd = sd(abs(cohens.d))) %>% 
-  kable(caption = "Mean absolute Cohen's d for volatiles and other traits", digits=2)
+            sd = sd(abs(cohens.d)),
+            se = sd/sqrt(n()),
+            n = n()) 
+kable(plasticity.cohens.d.summary, caption = "Mean absolute Cohen's d for volatiles and other traits", digits=2)
+plasticity.cohens.d.summary %>% select(-sd, -n) %>% 
+  pivot_wider(names_from=traitgroup, values_from = c(absolute_cohen, se)) %>% 
+  mutate(z = (absolute_cohen_other - absolute_cohen_volatile)/sqrt(se_other^2 + se_volatile^2),
+         p.value = pnorm(abs(z), mean = 0, sd = 1, lower.tail = FALSE)*2, .keep = "unused") %>% #two-tailed z test 
+  kable(caption = "Z test of difference in absolute Cohen's d for volatiles and other traits")
 ```
 
 ```{r adaptive_quadrants}
