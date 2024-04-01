@@ -238,7 +238,8 @@ chemsf <- chems %>%
   combine_filters() 
 
 #see below for add_quant1 and add_quant2 to generate this list
-add_quant2 <- c("(4E,6Z)-alloocimene", "methyl benzoate", "2-methylbenzonitrile", "(Z)-b-ocimene", "(2E)-2,7-dimethylocta-2,6-dien-1-ol", "cis-a-bergamotene", "g-terpinene", "trans-b-bergamotene", "(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene", "pseudoionone")
+# removed (2E)-2,7-dimethylocta-2,6-dien-1-ol - quant integration that coelutes with b-myrcene
+add_quant2 <- c("(4E,6Z)-alloocimene", "methyl benzoate", "2-methylbenzonitrile", "(Z)-b-ocimene", "cis-a-bergamotene", "g-terpinene", "trans-b-bergamotene", "(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene", "pseudoionone")
 
 chemsf$filter_final <- with(chemsf, filter_RT=="OK" & filter_match=="OK" & 
                               filter_freq.floral=="OK" & filter_contaminant=="OK" |
@@ -990,7 +991,7 @@ ggplot(mapping=aes(x=CAP1, y=CAP2, label=greekify(Label))) +
               mutate(Label=c("Snowmelt", "Precipitation")),
             aes(x=CAP1*2, y=CAP2*2, angle=atan(CAP2/CAP1)*180/pi), hjust=c(0,1), fontface="bold") +
   geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5) %>% 
-              mutate(nudge = c(0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0)),
+              mutate(nudge = c(0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0)),
             aes(x=CAP1*3, y=CAP2*3+nudge*0.1), size=3)+ labs(x=ax.labs[1], y=ax.labs[2])+
   scale_color_manual("Year", values=year_pal) + coord_fixed() + 
   theme_bw() + theme(panel.grid = element_blank())
