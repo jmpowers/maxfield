@@ -273,9 +273,14 @@ rownames(vol) <- volsmeta$index
 # source("read_shimadzu.R")
 # quantpath <- "~/MyDocs/MEGA/UCI/Schiedea/Analysis/scent/rmbl/RMBL Batches/quant_round4/"
 # bfiles <-  list.files(quantpath)
-# quant.full <- map_dfr(set_names(paste0(quantpath, bfiles), bfiles), read.shimadzu.quant, .id="batch") %>% 
-#   mutate(Name = trimws(Name), Area=replace_na(Area, 0)) %>% 
+# quant.full <- map_dfr(set_names(paste0(quantpath, bfiles), bfiles), read.shimadzu.quant, .id="batch") %>%
+#   mutate(Name = trimws(Name), Area=replace_na(Area, 0)) %>%
 #   distinct(Filename, Name, .keep_all=T)
+
+# quant.full %>% drop_na(Ret.Time) %>% mutate(Name = fct_reorder(Name, Ret.Time)) %>% 
+#   ggplot(aes(x=Ret.Time, y=Name, color=batch)) + geom_jitter(width=0, size=0.2)
+# quant.full %>% drop_na(Ret.Time) %>% group_by(Name) %>% mutate(RT.median = median(Ret.Time)) %>% 
+#   ggplot(aes(x=Ret.Time-RT.median, y=Name, color=batch)) + geom_jitter(width=0, size=0.5)
 
 # quant <- quant.full %>% select(batch, Dirname, Filename, Name, Area) %>% 
 #   mutate(Dirname = fct_relabel(Dirname, str_remove, "C:/GCMSsolution/Data/Project1_190815/")) %>% 
@@ -532,6 +537,19 @@ vols.traits <- bind_cols(volsmeta.avg, vols.good.avg) %>% left_join(mnps.plantyr
 ## Compound amounts
 
 ```{r relamounts}
+#get retention times in each year - need quant.full to run
+# quant.RT <- volsmeta %>% left_join(quant.full, by=c("FileName"="Filename")) %>% drop_na(Ret.Time) %>%
+#   group_by(Name, year) %>% summarize(RT.median = median(Ret.Time)) %>%
+#   write_tsv("data/volatiles/quant_RT.tsv")
+quant.RT <- read_tsv("data/volatiles/quant_RT.tsv")
+# quant.RT %>% pivot_wider(names_from=year, values_from=RT.median, id_cols=Name) %>% 
+#   mutate(`2019`=`2019`-`2020`, `2018`=`2018`-`2020`, .keep="unused") %>% ungroup() %>% 
+#   pivot_longer(c(`2018`, `2019`), values_to="offset", names_to="year") %>% 
+#   ggplot(aes(x=offset, color=year))+geom_density()
+load("data/volatiles/get_kovats.rda") # from RMBL-GCMS
+quant.RI.2018 <- quant.RT %>% filter(year==2018) %>% mutate(RI = get_kovats(RT.median, "2018-09-03")) %>% 
+  mutate(name = shortnames[Name])
+
 vols.good %>% decostand(method = "tot") %>% #relative amount in each sample
   pivot_longer(everything()) %>% group_by(name) %>% summarize(mean_rel = mean(value)) %>% 
   arrange(desc(mean_rel)) %>% kable(caption = "Mean relative amounts of each volatile")
@@ -539,9 +557,10 @@ vols.good %>% decostand(method = "tot") %>% #relative amount in each sample
 vols.good.avg %>% #average by plant first
   pivot_longer(everything()) %>% group_by(name) %>% summarize(mean_emissions = mean(value), sd_emissions=sd(value)) %>% 
   left_join(ipochemsf) %>%  arrange(class, desc(mean_emissions)) %>% 
+  left_join(quant.RI.2018) %>% 
   mutate(meansd = paste(sprintf(mean_emissions, fmt = '%#.1f'), "\U00B1", sprintf(sd_emissions, fmt = '%#.1f')),
-         name=greekify(name)) %>% 
-  select(class, name, meansd) %>%  kable(caption = "Mean emission rates of each volatile")
+         name=greekify(name), RI= round(RI)) %>% 
+  select(class, RI, name, meansd) %>%  kable(caption = "Mean emission rates of each volatile")
 ```
 
 

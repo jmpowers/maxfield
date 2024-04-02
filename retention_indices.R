@@ -36,3 +36,7 @@ quanttable.RI %>% select(CID, RI_pubchem)
 
 #quanttable.RI %>% mutate(maxfield = shortname %in% ipogood) %>% select(maxfield)
 
+#from 2018 maxfield quant data with 51 volatiles
+quant.RT.2018 <- read_tsv("data/volatiles/quant_RT.tsv") %>% filter(year==2018) %>% mutate(RI_2018 = get_kovats(RT.median, "2018-09-03")) %>% 
+  rename(name = Name, RT_2018 = RT.median)
+quanttable %>% left_join(quant.RT.2018) %>% select(name, RI_2018)

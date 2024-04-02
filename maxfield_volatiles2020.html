@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-04-01" />
+<meta name="date" content="2024-04-02" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-04-01</h4>
+<h4 class="date">2024-04-02</h4>
 
 </div>
 
@@ -688,9 +688,14 @@ rownames(vol) &lt;- volsmeta$index
 # source(&quot;read_shimadzu.R&quot;)
 # quantpath &lt;- &quot;~/MyDocs/MEGA/UCI/Schiedea/Analysis/scent/rmbl/RMBL Batches/quant_round4/&quot;
 # bfiles &lt;-  list.files(quantpath)
-# quant.full &lt;- map_dfr(set_names(paste0(quantpath, bfiles), bfiles), read.shimadzu.quant, .id=&quot;batch&quot;) %&gt;% 
-#   mutate(Name = trimws(Name), Area=replace_na(Area, 0)) %&gt;% 
+# quant.full &lt;- map_dfr(set_names(paste0(quantpath, bfiles), bfiles), read.shimadzu.quant, .id=&quot;batch&quot;) %&gt;%
+#   mutate(Name = trimws(Name), Area=replace_na(Area, 0)) %&gt;%
 #   distinct(Filename, Name, .keep_all=T)
+
+# quant.full %&gt;% drop_na(Ret.Time) %&gt;% mutate(Name = fct_reorder(Name, Ret.Time)) %&gt;% 
+#   ggplot(aes(x=Ret.Time, y=Name, color=batch)) + geom_jitter(width=0, size=0.2)
+# quant.full %&gt;% drop_na(Ret.Time) %&gt;% group_by(Name) %&gt;% mutate(RT.median = median(Ret.Time)) %&gt;% 
+#   ggplot(aes(x=Ret.Time-RT.median, y=Name, color=batch)) + geom_jitter(width=0, size=0.5)
 
 # quant &lt;- quant.full %&gt;% select(batch, Dirname, Filename, Name, Area) %&gt;% 
 #   mutate(Dirname = fct_relabel(Dirname, str_remove, &quot;C:/GCMSsolution/Data/Project1_190815/&quot;)) %&gt;% 
@@ -1011,7 +1016,20 @@ vols.traits &lt;- bind_cols(volsmeta.avg, vols.good.avg) %&gt;% left_join(mnps.p
 </div>
 <div id="compound-amounts" class="section level2">
 <h2>Compound amounts</h2>
-<pre class="r"><code>vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% #relative amount in each sample
+<pre class="r"><code>#get retention times in each year - need quant.full to run
+# quant.RT &lt;- volsmeta %&gt;% left_join(quant.full, by=c(&quot;FileName&quot;=&quot;Filename&quot;)) %&gt;% drop_na(Ret.Time) %&gt;%
+#   group_by(Name, year) %&gt;% summarize(RT.median = median(Ret.Time)) %&gt;%
+#   write_tsv(&quot;data/volatiles/quant_RT.tsv&quot;)
+quant.RT &lt;- read_tsv(&quot;data/volatiles/quant_RT.tsv&quot;)
+# quant.RT %&gt;% pivot_wider(names_from=year, values_from=RT.median, id_cols=Name) %&gt;% 
+#   mutate(`2019`=`2019`-`2020`, `2018`=`2018`-`2020`, .keep=&quot;unused&quot;) %&gt;% ungroup() %&gt;% 
+#   pivot_longer(c(`2018`, `2019`), values_to=&quot;offset&quot;, names_to=&quot;year&quot;) %&gt;% 
+#   ggplot(aes(x=offset, color=year))+geom_density()
+load(&quot;data/volatiles/get_kovats.rda&quot;) # from RMBL-GCMS
+quant.RI.2018 &lt;- quant.RT %&gt;% filter(year==2018) %&gt;% mutate(RI = get_kovats(RT.median, &quot;2018-09-03&quot;)) %&gt;% 
+  mutate(name = shortnames[Name])
+
+vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% #relative amount in each sample
   pivot_longer(everything()) %&gt;% group_by(name) %&gt;% summarize(mean_rel = mean(value)) %&gt;% 
   arrange(desc(mean_rel)) %&gt;% kable(caption = &quot;Mean relative amounts of each volatile&quot;)</code></pre>
 <table>
@@ -1145,19 +1163,22 @@ align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
 <pre class="r"><code>vols.good.avg %&gt;% #average by plant first
   pivot_longer(everything()) %&gt;% group_by(name) %&gt;% summarize(mean_emissions = mean(value), sd_emissions=sd(value)) %&gt;% 
   left_join(ipochemsf) %&gt;%  arrange(class, desc(mean_emissions)) %&gt;% 
+  left_join(quant.RI.2018) %&gt;% 
   mutate(meansd = paste(sprintf(mean_emissions, fmt = &#39;%#.1f&#39;), &quot;\U00B1&quot;, sprintf(sd_emissions, fmt = &#39;%#.1f&#39;)),
-         name=greekify(name)) %&gt;% 
-  select(class, name, meansd) %&gt;%  kable(caption = &quot;Mean emission rates of each volatile&quot;)</code></pre>
+         name=greekify(name), RI= round(RI)) %&gt;% 
+  select(class, RI, name, meansd) %&gt;%  kable(caption = &quot;Mean emission rates of each volatile&quot;)</code></pre>
 <table>
 <caption>Mean emission rates of each volatile</caption>
 <colgroup>
-<col width="17%" />
-<col width="67%" />
-<col width="14%" />
+<col width="16%" />
+<col width="5%" />
+<col width="63%" />
+<col width="13%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th align="left">class</th>
+<th align="right">RI</th>
 <th align="left">name</th>
 <th align="left">meansd</th>
 </tr>
@@ -1165,147 +1186,176 @@ align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
 <tbody>
 <tr class="odd">
 <td align="left">Monoterpene</td>
+<td align="right">933</td>
 <td align="left">α-pinene</td>
 <td align="left">42.2 ± 71.3</td>
 </tr>
 <tr class="even">
 <td align="left">Monoterpene</td>
+<td align="right">1029</td>
 <td align="left">D-limonene</td>
 <td align="left">16.7 ± 21.0</td>
 </tr>
 <tr class="odd">
 <td align="left">Monoterpene</td>
+<td align="right">1035</td>
 <td align="left">(Z)-β-ocimene</td>
 <td align="left">15.6 ± 23.8</td>
 </tr>
 <tr class="even">
 <td align="left">Monoterpene</td>
+<td align="right">1010</td>
 <td align="left">3-carene</td>
 <td align="left">10.1 ± 13.5</td>
 </tr>
 <tr class="odd">
 <td align="left">Monoterpene</td>
+<td align="right">1047</td>
 <td align="left">(E)-β-ocimene</td>
 <td align="left">6.3 ± 12.1</td>
 </tr>
 <tr class="even">
 <td align="left">Monoterpene</td>
+<td align="right">973</td>
 <td align="left">sabinene</td>
 <td align="left">5.9 ± 7.8</td>
 </tr>
 <tr class="odd">
 <td align="left">Monoterpene</td>
+<td align="right">988</td>
 <td align="left">β-myrcene</td>
 <td align="left">4.8 ± 10.2</td>
 </tr>
 <tr class="even">
 <td align="left">Monoterpene</td>
+<td align="right">1217</td>
 <td align="left">verbenone</td>
 <td align="left">3.2 ± 5.8</td>
 </tr>
 <tr class="odd">
 <td align="left">Monoterpene</td>
+<td align="right">1195</td>
 <td align="left">α-terpineol</td>
 <td align="left">3.0 ± 4.6</td>
 </tr>
 <tr class="even">
 <td align="left">Monoterpene</td>
+<td align="right">1056</td>
 <td align="left">γ-terpinene</td>
 <td align="left">0.9 ± 1.5</td>
 </tr>
 <tr class="odd">
 <td align="left">Monoterpene</td>
+<td align="right">1115</td>
 <td align="left">(3E)-4,8-dimethylnona-1,3,7-triene</td>
 <td align="left">0.6 ± 1.3</td>
 </tr>
 <tr class="even">
 <td align="left">Monoterpene</td>
+<td align="right">1128</td>
 <td align="left">(4E,6Z)-alloocimene</td>
 <td align="left">0.2 ± 0.3</td>
 </tr>
 <tr class="odd">
 <td align="left">Benzenoid</td>
+<td align="right">1096</td>
 <td align="left">methyl benzoate</td>
 <td align="left">0.6 ± 0.6</td>
 </tr>
 <tr class="even">
 <td align="left">Benzenoid</td>
+<td align="right">1141</td>
 <td align="left">2-methylbenzonitrile</td>
 <td align="left">0.3 ± 0.2</td>
 </tr>
 <tr class="odd">
 <td align="left">Sesquiterpene</td>
+<td align="right">1435</td>
 <td align="left">β-caryophyllene</td>
 <td align="left">4.1 ± 10.3</td>
 </tr>
 <tr class="even">
 <td align="left">Sesquiterpene</td>
+<td align="right">1411</td>
 <td align="left">petasitene</td>
 <td align="left">1.8 ± 4.7</td>
 </tr>
 <tr class="odd">
 <td align="left">Sesquiterpene</td>
+<td align="right">1605</td>
 <td align="left">β-caryophyllene oxide</td>
 <td align="left">1.0 ± 3.7</td>
 </tr>
 <tr class="even">
 <td align="left">Sesquiterpene</td>
+<td align="right">1454</td>
 <td align="left">trans-β-bergamotene</td>
 <td align="left">1.0 ± 2.0</td>
 </tr>
 <tr class="odd">
 <td align="left">Sesquiterpene</td>
+<td align="right">1424</td>
 <td align="left">cis-α-bergamotene</td>
 <td align="left">0.7 ± 0.9</td>
 </tr>
 <tr class="even">
 <td align="left">Sesquiterpene</td>
+<td align="right">1470</td>
 <td
 align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
 <td align="left">0.6 ± 1.7</td>
 </tr>
 <tr class="odd">
 <td align="left">Sesquiterpene</td>
+<td align="right">1387</td>
 <td align="left">α-copaene</td>
 <td align="left">0.5 ± 1.3</td>
 </tr>
 <tr class="even">
 <td align="left">Sesquiterpene</td>
+<td align="right">1580</td>
 <td align="left">pseudoionone</td>
 <td align="left">0.5 ± 0.9</td>
 </tr>
 <tr class="odd">
 <td align="left">Aliphatic</td>
+<td align="right">851</td>
 <td align="left">(E)-hex-3-en-1-ol</td>
 <td align="left">6.9 ± 12.2</td>
 </tr>
 <tr class="even">
 <td align="left">Aliphatic</td>
+<td align="right">865</td>
 <td align="left">hexan-1-ol</td>
 <td align="left">4.9 ± 5.0</td>
 </tr>
 <tr class="odd">
 <td align="left">Aliphatic</td>
+<td align="right">1141</td>
 <td align="left">[(E)-hex-3-enyl] butanoate</td>
 <td align="left">3.4 ± 7.5</td>
 </tr>
 <tr class="even">
 <td align="left">Aliphatic</td>
+<td align="right">1184</td>
 <td align="left">[(Z)-hex-3-enyl] butanoate</td>
 <td align="left">3.2 ± 8.0</td>
 </tr>
 <tr class="odd">
 <td align="left">Aliphatic</td>
+<td align="right">1003</td>
 <td align="left">[(E)-hex-3-enyl] acetate</td>
 <td align="left">1.8 ± 3.6</td>
 </tr>
 <tr class="even">
 <td align="left">Aliphatic</td>
+<td align="right">956</td>
 <td align="left">(E)-4-oxohex-2-enal</td>
 <td align="left">1.2 ± 2.3</td>
 </tr>
 <tr class="odd">
 <td align="left">Aliphatic</td>
+<td align="right">724</td>
 <td align="left">3-methylbutan-1-ol</td>
 <td align="left">1.0 ± 1.8</td>
 </tr>
