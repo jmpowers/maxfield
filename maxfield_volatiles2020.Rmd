@@ -174,8 +174,8 @@ ggplot(vt.ambi %>% filter(type=="ambient"), aes(x=hour(bag), fill=year)) +
 ipochems <- read_csv("data/volatiles/Ipo volatile compounds - chemsf_ipo.csv") %>% 
   select(name, shortname, standard, verdict) %>%  filter(verdict != "") %>% 
   mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
-         class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
-                            Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
+         class = fct_recode(standard, Aliphatics="Hexenol", Benzenoids="Methyl_salicylate", Benzenoids="Indole", 
+                            Sesquiterpenes="Caryophyllene", Monoterpenes="alpha_Pinene", Monoterpenes="Linalool")) %>%  
   left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
               pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
 class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
@@ -239,7 +239,7 @@ chemsf <- chems %>%
 
 #see below for add_quant1 and add_quant2 to generate this list
 # removed (2E)-2,7-dimethylocta-2,6-dien-1-ol - quant integration that coelutes with b-myrcene
-add_quant2 <- c("(4E,6Z)-alloocimene", "methyl benzoate", "2-methylbenzonitrile", "(Z)-b-ocimene", "cis-a-bergamotene", "g-terpinene", "trans-b-bergamotene", "(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene", "pseudoionone")
+add_quant2 <- c("(4E,6Z)-alloocimene", "methyl benzoate", "2-methylbenzonitrile", "(Z)-b-ocimene", "(Z)-a-bergamotene", "g-terpinene", "(E)-b-bergamotene", "a-humulene", "pseudoionone")
 
 chemsf$filter_final <- with(chemsf, filter_RT=="OK" & filter_match=="OK" & 
                               filter_freq.floral=="OK" & filter_contaminant=="OK" |
@@ -276,18 +276,18 @@ rownames(vol) <- volsmeta$index
 # quant.full <- map_dfr(set_names(paste0(quantpath, bfiles), bfiles), read.shimadzu.quant, .id="batch") %>%
 #   mutate(Name = trimws(Name), Area=replace_na(Area, 0)) %>%
 #   distinct(Filename, Name, .keep_all=T)
-
-# quant.full %>% drop_na(Ret.Time) %>% mutate(Name = fct_reorder(Name, Ret.Time)) %>% 
+# 
+# quant.full %>% drop_na(Ret.Time) %>% mutate(Name = fct_reorder(Name, Ret.Time)) %>%
 #   ggplot(aes(x=Ret.Time, y=Name, color=batch)) + geom_jitter(width=0, size=0.2)
-# quant.full %>% drop_na(Ret.Time) %>% group_by(Name) %>% mutate(RT.median = median(Ret.Time)) %>% 
+# quant.full %>% drop_na(Ret.Time) %>% group_by(Name) %>% mutate(RT.median = median(Ret.Time)) %>%
 #   ggplot(aes(x=Ret.Time-RT.median, y=Name, color=batch)) + geom_jitter(width=0, size=0.5)
-
-# quant <- quant.full %>% select(batch, Dirname, Filename, Name, Area) %>% 
-#   mutate(Dirname = fct_relabel(Dirname, str_remove, "C:/GCMSsolution/Data/Project1_190815/")) %>% 
-#   filter(!Name %in% c("1,6,10-Dodecatrien-3-ol, 3,7,11-trimethyl-", 
+# 
+# quant <- quant.full %>% select(batch, Dirname, Filename, Name, Area) %>%
+#   mutate(Dirname = fct_relabel(Dirname, str_remove, "C:/GCMSsolution/Data/Project1_190815/")) %>%
+#   filter(!Name %in% c("1,6,10-Dodecatrien-3-ol, 3,7,11-trimethyl-",
 #          "4,7-Methano-1H-indene, 2,4,5,6,7,7a-hexahydro-",
-#          "Tricyclo[3.1.0.0(2,4)]hexane, 3,6-diethyl-3,6-dimethyl-, trans-")) %>% 
-#   mutate(Name = recode(Name, !!!shortnames)) %>% 
+#          "Tricyclo[3.1.0.0(2,4)]hexane, 3,6-diethyl-3,6-dimethyl-, trans-")) %>%
+#   mutate(Name = recode(Name, !!!shortnames)) %>%
 #   pivot_wider(names_from = "Name", values_from="Area") %>% as.data.frame()
 # 
 # rownames(quant) <- quant$Filename
@@ -413,8 +413,8 @@ Plus (verdict other than "fvoc"):
 #   filter(verdict %in% c("bis14", "fvoc", "keep","keep_leaf","merge"),
 #          name %in% colnames(vols)[colSums(vols)>0], name != "Anisole") %>% #filter empty compounds
 #   mutate(standard = fct_recode(standard, "Methyl_salicylate"="Benzaldehyde"), # benzaldehyde regressions not reliable
-#          class = fct_recode(standard, Aliphatic="Hexenol", Benzenoid="Methyl_salicylate", Benzenoid="Indole", 
-#                             Sesquiterpene="Caryophyllene", Monoterpene="alpha_Pinene", Monoterpene="Linalool")) %>%  
+#          class = fct_recode(standard, Aliphatics="Hexenol", Benzenoids="Methyl_salicylate", Benzenoids="Indole", 
+#                             Sesquiterpenes="Caryophyllene", Monoterpenes="alpha_Pinene", Monoterpenes="Linalool")) %>%  
 #   left_join(read_csv("data/volatiles/regressions_181921_filtered_slopes.csv") %>% 
 #               pivot_wider(id_cols=standard, names_from="year", names_prefix="area_per_ng", values_from=area_per_ng)) 
 # class_pal <- set_names(c("#BC0060","#027B8C","#E56E00","#86D400"), levels(ipochems$class))
@@ -451,7 +451,7 @@ ipochemsf <- ipochemsf %>% #group_by(name=shortname, verdict, standard, class) %
                             mean.floral = map_dbl(vols.good, mean),
                             max.floral =  map_dbl(vols.good, max))) %>% 
   select(-name) %>% rename(name=shortname) %>%
-  mutate(class=droplevels(class))#no benzenoids
+  mutate(class=droplevels(class))#no Benzenoids
 rownames(ipochemsf) <- ipochemsf$name
 #ipogood == ipochemsf$name
 
@@ -1229,10 +1229,10 @@ trait.class.wide <- bind_cols(volsmeta.avg, vols.class) %>% left_join(mnps.plant
 selection_effects <- function(fitnesstrait) {
   options(contrasts = c("contr.sum", "contr.poly"))
   lm(relfitness ~ year * water * snow + 
-     Monoterpene * snow + Monoterpene * water + Monoterpene * year +
-     Sesquiterpene * snow + Sesquiterpene * water + Sesquiterpene * year + 
-     Benzenoid * snow + Benzenoid * water + Benzenoid * year +
-     Aliphatic * snow + Aliphatic * water + Aliphatic * year,
+     Monoterpenes * snow + Monoterpenes * water + Monoterpenes * year +
+     Sesquiterpenes * snow + Sesquiterpenes * water + Sesquiterpenes * year + 
+     Benzenoids * snow + Benzenoids * water + Benzenoids * year +
+     Aliphatics * snow + Aliphatics * water + Aliphatics * year,
        data = trait.class.wide %>% rename(fitness=fitnesstrait) %>% 
        mutate(relfitness = fitness/mean(fitness, na.rm=T)))
 }

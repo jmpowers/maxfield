@@ -591,8 +591,8 @@ ggplot(aes(x=yday(sampledate))) + geom_bar() + facet_wrap(vars(year), ncol=1) +
 ipochems &lt;- read_csv(&quot;data/volatiles/Ipo volatile compounds - chemsf_ipo.csv&quot;) %&gt;% 
   select(name, shortname, standard, verdict) %&gt;%  filter(verdict != &quot;&quot;) %&gt;% 
   mutate(standard = fct_recode(standard, &quot;Methyl_salicylate&quot;=&quot;Benzaldehyde&quot;), # benzaldehyde regressions not reliable
-         class = fct_recode(standard, Aliphatic=&quot;Hexenol&quot;, Benzenoid=&quot;Methyl_salicylate&quot;, Benzenoid=&quot;Indole&quot;, 
-                            Sesquiterpene=&quot;Caryophyllene&quot;, Monoterpene=&quot;alpha_Pinene&quot;, Monoterpene=&quot;Linalool&quot;)) %&gt;%  
+         class = fct_recode(standard, Aliphatics=&quot;Hexenol&quot;, Benzenoids=&quot;Methyl_salicylate&quot;, Benzenoids=&quot;Indole&quot;, 
+                            Sesquiterpenes=&quot;Caryophyllene&quot;, Monoterpenes=&quot;alpha_Pinene&quot;, Monoterpenes=&quot;Linalool&quot;)) %&gt;%  
   left_join(read_csv(&quot;data/volatiles/regressions_181921_filtered_slopes.csv&quot;) %&gt;% 
               pivot_wider(id_cols=standard, names_from=&quot;year&quot;, names_prefix=&quot;area_per_ng&quot;, values_from=area_per_ng)) 
 class_pal &lt;- set_names(c(&quot;#BC0060&quot;,&quot;#027B8C&quot;,&quot;#E56E00&quot;,&quot;#86D400&quot;), levels(ipochems$class))
@@ -653,7 +653,7 @@ chems &lt;- make_chemtable(longdata, metadata)</code></pre>
 
 #see below for add_quant1 and add_quant2 to generate this list
 # removed (2E)-2,7-dimethylocta-2,6-dien-1-ol - quant integration that coelutes with b-myrcene
-add_quant2 &lt;- c(&quot;(4E,6Z)-alloocimene&quot;, &quot;methyl benzoate&quot;, &quot;2-methylbenzonitrile&quot;, &quot;(Z)-b-ocimene&quot;, &quot;cis-a-bergamotene&quot;, &quot;g-terpinene&quot;, &quot;trans-b-bergamotene&quot;, &quot;(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene&quot;, &quot;pseudoionone&quot;)
+add_quant2 &lt;- c(&quot;(4E,6Z)-alloocimene&quot;, &quot;methyl benzoate&quot;, &quot;2-methylbenzonitrile&quot;, &quot;(Z)-b-ocimene&quot;, &quot;(Z)-a-bergamotene&quot;, &quot;g-terpinene&quot;, &quot;(E)-b-bergamotene&quot;, &quot;a-humulene&quot;, &quot;pseudoionone&quot;)
 
 chemsf$filter_final &lt;- with(chemsf, filter_RT==&quot;OK&quot; &amp; filter_match==&quot;OK&quot; &amp; 
                               filter_freq.floral==&quot;OK&quot; &amp; filter_contaminant==&quot;OK&quot; |
@@ -691,18 +691,18 @@ rownames(vol) &lt;- volsmeta$index
 # quant.full &lt;- map_dfr(set_names(paste0(quantpath, bfiles), bfiles), read.shimadzu.quant, .id=&quot;batch&quot;) %&gt;%
 #   mutate(Name = trimws(Name), Area=replace_na(Area, 0)) %&gt;%
 #   distinct(Filename, Name, .keep_all=T)
-
-# quant.full %&gt;% drop_na(Ret.Time) %&gt;% mutate(Name = fct_reorder(Name, Ret.Time)) %&gt;% 
+# 
+# quant.full %&gt;% drop_na(Ret.Time) %&gt;% mutate(Name = fct_reorder(Name, Ret.Time)) %&gt;%
 #   ggplot(aes(x=Ret.Time, y=Name, color=batch)) + geom_jitter(width=0, size=0.2)
-# quant.full %&gt;% drop_na(Ret.Time) %&gt;% group_by(Name) %&gt;% mutate(RT.median = median(Ret.Time)) %&gt;% 
+# quant.full %&gt;% drop_na(Ret.Time) %&gt;% group_by(Name) %&gt;% mutate(RT.median = median(Ret.Time)) %&gt;%
 #   ggplot(aes(x=Ret.Time-RT.median, y=Name, color=batch)) + geom_jitter(width=0, size=0.5)
-
-# quant &lt;- quant.full %&gt;% select(batch, Dirname, Filename, Name, Area) %&gt;% 
-#   mutate(Dirname = fct_relabel(Dirname, str_remove, &quot;C:/GCMSsolution/Data/Project1_190815/&quot;)) %&gt;% 
-#   filter(!Name %in% c(&quot;1,6,10-Dodecatrien-3-ol, 3,7,11-trimethyl-&quot;, 
+# 
+# quant &lt;- quant.full %&gt;% select(batch, Dirname, Filename, Name, Area) %&gt;%
+#   mutate(Dirname = fct_relabel(Dirname, str_remove, &quot;C:/GCMSsolution/Data/Project1_190815/&quot;)) %&gt;%
+#   filter(!Name %in% c(&quot;1,6,10-Dodecatrien-3-ol, 3,7,11-trimethyl-&quot;,
 #          &quot;4,7-Methano-1H-indene, 2,4,5,6,7,7a-hexahydro-&quot;,
-#          &quot;Tricyclo[3.1.0.0(2,4)]hexane, 3,6-diethyl-3,6-dimethyl-, trans-&quot;)) %&gt;% 
-#   mutate(Name = recode(Name, !!!shortnames)) %&gt;% 
+#          &quot;Tricyclo[3.1.0.0(2,4)]hexane, 3,6-diethyl-3,6-dimethyl-, trans-&quot;)) %&gt;%
+#   mutate(Name = recode(Name, !!!shortnames)) %&gt;%
 #   pivot_wider(names_from = &quot;Name&quot;, values_from=&quot;Area&quot;) %&gt;% as.data.frame()
 # 
 # rownames(quant) &lt;- quant$Filename
@@ -871,8 +871,8 @@ camphene, benzaldehyde, a-thujene, sabinene, abietadiene,
 #   filter(verdict %in% c(&quot;bis14&quot;, &quot;fvoc&quot;, &quot;keep&quot;,&quot;keep_leaf&quot;,&quot;merge&quot;),
 #          name %in% colnames(vols)[colSums(vols)&gt;0], name != &quot;Anisole&quot;) %&gt;% #filter empty compounds
 #   mutate(standard = fct_recode(standard, &quot;Methyl_salicylate&quot;=&quot;Benzaldehyde&quot;), # benzaldehyde regressions not reliable
-#          class = fct_recode(standard, Aliphatic=&quot;Hexenol&quot;, Benzenoid=&quot;Methyl_salicylate&quot;, Benzenoid=&quot;Indole&quot;, 
-#                             Sesquiterpene=&quot;Caryophyllene&quot;, Monoterpene=&quot;alpha_Pinene&quot;, Monoterpene=&quot;Linalool&quot;)) %&gt;%  
+#          class = fct_recode(standard, Aliphatics=&quot;Hexenol&quot;, Benzenoids=&quot;Methyl_salicylate&quot;, Benzenoids=&quot;Indole&quot;, 
+#                             Sesquiterpenes=&quot;Caryophyllene&quot;, Monoterpenes=&quot;alpha_Pinene&quot;, Monoterpenes=&quot;Linalool&quot;)) %&gt;%  
 #   left_join(read_csv(&quot;data/volatiles/regressions_181921_filtered_slopes.csv&quot;) %&gt;% 
 #               pivot_wider(id_cols=standard, names_from=&quot;year&quot;, names_prefix=&quot;area_per_ng&quot;, values_from=area_per_ng)) 
 # class_pal &lt;- set_names(c(&quot;#BC0060&quot;,&quot;#027B8C&quot;,&quot;#E56E00&quot;,&quot;#86D400&quot;), levels(ipochems$class))
@@ -909,7 +909,7 @@ ipochemsf &lt;- ipochemsf %&gt;% #group_by(name=shortname, verdict, standard, cl
                             mean.floral = map_dbl(vols.good, mean),
                             max.floral =  map_dbl(vols.good, max))) %&gt;% 
   select(-name) %&gt;% rename(name=shortname) %&gt;%
-  mutate(class=droplevels(class))#no benzenoids
+  mutate(class=droplevels(class))#no Benzenoids
 rownames(ipochemsf) &lt;- ipochemsf$name
 #ipogood == ipochemsf$name
 
@@ -1046,7 +1046,7 @@ vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% #relative amount in 
 <td align="right">0.2750</td>
 </tr>
 <tr class="even">
-<td align="left">D-limonene</td>
+<td align="left">limonene</td>
 <td align="right">0.1161</td>
 </tr>
 <tr class="odd">
@@ -1058,8 +1058,8 @@ vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% #relative amount in 
 <td align="right">0.0722</td>
 </tr>
 <tr class="odd">
-<td align="left">(E)-hex-3-en-1-ol</td>
-<td align="right">0.0571</td>
+<td align="left">(Z)-hex-3-en-1-ol</td>
+<td align="right">0.0572</td>
 </tr>
 <tr class="even">
 <td align="left">(E)-b-ocimene</td>
@@ -1075,7 +1075,7 @@ vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% #relative amount in 
 </tr>
 <tr class="odd">
 <td align="left">b-myrcene</td>
-<td align="right">0.0260</td>
+<td align="right">0.0259</td>
 </tr>
 <tr class="even">
 <td align="left">a-terpineol</td>
@@ -1110,7 +1110,7 @@ vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% #relative amount in 
 <td align="right">0.0086</td>
 </tr>
 <tr class="even">
-<td align="left">trans-b-bergamotene</td>
+<td align="left">(E)-b-bergamotene</td>
 <td align="right">0.0084</td>
 </tr>
 <tr class="odd">
@@ -1134,7 +1134,7 @@ vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% #relative amount in 
 <td align="right">0.0047</td>
 </tr>
 <tr class="even">
-<td align="left">cis-a-bergamotene</td>
+<td align="left">(Z)-a-bergamotene</td>
 <td align="right">0.0047</td>
 </tr>
 <tr class="odd">
@@ -1150,8 +1150,7 @@ vols.good %&gt;% decostand(method = &quot;tot&quot;) %&gt;% #relative amount in 
 <td align="right">0.0035</td>
 </tr>
 <tr class="even">
-<td
-align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
+<td align="left">a-humulene</td>
 <td align="right">0.0032</td>
 </tr>
 <tr class="odd">
@@ -1169,12 +1168,6 @@ align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
   select(class, RI, name, meansd) %&gt;%  kable(caption = &quot;Mean emission rates of each volatile&quot;)</code></pre>
 <table>
 <caption>Mean emission rates of each volatile</caption>
-<colgroup>
-<col width="16%" />
-<col width="5%" />
-<col width="63%" />
-<col width="13%" />
-</colgroup>
 <thead>
 <tr class="header">
 <th align="left">class</th>
@@ -1185,176 +1178,175 @@ align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">933</td>
 <td align="left">α-pinene</td>
 <td align="left">42.2 ± 71.3</td>
 </tr>
 <tr class="even">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">1029</td>
-<td align="left">D-limonene</td>
+<td align="left">limonene</td>
 <td align="left">16.7 ± 21.0</td>
 </tr>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">1035</td>
 <td align="left">(Z)-β-ocimene</td>
 <td align="left">15.6 ± 23.8</td>
 </tr>
 <tr class="even">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">1010</td>
 <td align="left">3-carene</td>
 <td align="left">10.1 ± 13.5</td>
 </tr>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">1047</td>
 <td align="left">(E)-β-ocimene</td>
 <td align="left">6.3 ± 12.1</td>
 </tr>
 <tr class="even">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">973</td>
 <td align="left">sabinene</td>
 <td align="left">5.9 ± 7.8</td>
 </tr>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">988</td>
 <td align="left">β-myrcene</td>
 <td align="left">4.8 ± 10.2</td>
 </tr>
 <tr class="even">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">1217</td>
 <td align="left">verbenone</td>
 <td align="left">3.2 ± 5.8</td>
 </tr>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">1195</td>
 <td align="left">α-terpineol</td>
 <td align="left">3.0 ± 4.6</td>
 </tr>
 <tr class="even">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">1056</td>
 <td align="left">γ-terpinene</td>
 <td align="left">0.9 ± 1.5</td>
 </tr>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">1115</td>
 <td align="left">(3E)-4,8-dimethylnona-1,3,7-triene</td>
 <td align="left">0.6 ± 1.3</td>
 </tr>
 <tr class="even">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">1128</td>
 <td align="left">(4E,6Z)-alloocimene</td>
 <td align="left">0.2 ± 0.3</td>
 </tr>
 <tr class="odd">
-<td align="left">Benzenoid</td>
+<td align="left">Benzenoids</td>
 <td align="right">1096</td>
 <td align="left">methyl benzoate</td>
 <td align="left">0.6 ± 0.6</td>
 </tr>
 <tr class="even">
-<td align="left">Benzenoid</td>
+<td align="left">Benzenoids</td>
 <td align="right">1141</td>
 <td align="left">2-methylbenzonitrile</td>
 <td align="left">0.3 ± 0.2</td>
 </tr>
 <tr class="odd">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">1435</td>
 <td align="left">β-caryophyllene</td>
 <td align="left">4.1 ± 10.3</td>
 </tr>
 <tr class="even">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">1411</td>
 <td align="left">petasitene</td>
 <td align="left">1.8 ± 4.7</td>
 </tr>
 <tr class="odd">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">1605</td>
 <td align="left">β-caryophyllene oxide</td>
 <td align="left">1.0 ± 3.7</td>
 </tr>
 <tr class="even">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">1454</td>
-<td align="left">trans-β-bergamotene</td>
+<td align="left">(E)-β-bergamotene</td>
 <td align="left">1.0 ± 2.0</td>
 </tr>
 <tr class="odd">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">1424</td>
-<td align="left">cis-α-bergamotene</td>
+<td align="left">(Z)-α-bergamotene</td>
 <td align="left">0.7 ± 0.9</td>
 </tr>
 <tr class="even">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">1470</td>
-<td
-align="left">(1Z,4Z,7Z)-1,5,9,9-tetramethylcycloundeca-1,4,7-triene</td>
+<td align="left">α-humulene</td>
 <td align="left">0.6 ± 1.7</td>
 </tr>
 <tr class="odd">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">1387</td>
 <td align="left">α-copaene</td>
 <td align="left">0.5 ± 1.3</td>
 </tr>
 <tr class="even">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">1580</td>
 <td align="left">pseudoionone</td>
 <td align="left">0.5 ± 0.9</td>
 </tr>
 <tr class="odd">
-<td align="left">Aliphatic</td>
+<td align="left">Aliphatics</td>
 <td align="right">851</td>
-<td align="left">(E)-hex-3-en-1-ol</td>
-<td align="left">6.9 ± 12.2</td>
+<td align="left">(Z)-hex-3-en-1-ol</td>
+<td align="left">7.0 ± 12.2</td>
 </tr>
 <tr class="even">
-<td align="left">Aliphatic</td>
+<td align="left">Aliphatics</td>
 <td align="right">865</td>
 <td align="left">hexan-1-ol</td>
 <td align="left">4.9 ± 5.0</td>
 </tr>
 <tr class="odd">
-<td align="left">Aliphatic</td>
+<td align="left">Aliphatics</td>
 <td align="right">1141</td>
 <td align="left">[(E)-hex-3-enyl] butanoate</td>
 <td align="left">3.4 ± 7.5</td>
 </tr>
 <tr class="even">
-<td align="left">Aliphatic</td>
+<td align="left">Aliphatics</td>
 <td align="right">1184</td>
 <td align="left">[(Z)-hex-3-enyl] butanoate</td>
 <td align="left">3.2 ± 8.0</td>
 </tr>
 <tr class="odd">
-<td align="left">Aliphatic</td>
+<td align="left">Aliphatics</td>
 <td align="right">1003</td>
 <td align="left">[(E)-hex-3-enyl] acetate</td>
 <td align="left">1.8 ± 3.6</td>
 </tr>
 <tr class="even">
-<td align="left">Aliphatic</td>
+<td align="left">Aliphatics</td>
 <td align="right">956</td>
 <td align="left">(E)-4-oxohex-2-enal</td>
 <td align="left">1.2 ± 2.3</td>
 </tr>
 <tr class="odd">
-<td align="left">Aliphatic</td>
+<td align="left">Aliphatics</td>
 <td align="right">724</td>
 <td align="left">3-methylbutan-1-ol</td>
 <td align="left">1.0 ± 1.8</td>
@@ -1922,10 +1914,10 @@ Data:     sqrt(vols.good)
 Distance: bray 
 
 Dimensions: 2 
-Stress:     0.1554 
+Stress:     0.1555 
 Stress type 1, weak ties
-Best solution was repeated 4 times in 20 tries
-The best solution was from try 15 (random start)
+Best solution was repeated 3 times in 20 tries
+The best solution was from try 16 (random start)
 Scaling: centring, PC rotation, halfchange scaling 
 Species: expanded scores based on &#39;sqrt(vols.good)&#39; </code></pre>
 <pre class="r"><code>nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
@@ -2051,10 +2043,10 @@ pheatmap(corr.vols,
 data = volsmeta.avg, distance = &quot;bray&quot;)
 
               Inertia Proportion Rank
-Total          43.580      1.000     
-Constrained     5.820      0.134   17
-Unconstrained  52.113      1.196  117
-Imaginary     -14.353     -0.329  256
+Total          43.581      1.000     
+Constrained     5.821      0.134   17
+Unconstrained  52.114      1.196  117
+Imaginary     -14.354     -0.329  256
 Inertia is squared Bray distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good.avg&#39; 
 
@@ -2083,22 +2075,22 @@ Eigenvalues for unconstrained axes:
 <tr class="odd">
 <td align="left">year</td>
 <td align="right">2</td>
-<td align="right">3.4356</td>
-<td align="right">11.7348</td>
+<td align="right">3.4357</td>
+<td align="right">11.7350</td>
 <td align="right">0.001</td>
 </tr>
 <tr class="even">
 <td align="left">water</td>
 <td align="right">2</td>
 <td align="right">0.3819</td>
-<td align="right">1.3044</td>
+<td align="right">1.3045</td>
 <td align="right">0.145</td>
 </tr>
 <tr class="odd">
 <td align="left">snow</td>
 <td align="right">1</td>
-<td align="right">0.1658</td>
-<td align="right">1.1329</td>
+<td align="right">0.1659</td>
+<td align="right">1.1330</td>
 <td align="right">0.287</td>
 </tr>
 <tr class="even">
@@ -2106,12 +2098,12 @@ Eigenvalues for unconstrained axes:
 <td align="right">4</td>
 <td align="right">0.5686</td>
 <td align="right">0.9711</td>
-<td align="right">0.493</td>
+<td align="right">0.494</td>
 </tr>
 <tr class="odd">
 <td align="left">year:snow</td>
 <td align="right">2</td>
-<td align="right">0.4710</td>
+<td align="right">0.4711</td>
 <td align="right">1.6089</td>
 <td align="right">0.048</td>
 </tr>
@@ -2119,8 +2111,8 @@ Eigenvalues for unconstrained axes:
 <td align="left">water:snow</td>
 <td align="right">2</td>
 <td align="right">0.3078</td>
-<td align="right">1.0513</td>
-<td align="right">0.359</td>
+<td align="right">1.0514</td>
+<td align="right">0.358</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water:snow</td>
@@ -2132,7 +2124,7 @@ Eigenvalues for unconstrained axes:
 <tr class="even">
 <td align="left">Residual</td>
 <td align="right">356</td>
-<td align="right">52.1127</td>
+<td align="right">52.1136</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
@@ -2247,12 +2239,12 @@ mod.split %&gt;% select(class, term, p.value) %&gt;%
 <table>
 <caption>Plasticity of emissions to treatments</caption>
 <colgroup>
-<col width="16%" />
+<col width="17%" />
 <col width="8%" />
 <col width="8%" />
 <col width="8%" />
 <col width="13%" />
-<col width="12%" />
+<col width="11%" />
 <col width="13%" />
 <col width="19%" />
 </colgroup>
@@ -2270,7 +2262,7 @@ mod.split %&gt;% select(class, term, p.value) %&gt;%
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">0.0134</td>
 <td align="right">0.4108</td>
 <td align="right">0.2778</td>
@@ -2280,7 +2272,7 @@ mod.split %&gt;% select(class, term, p.value) %&gt;%
 <td align="right">0.7038</td>
 </tr>
 <tr class="even">
-<td align="left">Benzenoid</td>
+<td align="left">Benzenoids</td>
 <td align="right">0.0000</td>
 <td align="right">0.7037</td>
 <td align="right">0.1168</td>
@@ -2290,7 +2282,7 @@ mod.split %&gt;% select(class, term, p.value) %&gt;%
 <td align="right">0.2210</td>
 </tr>
 <tr class="odd">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">0.0067</td>
 <td align="right">0.4966</td>
 <td align="right">0.4816</td>
@@ -2300,14 +2292,14 @@ mod.split %&gt;% select(class, term, p.value) %&gt;%
 <td align="right">0.7841</td>
 </tr>
 <tr class="even">
-<td align="left">Aliphatic</td>
-<td align="right">0.0633</td>
-<td align="right">0.3697</td>
+<td align="left">Aliphatics</td>
+<td align="right">0.0639</td>
+<td align="right">0.3696</td>
 <td align="right">0.0444</td>
-<td align="right">0.4206</td>
+<td align="right">0.4205</td>
 <td align="right">0.2650</td>
-<td align="right">0.2439</td>
-<td align="right">0.4759</td>
+<td align="right">0.2436</td>
+<td align="right">0.4761</td>
 </tr>
 </tbody>
 </table>
@@ -2323,10 +2315,10 @@ class="section level2">
 precip_est_mm, data = volsmeta.avg, distance = &quot;bray&quot;)
 
                Inertia Proportion Rank
-Total          43.5799     1.0000     
+Total          43.5806     1.0000     
 Constrained     1.9810     0.0455    3
-Unconstrained  55.9522     1.2839  117
-Imaginary     -14.3533    -0.3294  256
+Unconstrained  55.9533     1.2839  117
+Imaginary     -14.3536    -0.3294  256
 Inertia is squared Bray distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good.avg&#39; 
 
@@ -2353,7 +2345,7 @@ Eigenvalues for unconstrained axes:
 <tr class="odd">
 <td align="left">sun_date</td>
 <td align="right">1</td>
-<td align="right">1.3910</td>
+<td align="right">1.3911</td>
 <td align="right">9.199</td>
 <td align="right">0.001</td>
 </tr>
@@ -2374,7 +2366,7 @@ Eigenvalues for unconstrained axes:
 <tr class="even">
 <td align="left">Residual</td>
 <td align="right">370</td>
-<td align="right">55.9522</td>
+<td align="right">55.9533</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
@@ -2428,28 +2420,28 @@ precipitation</caption>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">0.6675</td>
 <td align="right">0.5663</td>
 <td align="right">0.4931</td>
 </tr>
 <tr class="even">
-<td align="left">Benzenoid</td>
+<td align="left">Benzenoids</td>
 <td align="right">0.1963</td>
 <td align="right">0.2864</td>
 <td align="right">0.4652</td>
 </tr>
 <tr class="odd">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">0.6550</td>
 <td align="right">0.3006</td>
 <td align="right">0.1710</td>
 </tr>
 <tr class="even">
-<td align="left">Aliphatic</td>
-<td align="right">0.3618</td>
-<td align="right">0.6626</td>
-<td align="right">0.6104</td>
+<td align="left">Aliphatics</td>
+<td align="right">0.3621</td>
+<td align="right">0.6619</td>
+<td align="right">0.6099</td>
 </tr>
 </tbody>
 </table>
@@ -2492,9 +2484,9 @@ class="section level2">
 data = volsmeta.avg[hasVWC, ], distance = &quot;bray&quot;)
 
               Inertia Proportion Rank
-Total          40.698      1.000     
+Total          40.699      1.000     
 Constrained     4.088      0.100    5
-Unconstrained  49.683      1.221  111
+Unconstrained  49.684      1.221  111
 Imaginary     -13.073     -0.321  235
 Inertia is squared Bray distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good.avg[hasVWC, ]&#39; 
@@ -2522,7 +2514,7 @@ Eigenvalues for unconstrained axes:
 <tr class="odd">
 <td align="left">year</td>
 <td align="right">2</td>
-<td align="right">3.1747</td>
+<td align="right">3.1748</td>
 <td align="right">10.895</td>
 <td align="right">0.001</td>
 </tr>
@@ -2543,7 +2535,7 @@ Eigenvalues for unconstrained axes:
 <tr class="even">
 <td align="left">Residual</td>
 <td align="right">341</td>
-<td align="right">49.6827</td>
+<td align="right">49.6837</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
@@ -2589,28 +2581,28 @@ mod.sm %&gt;% select(class, term, p.value) %&gt;%
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">0.0090</td>
 <td align="right">0.6565</td>
 <td align="right">0.1058</td>
 </tr>
 <tr class="even">
-<td align="left">Benzenoid</td>
+<td align="left">Benzenoids</td>
 <td align="right">0.0000</td>
 <td align="right">0.1161</td>
 <td align="right">0.0201</td>
 </tr>
 <tr class="odd">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">0.0038</td>
 <td align="right">0.4438</td>
 <td align="right">0.1303</td>
 </tr>
 <tr class="even">
-<td align="left">Aliphatic</td>
-<td align="right">0.0375</td>
-<td align="right">0.7321</td>
-<td align="right">0.0419</td>
+<td align="left">Aliphatics</td>
+<td align="right">0.0378</td>
+<td align="right">0.7325</td>
+<td align="right">0.0420</td>
 </tr>
 </tbody>
 </table>
@@ -2646,10 +2638,10 @@ left_join(select(volsmeta.avg, -VWC), sm.subplotyear), distance =
 &quot;bray&quot;)
 
                Inertia Proportion Rank
-Total          43.5799     1.0000     
-Constrained     4.0572     0.0931    5
-Unconstrained  53.8760     1.2363  117
-Imaginary     -14.3533    -0.3294  256
+Total          43.5806     1.0000     
+Constrained     4.0573     0.0931    5
+Unconstrained  53.8769     1.2363  117
+Imaginary     -14.3536    -0.3294  256
 Inertia is squared Bray distance 
 Species scores projected from &#39;sqrt&#39; &#39;vols.good.avg&#39; 
 
@@ -2659,7 +2651,7 @@ Eigenvalues for constrained axes:
 
 Eigenvalues for unconstrained axes:
  MDS1  MDS2  MDS3  MDS4  MDS5  MDS6  MDS7  MDS8 
-12.43  8.35  3.23  2.06  1.97  1.63  1.39  1.31 
+12.42  8.35  3.23  2.06  1.97  1.63  1.39  1.31 
 (Showing 8 of 117 unconstrained eigenvalues)</code></pre>
 <pre class="r"><code>anova(scents.cap, by=&quot;term&quot;) %&gt;% kable()</code></pre>
 <table>
@@ -2676,28 +2668,28 @@ Eigenvalues for unconstrained axes:
 <tr class="odd">
 <td align="left">year</td>
 <td align="right">2</td>
-<td align="right">3.4356</td>
-<td align="right">11.7333</td>
+<td align="right">3.4357</td>
+<td align="right">11.7336</td>
 <td align="right">0.001</td>
 </tr>
 <tr class="even">
 <td align="left">VWC</td>
 <td align="right">1</td>
 <td align="right">0.1433</td>
-<td align="right">0.9785</td>
+<td align="right">0.9786</td>
 <td align="right">0.455</td>
 </tr>
 <tr class="odd">
 <td align="left">year:VWC</td>
 <td align="right">2</td>
 <td align="right">0.4784</td>
-<td align="right">1.6337</td>
+<td align="right">1.6338</td>
 <td align="right">0.038</td>
 </tr>
 <tr class="even">
 <td align="left">Residual</td>
 <td align="right">368</td>
-<td align="right">53.8760</td>
+<td align="right">53.8769</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 </tr>
@@ -2744,28 +2736,28 @@ moisture</caption>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">0.0442</td>
 <td align="right">0.5431</td>
 <td align="right">0.0515</td>
 </tr>
 <tr class="even">
-<td align="left">Benzenoid</td>
+<td align="left">Benzenoids</td>
 <td align="right">0.8915</td>
 <td align="right">0.9030</td>
 <td align="right">0.7643</td>
 </tr>
 <tr class="odd">
-<td align="left">Sesquiterpene</td>
+<td align="left">Sesquiterpenes</td>
 <td align="right">0.1005</td>
 <td align="right">0.3670</td>
 <td align="right">0.0834</td>
 </tr>
 <tr class="even">
-<td align="left">Aliphatic</td>
+<td align="left">Aliphatics</td>
 <td align="right">0.0552</td>
 <td align="right">0.2474</td>
-<td align="right">0.0918</td>
+<td align="right">0.0917</td>
 </tr>
 </tbody>
 </table>
@@ -2831,10 +2823,10 @@ class="section level2">
 selection_effects &lt;- function(fitnesstrait) {
   options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
   lm(relfitness ~ year * water * snow + 
-     Monoterpene * snow + Monoterpene * water + Monoterpene * year +
-     Sesquiterpene * snow + Sesquiterpene * water + Sesquiterpene * year + 
-     Benzenoid * snow + Benzenoid * water + Benzenoid * year +
-     Aliphatic * snow + Aliphatic * water + Aliphatic * year,
+     Monoterpenes * snow + Monoterpenes * water + Monoterpenes * year +
+     Sesquiterpenes * snow + Sesquiterpenes * water + Sesquiterpenes * year + 
+     Benzenoids * snow + Benzenoids * water + Benzenoids * year +
+     Aliphatics * snow + Aliphatics * water + Aliphatics * year,
        data = trait.class.wide %&gt;% rename(fitness=fitnesstrait) %&gt;% 
        mutate(relfitness = fitness/mean(fitness, na.rm=T)))
 }
@@ -2859,7 +2851,7 @@ mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&g
 <table>
 <caption>Selection of emissions in each treatment</caption>
 <colgroup>
-<col width="22%" />
+<col width="23%" />
 <col width="11%" />
 <col width="30%" />
 <col width="17%" />
@@ -2892,50 +2884,50 @@ mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&g
 <tr class="odd">
 <td align="left">water</td>
 <td align="right">0.5879</td>
-<td align="right">0.1557</td>
+<td align="right">0.1559</td>
 <td align="right">0.2391</td>
-<td align="right">0.7173</td>
+<td align="right">0.7175</td>
 </tr>
 <tr class="even">
 <td align="left">snow</td>
-<td align="right">0.1219</td>
+<td align="right">0.1220</td>
 <td align="right">0.0495</td>
 <td align="right">0.8971</td>
-<td align="right">0.4552</td>
+<td align="right">0.4551</td>
 </tr>
 <tr class="odd">
-<td align="left">Monoterpene</td>
+<td align="left">Monoterpenes</td>
 <td align="right">0.0537</td>
-<td align="right">0.3141</td>
-<td align="right">0.6510</td>
+<td align="right">0.3140</td>
+<td align="right">0.6509</td>
 <td align="right">0.1699</td>
 </tr>
 <tr class="even">
-<td align="left">Sesquiterpene</td>
-<td align="right">0.3200</td>
-<td align="right">0.9103</td>
-<td align="right">0.0877</td>
-<td align="right">0.6084</td>
+<td align="left">Sesquiterpenes</td>
+<td align="right">0.3199</td>
+<td align="right">0.9099</td>
+<td align="right">0.0876</td>
+<td align="right">0.6085</td>
 </tr>
 <tr class="odd">
-<td align="left">Benzenoid</td>
+<td align="left">Benzenoids</td>
 <td align="right">0.0210</td>
 <td align="right">0.1957</td>
 <td align="right">0.1056</td>
-<td align="right">0.2165</td>
+<td align="right">0.2164</td>
 </tr>
 <tr class="even">
-<td align="left">Aliphatic</td>
-<td align="right">0.7886</td>
-<td align="right">0.7739</td>
-<td align="right">0.3272</td>
-<td align="right">0.5232</td>
+<td align="left">Aliphatics</td>
+<td align="right">0.7890</td>
+<td align="right">0.7748</td>
+<td align="right">0.3267</td>
+<td align="right">0.5234</td>
 </tr>
 <tr class="odd">
 <td align="left">year:water</td>
 <td align="right">0.0364</td>
 <td align="right">0.0044</td>
-<td align="right">0.3619</td>
+<td align="right">0.3618</td>
 <td align="right">0.9932</td>
 </tr>
 <tr class="even">
@@ -2947,100 +2939,100 @@ mod.selection %&gt;% unnest(test) %&gt;% select(fitnesstrait, term, p.value) %&g
 </tr>
 <tr class="odd">
 <td align="left">water:snow</td>
-<td align="right">0.4837</td>
+<td align="right">0.4838</td>
 <td align="right">0.3688</td>
 <td align="right">0.4163</td>
 <td align="right">0.6692</td>
 </tr>
 <tr class="even">
-<td align="left">snow:Monoterpene</td>
-<td align="right">0.1353</td>
-<td align="right">0.4202</td>
-<td align="right">0.4417</td>
-<td align="right">0.5807</td>
+<td align="left">snow:Monoterpenes</td>
+<td align="right">0.1354</td>
+<td align="right">0.4203</td>
+<td align="right">0.4415</td>
+<td align="right">0.5806</td>
 </tr>
 <tr class="odd">
-<td align="left">water:Monoterpene</td>
-<td align="right">0.7899</td>
+<td align="left">water:Monoterpenes</td>
+<td align="right">0.7900</td>
 <td align="right">0.2902</td>
-<td align="right">0.3871</td>
+<td align="right">0.3872</td>
 <td align="right">0.4584</td>
 </tr>
 <tr class="even">
-<td align="left">year:Monoterpene</td>
-<td align="right">0.4423</td>
-<td align="right">0.8340</td>
+<td align="left">year:Monoterpenes</td>
+<td align="right">0.4422</td>
+<td align="right">0.8341</td>
 <td align="right">0.0122</td>
 <td align="right">0.2275</td>
 </tr>
 <tr class="odd">
-<td align="left">snow:Sesquiterpene</td>
-<td align="right">0.4965</td>
+<td align="left">snow:Sesquiterpenes</td>
+<td align="right">0.4964</td>
 <td align="right">0.0481</td>
 <td align="right">0.0521</td>
 <td align="right">0.1243</td>
 </tr>
 <tr class="even">
-<td align="left">water:Sesquiterpene</td>
-<td align="right">0.5934</td>
-<td align="right">0.3456</td>
+<td align="left">water:Sesquiterpenes</td>
+<td align="right">0.5936</td>
+<td align="right">0.3454</td>
 <td align="right">0.0011</td>
-<td align="right">0.7205</td>
+<td align="right">0.7203</td>
 </tr>
 <tr class="odd">
-<td align="left">year:Sesquiterpene</td>
-<td align="right">0.7789</td>
+<td align="left">year:Sesquiterpenes</td>
+<td align="right">0.7790</td>
 <td align="right">0.9984</td>
 <td align="right">0.0596</td>
-<td align="right">0.3754</td>
+<td align="right">0.3752</td>
 </tr>
 <tr class="even">
-<td align="left">snow:Benzenoid</td>
-<td align="right">0.5870</td>
-<td align="right">0.9813</td>
-<td align="right">0.7817</td>
-<td align="right">0.5412</td>
+<td align="left">snow:Benzenoids</td>
+<td align="right">0.5874</td>
+<td align="right">0.9817</td>
+<td align="right">0.7818</td>
+<td align="right">0.5409</td>
 </tr>
 <tr class="odd">
-<td align="left">water:Benzenoid</td>
-<td align="right">0.6190</td>
-<td align="right">0.3522</td>
+<td align="left">water:Benzenoids</td>
+<td align="right">0.6192</td>
+<td align="right">0.3523</td>
 <td align="right">0.1235</td>
-<td align="right">0.6854</td>
+<td align="right">0.6857</td>
 </tr>
 <tr class="even">
-<td align="left">year:Benzenoid</td>
+<td align="left">year:Benzenoids</td>
 <td align="right">0.2099</td>
-<td align="right">0.3276</td>
+<td align="right">0.3278</td>
 <td align="right">0.4836</td>
-<td align="right">0.3911</td>
+<td align="right">0.3909</td>
 </tr>
 <tr class="odd">
-<td align="left">snow:Aliphatic</td>
+<td align="left">snow:Aliphatics</td>
 <td align="right">0.0479</td>
 <td align="right">0.1324</td>
-<td align="right">0.2284</td>
-<td align="right">0.3648</td>
+<td align="right">0.2281</td>
+<td align="right">0.3646</td>
 </tr>
 <tr class="even">
-<td align="left">water:Aliphatic</td>
-<td align="right">0.7936</td>
-<td align="right">0.2259</td>
-<td align="right">0.6276</td>
-<td align="right">0.0709</td>
+<td align="left">water:Aliphatics</td>
+<td align="right">0.7942</td>
+<td align="right">0.2255</td>
+<td align="right">0.6274</td>
+<td align="right">0.0708</td>
 </tr>
 <tr class="odd">
-<td align="left">year:Aliphatic</td>
-<td align="right">0.6091</td>
-<td align="right">0.9734</td>
-<td align="right">0.5648</td>
-<td align="right">0.3977</td>
+<td align="left">year:Aliphatics</td>
+<td align="right">0.6088</td>
+<td align="right">0.9736</td>
+<td align="right">0.5643</td>
+<td align="right">0.3975</td>
 </tr>
 <tr class="even">
 <td align="left">year:water:snow</td>
 <td align="right">0.6179</td>
 <td align="right">0.8074</td>
-<td align="right">0.2269</td>
+<td align="right">0.2268</td>
 <td align="right">0.0890</td>
 </tr>
 </tbody>
