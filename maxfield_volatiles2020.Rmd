@@ -1239,6 +1239,11 @@ selection_effects <- function(fitnesstrait) {
 
 fitnesstraits.sd <- map_dbl(fitnesstraits, ~sd(mnps.plantyr.traits[[.x]], na.rm=T)) %>% set_names(fitnesstraits)
 class.sd <- map_dbl(names(class_pal), ~sd(trait.class.wide[[.x]], na.rm=T)) %>% set_names(names(class_pal)) 
+mnps.plantyr.traits %>% pivot_longer(all_of(traits)) %>% group_by(name) %>% 
+  summarize(mean=mean(value, na.rm=T), sd=sd(value, na.rm=T),
+            n_plants=sum(!is.na(value))) %>% 
+    mutate(name = traitnames.units[name]) %>% 
+  write_csv("data/trait_means.csv", na="")
 
 get_emt_class <- function(mod) {
   map_dfr(set_names(names(class_pal)), ~emtrends(mod, c("year","water","snow"), var=.x) %>% 
@@ -2364,6 +2369,7 @@ mod.selection.tests.drop %>%
   filter(trait %in% c(ipogood.top, floraltraits)) %>% 
   mutate(trait = trait %>% greekify() %>% recode(!!!traitnames) %>% 
            factor(levels = rev(c(traitnames, greekify(ipogood.top))))) %>% 
+  write_csv("data/volatiles/selection_results.csv", na="") %>% 
   ggplot(aes(x=estimate,y=trait, color=response, 
              shape=if_else(!is.na(analysis), analysis, as.character(p.value < 0.05)), 
              xmin=estimate-std.error, xmax=estimate+std.error)) + 
