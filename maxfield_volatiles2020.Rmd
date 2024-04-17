@@ -24,6 +24,7 @@ library(tidyverse)
 library(lubridate)
 library(vegan)
 library(broom)
+library(broom.mixed)
 library(emmeans)
 library(viridis)
 library(ggvegan)
@@ -1035,6 +1036,29 @@ mod.abs %>% select(class, term, p.value) %>%
   kable(caption="Plasticity of emissions to snowmelt date and estimated precipitation")
 ```
 
+### Individual emissions
+
+```{r mod_abs_traits}
+options(contrasts = c("contr.sum", "contr.poly"))
+abs_effects_indiv <- function(trait) {
+  lmer(formula(paste0("`",trait,"` ~ sun_date * precip_est_mm + (1|plot) + (1|plotid)")), 
+       data = bind_cols(volsmeta.avg, vols.good.top))
+}
+
+mod.abs.indiv <- tibble(name = ipogood.top) %>% 
+  mutate(model = map(name, abs_effects_indiv),
+         test = map(model, ~ tidy(anova(.x, ddf="Ken"))),
+         coef = map(model, ~ tidy(.x)))
+
+mod.abs.indiv %>% select(-model, -coef) %>% unnest(test) %>% select(name, term, p.value) %>% 
+  pivot_wider(names_from=term, values_from=p.value) %>%
+  kable(caption="Plasticity p-values")
+
+mod.abs.indiv %>% select(-model, -test) %>% unnest(coef) %>% filter(effect=="fixed", term!="(Intercept)") %>%
+  pivot_wider(id_cols=name, names_from=term, values_from=c("estimate","std.error")) %>% 
+  kable(caption="Plasticity estimates")
+```
+
 ### Scatterplots
 
 #### Snowmelt date
@@ -1244,6 +1268,10 @@ mnps.plantyr.traits %>% pivot_longer(all_of(traits)) %>% group_by(name) %>%
             n_plants=sum(!is.na(value))) %>% 
     mutate(name = traitnames.units[name]) %>% 
   write_csv("data/trait_means.csv", na="")
+bind_rows(volsmeta.avg, vols.good.top) %>% pivot_longer(all_of(ipogood.top)) %>% group_by(name) %>% 
+  summarize(mean=mean(value, na.rm=T), sd=sd(value, na.rm=T),
+            n_plants=sum(!is.na(value))) %>%  
+  write_csv("data/volatiles/volatiles_means.csv", na="")
 
 get_emt_class <- function(mod) {
   map_dfr(set_names(names(class_pal)), ~emtrends(mod, c("year","water","snow"), var=.x) %>% 

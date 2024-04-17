@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-04-15" />
+<meta name="date" content="2024-04-17" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-04-15</h4>
+<h4 class="date">2024-04-17</h4>
 
 </div>
 
@@ -267,6 +267,7 @@ td, th { padding : 6px }
 library(lubridate)
 library(vegan)
 library(broom)
+library(broom.mixed)
 library(emmeans)
 library(viridis)
 library(ggvegan)
@@ -2446,6 +2447,244 @@ precipitation</caption>
 </tbody>
 </table>
 </div>
+<div id="individual-emissions" class="section level3">
+<h3>Individual emissions</h3>
+<pre class="r"><code>options(contrasts = c(&quot;contr.sum&quot;, &quot;contr.poly&quot;))
+abs_effects_indiv &lt;- function(trait) {
+  lmer(formula(paste0(&quot;`&quot;,trait,&quot;` ~ sun_date * precip_est_mm + (1|plot) + (1|plotid)&quot;)), 
+       data = bind_cols(volsmeta.avg, vols.good.top))
+}
+
+mod.abs.indiv &lt;- tibble(name = ipogood.top) %&gt;% 
+  mutate(model = map(name, abs_effects_indiv),
+         test = map(model, ~ tidy(anova(.x, ddf=&quot;Ken&quot;))),
+         coef = map(model, ~ tidy(.x)))
+
+mod.abs.indiv %&gt;% select(-model, -coef) %&gt;% unnest(test) %&gt;% select(name, term, p.value) %&gt;% 
+  pivot_wider(names_from=term, values_from=p.value) %&gt;%
+  kable(caption=&quot;Plasticity p-values&quot;)</code></pre>
+<table>
+<caption>Plasticity p-values</caption>
+<thead>
+<tr class="header">
+<th align="left">name</th>
+<th align="right">sun_date</th>
+<th align="right">precip_est_mm</th>
+<th align="right">sun_date:precip_est_mm</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a-pinene</td>
+<td align="right">0.0501</td>
+<td align="right">0.7227</td>
+<td align="right">0.8532</td>
+</tr>
+<tr class="even">
+<td align="left">limonene</td>
+<td align="right">0.2755</td>
+<td align="right">0.5590</td>
+<td align="right">0.5593</td>
+</tr>
+<tr class="odd">
+<td align="left">(Z)-b-ocimene</td>
+<td align="right">0.5710</td>
+<td align="right">0.2613</td>
+<td align="right">0.3744</td>
+</tr>
+<tr class="even">
+<td align="left">3-carene</td>
+<td align="right">0.1079</td>
+<td align="right">0.3861</td>
+<td align="right">0.4984</td>
+</tr>
+<tr class="odd">
+<td align="left">sabinene</td>
+<td align="right">0.0222</td>
+<td align="right">0.5974</td>
+<td align="right">0.5966</td>
+</tr>
+<tr class="even">
+<td align="left">hexan-1-ol</td>
+<td align="right">0.0225</td>
+<td align="right">0.6517</td>
+<td align="right">0.9452</td>
+</tr>
+<tr class="odd">
+<td align="left">b-caryophyllene</td>
+<td align="right">0.4679</td>
+<td align="right">0.9304</td>
+<td align="right">0.8907</td>
+</tr>
+<tr class="even">
+<td align="left">(E)-4-oxohex-2-enal</td>
+<td align="right">0.4351</td>
+<td align="right">0.7486</td>
+<td align="right">0.9465</td>
+</tr>
+<tr class="odd">
+<td align="left">(Z)-a-bergamotene</td>
+<td align="right">0.3546</td>
+<td align="right">0.2951</td>
+<td align="right">0.9827</td>
+</tr>
+<tr class="even">
+<td align="left">methyl benzoate</td>
+<td align="right">0.2441</td>
+<td align="right">0.1996</td>
+<td align="right">0.4490</td>
+</tr>
+<tr class="odd">
+<td align="left">a-copaene</td>
+<td align="right">0.4220</td>
+<td align="right">0.8888</td>
+<td align="right">0.6920</td>
+</tr>
+<tr class="even">
+<td align="left">2-methylbenzonitrile</td>
+<td align="right">0.7275</td>
+<td align="right">0.6098</td>
+<td align="right">0.7076</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>mod.abs.indiv %&gt;% select(-model, -test) %&gt;% unnest(coef) %&gt;% filter(effect==&quot;fixed&quot;, term!=&quot;(Intercept)&quot;) %&gt;%
+  pivot_wider(id_cols=name, names_from=term, values_from=c(&quot;estimate&quot;,&quot;std.error&quot;)) %&gt;% 
+  kable(caption=&quot;Plasticity estimates&quot;)</code></pre>
+<table>
+<caption>Plasticity estimates</caption>
+<colgroup>
+<col width="12%" />
+<col width="10%" />
+<col width="13%" />
+<col width="18%" />
+<col width="11%" />
+<col width="14%" />
+<col width="19%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">name</th>
+<th align="right">estimate_sun_date</th>
+<th align="right">estimate_precip_est_mm</th>
+<th align="right">estimate_sun_date:precip_est_mm</th>
+<th align="right">std.error_sun_date</th>
+<th align="right">std.error_precip_est_mm</th>
+<th align="right">std.error_sun_date:precip_est_mm</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">a-pinene</td>
+<td align="right">0.8574</td>
+<td align="right">-0.2098</td>
+<td align="right">0.0008</td>
+<td align="right">0.4342</td>
+<td align="right">0.5844</td>
+<td align="right">0.0045</td>
+</tr>
+<tr class="even">
+<td align="left">limonene</td>
+<td align="right">-0.1444</td>
+<td align="right">-0.1047</td>
+<td align="right">0.0008</td>
+<td align="right">0.1314</td>
+<td align="right">0.1764</td>
+<td align="right">0.0013</td>
+</tr>
+<tr class="odd">
+<td align="left">(Z)-b-ocimene</td>
+<td align="right">-0.0840</td>
+<td align="right">0.2253</td>
+<td align="right">-0.0014</td>
+<td align="right">0.1470</td>
+<td align="right">0.1961</td>
+<td align="right">0.0015</td>
+</tr>
+<tr class="even">
+<td align="left">3-carene</td>
+<td align="right">-0.1326</td>
+<td align="right">0.0966</td>
+<td align="right">-0.0006</td>
+<td align="right">0.0818</td>
+<td align="right">0.1098</td>
+<td align="right">0.0008</td>
+</tr>
+<tr class="odd">
+<td align="left">sabinene</td>
+<td align="right">-0.1061</td>
+<td align="right">0.0329</td>
+<td align="right">0.0003</td>
+<td align="right">0.0461</td>
+<td align="right">0.0620</td>
+<td align="right">0.0005</td>
+</tr>
+<tr class="even">
+<td align="left">hexan-1-ol</td>
+<td align="right">-0.0686</td>
+<td align="right">0.0183</td>
+<td align="right">0.0000</td>
+<td align="right">0.0298</td>
+<td align="right">0.0402</td>
+<td align="right">0.0003</td>
+</tr>
+<tr class="odd">
+<td align="left">b-caryophyllene</td>
+<td align="right">0.0467</td>
+<td align="right">-0.0076</td>
+<td align="right">0.0001</td>
+<td align="right">0.0640</td>
+<td align="right">0.0863</td>
+<td align="right">0.0007</td>
+</tr>
+<tr class="even">
+<td align="left">(E)-4-oxohex-2-enal</td>
+<td align="right">-0.0114</td>
+<td align="right">0.0064</td>
+<td align="right">0.0000</td>
+<td align="right">0.0146</td>
+<td align="right">0.0195</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="odd">
+<td align="left">(Z)-a-bergamotene</td>
+<td align="right">-0.0049</td>
+<td align="right">0.0075</td>
+<td align="right">0.0000</td>
+<td align="right">0.0053</td>
+<td align="right">0.0072</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="even">
+<td align="left">methyl benzoate</td>
+<td align="right">0.0046</td>
+<td align="right">0.0069</td>
+<td align="right">0.0000</td>
+<td align="right">0.0039</td>
+<td align="right">0.0053</td>
+<td align="right">0.0000</td>
+</tr>
+<tr class="odd">
+<td align="left">a-copaene</td>
+<td align="right">-0.0064</td>
+<td align="right">-0.0015</td>
+<td align="right">0.0000</td>
+<td align="right">0.0080</td>
+<td align="right">0.0107</td>
+<td align="right">0.0001</td>
+</tr>
+<tr class="even">
+<td align="left">2-methylbenzonitrile</td>
+<td align="right">0.0004</td>
+<td align="right">0.0009</td>
+<td align="right">0.0000</td>
+<td align="right">0.0013</td>
+<td align="right">0.0017</td>
+<td align="right">0.0000</td>
+</tr>
+</tbody>
+</table>
+</div>
 <div id="scatterplots" class="section level3">
 <h3>Scatterplots</h3>
 <div id="snowmelt-date" class="section level4">
@@ -2838,6 +3077,10 @@ mnps.plantyr.traits %&gt;% pivot_longer(all_of(traits)) %&gt;% group_by(name) %&
             n_plants=sum(!is.na(value))) %&gt;% 
     mutate(name = traitnames.units[name]) %&gt;% 
   write_csv(&quot;data/trait_means.csv&quot;, na=&quot;&quot;)
+bind_rows(volsmeta.avg, vols.good.top) %&gt;% pivot_longer(all_of(ipogood.top)) %&gt;% group_by(name) %&gt;% 
+  summarize(mean=mean(value, na.rm=T), sd=sd(value, na.rm=T),
+            n_plants=sum(!is.na(value))) %&gt;%  
+  write_csv(&quot;data/volatiles/volatiles_means.csv&quot;, na=&quot;&quot;)
 
 get_emt_class &lt;- function(mod) {
   map_dfr(set_names(names(class_pal)), ~emtrends(mod, c(&quot;year&quot;,&quot;water&quot;,&quot;snow&quot;), var=.x) %&gt;% 
