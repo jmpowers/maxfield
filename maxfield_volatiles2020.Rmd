@@ -733,9 +733,9 @@ for(yr in unique(year(volsmeta$sequence.start))) {
   print(vols.cap)
   print(anova(vols.cap, by="term"))
   # vols.cap.points <-  fortify(vols.cap) %>% as_tibble()
-  # vols.cap.samples <- vols.cap.points %>% filter(Score=="sites") %>% 
-  #   left_join(volsmeta, by=c("Label"="index"))
-  # vols.cap.chems <- vols.cap.points %>% filter(Score=="species")
+  # vols.cap.samples <- vols.cap.points %>% filter(score=="sites") %>% 
+  #   left_join(volsmeta, by=c("label"="index"))
+  # vols.cap.chems <- vols.cap.points %>% filter(score=="species")
   # p <- vols.cap.samples %>% 
   #   mutate(sequence.date = date(sequence.start)) %>% 
   #   filter(sequence.year == yr) %>% 
@@ -752,21 +752,21 @@ for(yr in unique(year(volsmeta$sequence.start))) {
 ```{r nmds, fig.height=9, fig.width=6}
 (vols.nmds <- metaMDS(sqrt(vols.cut), autotransform=FALSE, trace=F))
 vols.nmds.points <-  fortify(vols.nmds) %>% as_tibble()
-vols.nmds.samples <- vols.nmds.points %>% filter(Score=="sites") %>% 
-  left_join(volsmeta, by=c("Label"="index"))
-vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
+vols.nmds.samples <- vols.nmds.points %>% filter(score=="sites") %>% 
+  left_join(volsmeta, by=c("label"="index"))
+vols.nmds.chems <- vols.nmds.points %>% filter(score=="species")
 
 (scents.nmds <- metaMDS(sqrt(vols.good), autotransform=FALSE, trace=F)) #had noshare = FALSE
 nmds.points <-  fortify(scents.nmds) %>% as_tibble()
-nmds.samples <- nmds.points %>% filter(Score=="sites") %>% left_join(volsmeta, by=c("Label"="index"))
-nmds.chems <- nmds.points %>% filter(Score=="species") %>% left_join(ipochemsf, by=c("Label"="name"))
+nmds.samples <- nmds.points %>% filter(score=="sites") %>% left_join(volsmeta, by=c("label"="index"))
+nmds.chems <- nmds.points %>% filter(score=="species") %>% left_join(ipochemsf, by=c("label"="name"))
 
 # By year
 vols.plot <- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
   geom_point(aes(color=year)) + scale_color_manual(values=year_pal)+
   labs(title="Unfiltered NMDS", color="Year")
 vols.good.plot <- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
-  #geom_text(data=nmds.chems, aes(label=Label)) +
+  #geom_text(data=nmds.chems, aes(label=label)) +
   geom_point(aes(color=year))+ scale_color_manual(values=year_pal)+
   #geom_point(aes(color=water, shape=year)) + scale_color_manual("Precipitation", values=water_pal) +
   labs(title="Filtered NMDS", color="Year")
@@ -785,7 +785,7 @@ grid.arrange(vols.plot, vols.good.plot)
 ```{r nmds_chems, fig.height=12, fig.width=12}
 ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
   geom_point(aes(color=year))+ scale_color_manual(values=year_pal)+
-    geom_text(data=nmds.chems, aes(label=Label, alpha=freq.floral^(1/3))) +
+    geom_text(data=nmds.chems, aes(label=label, alpha=freq.floral^(1/3))) +
   labs(title="Filtered NMDS", color="Year")
 ```
 
@@ -822,15 +822,15 @@ for(yr in unique(year(volsmeta$sequence.start))) {
   thisyr <- year(volsmeta$sequence.start)==yr
   (vols.nmds <- metaMDS(sqrt(vols.cut[thisyr,]), autotransform=FALSE, trace=F))
   vols.nmds.points <-  fortify(vols.nmds) %>% as_tibble()
-  vols.nmds.samples <- vols.nmds.points %>% filter(Score=="sites") %>% 
-    left_join(volsmeta, by=c("Label"="index")) %>% filter(sequence.year == yr)
-  vols.nmds.chems <- vols.nmds.points %>% filter(Score=="species")
+  vols.nmds.samples <- vols.nmds.points %>% filter(score=="sites") %>% 
+    left_join(volsmeta, by=c("label"="index")) %>% filter(sequence.year == yr)
+  vols.nmds.chems <- vols.nmds.points %>% filter(score=="species")
   
   (scents.nmds <- metaMDS(sqrt(vols.good[thisyr,]), autotransform=FALSE, trace=F))
   nmds.points <-  fortify(scents.nmds) %>% as_tibble()
-  nmds.samples <- nmds.points %>% filter(Score=="sites") %>% 
-    left_join(volsmeta, by=c("Label"="index")) %>% filter(sequence.year == yr)
-  nmds.chems <- nmds.points %>% filter(Score=="species")
+  nmds.samples <- nmds.points %>% filter(score=="sites") %>% 
+    left_join(volsmeta, by=c("label"="index")) %>% filter(sequence.year == yr)
+  nmds.chems <- nmds.points %>% filter(score=="species")
   
   vols.plot <- vols.nmds.samples %>% 
     ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste("Unfiltered NMDS run",yr))+
@@ -1003,15 +1003,16 @@ scents.cap <- update(scents.cap, ~ sun_date + precip_est_mm)
 cap.df <- fortify(scents.cap) #drop non-signif interaction for plotting
 prop.expl <- summary(scents.cap)$cont$importance
 ax.labs <- paste0(colnames(prop.expl)[1:2], " (",round(100*prop.expl[2,1:2]),"% explained)")
-ggplot(mapping=aes(x=CAP1, y=CAP2, label=greekify(Label))) + 
-  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta.avg), aes(color=year))+
-  geom_segment(data=cap.df %>% filter(Score=="biplot"), aes(x=0,y=0,xend=CAP1*1.8, yend=CAP2*1.8), 
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=greekify(label))) + 
+  geom_point(data=cap.df %>% filter(score=="sites") %>% bind_cols(volsmeta.avg), aes(color=year))+
+  geom_segment(data=cap.df %>% filter(score=="biplot"), aes(x=0,y=0,xend=CAP1*1.8, yend=CAP2*1.8), 
                arrow=arrow(length=unit(0.5, "lines")))+
-  geom_text(data=cap.df %>% filter(Score=="biplot") %>% 
-              mutate(Label=c("Snowmelt", "Precipitation")),
+  geom_text(data=cap.df %>% filter(score=="biplot") %>% 
+              mutate(label=c("Snowmelt", "Precipitation")),
             aes(x=CAP1*2, y=CAP2*2, angle=atan(CAP2/CAP1)*180/pi), hjust=c(0,1), fontface="bold") +
-  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5) %>% 
-              mutate(nudge = c(0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0)),
+  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("label"="name")) %>% filter(score=="species", mean.floral>1.5) %>% 
+              mutate(nudge = c(0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0),
+                     label = recode(label, "[(E)-hex-3-enyl] butanoate"="unknown ester", "[(E)-hex-3-enyl] butanoate"="unknown ester", "[(E)-hex-3-enyl] acetate"="[(Z)-hex-3-enyl] acetate")),
             aes(x=CAP1*3, y=CAP2*3+nudge*0.1), size=3)+ labs(x=ax.labs[1], y=ax.labs[2])+
   scale_color_manual("Year", values=year_pal) + coord_fixed() + 
   theme_bw() + theme(panel.grid = element_blank())
@@ -1095,13 +1096,13 @@ hasVWC <- !is.na(volsmeta.avg$VWC)
 anova(scents.cap, by="term") %>% kable()
 
 cap.df <- fortify(scents.cap)
-ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
-  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta.avg[hasVWC,]), aes(color=year))+
-  geom_segment(data=cap.df %>% filter(Score=="biplot"), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=label)) + 
+  geom_point(data=cap.df %>% filter(score=="sites") %>% bind_cols(volsmeta.avg[hasVWC,]), aes(color=year))+
+  geom_segment(data=cap.df %>% filter(score=="biplot"), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
                arrow=arrow(length=unit(0.5, "lines")))+
-  geom_text(data=cap.df %>% filter(Score=="biplot") ,
+  geom_text(data=cap.df %>% filter(score=="biplot") ,
             aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface="bold") +
-  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("label"="name")) %>% filter(score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
   scale_color_manual("Year", values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
   theme_bw() + theme(panel.grid = element_blank())
 ```
@@ -1155,13 +1156,13 @@ ggplot(volsmeta.avg, aes(x = VWC, color = year, y = total)) +
                         distance="bray"))
 anova(scents.cap, by="term") %>% kable()
 cap.df <- fortify(scents.cap)
-ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
-  geom_point(data=cap.df %>% filter(Score=="sites") %>% bind_cols(volsmeta.avg), aes(color=year))+
-  geom_segment(data=cap.df %>% filter(Score=="biplot"), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=label)) + 
+  geom_point(data=cap.df %>% filter(score=="sites") %>% bind_cols(volsmeta.avg), aes(color=year))+
+  geom_segment(data=cap.df %>% filter(score=="biplot"), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
                arrow=arrow(length=unit(0.5, "lines")))+
-  geom_text(data=cap.df %>% filter(Score=="biplot") ,
+  geom_text(data=cap.df %>% filter(score=="biplot") ,
             aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface="bold") +
-  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("Label"="name")) %>% filter(Score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  geom_text(data=cap.df %>% left_join(ipochemsf, by=c("label"="name")) %>% filter(score=="species", mean.floral>1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
   scale_color_manual("Year", values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
   theme_bw() + theme(panel.grid = element_blank())
 ```
