@@ -11,7 +11,7 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-04-19" />
+<meta name="date" content="2024-09-10" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-04-19</h4>
+<h4 class="date">2024-09-10</h4>
 
 </div>
 
@@ -1866,9 +1866,9 @@ ggplot(volsmeta, aes(x=Desorb.Start.Time, y=cluster))  + geom_line() + geom_poin
   print(vols.cap)
   print(anova(vols.cap, by=&quot;term&quot;))
   # vols.cap.points &lt;-  fortify(vols.cap) %&gt;% as_tibble()
-  # vols.cap.samples &lt;- vols.cap.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
-  #   left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
-  # vols.cap.chems &lt;- vols.cap.points %&gt;% filter(Score==&quot;species&quot;)
+  # vols.cap.samples &lt;- vols.cap.points %&gt;% filter(score==&quot;sites&quot;) %&gt;% 
+  #   left_join(volsmeta, by=c(&quot;label&quot;=&quot;index&quot;))
+  # vols.cap.chems &lt;- vols.cap.points %&gt;% filter(score==&quot;species&quot;)
   # p &lt;- vols.cap.samples %&gt;% 
   #   mutate(sequence.date = date(sequence.start)) %&gt;% 
   #   filter(sequence.year == yr) %&gt;% 
@@ -1900,9 +1900,9 @@ The best solution was from try 10 (random start)
 Scaling: centring, PC rotation, halfchange scaling 
 Species: expanded scores based on &#39;sqrt(vols.cut)&#39; </code></pre>
 <pre class="r"><code>vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
-vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
-  left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
-vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
+vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(score==&quot;sites&quot;) %&gt;% 
+  left_join(volsmeta, by=c(&quot;label&quot;=&quot;index&quot;))
+vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(score==&quot;species&quot;)
 
 (scents.nmds &lt;- metaMDS(sqrt(vols.good), autotransform=FALSE, trace=F)) #had noshare = FALSE</code></pre>
 <pre><code>
@@ -1922,15 +1922,15 @@ The best solution was from try 16 (random start)
 Scaling: centring, PC rotation, halfchange scaling 
 Species: expanded scores based on &#39;sqrt(vols.good)&#39; </code></pre>
 <pre class="r"><code>nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
-nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;))
-nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;) %&gt;% left_join(ipochemsf, by=c(&quot;Label&quot;=&quot;name&quot;))
+nmds.samples &lt;- nmds.points %&gt;% filter(score==&quot;sites&quot;) %&gt;% left_join(volsmeta, by=c(&quot;label&quot;=&quot;index&quot;))
+nmds.chems &lt;- nmds.points %&gt;% filter(score==&quot;species&quot;) %&gt;% left_join(ipochemsf, by=c(&quot;label&quot;=&quot;name&quot;))
 
 # By year
 vols.plot &lt;- ggplot(vols.nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() +
   geom_point(aes(color=year)) + scale_color_manual(values=year_pal)+
   labs(title=&quot;Unfiltered NMDS&quot;, color=&quot;Year&quot;)
 vols.good.plot &lt;- ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
-  #geom_text(data=nmds.chems, aes(label=Label)) +
+  #geom_text(data=nmds.chems, aes(label=label)) +
   geom_point(aes(color=year))+ scale_color_manual(values=year_pal)+
   #geom_point(aes(color=water, shape=year)) + scale_color_manual(&quot;Precipitation&quot;, values=water_pal) +
   labs(title=&quot;Filtered NMDS&quot;, color=&quot;Year&quot;)
@@ -1947,7 +1947,7 @@ grid.arrange(vols.plot, vols.good.plot)</code></pre>
 <p><img src="images_volatiles2020/nmds-2.svg" width="576" /></p>
 <pre class="r"><code>ggplot(nmds.samples, aes(x=NMDS1, y=NMDS2)) + theme_classic() + 
   geom_point(aes(color=year))+ scale_color_manual(values=year_pal)+
-    geom_text(data=nmds.chems, aes(label=Label, alpha=freq.floral^(1/3))) +
+    geom_text(data=nmds.chems, aes(label=label, alpha=freq.floral^(1/3))) +
   labs(title=&quot;Filtered NMDS&quot;, color=&quot;Year&quot;)</code></pre>
 <p><img src="images_volatiles2020/nmds_chems-1.svg" width="1152" /></p>
 <pre class="r"><code>#Cluster based on filtered data
@@ -1981,15 +1981,15 @@ for(yr in unique(year(volsmeta$sequence.start))) {
   thisyr &lt;- year(volsmeta$sequence.start)==yr
   (vols.nmds &lt;- metaMDS(sqrt(vols.cut[thisyr,]), autotransform=FALSE, trace=F))
   vols.nmds.points &lt;-  fortify(vols.nmds) %&gt;% as_tibble()
-  vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
-    left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;)) %&gt;% filter(sequence.year == yr)
-  vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(Score==&quot;species&quot;)
+  vols.nmds.samples &lt;- vols.nmds.points %&gt;% filter(score==&quot;sites&quot;) %&gt;% 
+    left_join(volsmeta, by=c(&quot;label&quot;=&quot;index&quot;)) %&gt;% filter(sequence.year == yr)
+  vols.nmds.chems &lt;- vols.nmds.points %&gt;% filter(score==&quot;species&quot;)
   
   (scents.nmds &lt;- metaMDS(sqrt(vols.good[thisyr,]), autotransform=FALSE, trace=F))
   nmds.points &lt;-  fortify(scents.nmds) %&gt;% as_tibble()
-  nmds.samples &lt;- nmds.points %&gt;% filter(Score==&quot;sites&quot;) %&gt;% 
-    left_join(volsmeta, by=c(&quot;Label&quot;=&quot;index&quot;)) %&gt;% filter(sequence.year == yr)
-  nmds.chems &lt;- nmds.points %&gt;% filter(Score==&quot;species&quot;)
+  nmds.samples &lt;- nmds.points %&gt;% filter(score==&quot;sites&quot;) %&gt;% 
+    left_join(volsmeta, by=c(&quot;label&quot;=&quot;index&quot;)) %&gt;% filter(sequence.year == yr)
+  nmds.chems &lt;- nmds.points %&gt;% filter(score==&quot;species&quot;)
   
   vols.plot &lt;- vols.nmds.samples %&gt;% 
     ggplot(aes(x=NMDS1, y=NMDS2)) + theme_classic()+ labs(title = paste(&quot;Unfiltered NMDS run&quot;,yr))+
@@ -2378,15 +2378,16 @@ scents.cap &lt;- update(scents.cap, ~ sun_date + precip_est_mm)
 cap.df &lt;- fortify(scents.cap) #drop non-signif interaction for plotting
 prop.expl &lt;- summary(scents.cap)$cont$importance
 ax.labs &lt;- paste0(colnames(prop.expl)[1:2], &quot; (&quot;,round(100*prop.expl[2,1:2]),&quot;% explained)&quot;)
-ggplot(mapping=aes(x=CAP1, y=CAP2, label=greekify(Label))) + 
-  geom_point(data=cap.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta.avg), aes(color=year))+
-  geom_segment(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*1.8, yend=CAP2*1.8), 
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=greekify(label))) + 
+  geom_point(data=cap.df %&gt;% filter(score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta.avg), aes(color=year))+
+  geom_segment(data=cap.df %&gt;% filter(score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*1.8, yend=CAP2*1.8), 
                arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
-  geom_text(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;) %&gt;% 
-              mutate(Label=c(&quot;Snowmelt&quot;, &quot;Precipitation&quot;)),
+  geom_text(data=cap.df %&gt;% filter(score==&quot;biplot&quot;) %&gt;% 
+              mutate(label=c(&quot;Snowmelt&quot;, &quot;Precipitation&quot;)),
             aes(x=CAP1*2, y=CAP2*2, angle=atan(CAP2/CAP1)*180/pi), hjust=c(0,1), fontface=&quot;bold&quot;) +
-  geom_text(data=cap.df %&gt;% left_join(ipochemsf, by=c(&quot;Label&quot;=&quot;name&quot;)) %&gt;% filter(Score==&quot;species&quot;, mean.floral&gt;1.5) %&gt;% 
-              mutate(nudge = c(0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0)),
+  geom_text(data=cap.df %&gt;% left_join(ipochemsf, by=c(&quot;label&quot;=&quot;name&quot;)) %&gt;% filter(score==&quot;species&quot;, mean.floral&gt;1.5) %&gt;% 
+              mutate(nudge = c(0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0),
+                     label = recode(label, &quot;[(E)-hex-3-enyl] butanoate&quot;=&quot;unknown ester&quot;, &quot;[(E)-hex-3-enyl] butanoate&quot;=&quot;unknown ester&quot;, &quot;[(E)-hex-3-enyl] acetate&quot;=&quot;[(Z)-hex-3-enyl] acetate&quot;)),
             aes(x=CAP1*3, y=CAP2*3+nudge*0.1), size=3)+ labs(x=ax.labs[1], y=ax.labs[2])+
   scale_color_manual(&quot;Year&quot;, values=year_pal) + coord_fixed() + 
   theme_bw() + theme(panel.grid = element_blank())</code></pre>
@@ -2781,13 +2782,13 @@ Eigenvalues for unconstrained axes:
 </tbody>
 </table>
 <pre class="r"><code>cap.df &lt;- fortify(scents.cap)
-ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
-  geom_point(data=cap.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta.avg[hasVWC,]), aes(color=year))+
-  geom_segment(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=label)) + 
+  geom_point(data=cap.df %&gt;% filter(score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta.avg[hasVWC,]), aes(color=year))+
+  geom_segment(data=cap.df %&gt;% filter(score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
                arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
-  geom_text(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;) ,
+  geom_text(data=cap.df %&gt;% filter(score==&quot;biplot&quot;) ,
             aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface=&quot;bold&quot;) +
-  geom_text(data=cap.df %&gt;% left_join(ipochemsf, by=c(&quot;Label&quot;=&quot;name&quot;)) %&gt;% filter(Score==&quot;species&quot;, mean.floral&gt;1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  geom_text(data=cap.df %&gt;% left_join(ipochemsf, by=c(&quot;label&quot;=&quot;name&quot;)) %&gt;% filter(score==&quot;species&quot;, mean.floral&gt;1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
   scale_color_manual(&quot;Year&quot;, values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
   theme_bw() + theme(panel.grid = element_blank())</code></pre>
 <p><img src="images_volatiles2020/cap_sm-1.svg" width="768" /></p>
@@ -2935,13 +2936,13 @@ Eigenvalues for unconstrained axes:
 </tbody>
 </table>
 <pre class="r"><code>cap.df &lt;- fortify(scents.cap)
-ggplot(mapping=aes(x=CAP1, y=CAP2, label=Label)) + 
-  geom_point(data=cap.df %&gt;% filter(Score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta.avg), aes(color=year))+
-  geom_segment(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
+ggplot(mapping=aes(x=CAP1, y=CAP2, label=label)) + 
+  geom_point(data=cap.df %&gt;% filter(score==&quot;sites&quot;) %&gt;% bind_cols(volsmeta.avg), aes(color=year))+
+  geom_segment(data=cap.df %&gt;% filter(score==&quot;biplot&quot;), aes(x=0,y=0,xend=CAP1*3.7, yend=CAP2*3.7), 
                arrow=arrow(length=unit(0.5, &quot;lines&quot;)))+
-  geom_text(data=cap.df %&gt;% filter(Score==&quot;biplot&quot;) ,
+  geom_text(data=cap.df %&gt;% filter(score==&quot;biplot&quot;) ,
             aes(x=CAP1*4, y=CAP2*4, angle=atan(CAP2/CAP1)*180/pi), hjust=0, fontface=&quot;bold&quot;) +
-  geom_text(data=cap.df %&gt;% left_join(ipochemsf, by=c(&quot;Label&quot;=&quot;name&quot;)) %&gt;% filter(Score==&quot;species&quot;, mean.floral&gt;1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
+  geom_text(data=cap.df %&gt;% left_join(ipochemsf, by=c(&quot;label&quot;=&quot;name&quot;)) %&gt;% filter(score==&quot;species&quot;, mean.floral&gt;1.5), aes(x=CAP1*3, y=CAP2*3), size=3)+
   scale_color_manual(&quot;Year&quot;, values=year_pal) + coord_fixed(xlim=c(-3,NA)) + 
   theme_bw() + theme(panel.grid = element_blank())</code></pre>
 <p><img src="images_volatiles2020/cap_sm_subplot-1.svg" width="768" /></p>
