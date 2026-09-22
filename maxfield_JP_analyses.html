@@ -11,11 +11,11 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-04-19" />
+<meta name="date" content="2026-09-22" />
 
 <title>Maxfield Meadow Ipomopsis Experiment</title>
 
-<script src="libs/header-attrs-2.26/header-attrs.js"></script>
+<script src="libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Experiment</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-04-19</h4>
+<h4 class="date">2026-09-22</h4>
 
 </div>
 
@@ -5717,6 +5717,109 @@ autoplot(capscale(scale(mt.morph.wm[,-(6:8)]) ~ precip_est_mm + sun_date, data=m
 </div>
 <div id="mortalityfloweringrgr-selection" class="section level1">
 <h1>Mortality/flowering/RGR selection</h1>
+<div id="for-meta-analysis" class="section level2">
+<h2>For meta-analysis</h2>
+<div id="total-selection-in-each-year" class="section level3">
+<h3>Total selection in each year</h3>
+<pre class="r"><code>selection_year_mod &lt;- function(trait, response, set, .year, drop=TRUE) {
+  t.plantyr &lt;- list(lt1 = filter(lt.plantyr, round==&quot;1&quot;), 
+                    lt2 = filter(lt.plantyr, round==&quot;2&quot;),
+                    pt = pt.plantyr)[[set]] %&gt;% 
+    rename(&quot;trait&quot;=trait,&quot;response&quot;=response) %&gt;% 
+    select(year, snow, water, trait, response, plot) %&gt;% 
+    filter(year == .year, water == &quot;Control&quot;, snow == &quot;Normal&quot;) %&gt;% #only the controls
+    drop_na(trait, response) %&gt;% 
+    mutate(ztrait = trait/sd(trait),
+           relfitness = response/mean(response))
+  if(nrow(t.plantyr) == 0) return(NA)
+  lm(relfitness ~ ztrait, data=t.plantyr)
+}
+selection.combos &lt;- expand_grid(response = fitnesstraits, set = c(&quot;lt1&quot;, &quot;lt2&quot;, &quot;pt&quot;),
+                                .year = levels(treatments$year)) %&gt;% 
+  full_join(tibble(trait=c(leaftraits, leaftraits, phystraits), 
+                   set = c(rep(&quot;lt1&quot;, length(leaftraits)),
+                           rep(&quot;lt2&quot;, length(leaftraits)),  
+                           rep(&quot;pt&quot;, length(phystraits)))), relationship = &quot;many-to-many&quot;) 
+
+mod.selection.split &lt;- selection.combos %&gt;%
+  mutate(model = pmap(., selection_year_mod, drop=F)) %&gt;% 
+  filter(!is.na(model)) %&gt;% rename(year = .year) %&gt;% 
+  mutate(coefs = map(model, tidy), 
+         round = c(lt1=1, lt2=2, pt=1)[set])
+
+coef.selection.split &lt;- mod.selection.split %&gt;% 
+  select(-model) %&gt;% unnest(coefs) %&gt;% filter(term==&quot;ztrait&quot;)
+
+ggplot(coef.selection.split, aes(x=paste(year, round, sep=&quot;.&quot;), y=estimate, color= year,
+                                 ymax=estimate+std.error, ymin = estimate-std.error)) +
+  facet_grid(vars(response), vars(trait), labeller = as_labeller(c(traitnames, fitnessnames)),
+             scales = &quot;free_y&quot;) + 
+  geom_hline(yintercept=0) + geom_pointrange(size=1) + theme_minimal() +
+  scale_color_manual(values=year_pal)+ labs(y=&quot;SD-standardized selection gradient&quot;, x=&quot;Year, round&quot;) +
+  theme(legend.position = &quot;top&quot;, axis.text.x = element_text(angle=90))</code></pre>
+<p><img src="images/selection_year-1.png" width="1152" /></p>
+</div>
+<div id="direct-selection-in-each-year" class="section level3">
+<h3>Direct selection in each year</h3>
+<pre class="r"><code># function to calculate standardized selection gradients in each year
+# only includes subplots with unmanipulated snowmelt and precipitation
+# response: the fitness metric (survived, flowered, RGR), observed the following year
+# set: lt1/lt2 = leaf traits (trichomes, SLA, water content), collection round 1 or 2
+# leaves from 2019 round 2 were not weighed, so this round is excluded
+# set: pt = physiology traits (conductance, photosynthesis, WUE)
+# pt and fitness measured on less than 10 plants in 2019 and 2020, excluded
+# the multiple regression includes only the three traits from that set,
+# since each set of traits was measured on different plants
+# fitness and traits are standardized within each year
+# uses datasets with the mean trait for each round and year (lt.plantyr, pt.plantyr)
+selection_year_mult_mod &lt;- function(response, set, .year) {
+  
+  traits &lt;- list(lt1=leaftraits, lt2=leaftraits, pt=phystraits)[[set]]
+  
+  t.plantyr &lt;- list(lt1 = filter(lt.plantyr, round==&quot;1&quot;), 
+                    lt2 = filter(lt.plantyr, round==&quot;2&quot;),
+                    pt = pt.plantyr)[[set]] %&gt;% 
+    filter(year == .year, water == &quot;Control&quot;, snow == &quot;Normal&quot;) %&gt;% 
+    rename(&quot;response&quot;=response) %&gt;% select(response, !!!traits) %&gt;% 
+    drop_na(all_of(traits), response) %&gt;% 
+    mutate(across(all_of(traits), \(x) x/sd(x)), # divide traits by standard deviation
+           relfitness = response/mean(response)) # divide fitness by mean
+  
+  if(nrow(t.plantyr) &lt; 10) return(NA) # not enough data for that round
+  
+  lm(formula(paste(&quot;relfitness ~ &quot;, paste(traits, collapse=&quot;+&quot;))), data=t.plantyr)
+}
+
+# the combinations of fitness trait, trait set, and year to run models on
+selection.combos &lt;- expand_grid(response = fitnesstraits, 
+                                set = c(&quot;lt1&quot;, &quot;lt2&quot;, &quot;pt&quot;),
+                                .year = levels(treatments$year))
+
+# run the models 
+coef.selection &lt;- selection.combos %&gt;%
+  mutate(model = pmap(., selection_year_mult_mod)) %&gt;% 
+  filter(!is.na(model)) %&gt;% rename(year = .year) %&gt;% 
+  mutate(coefs = map(model, tidy), 
+         n_obs = map_int(model, nobs),
+         round = c(lt1=1, lt2=2, pt=1)[set]) %&gt;% 
+  select(-model) %&gt;% unnest(coefs) %&gt;% filter(term!=&quot;(Intercept)&quot;)
+
+ggplot(coef.selection, aes(x=paste(year, round, sep=&quot;.&quot;), y=estimate, color=year, size=n_obs,
+                                 ymax=estimate+std.error, ymin=estimate-std.error)) +
+  facet_grid(vars(response), vars(factor(term, levels = names(traitnames))), 
+             labeller = as_labeller(c(traitnames, fitnessnames)),
+             scales = &quot;free_y&quot;) + 
+  geom_hline(yintercept=0) + geom_pointrange() + 
+  scale_color_manual(values=year_pal) + scale_size_area(max_size=2) + 
+  labs(y=&quot;SD-standardized selection gradient&quot;, x=&quot;Year, round&quot;, color=&quot;Year&quot;, size=&quot;Sample size&quot;) +
+  theme_minimal() + theme(legend.position = &quot;top&quot;, axis.text.x = element_text(angle=90))</code></pre>
+<p><img src="images/selection_year_mult-1.png" width="1152" /></p>
+<pre class="r"><code>save(leaftraits, phystraits, fitnesstraits, fitnessnames, traitnames, year_pal,
+     lt.plantyr, pt.plantyr, treatments, coef.selection, file=&quot;data/selection_gradient_dfs.rda&quot;)
+     
+write_csv(coef.selection, &quot;data/selection_gradients_controls.csv&quot;)</code></pre>
+</div>
+</div>
 <div id="selection-vs.-treatments" class="section level2">
 <h2>Selection vs. treatments</h2>
 <pre class="r"><code>lt.plantyr.r2 &lt;- lt.plantyr %&gt;% filter(round==&quot;2&quot;)
