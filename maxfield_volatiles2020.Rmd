@@ -1557,6 +1557,41 @@ ggplot(beta.compare.mr, aes(x=n.PCs, y=abs(error), color=trait)) + geom_hline(yi
   coord_cartesian(ylim=c(0, 0.15)) + theme_bw()
 ```
 
+### Trait multiple regression by year
+
+```{r traitreg_year, fig.width=9}
+trait_year_mult_reg <- function(fitnesstrait, regtraits, .year) {
+  std.traits <- meta.pca.nosepal %>% 
+    filter(year == .year,  water == "Control", snow == "Normal") %>% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %>%  #center and scale traits
+    select(-any_of(fitnesstrait)) %>% 
+    left_join(mnps.plantyr.traits %>% select(year, plotid, plantid, all_of(fitnesstrait)), by=c("year", "plotid", "plantid")) %>% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %>% 
+    rename("fitness" = all_of(fitnesstrait)) %>% 
+    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep="unused") %>% #relative fitness across years
+    drop_na(relfitness) %>% 
+    select(where(~sum(is.na(.))==0))
+  
+    selection.on.traits <- lm(formula(paste("relfitness ~", paste0(regtraits, collapse="+"))), 
+                              data = std.traits) 
+    selection.on.traits %>% tidy() %>% rename(B=estimate, SE=std.error, trait=term) %>% 
+      mutate(n_obs = nobs(selection.on.traits))
+}
+
+multregs.year <- expand_grid(fitnesstrait=fitnesstraits, year=levels(treatments$year)) %>% 
+  mutate(betas = map2(fitnesstrait, year, ~trait_year_mult_reg(fitnesstrait=.x, regtraits=floraltraits.pca[-4], .year=.y))) %>%
+  unnest(betas) %>% filter(trait != "(Intercept)")
+
+ggplot(multregs.year, aes(x=year, y=B, color=year, size=n_obs,
+                           ymax=B+SE, ymin=B-SE)) +
+  facet_grid(vars(fitnesstrait), vars(factor(trait, levels = names(traitnames))), 
+             labeller = as_labeller(c(traitnames, fitnessnames))) + 
+  geom_hline(yintercept=0) + geom_pointrange() + 
+  scale_color_manual(values=year_pal) + scale_size_area(max_size=1.5) + 
+  labs(y="SD-standardized selection gradient", x="Year", color="Year", size="Sample size") +
+  theme_minimal() + theme(legend.position = "top", axis.text.x = element_text(angle=90))
+```
+
 ### Volatiles multiple regression
 
 ```{r volreg}

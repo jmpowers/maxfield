@@ -11,11 +11,11 @@
 
 <meta name="author" content="John Powers" />
 
-<meta name="date" content="2024-10-08" />
+<meta name="date" content="2026-09-23" />
 
 <title>Maxfield Meadow Ipomopsis Volatiles</title>
 
-<script src="libs/header-attrs-2.26/header-attrs.js"></script>
+<script src="libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -253,7 +253,7 @@ div.tocify {
 <h1 class="title toc-ignore">Maxfield Meadow Ipomopsis Volatiles</h1>
 <h4 class="author"><a href="http://sites.uci.edu/powers/">John
 Powers</a></h4>
-<h4 class="date">2024-10-08</h4>
+<h4 class="date">2026-09-23</h4>
 
 </div>
 
@@ -3562,6 +3562,40 @@ ggplot(beta.compare.mr, aes(x=n.PCs, y=abs(error), color=trait)) + geom_hline(yi
   labs(subtitle=&quot;absolute error (black), sign_error/10 (grey),\nSE of estimates (brown), PC explained (purple)&quot;) +
   coord_cartesian(ylim=c(0, 0.15)) + theme_bw()</code></pre>
 <p><img src="images_volatiles2020/traitreg-2.svg" width="768" /></p>
+</div>
+<div id="trait-multiple-regression-by-year" class="section level3">
+<h3>Trait multiple regression by year</h3>
+<pre class="r"><code>trait_year_mult_reg &lt;- function(fitnesstrait, regtraits, .year) {
+  std.traits &lt;- meta.pca.nosepal %&gt;% 
+    filter(year == .year,  water == &quot;Control&quot;, snow == &quot;Normal&quot;) %&gt;% 
+    mutate(across(all_of(regtraits), ~ (.x-mean(.x))/sd(.x))) %&gt;%  #center and scale traits
+    select(-any_of(fitnesstrait)) %&gt;% 
+    left_join(mnps.plantyr.traits %&gt;% select(year, plotid, plantid, all_of(fitnesstrait)), by=c(&quot;year&quot;, &quot;plotid&quot;, &quot;plantid&quot;)) %&gt;% 
+    select(all_of(fitnesstrait), any_of(names(treatments)), all_of(regtraits)) %&gt;% 
+    rename(&quot;fitness&quot; = all_of(fitnesstrait)) %&gt;% 
+    mutate(relfitness = fitness/mean(fitness, na.rm=T), .keep=&quot;unused&quot;) %&gt;% #relative fitness across years
+    drop_na(relfitness) %&gt;% 
+    select(where(~sum(is.na(.))==0))
+  
+    selection.on.traits &lt;- lm(formula(paste(&quot;relfitness ~&quot;, paste0(regtraits, collapse=&quot;+&quot;))), 
+                              data = std.traits) 
+    selection.on.traits %&gt;% tidy() %&gt;% rename(B=estimate, SE=std.error, trait=term) %&gt;% 
+      mutate(n_obs = nobs(selection.on.traits))
+}
+
+multregs.year &lt;- expand_grid(fitnesstrait=fitnesstraits, year=levels(treatments$year)) %&gt;% 
+  mutate(betas = map2(fitnesstrait, year, ~trait_year_mult_reg(fitnesstrait=.x, regtraits=floraltraits.pca[-4], .year=.y))) %&gt;%
+  unnest(betas) %&gt;% filter(trait != &quot;(Intercept)&quot;)
+
+ggplot(multregs.year, aes(x=year, y=B, color=year, size=n_obs,
+                           ymax=B+SE, ymin=B-SE)) +
+  facet_grid(vars(fitnesstrait), vars(factor(trait, levels = names(traitnames))), 
+             labeller = as_labeller(c(traitnames, fitnessnames))) + 
+  geom_hline(yintercept=0) + geom_pointrange() + 
+  scale_color_manual(values=year_pal) + scale_size_area(max_size=1.5) + 
+  labs(y=&quot;SD-standardized selection gradient&quot;, x=&quot;Year&quot;, color=&quot;Year&quot;, size=&quot;Sample size&quot;) +
+  theme_minimal() + theme(legend.position = &quot;top&quot;, axis.text.x = element_text(angle=90))</code></pre>
+<p><img src="images_volatiles2020/traitreg_year-1.svg" width="864" /></p>
 </div>
 <div id="volatiles-multiple-regression" class="section level3">
 <h3>Volatiles multiple regression</h3>
